@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+@inject IOptionsSnapshot<BackgroundSetting> bgSetting
+@inject ConstantUtil constantUtil
+@{
+    ViewContext.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "http://gmgard.com");
+    ViewContext.HttpContext.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+    var bg = bgSetting.Value.GetUserBackground(ViewContext.HttpContext.Request);
+}
+<html lang="zh-cn" class="@bg.BgClasses" data-class="@bg.BgType">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="description" content="@(ViewBag.Description ?? constantUtil.SiteDesc)" />
+    <title>@ViewBag.Title - @constantUtil.SiteName ♢绅士们的二次元资源分享交流平台♢</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+    <bg-style bg-name="@bg.BgClassName" />
+    <link cdn href="~/bootstrap/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
+    <link cdn href="~/Content/Site.min.css" rel="stylesheet" asp-append-version="true" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" asp-fallback-src="~/Scripts/jquery.min.js" asp-fallback-test="window.jQuery"></script>
+    @RenderSection("scripts", required: false)
+</head>
+<body class="@bg.BgClasses" data-bg="@bgSetting.Value.ClassList()">
+    <header>
+        <canvas style="position: fixed;" id="canvas"></canvas>
+        <div class="content-wrapper">
+            <div class="float-left">
+                <div class="site-title">
+                    <a asp-action="Index" asp-controller="Home">
+                        <img id="Logo" src="@constantUtil.SiteLogo" />
+                    </a>
+                    <p style="margin: 0;"></p>
+                </div>
+            </div>
+            <div class="float-right">
+                <section id="login">
+                    @await Html.PartialAsync("_LoginPartial")
+                </section>
+            </div>
+            <div class="clear-fix"></div>
+            @await Html.PartialAsync("_Menu")
+            @await Html.PartialAsync("_BodyMenu")
+        </div>
+    </header>
+    <div id="body" class="max-width">
+        <section class="categories">
+            @await Component.InvokeAsync(nameof(SiteHeader))
+        </section>
+        <div id="main" style="display:block; margin:auto; padding:0">
+            @RenderSection("featured", required: false)
+            <section class="content-wrapper main-content clear-fix">
+                @RenderBody()
+            </section>
+        </div>
+    </div>
+    @await Html.PartialAsync("_FooterPartial")
+    @RenderSection("end_scripts", required: false)
+</body>
+</html>

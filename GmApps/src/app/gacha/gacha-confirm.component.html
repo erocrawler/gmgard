@@ -1,0 +1,20 @@
+<div *ngIf="points - data * cost >= 0; then confirm; else notEnough"></div>
+<ng-template #notEnough>
+  <div mat-dialog-content>棒棒糖不足，无法召唤！</div>
+  <div mat-dialog-actions>
+    <button mat-button matDialogClose="">关闭</button>
+  </div>
+</ng-template>
+<ng-template #confirm>
+  <div mat-dialog-content>
+    <p>使用 {{ data * cost }} 根棒棒糖兑换绅士度{{ data }}并获赠召唤机会。</p>
+    <p>是否确认兑换？</p>
+    <p>拥有棒棒糖： {{ points }} 根</p>
+    <p>兑换后拥有棒棒糖： {{ points - data * cost }} 根</p>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end">
+    <button mat-button matDialogClose="">关闭</button>
+    <button mat-button matDialogClose="true">决定</button>
+  </div>
+
+</ng-template>

@@ -1,0 +1,19 @@
+<div >
+  <div *ngIf="loading; else showBlock"><mat-spinner></mat-spinner></div>
+  <ng-template #showBlock>
+    <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="10px">
+      <div fxFlex="512px" fxFlex.lt-md="none">
+        <img style="width:100% " src="//static.gmgard.com/Images/gacha/{{item.name}}.png" />
+      </div>
+      <div ngClass.gt-sm="max-height">
+        <h1>{{item.title}}</h1>
+        <p class="description">{{item.description}}</p>
+        <hr />
+        <p *ngIf="item.rarity == 2">获得卡牌时，每张可随机增加4点绅士度或棒棒糖。</p>
+        <p *ngIf="item.rarity == 3 || item.rarity == 4">当称号获得后，额外获得卡牌时，每张可随机增加{{ (item.rarity - 1) * 4 }}点绅士度或棒棒糖。</p>
+        <p *ngIf="item.rarity == 5">获得卡牌时，每张可随机增加30~50点棒棒糖。</p>
+        <p>持有数：{{item.itemCount}}</p>
+      </div>
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,62 @@
+﻿@model SearchBlogResult
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@inject RatingUtil rateUtil
+@{
+    blogUtil.PrepareListCache(Model.Blogs);
+    int? id = ViewBag.CategoryId;
+    ViewBag.CategoryBadge = !id.HasValue;
+    ViewBag.AncestorBadge = !id.HasValue;
+    if (id.HasValue)
+    {
+        var category = catUtil.GetCategoryList().SingleOrDefault(c => c.CategoryID == id);
+        ViewBag.CategoryBadge = category.SubCategories != null;
+    }
+    SearchModel search = Model.SearchModel ?? new SearchModel();
+    string str = "资源列表";
+    if(id.HasValue){
+        string desc;
+        str = catUtil.categoryInfo(id.Value, out desc);
+        <h2 style="display: inline" title="@desc">@str</h2>
+    }
+    else{
+        <h2 style="display: inline">@str</h2>
+    }
+    ViewBag.Title = str;
+}
+@await Html.PartialAsync("_ListOptionsPartial", search)
+<div class="btn-toolbar" style="display: inline-block;margin:15px 0 0 15px">
+    <div class="btn-group">
+    <a class="btn btn-small active">资源</a>
+    <a class="btn btn-small" href="@Url.Action("List", "Topic", new { id = id })">专题</a>
+    </div>
+    <a class="btn btn-small" id="randomgm" target="_blank" href="@Url.Action("Random", new { id = id })" title="浏览一个随机的资源"><i class="icon-question-sign" style="margin-top: 0"></i>试试手气</a>
+</div>
+@await Html.PartialAsync("SearchPartial", Model.SearchModel)
+@await Html.PartialAsync("_TagsSearchedPartial", Model.TagsSearched)
+<div class="clear-fix"></div>
+<hr />
+<div id="listdiv">
+@if (Model.Blogs.Count > 0)
+{
+<ul class="listview image fluid">
+    @foreach (var blog in Model.Blogs)
+    {
+        @await Html.PartialAsync("_ListPartial", blog);
+    }
+</ul>
+}
+else if (Model.HasError)
+{
+    <h3 class="ratefail">搜索出错了，请刷新重试。</h3>
+}
+else
+{
+    <h3>无结果</h3>
+}
+@await Html.PartialAsync("_SearchPagerPartial", Model.Blogs)
+</div>
+
+@section end_scripts{
+    @await Html.PartialAsync("_ListScripts")
+}

@@ -1,0 +1,174 @@
+﻿@model HanDisplay
+@inject BlogUtil blogUtil
+@inject HtmlUtil htmlUtil
+@{
+    blogUtil.PrepareListCache(Model.blogs);
+    ViewBag.Title = "汉化组专版";
+    var hangroup = Model.hangroup;
+    var option = ViewContext.HttpContext.Request.Cookies["gmlistdisplay"];
+    var viewclass = "three";
+    if (!string.IsNullOrEmpty(option)) {
+        viewclass = option;
+    }
+}
+
+<h2>汉化组专版</h2>
+<div class="HGinfo row-fluid">
+    <div class="hanlogo span5">
+        <a class="hglink" href="@Url.Action("Index", new { name = Model.hangroup.GroupUri})"><img alt="@hangroup.Title" style="max-height:300px;max-width:300px" src="@(hangroup.Logo != null ? "//static.gmgard.com/" + hangroup.Logo : "//:0")" /></a>
+    </div>
+    <div class="hanintro span7">
+        <h3>
+            @hangroup.Title&nbsp;&nbsp;&nbsp;<span class="label label-info">作品数：@hangroup.blogs.Count</span>
+            @if (User.Identity.IsAuthenticated){
+                if(User.IsInRole("Administrator") || hangroup.members.Exists(h => h.Username.Equals(User.Identity.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    @Html.ActionLink("管理", "Edit", new { id = hangroup.HanGroupID }, new { @class="btn btn-small" })
+                }
+            }
+        </h3>
+        <span>汉化组代表：</span>
+        @foreach (var member in hangroup.members)
+        {
+            if(member.GroupLvl == 1){
+                <a asp-action="UserInfo" asp-controller="Home" asp-route-name="@member.Username" title="汉化组组长" ><i class="icon-certificate"></i>@blogUtil.GetNickName(member.Username)</a>
+            }
+            else{
+                <a asp-action="UserInfo" asp-controller="Home" asp-route-name="@member.Username">@blogUtil.GetNickName(member.Username)</a>
+            }
+        }
+        <div id="HGintro" class="well" style="word-break: break-all">
+            @htmlUtil.ContentWithRewrite(hangroup.Intro)
+        </div>
+    </div>
+</div>
+<div class="clear-fix"></div>
+<div class="HGswitch">
+    <div class="navbar">
+        <div class="navbar-inner">
+            <ul id="HGnav" class="HGnav nav">
+                @foreach (var group in Model.grouplist)
+                {
+                    <li @if (group.name == hangroup.Title) {<text> class="active" </text>}>
+                        <a asp-action="Index" asp-route-name="@group.url" data-ajax="true" data-ajax-begin="beginupdate" data-ajax-method="POST" data-ajax-success="updatepage">@group.name</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="btn-group"><button id="hgnav-btn" class="btn"><i class="icon-chevron-down"></i></button></div>
+</div>
+<div class="HGworks">
+    <div class="btn-toolbar listoption">
+        <span class="label">查看</span>
+        <div class="btn-group" data-toggle="buttons-radio">
+            <button onclick="changeclass('one')" class="btn btn-small"><i class="icon-th-list"></i></button>
+            <button onclick="changeclass('two')" class="btn btn-small"><i class="icon-th-large"></i></button>
+            <button onclick="changeclass('three')" class="btn btn-small"><i class="icon-th"></i></button>
+            <button onclick="changeclass('img')" class="btn btn-small"><i class="icon-picture"></i></button>
+        </div>
+    </div>
+    <h2>汉化组作品</h2>
+    <br />
+    <ul class="listview image fluid @viewclass">
+        @foreach (var blog in Model.blogs)
+        {
+            @await Html.PartialAsync("_ListPartial", blog);
+        }
+    </ul>
+    @{
+        ViewBag.PostUrl = Url.Action("Index");
+        ViewBag.HasReplace = true;
+        await Html.RenderPartialAsync("_AjaxPager", Model.blogs);
+    }
+</div>
+<script src="~/Scripts/lib/jquery.imgpreview.min.js" cdn></script>
+<script type="text/javascript">
+    function updatepage(view, status) {
+        var $view = $('<div>' + view + '</div>');
+        var link = $view.find('.hglink').attr('href');
+        $('.HGinfo').replaceWith($view.find('.HGinfo'));
+        $('.HGworks').html($view.find('.HGworks').html());
+        $('.HGworks').trigger('update');
+        $('#loadingimg').hide();
+        if (history.pushState && status) {
+            history.pushState(view, document.title, link);
+        }
+    }
+    var loadingimg = document.createElement('img');
+    loadingimg.src = '/Images/ccloading.gif';
+    loadingimg.id = 'loadingimg';
+    function beginupdate(e) {
+        var parent = $(this).parent();
+        if(parent.hasClass('active')){
+            e.abort();
+            return false;
+        }
+        $('#HGnav li').removeClass('active');
+        parent.addClass('active');
+        $(this).append(loadingimg);
+        $('#loadingimg').show();
+    }
+    function replace(view) {
+        var $view = $('<div>' + view + '</div>');
+        $('html, body').animate({ scrollTop: $('.HGworks').html($view.find('.HGworks').html()).offset().top }, 'slow');
+        $('.HGworks').trigger('update');
+    }
+    $('#hgnav-btn').click(function () {
+        var nav = $('#HGnav'), $i = $(this).find('i');
+        if ($i.hasClass('icon-chevron-down')) {
+            nav.css('height', 'auto'); $i.attr('class', 'icon-chevron-up');
+        } else {
+            nav.css('height', ''); $i.attr('class', 'icon-chevron-down');
+        }
+    });
+function changeclass(classname) {
+    $('.listview').attr('class', 'listview image fluid ' + classname);
+    window.localStorage["gmlistdisplay"] = classname;
+}
+$(function () {
+    $('.HGworks').on('update', function() {
+        var option = localStorage["gmlistdisplay"];
+        if (option) {
+            if (option == "two") {
+                $('.listoption button')[1].className += " active";
+                changeclass(option);
+            } else if (option == "one") {
+                $('.listoption button')[0].className += " active";
+                changeclass(option);
+            } else if (option == "img") {
+                $('.listoption button')[3].className += " active";
+                changeclass(option);
+            } else {
+                $('.listoption button')[2].className += " active";
+            }
+        } else {
+            $('.listoption button')[2].className += " active";
+        }
+        var listview = $('.listview .img-small');
+        listview.length > 0 && listview.imgPreview({
+            imgCSS: {
+                // Limit preview size:
+                'max-width': 500,
+                'max-height': 500,
+                border: "2px solid"
+            },
+            srcAttr: "data-src",
+            containerLoadingClass: 'imgloading'
+        });
+    });
+    $('.HGworks').trigger('update');
+    if (window.history.replaceState) {
+        window.history.replaceState($('#main').html(), document.title, document.location.href);
+    }
+    if (typeof window.onpopstate !== 'undefined') {
+        window.onpopstate = function (event) {
+            if (event.state) {
+                updatepage(event.state, false);
+                $('#HGnav li').removeClass('active');
+                $('#HGnav a[href="' + document.location.pathname + '"]').parent().addClass('active');
+            }
+        }
+    }
+});
+</script>

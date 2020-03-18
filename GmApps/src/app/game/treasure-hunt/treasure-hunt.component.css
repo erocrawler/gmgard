@@ -1,0 +1,24 @@
+:host {
+    width: 100%;
+}
+
+.hint-button {
+    position: absolute;
+    bottom: 10px;
+    left: calc(50% - 28px)
+}
+
+.switch-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+canvas {
+    opacity: 1;
+    transition: opacity linear 0.5s;
+}
+
+.fade {
+    opacity: 0;
+}

@@ -1,0 +1,382 @@
+﻿@model UserProfile
+@inject BlogUtil blogUtil
+@inject ExpUtil expUtil
+@inject IOptionsSnapshot<BackgroundSetting> bgSetting
+@inject ConstantUtil constUtil
+@{
+    ViewBag.Title = "账号设置";
+    int points = expUtil.getUserPoints(User.Identity.Name);
+    var setting = bgSetting.Value;
+    var currentTitle = Model.quest?.Title.ToString();
+    var allTitles = Model.quest?.AllTitles();
+    var groups = new Dictionary<GachaPool.PoolName, SelectListGroup>()
+{
+{ GachaPool.PoolName.FourthAnniversary, new SelectListGroup { Name = "四周年抽奖活动" } },
+{ GachaPool.PoolName.Touhou1st, new SelectListGroup { Name = "幻想乡推荐召唤第一弹" } },
+{ GachaPool.PoolName.April2018, new SelectListGroup { Name = "路人女主的养成方法" } },
+{ GachaPool.PoolName.June2018, new SelectListGroup { Name = "少女の辉" } },
+{ GachaPool.PoolName.April2019, new SelectListGroup { Name = "绅士之魂诞生" } },
+};
+    SelectListGroup TitleGroup(UserQuest.UserProfession title)
+    {
+        int t = (int)title;
+        if (t >= 7 && t < 30)
+        {
+            return groups[GachaPool.PoolName.FourthAnniversary];
+        }
+        else if (t >= 30 && t < 42)
+        {
+            return groups[GachaPool.PoolName.Touhou1st];
+        }
+        else if (t >= 42 && t < 51)
+        {
+            return groups[GachaPool.PoolName.April2018];
+        }
+        else if (t >= 51 && t < 59)
+        {
+            return groups[GachaPool.PoolName.June2018];
+        }
+        else if (t >= 59 && t < 67)
+        {
+            return groups[GachaPool.PoolName.April2019];
+        }
+        else if (title == UserQuest.UserProfession.轮回独断)
+        {
+            return new SelectListGroup { Name = "六周年冒险活动" };
+        }
+        return null;
+    }
+
+    SelectListGroup BgGroup(string bg)
+    {
+        var kvp = UserQuest.AllTitleBackground.First(t => t.Value == bg);
+        return TitleGroup(kvp.Key);
+    }
+}
+
+<hgroup class="title">
+    <h1>编辑账号资料.</h1>
+</hgroup>
+
+<p>你已使用 <strong>@User.Identity.Name</strong> 身份登录。</p>
+<p>注册日期： <strong>@Model.CreateDate</strong></p>
+<p>当前棒棒糖：<strong id="pointdisplay">@(points)根</strong></p>
+
+@if (ViewBag.ManageMsg != null)
+{
+    <div class="alert alert-info">
+        @ViewBag.ManageMsg
+    </div>
+}
+
+    <div class="accordion" id="account-accordion">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changecommentdiv"><h3>个人签名</h3></a>
+            </div>
+            <div class="accordion-body collapse in" id="changecommentdiv">
+                <partial name="_ChangeCommentPartial" model="Model.UserComment" />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#change-nick"><h3>昵称设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="change-nick">
+                <p><small>每次消耗<strong>200</strong>棒棒糖，不得包含空格</small></p>
+                <input type="text" name="nickname" id="nickname" maxlength="20" data-original="@Model.NickName" value="@Model.NickName" />
+                <button id="nicknamebtn" class="btn btn-primary butnfix">修改</button><br />
+                <span id="nicknamemsg" class="text-success"></span><br />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeemaildiv"><h3>邮箱设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="changeemaildiv">
+                <partial name="_ChangeEmailPartial" model="Model.Email" />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changepassworddiv"><h3>密码设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="changepassworddiv">
+                <partial name="_ChangePasswordPartial" model="new LocalPasswordModel()" />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#two-factor-auth"><h3>两步验证设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="two-factor-auth">
+                <iframe style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/account/2fa"></iframe>
+                <p>如果无法显示，请尝试在<a href="@(constUtil.AppHost)/account/2fa" target="_blank">新窗口中打开</a></p>
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeoptiondiv"><h3>通知与特效设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="changeoptiondiv">
+                <partial name="UserOptions" model="Model.option" />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#change-title"><h3>称号与个人页面背景</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="change-title">
+                <h3>称号设置<small>（灰色表示尚未解锁)</small></h3>
+                <ul id="user-title" data-url="@Url.Action("ChangeTitle")" data-current="@currentTitle" class="listview fluid"
+                    data-titles="@Json.Encode(allTitles?.Where(t => (int)t < 7).Select(t => t.ToString()))">
+                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Loli">
+                        <strong>萝莉</strong>
+                    </li>
+                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Onee">
+                        <strong>御姐</strong>
+                    </li>
+                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Otokonoko">
+                        <strong>伪娘</strong>
+                    </li>
+                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Futa">
+                        <strong>扶她</strong>
+                    </li>
+                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Shiro">
+                        <strong>白学家</strong>
+                    </li>
+                    <li class="muted" title="三周年冒险活动Good End" data-name="@UserQuest.UserProfession.ShiroiStocking">
+                        <strong>白丝萝莉</strong>
+                    </li>
+                    @if (Model.quest != null)
+                    {
+                        @foreach (var title in allTitles.Where(t => (int)t >= 7))
+                        {
+                            <li title="@TitleGroup(title)?.Name" data-name="@title" data-bg="@UserQuest.TitleBackground(title)">
+                                <strong>@UserQuest.ProfessionName(title)</strong>
+                            </li>
+                        }
+                    }
+                </ul>
+                @if (allTitles != null && allTitles.Count > 0)
+                {
+                    var items = (new[] { new SelectListItem() }).Concat(allTitles.Where(t => UserQuest.AllTitleBackground.ContainsKey(t))
+                        .Select(t => UserQuest.TitleBackground(t)).Distinct()
+                        .Select(t => new SelectListItem
+                        {
+                            Text = t,
+                            Value = t,
+                            Group = BgGroup(t),
+                            Selected = Model.quest.PersonalBackground == t
+                        }));
+
+                    <h3>个人页面背景</h3>
+                    <button id="user-bg-sync" class="btn butnfix">与称号对应</button>
+                    <select id="user-bg" data-value="@Model.quest.PersonalBackground" data-url="@Url.Action("ChangeBackground")" asp-items="items"></select>
+                    <div id="bgmsg" style="height:320px; background-size:cover; background-position: center" class="@Model.quest.PersonalBackground"></div>
+                    <br />
+                }
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#choose-image-collapse"><h3>图片服务器设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="choose-image-collapse">
+                <div class="alert alert-info">部分域名被某些运营商墙了。请选择下面加载最快的选项。选择后访问主页即可查看效果。<strong>注意本设置仅对当前浏览器有效。</strong></div>
+                <div class="row-fluid choose-image">
+                    <ul class="thumbnails">
+                        <li class="span4">
+                            <div class="thumbnail">
+                                <label>
+                                    <img src="/Images/loading.gif" data-domain="static.gmgard.com" />
+                                    <span class="caption">
+                                        <input type="radio" name="imgbackup" value="static.gmgard.com" checked />static.gmgard.com <small>（默认）</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </li>
+                        @foreach (var item in setting.BackgroundClasses)
+                        {
+                            <li class="span4">
+                                <div class="thumbnail">
+                                    <label>
+                                        <img src="/Images/loading.gif" data-domain="@item.Key" />
+                                        <span class="caption">
+                                            <input type="radio" name="imgbackup" value="@item.Key" />@item.Key
+                                        </span>
+                                    </label>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#homesetting"><h3>主页设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="homesetting">
+                <partial name="_HPSettingPartial" model="ViewBag.HpSettings as HPSettingsModel" />
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeavatardiv"><h3>头像设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="changeavatardiv">
+                <partial name="_ChangeAvatarPartial" />
+            </div>
+        </div>
+    </div>
+
+@section scripts {
+    <style>
+        #account-accordion h3 {
+            margin: 0;
+        }
+        .accordion-body {
+            padding: 0 15px;
+        }
+        .choose-image li:nth-of-type(3n+2) img {
+            -moz-transform: scaleY(-1);
+            -ms-transform: scaleY(-1);
+            -o-transform: scaleY(-1);
+            -webkit-transform: scaleY(-1);
+            transform: scaleY(-1);
+        }
+
+        .choose-image li:nth-of-type(3n+3) img {
+            -moz-transform: scaleX(-1);
+            -ms-transform: scaleX(-1);
+            -o-transform: scaleX(-1);
+            -webkit-transform: scaleX(-1);
+            transform: scaleX(-1);
+        }
+
+        #user-title li {
+            height: initial;
+            width: 105px;
+            padding-bottom: 0;
+            text-align: center;
+            cursor: pointer;
+        }
+
+            #user-title li.selected:after {
+                border-top: 20px solid #2d89ef;
+                border-left: 20px solid transparent;
+            }
+
+            #user-title li.selected:before {
+                line-height: 10px;
+                font-size: 10px;
+                right: 0;
+            }
+    </style>
+    <bg-user />
+}
+
+@section end_scripts {
+    <script async cdn src="~/Jcrop/js/jquery.Jcrop.min.js"></script>
+    <link href="~/Jcrop/css/jquery.Jcrop.min.css" cdn rel="stylesheet" />
+    <script>
+    function displayerror(error) {
+        if (error) {
+            document.write(error);
+        }
+    }
+    function updatehpsetting() { }
+    (function() {
+        var originalname = document.getElementById('nickname').getAttribute('data-original');
+        var submitname = null;
+        $(function () {
+            $('#nicknamebtn').click(function () {
+                    var name = $('#nickname').val();
+                    name = name.replace(/\s+/g, '');
+                $('#nickname').val(name);
+                    if (name == originalname || name == submitname)
+                        return;
+                    else {
+                        submitname = name;
+                    }
+                $.post('@Url.Action("changenickname")', { name: name }, function (ret) {
+                    if (ret.success === true) {
+                        originalname = name;
+                        $('#nicknamemsg').text('修改成功');
+                        $('#pointdisplay').text(ret.points);
+                    }
+                    else if (ret.success == 'err') {
+                        showerr(ret.err);
+                    }
+                    else {
+                        $('#nicknamemsg').text('棒棒糖不足200，无法修改！');
+                    }
+                });
+            });
+            $('#nickname').change(function () {
+                $.post('@Url.Action("checknickname")', { name: $('#nickname').val() }, function (ret) {
+                        if (ret && ret.err)
+                            showerr(ret.err);
+                        else
+                        $('#nicknamemsg').text('');
+                    });
+                });
+                function showerr(err){
+                    var msg = '昵称无效！';
+                    if (err == 'empty') {
+                        msg = '请输入昵称';
+                    }
+                    else if (err == 'dup') {
+                        msg = '该昵称已被占用';
+                    }
+                    else if (err == 'length') {
+                        msg = '昵称过长！';
+                    }
+                    $('#nicknamemsg').text(msg);
+                }
+
+                var $title = $('#user-title'),
+                current = $title.data('current');
+                $.each($title.data('titles'), function (i, title) {
+                $title.find('li[data-name="' + title + '"]').removeClass('muted');
+            });
+            $title.find('li').tooltip()
+                .filter(':not(.muted)')
+                .click(function () {
+                    var $t = $(this), chosen = $t.data('name');
+                    if ($t.hasClass('selected')) {
+                        chosen = 'None';
+                    }
+                    $.post($title.data('url'), { title: chosen }, function (r) {
+                        if (r && r.success) {
+                            $title.find('li').removeClass('selected').end().find('li[data-name="' + r.current + '"]').addClass('selected');
+                        }
+                    })
+                }).filter('[data-name="' + current + '"]').addClass('selected').end();
+            $('#user-bg').change(function () {
+                var $t = $(this);
+                $.post($t.data('url'), { name: $t.find(':selected').text() }, function (r) {
+                    if (r && r.success) {
+                        $('#bgmsg').attr('class', $t.val());
+                    }
+                });
+            });
+            $('#user-bg-sync').click(function () {
+                $('#user-bg').val($title.find('li.selected').data('bg')).trigger('change');
+            });
+        });
+        $('#choose-image-collapse').one('show', function () {
+            $(this).find('img').each(function () {
+                    this.setAttribute('src', '//' + this.getAttribute('data-domain') + '/Images/金馆长.png');
+                }).end().find('input[name="imgbackup"]').change(function () {
+                    setCookie('imgbackup', this.value);
+                }).each(function () {
+                    if (this.value == getCookie('imgbackup')) {
+                        this.checked = true;
+                    }
+                });
+            });
+        })()
+    </script>
+}

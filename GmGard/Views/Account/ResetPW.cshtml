@@ -1,0 +1,30 @@
+﻿@model PasswordResetModel
+@{
+    ViewBag.Title = "重设密码";
+}
+
+<h2>重设密码</h2>
+@if (ViewBag.ok != null)
+{
+    <div class="alert alert-success">
+        <strong>密码设置成功！</strong>请前往登录页面进行登录，并恳请您牢记您的新密码。
+    </div>
+}
+else
+{
+    <form asp-action="ResetPW" asp-controller="Account" method="post" asp-antiforgery="true">
+        <div class="alert alert-info">
+            请设置您的新密码：
+            <div asp-validation-summary="All"></div>
+        </div>
+        <div class="control-group">
+            <div class="controls">
+                <label for="Email">账户邮箱：</label><input asp-for="Email" placeholder="账户邮箱" readonly /> <br />
+                <label for="Password">新密码：</label><input asp-for="Password" placeholder="新密码" /> <br />
+                <label for="ConfirmPassword">确认新密码：</label><input asp-for="ConfirmPassword" placeholder="确认新密码" /> <br />
+                <input type="submit" class="btn btn-primary" value="提交" /><br />
+                <input type="hidden" asp-for="Code" />
+            </div>
+        </div>
+    </form>
+}

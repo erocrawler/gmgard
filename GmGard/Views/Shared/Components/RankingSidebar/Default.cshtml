@@ -1,0 +1,137 @@
+﻿@model IEnumerable<RankingDisplay>
+
+@inject IVisitCounter visitCounter
+@inject RatingUtil ratingUtil
+
+<div class="rankflag">
+    <div style="width: 220px;border-bottom:1px solid rgb(221, 221, 221)">
+        <ul id="rankTab" class="nav nav-tabs nav-rank">
+            <li class="active"><a href="#dayr" data-toggle="tab">日榜</a></li>
+            <li><a href="#weekr" data-toggle="tab">周榜</a></li>
+            <li><a href="#totalr" data-toggle="tab">月榜</a></li>
+            <li><a href="@Url.Action("History", "Ranking")" onclick="window.location.href = this.href" style="padding:8px 10px">历史</a></li>
+        </ul>
+    </div>
+
+    <div id="rankContent" class="tab-content rankc">
+        <div id="dayr" class="tab-pane thumbnails fade active in">
+            @if (Model != null)
+            {
+                int i = 0;
+                foreach (var rank in Model.Where(r => r.RankType == HistoryRanking.Type.Rank24h).OrderByDescending(a => a.Rating).ThenByDescending(a => a.BlogDate))
+                {
+                    <div class="rankblock">
+                        <hr />
+                        <a target="_blank" data-toggle="tooltip" title="@rank.BlogTitle" href="@Url.Action("Details", "Blog", new { id = rank.BlogID })">
+                            @{
+                                i++;
+                                if (i <= 5)
+                                {
+                                    <i class="rimg rimg@(i)"></i>
+                                }
+                            }
+                            <div class="thumbnail rthumb">
+                                <img src="@rank.BlogThumb" alt="@rank.BlogTitle" class="rtimg" />
+                            </div>
+                            <div class="rcaption">
+                                <span class="label label-important" title="总分 @ratingUtil.getRating(rank.BlogID)"><span class="rscore normal">@rank.Rating.KiloFormat()</span></span>
+                                <br />
+                                <span class="label label-info" title="浏览数：@visitCounter.GetBlogVisit(rank.BlogID)"><i class="icon-eye-open icon-white"></i> @visitCounter.GetBlogVisit(rank.BlogID).KiloFormat()</span>
+                                <br />
+                                <span class="label label-info" title="评论数：@rank.PostCount"><i class="icon-comment icon-white"></i> @rank.PostCount</span>
+                            </div>
+                        </a>
+                    </div>
+                    if (i == 1)
+                    {
+                        <i class="rcrown"></i>
+                    }
+                }
+            }
+        </div>
+        <div id="weekr" class="tab-pane thumbnails fade">
+            @if (Model != null)
+            {
+                int i = 0;
+                foreach (var rank in Model.Where(r => r.RankType == HistoryRanking.Type.RankWeekly).OrderByDescending(a => a.Rating).ThenByDescending(a => a.BlogDate))
+                {
+                    <div class="rankblock">
+                        <hr />
+                        <a target="_blank" data-toggle="tooltip" title="@rank.BlogTitle" href="@Url.Action("Details", "Blog", new { id = rank.BlogID })">
+                            @{
+                                i++;
+                                if (i <= 5)
+                                {
+                                    <i class="rimg rimg@(i)"></i>
+                                }
+                            }
+                            <div class="thumbnail rthumb">
+                                <img src="@rank.BlogThumb" alt="@rank.BlogTitle" class="rtimg" />
+                            </div>
+                            <div class="rcaption">
+                                <span class="label label-important" title="总分 @ratingUtil.getRating(rank.BlogID)"><span class="rscore normal">@rank.Rating.KiloFormat()</span></span>
+                                <br />
+                                <span class="label label-info" title="浏览数：@visitCounter.GetBlogVisit(rank.BlogID)"><i class="icon-eye-open icon-white"></i> @visitCounter.GetBlogVisit(rank.BlogID).KiloFormat()</span>
+                                <br />
+                                <span class="label label-info" title="评论数：@rank.PostCount"><i class="icon-comment icon-white"></i> @rank.PostCount</span>
+                            </div>
+                        </a>
+                    </div>
+                    if (i == 1)
+                    {
+                        <i class="rcrown"></i>
+                    }
+                }
+            }
+        </div>
+
+        <div id="totalr" class="tab-pane thumbnails fade">
+            @if (Model != null)
+            {
+                int i = 0;
+                foreach (var rank in Model.Where(r => r.RankType == HistoryRanking.Type.RankMonthly).OrderByDescending(a => a.Rating).ThenByDescending(a => a.BlogDate))
+                {
+                    <div class="rankblock">
+                        <hr />
+                        <a target="_blank" data-toggle="tooltip" title="@rank.BlogTitle" href="@Url.Action("Details", "Blog", new { id = rank.BlogID })">
+                            @{
+                                i++;
+                                if (i <= 5)
+                                {
+                                    <i class="rimg rimg@(i)"></i>
+                                }
+                            }
+                            <div class="thumbnail rthumb">
+                                <img src="@rank.BlogThumb" alt="@rank.BlogTitle" class="rtimg" />
+                            </div>
+                            <div class="rcaption">
+                                <span class="label label-important" title="总分 @ratingUtil.getRating(rank.BlogID)"><span class="rscore normal">@rank.Rating.KiloFormat()</span></span>
+                                <br />
+                                <span class="label label-info" title="浏览数：@visitCounter.GetBlogVisit(rank.BlogID)"><i class="icon-eye-open icon-white"></i> @visitCounter.GetBlogVisit(rank.BlogID).KiloFormat()</span>
+                                <br />
+                                <span class="label label-info" title="评论数：@rank.PostCount"><i class="icon-comment icon-white"></i> @rank.PostCount</span>
+                            </div>
+                        </a>
+                    </div>
+                    if (i == 1)
+                    {
+                        <i class="rcrown"></i>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".rcaption .rscore").each(function () {
+            if ($(this).text().length == 4) {
+                $(this).css("font-size", 20);
+            }
+            else if ($(this).text().length > 4) {
+                $(this).css("font-size", 18);
+            }
+        });
+    });
+</script>

@@ -1,0 +1,29 @@
+﻿<div style="width:100%;text-align:center">
+    <h1>暂时关闭注册！</h1>
+
+    <img src="//static.gmgard.com/Images/x.gif" alt="阿卡林" />
+    <br /><br />
+</div>
+
+@section Scripts {
+<style>
+    .main-content {
+        width: 100%;
+        box-shadow: 5px 5px 5px #aaa;
+        border: 1px solid #000;
+        height: 720px;
+    }
+</style>
+@if (ViewBag.AllowBackdoor == true) {
+<script>
+        function 阿卡林(阿, 卡, 林) {
+            阿 = '#main'; 卡 = 'form'; 林 = '阿卡林';
+            $.get(document.location.pathname, function (r) {
+                $('.main-content').clone().html($(r).find(卡).parent()).addClass(卡).appendTo(阿);
+                $.validator.unobtrusive.parse(卡); z();
+                $(阿).addClass(卡).delay(1500).queue(function () { $(this).addClass(林); });
+            })
+        }
+</script>
+}
+}

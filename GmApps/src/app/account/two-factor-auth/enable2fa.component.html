@@ -1,0 +1,37 @@
+<mat-card class="card-top">
+    <mat-card-title>
+        启用两步验证
+    </mat-card-title>
+    <mat-spinner *ngIf="loading"></mat-spinner>
+    <div [hidden]="loading">
+        <p>
+            用手机下载任意一款两步验证APP。然后使用APP扫描以下二维码，或在APP中输入以下秘钥以绑定您的账号：<br />
+            <code style="background: #efefef"><strong>{{ key }}</strong></code>
+        </p>
+        <ul>
+            <li>
+                <mat-icon>phone_iphone</mat-icon>苹果：<a href="https://itunes.apple.com/app/id388497605" target="_blank">谷歌验证器</a>，
+                <a href="https://itunes.apple.com/app/id983156458" target="_blank">微软验证器</a>
+            </li>
+            <li>
+                <mat-icon>android</mat-icon>安卓：<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">谷歌验证器（Play商店）</a>，
+                <a href="https://shouji.baidu.com/software/22417419.html" target="_blank">谷歌验证器（百度商店）</a>，
+                <a href="https://www.coolapk.com/apk/com.azure.authenticator" target="_blank">微软验证器（酷安）</a>
+            </li>
+        </ul>
+        <canvas class="qrcode" #qr></canvas>
+        
+
+        <hr />
+
+        <p>设置成功后，两步验证APP会每30秒提供一个验证码。请在此输入验证码以确认绑定成功。</p>
+        <mat-form-field>
+            <input matInput placeholder="验证码" maxlength="7" [(ngModel)]="code" required />
+        </mat-form-field>
+        <p><mat-icon>info</mat-icon>注意，启用两步验证后您可能需要使用两步验证重新登录网站。</p>
+    </div>
+    <mat-card-actions>
+        <button mat-button [routerLink]="['/account', '2fa']">取消</button>
+        <button mat-raised-button color="primary" (click)="verifyCode()" [disabled]="!code">完成验证</button>
+    </mat-card-actions>
+</mat-card>

@@ -1,0 +1,55 @@
+﻿@model GmGard.Models.LoginModel
+
+@{
+    ViewBag.Title = "登录";
+}
+
+<hgroup class="title">
+    <h1>@ViewBag.Title.</h1>
+</hgroup>
+
+<form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="form-horizontal" asp-antiforgery="true">
+    <div asp-validation-summary="ModelOnly" class="text-error"></div>
+    <fieldset>
+        <legend>“登录”表单</legend>
+        <div class="control-group">
+            <label asp-for="UserName" class="control-label"></label>
+            <div class="controls">
+                <input asp-for="UserName" /><br />
+                <span asp-validation-for="UserName" class="text-error"></span>
+            </div>
+        </div>
+        <div class="control-group">
+            <label asp-for="Password" class="control-label"></label>
+            <div class="controls">
+                <input asp-for="Password" /><br />
+                <span asp-validation-for="Password" class="text-error"></span>
+            </div>
+        </div>
+        <div class="control-group" style="white-space:nowrap;">
+            <label for="Captcha" class="control-label">
+                等于多少?
+            </label>
+            <div class="controls">
+                <img alt="Captcha" src="@Url.Action("CaptchaImage", "Captcha")" style="padding-top:5px;" />
+                <input asp-for="Captcha" style="width:100px;margin-left:16px;" /><br />
+                <span asp-validation-for="Captcha" class="text-error"></span>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="controls">
+                <label class="checkbox">
+                    <input type="checkbox" asp-for="RememberMe" />
+                    记住我？
+                </label><br />
+                <input type="submit" value="登录" class="btn btn-primary" /> <a asp-action="Forget">忘记用户名或密码？</a>
+            </div>
+        </div>
+    </fieldset>
+    <div class="control-group">
+        <div class="controls">
+            <a asp-action="Register" class="btn">注册</a> <span> (如果你没有帐户)</span>
+        </div>
+    </div>
+</form>
+    

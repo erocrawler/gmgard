@@ -1,0 +1,28 @@
+﻿@model PagedList.IPagedList<Blog>
+@inject BlogUtil blogUtil
+@{
+    blogUtil.PrepareListCache(Model);
+    ViewBag.SearchAction = "UserInfo";
+}
+<div id="listdiv" style="position:relative">
+    <div id="user-listdiv">
+        <ul class="listview image fluid">
+            @if (Model == null || Model.Count == 0)
+            {
+                <li>没有投稿。</li>
+            }
+            else{
+            foreach (Blog b in Model)
+            {
+                await Html.RenderPartialAsync("_ListUserBlogPartial", b);
+            }
+            }
+        </ul>
+        @if (Model.HasNextPage || Model.HasPreviousPage)
+        {
+            ViewBag.PageActionName = "UserInfo";
+            ViewBag.PagerRouteValues = new { view = "UserBlog", name = ViewBag.UserName };
+            @await Html.PartialAsync("_SearchPagerPartial", Model)
+        }
+    </div>
+</div>

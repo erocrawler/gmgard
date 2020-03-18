@@ -1,0 +1,66 @@
+﻿@model IEnumerable<UserProfile>
+@inject BlogUtil blogUtil
+@inject ExpUtil expUtil
+@if (Model.Count() > 0)
+{
+    <form asp-action="Suggestions" asp-controller="Follow">
+        <div class="well" style="padding:0;max-width:800px;margin:auto">
+            <div style="padding:15px">
+                <h2>推荐关注：</h2>
+                <hr />
+                <ul id="suggest-follow" class="listview image fluid two">
+                    @foreach (var user in Model)
+                {
+                    var avatar = Url.Action("Show", "Avatar", new { name = user.UserName });
+                    int lvl = expUtil.getUserLvl(user.UserName);
+                        <li>
+                            <div class="icon">
+                                <div class="imgcenter">
+                                    <img alt="@user.UserName" src="@avatar" />
+                                </div>
+                            </div>
+                            <div class="data">
+                                <h4>
+                                    @blogUtil.GetNickName(user.UserName)
+                                </h4>
+                                <p> @user.UserComment</p>
+                                &nbsp;<span class="lfoot">
+                                    <span class="badge lvl">lv.@lvl @expUtil.getLevelTitle(lvl)</span>
+                                </span>
+                                <span class="lfoot">
+                                    <a class="btn btn-small" href="@Url.Action("UserInfo", "Home", new {name = user.UserName})" target="_blank">详细 &raquo;</a>
+                                </span>
+                                <input type="hidden" name="userid" value="@user.Id" disabled />
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <input type="submit" value="关注" class="btn btn-primary btn-large" />
+            </div>
+        </div>
+    </form>
+
+<script>
+    $(function () {
+        $('#suggest-follow').find('li').click(function (e) {
+            if (e.target.tagName == 'A') return;
+            e.preventDefault();
+            $(this).toggleClass('selected').find('input[type="hidden"]').prop('disabled', function (idx, oldProp) {
+                return !oldProp;
+            });
+        }).end().closest('form').submit(function (e) {
+            e.preventDefault();
+            $t = $(this);
+            if ($t.find('li.selected').length < 1) {
+                return;
+            }
+            $t.find('input[type="submit"]').prop('disabled', true);
+            $.post($t.attr('action'), $t.serialize(), function () {
+                window.location.reload(true);
+            });
+        });
+    });
+</script>
+}

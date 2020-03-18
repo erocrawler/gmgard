@@ -1,0 +1,28 @@
+﻿@inject BlogUtil blogUtil
+@inject ExpUtil expUtil
+@if(blogUtil.CheckAdmin(true) || (User.Identity.IsAuthenticated && expUtil.getUserLvl(User.Identity.Name) >= 4)){
+    ViewContext.HttpContext.Session.Set("skipcaptcha", new byte[1] { 1 });
+}
+else {
+    int prefix = blogUtil.getCaptchaId();
+
+<div>
+<img alt="Captcha" src="@Url.Action("CaptchaImage","Captcha", new {prefix = prefix})" class="captchaimg" style="cursor:pointer" />等于多少？
+<input id="captchainput" class="span2" autocomplete="off" type="text" name="Captcha" data-val="true" data-val-required="请输入验证码" />
+    <input type="hidden" name="Prefix" value="@prefix" />
+    @Html.ValidationMessage("Captcha")
+</div>
+    <script>
+        $(function () {
+            $('#captchainput').tooltip({ title: "达到4级之后就不用验证了哦~", placement: "right" });
+            $('.captchaimg').click(function () {
+                var src = this.src;
+                var index = src.indexOf('#');
+                if (index > 0) {
+                    src = src.substring(0, index);
+                }
+                this.src = src + "#" + new Date().getTime();
+            }).tooltip({ title: "换一个？", placement: "right" });
+        });
+    </script>
+}

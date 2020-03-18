@@ -1,0 +1,134 @@
+﻿@model GmGard.Models.AdminViewModel
+
+@{
+    var settings = Model.registersettings;
+}
+<form asp-action="ManageRegisterQuestions" method="post" id="manage-register-form" asp-antiforgery="true">
+    <label>
+        @Html.CheckBox("AllowRegister", settings == null ? true : settings.AllowRegister)
+        开放注册
+    </label>
+    <label>
+        @Html.CheckBox("AllowBackdoor", settings == null ? true : settings.AllowBackdoor)
+        开放注册后门<small>（控制台输入“阿卡林()”）</small>
+    </label>
+    <label>
+        允许会员注册的最小等级<small>（小于等于0则禁用）</small>
+        @Html.TextBox("AllowMemberRegisterLevel", settings == null ? 1 : settings.AllowMemberRegisterLevel, new { @type = "number", @class = "span1" })
+    </label>
+    <label>
+        @Html.CheckBox("RequireCode", settings == null ? false : settings.RequireCode)
+        启用邀请码
+    </label>
+    <label>
+        邀请码价格
+        @Html.TextBox("CodeCost", settings == null || settings.CodeCost <= 0 ? 300 : settings.CodeCost, new { @type = "number", @class = "span2" })
+    </label>
+    <label>
+        邀请码价格阶段上涨
+        @Html.TextBox("CodeCostIncrement", settings == null || settings.CodeCostIncrement <= 0 ? 100 : settings.CodeCostIncrement, new { @type = "number", @class = "span2" })
+    </label>
+    <label>
+        @Html.CheckBox("RegisterQuestionEnabled", settings == null ? false : settings.RegisterQuestionEnabled)
+        启用注册问题
+    </label>
+    <table class="table table-striped">
+        <colgroup>
+            <col />
+            <col />
+            <col style="width:85px;" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th>问题</th>
+                <th>答案</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="new-question-row">
+                <td colspan="2">注：下划线将被替换为输入框，下划线长度代表所需字符数。用户输入的答案将被整合为空格分隔字符串。</td>
+                <td>
+                    <input type="button" class="btn new-question" value="添加" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <input class="btn btn-primary btn-large" type="submit" value="保存" />
+</form>
+<textarea hidden class="hide" id="question-data">
+@if (settings != null && settings.RegisterQuestions != null)
+{
+    @Json.Encode(settings.RegisterQuestions)
+}
+</textarea>
+<script type="text/template" id="question-template">
+    <tr class="question-row control-group">
+        <td>
+            <textarea name="RegisterQuestions[{{index}}].Question">{{question}}</textarea>
+        </td>
+        <td>
+            <textarea name="RegisterQuestions[{{index}}].Answer">{{answer}}</textarea>
+        </td>
+        <td>
+            <input type="button" class="btn btn-small edit-button" value="编辑器" />
+            <input type="button" class="btn btn-small delete-question" value="删除" />
+        </td>
+    </tr>
+</script>
+<script src="~/Scripts/lib/mustache.min.js"></script>
+<script async src="~/ckeditor/ckeditor.js"></script>
+<script>
+    (function () {
+        let qtemplate = $('#question-template').html(),
+            qdata = $('#question-data').val().trim(),
+            currentEditor = null, $currentBtn = null;
+        function destroyEditor() {
+            if (currentEditor) {
+                currentEditor.destroy();
+                $currentBtn.val('编辑器');
+            }
+        }
+        $('.table').on('click', '.delete-question', function () {
+            let $this = $(this);
+            $this.closest('tr').toggleClass('warning').find('textarea,.edit-button').toggleClass('disabled').prop('disabled', $this.toggleClass('disabled').hasClass('disabled'));
+            $this.val($this.hasClass('disabled') ? '将删除' : '删除');
+            destroyEditor();
+        }).on('click', '.edit-button', function () {
+            if (this.disabled) return;
+            let $this = $(this);
+            if ($this.val() == '编辑器') {
+                destroyEditor();
+                let elem = $this.closest('tr').find('textarea')[0];
+                currentEditor = CKEDITOR.replace(elem, {
+                    customConfig: '/ckeditor/replyconfig.js'
+                });
+                $currentBtn = $this;
+                $this.val('完成编辑');
+            } else {
+                destroyEditor();
+            }
+        });
+        $('.new-question').click(function () {
+            var qrow = $('.question-row'),
+                qnext = qrow.length,
+                qnew = Mustache.render(qtemplate, { index: qnext });
+            $('#new-question-row').before(qnew);
+        });
+        $('#manage-register-form').submit(function () {
+            $(this).find('.question-row.warning').remove().end().find('.question-row').each(function (i, e) {
+                $(this).find('[name^="RegisterQuestions"]').each(function () {
+                    this.name = this.name.replace(/(\d+)/, i);
+                });
+            });
+        });
+
+        if (qdata) {
+            let qd = JSON.parse(qdata);
+            for (let i = 0; i < qd.length; i++) {
+                let qnew = Mustache.render(qtemplate, { index: i, question: qd[i].Question, answer: qd[i].Answer });
+                $('#new-question-row').before(qnew);
+            }
+        }
+    })();
+</script>

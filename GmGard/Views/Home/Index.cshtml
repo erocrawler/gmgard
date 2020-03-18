@@ -1,0 +1,185 @@
+﻿@model PagedList.IPagedList<BlogDisplay>
+@inject ConstantUtil constantUtil
+@inject BlogUtil blogUtil
+@inject RatingUtil ratingUtil
+@inject CategoryUtil catUtil
+@{
+    ViewBag.Title = constantUtil.IsAltSite ? "HGgard" : "GMgard";
+    List<int> features = ViewBag.featuredBlog as List<int>;
+    bool first = true;
+    var modellist = Model.ToList();
+    if(Model.IsFirstPage && features != null && features.Count > 0){
+        var featurecount = modellist.Count(b => features.Contains(b.blog.BlogID));
+        var f = modellist.Take(featurecount);
+        f = f.OrderBy(b => features.IndexOf(b.blog.BlogID));
+        modellist = f.Concat(modellist.Skip(featurecount)).ToList();
+    }
+
+    var nicks = blogUtil.GetNickNames(Model.Select(b => b.blog.Author));
+    blogUtil.PreparePostCount(Model.Select(b => b.blog.BlogID));
+    ratingUtil.PrepareRatings(Model.Select(b => b.blog.BlogID));
+}
+@section featured {
+<harmony>
+    <section class="featured">
+        <div class="content-wrapper cycle-slideshow hp-slideshow"
+             data-cycle-timeout="10000"
+             data-cycle-slides=".cycle-slide"
+             data-cycle-pager=".hp-pager">
+            @await Component.InvokeAsync(nameof(HomeCarousel))
+        </div>
+        <script>
+            $('.hp-slideshow .cycle-slide').each(function () {
+                var $t = $(this); $t.data('src') ? $t.css('background-image', 'url(' + $t.data('src') + ')') : null;
+            })
+        </script>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="hpsettingbtn hpbtn">
+                <button id="homesettingbtn" class="btn btn-mini btn-inverse"><i class="icon-eject icon-white"></i></button>
+            </div>
+        }
+        <div class="hpbtn">
+            <div class="hp-pager"></div>
+        </div>
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <script>
+                (function () {
+                    var actualHeight = $('.featured').height();
+                    $('#homesettingbtn').click(function () {
+                        var fdiv = $('.featured'),
+                            $this = $(this),
+                            btnheight = $this.height() + 5,
+                            height = btnheight,
+                            sdiv = $('#homesetting'),
+                            gcb = function (view) {
+                                if (view) {
+                                    sdiv.html(view);
+                                    $this.prop('disabled', false);
+                                }
+                                fdiv.animate({ height: height }, 200);
+                                sdiv.slideToggle(200);
+                            };
+                        if (fdiv.height() < actualHeight) height = actualHeight;
+                        if (sdiv.html().trim() == '') {
+                            $.get('@Url.Action("HPSetting", "Account")', null, gcb);
+                            $this.prop('disabled', true);
+                        } else {
+                            gcb();
+                        }
+                    });
+                })();
+                function updatehpsetting() {
+                    if (Pager.instances) {
+                        Pager.instances[0].jumppage(1);
+                    } else {
+                        window.location.reload();
+                    }
+                }
+                $(function () {
+                    $('#homesettingbtn').tooltip({ title: "主页定制", placement: 'top', container: '.featured' });
+                })
+            </script>
+        }
+    </section>
+    <div id="homesetting" class="home-settings hide">
+    </div>
+</harmony>
+}
+<div class="home-list">
+    @foreach (BlogDisplay blogdisplay in modellist)
+    {
+        var blog = blogdisplay.blog;
+        bool isfeature = false;
+        if (features != null && Model.PageNumber == 1)
+        {
+            if (features.Contains(blog.BlogID))
+            {
+                isfeature = true;
+            }
+        }
+        <div class="post @if (isfeature) {<text>post-featured</text>}">
+            @if (isfeature)
+            {
+                <h3 class="post-title"><span class="label label-important">置顶</span>
+                    <a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID">@blog.BlogTitle</a>
+                </h3>
+                <div class="post-header-line-1">
+                    由<a asp-action="UserInfo" asp-controller="Home" asp-route-name="@blog.Author"><i class="icon-user"></i>@nicks[blog.Author]</a> 于 @blog.BlogDate 发布。
+                </div>
+            }
+            else {
+                <h3 class="post-title"><a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID">@blog.BlogTitle</a></h3>
+                <div class="post-header-line-1">
+                    由<a asp-action="UserInfo" asp-controller="Home" asp-route-name="@blog.Author"><i class="icon-user"></i>@nicks[blog.Author]</a> 于 @blog.BlogDate 发布。&nbsp;&nbsp; 
+                    <i class="icon-bookmark"></i>总得分：<a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID" asp-fragment="rating">@ratingUtil.getRating(blog.BlogID)</a>
+                </div>
+            }
+            <div class="post-body">
+                <div class="nohover">
+                    <a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID">
+                    @if (!isfeature) {
+                        string imgpath = BlogHelper.firstImgPath(blog);
+                        if (first) {
+                            <img src="@imgpath" alt="@blog.BlogTitle" />
+                            first = false;
+                        }
+                        else {
+                            <img src="//static.gmgard.com/Images/loading.gif" data-src="@imgpath" alt="@blog.BlogTitle" />
+                        }
+                    }
+                    else {
+                        <br />
+                    }
+                    </a>
+
+                    <a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID" asp-fragment="replydiv" class="combubbles">
+                        <span><span class="indcomspan">@blogUtil.GetPostCount(blog)</span>&nbsp;条评论</span>
+                    </a>
+                </div><br />
+                <p> @Html.Raw(blogUtil.GetFirstLine(blog))</p><br />
+                <a asp-action="Details" asp-controller="Blog" asp-route-id="@blog.BlogID" class="btn">继续阅读 &raquo;</a>
+            </div>
+            <div class="post-footer">
+                <i class="icon-th-list"></i> 分类：
+                <harmony>
+                    @foreach (var parentID in catUtil.GetParentCategories(blog.CategoryID))
+                    {
+                        <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@parentID">@catUtil.categoryInfo(parentID)</a>
+                        <i class="icon icon-chevron-right icon-fix"></i>
+                    }
+                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@blog.CategoryID">@catUtil.categoryInfo(blog.CategoryID)</a><span>&nbsp;| </span>
+                </harmony>
+                <harmony show="true">
+                    @{ var ancestorid = catUtil.GetAncestor(blog.CategoryID); }
+                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="ancestorid">@catUtil.categoryInfo(ancestorid)</a><span>&nbsp;| </span>
+                </harmony>
+                <i class="icon-tags"></i>
+                标签：
+                @foreach (var tag in blogdisplay.tag)
+                {
+                    <a class="label label-info" asp-action="Tags" asp-controller="Search" asp-route-id="@tag.TagID">@tag.TagName</a>
+                }
+            </div>
+         </div>
+    }
+    @await Html.PartialAsync("_PagerPartial", Model)
+</div>
+@section end_scripts{
+    <script src="~/Scripts/lib/jquery.unveil.min.js" cdn></script>
+<script>
+    Pager({
+        pager_init: function () {
+            $('.post-body img').unveil(300);
+            $(".indcomspan").each(function () {
+                if ($(this).text().length == 2)
+                    $(this).parent("span").addClass("ten");
+                else if ($(this).text().length >= 3)
+                    $(this).parent("span").addClass("hundred");
+            });
+        }
+    });
+</script>
+}

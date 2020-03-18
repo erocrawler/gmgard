@@ -1,0 +1,12 @@
+<h1 mat-dialog-title>{{title}}</h1>
+<div mat-dialog-content *ngIf="!loading">
+    <p>签到需要花费 {{cost}} 棒棒糖</p>
+    <p *ngIf="cost > 0" style="text-align:center">{{points}} → <span style="color:red">{{points - cost}}</span></p>
+    <p *ngIf="ticketCount > 0">或使用补签券（剩余{{ticketCount}}张）</p>
+</div>
+<mat-spinner *ngIf="loading"></mat-spinner>
+<div mat-dialog-actions>
+    <button mat-button mat-dialog-close="">取消</button>
+    <button mat-raised-button color="primary" mat-dialog-close="points" [disabled]="points < cost">签到</button>
+    <button *ngIf="ticketCount > 0" mat-raised-button color="primary" mat-dialog-close="ticket">使用补签券</button>
+</div>

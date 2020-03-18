@@ -1,0 +1,396 @@
+﻿@model GmGard.Models.BlogDetailDisplay
+@inject BlogUtil blogUtil
+@inject CategoryUtil catUtil
+@inject RatingUtil rateUtil
+@inject HtmlUtil htmlUtil
+
+@{
+    Blog blog = Model.blog;
+    ViewBag.Title = blog.BlogTitle;
+    ViewBag.Description = string.Empty;
+    string categoryName = catUtil.categoryInfo(blog.CategoryID);
+}
+
+@section featured
+{
+
+<div id="blog" class="detaillayout">
+    <h2>@blog.BlogTitle
+        @if (blog.isApproved == false && !Model.Option.NoApprove)
+        {
+            <text>(未通过)</text>
+        }
+        else if (blog.isApproved == null)
+        {
+            <text>(待审批)</text>
+        }
+    </h2>
+    <br />
+    <i class="icon-list"></i> 分类：
+    <harmony>
+        @foreach (var parentID in catUtil.GetParentCategories(blog.CategoryID))
+        {
+            <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.categoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
+        }
+        <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = blog.CategoryID })">@categoryName</a>
+    </harmony>
+    <harmony show="true">
+        @{ 
+            var ancestorid = catUtil.GetAncestor(blog.CategoryID);
+        }
+        <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = ancestorid })">@catUtil.categoryInfo(ancestorid)</a>
+    </harmony>
+    <hr />
+    <span style="font-size:small;position:relative;"><a href="@Url.Action("UserInfo", "Home", new { name = blog.Author })"><i class="icon-user"></i>@blogUtil.GetNickName(blog.Author)</a> 于 @blog.BlogDate 发布
+        &nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-eye-open"></i> <span style="color: #808080">@(blog.BlogVisit)</span> 次浏览&nbsp;&nbsp;&nbsp;&nbsp;
+        @if (User.Identity.IsAuthenticated)
+        {
+            if(ViewBag.isFavorite == true)
+            {
+                <button class="btn btn-small btn-inverse favbtn" style="margin-bottom: 5px" title="已收藏"><i class="icon-star icon-white"></i></button>
+            }
+            else
+            {
+                <button class="btn btn-small favbtn" style="margin-bottom: 5px" title="加入收藏"><i class="icon-star-empty"></i></button>
+            }
+            <a href="#rptModal" class="btn btn-small" style="margin-bottom: 5px" onclick="gm.rptBlog()" title="汇报问题" data-toggle="modal"><i class="icon-bullhorn"></i></a> <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        }
+        @if (User.Identity.IsAuthenticated && (Model.IsAuthor || blogUtil.CheckAdmin()))
+        {
+            <i class="icon-pencil"></i>@Html.ActionLink("编辑", "Edit", new { id = blog.BlogID });
+            if (string.Equals(User.Identity.Name, blog.Author, StringComparison.OrdinalIgnoreCase))
+            {
+                <a id="dellink" onclick="confirm('确认删除？\n(在未通过的投稿页面点“编辑”按钮并按要求修改投稿后，\n点“提交”按钮后投稿会再次进入待审核，无须删掉旧投稿重新投稿。)') && $.post('@Url.Action("Delete")', { BlogId: '@blog.BlogID' }, gm.redir);"><i class="icon-trash"></i>删除</a>
+            }
+            else
+            {
+                <a href="#delModal" data-toggle="modal"><i class="icon-trash"></i>删除</a>
+            }
+        }
+    </span><hr /><img src="~/Images/logo.png" style="display:none" hidden />
+    @if (blog.IsLocalImg)
+    {
+        var paths = blog.ImagePath.Split(';');
+        var first = paths.ElementAt(0);
+        <div id="imgdivs">
+            <div id="imgdiv0">
+                <a style="text-decoration:none;" data-img-href href="@first" rel="lightbox[g]" onclick="return false;">
+                    <img class="uimg" src="@first" alt="@blog.BlogTitle" />
+                </a>
+                <br /><br />
+            </div>
+            @foreach(var imgurl in paths.Skip(1))
+            {
+                <a data-img-href href="@imgurl" rel="lightbox[g]"><img src="@imgurl" alt="" class="thumbs" /></a>
+            }
+            <br /><br />
+        </div>
+    }
+    <div id="blogcontent">
+        @htmlUtil.RewriteBlogImage(blog)
+    </div>
+    @{ 
+        BlogLink[] links = BlogHelper.GetBlogLink(blog.Links);
+        if (links != null && links.Length > 0 && !(links.Length == 1 && links[0].url == null))
+        {
+            <h4>链接：</h4>
+            <dl id="dllist">
+            @for (var i = 0;i < links.Length; i++)
+            {
+                var link = links[i];
+                if (string.IsNullOrEmpty(link.url))
+                {
+                    continue;
+                }
+                <dd>
+                    <a href="javascript:void(0);" target="_blank" rel="nofollow noopener" class="btn btn-info btn-large" data-dl="@i">
+                        @(string.IsNullOrEmpty(link.name) ? "下载" : link.name)
+                    </a>
+                    @if (!string.IsNullOrEmpty(link.pass))
+                    {
+                        <span>提取码： <span class="label label-inverse">@link.pass</span></span>
+                    }
+                </dd>
+            }
+            </dl>
+        }
+    }
+    <br />
+    <div id="tag-div">
+        <i class="icon-tags"></i><span> 标签：</span>
+        <div style="display:inline;" id="tags">
+        @foreach (var t in Model.tag)
+        {
+            <a class="label label-info" href="@Url.Action("Tags", "Search", new { id = t.TagID })" data-tag="@t.TagName">@t.TagName</a>
+        }
+        </div>
+        @if (User.Identity.IsAuthenticated && !Model.Option.LockTags)
+        {
+        <div class="float-right" id="newtag">
+            <button class="btn btn-small" onclick="gm.editTag(this);">编辑标签</button>
+        </div>
+        }
+    </div>
+    <div id="edit-tag"></div>
+    <script>
+        (function () {
+            var $bc = $('#blogcontent');
+            $('#imgdivs a').each(function (i, e) {
+                var $c = $(e).clone().find('img').attr('class', 'uimg').attr('rel', 'lightbox[u]').end(),
+                    $i = $bc.find('img[data-index="' + i + '"]');
+                if ($i.length > 0) {
+                    $i.replaceWith($c);
+                    $('#imgdiv' + i).hide();
+                    $(e).hide();
+                }
+            });
+            var dl = @Json.Serialize(links?.Select(l => l.url));
+            $('#dllist a').one('mouseenter', function() {
+                var $this=$(this),dlid = $this.data('dl');
+                if(dlid >= 0){ $this.attr('href', dl[dlid])};
+            }).one('focus',(function(){$(this).trigger('mouseenter')}));
+        })();
+    </script>
+    @if (!string.IsNullOrEmpty(Model.AuthorDesc))
+    {
+        <table class="author-info clear-fix">
+            <tr>
+            <td class="author-avatar">
+                <img src="@Url.Action("Show", "Avatar", new { name = blog.Author })" alt="@blog.Author" />
+            </td>
+            <td class="author-desc">
+                <h4 style="margin-top: 0; line-height:26px">
+                    @Html.ActionLink(blogUtil.GetNickName(blog.Author), "UserInfo", "Home", new { name = blog.Author }, null)
+                    <span class="float-right">@await Html.PartialAsync("_FollowBtn", Model.blog.Author)</span>
+                </h4>
+                <div class="author-sign">
+                <p style="margin-bottom: 0">@Model.AuthorDesc</p>
+                </div>
+            </td>
+            </tr>
+        </table>
+    }
+    @if (blog.isApproved == true || Model.Option.NoApprove)
+    {
+        if (Model.Option.NoRate != true)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                <h3>请评分：</h3>
+                <br />
+                <table class="rating">
+                    <tr>
+                        <td><a class="rate1" href="#rtip" role="button" data-toggle="modal">卧槽瞎一脸</a></td>
+                        <td><a class="rate2" href="#rtip" role="button" data-toggle="modal">这玩意能看？</a></td>
+                        <td><a class="rate3" onclick="gm.rateClick(3);return false;">一般吧</a></td>
+                        <td><a class="rate4" onclick="gm.rateClick(4);return false;">还不错</a></td>
+                        <td><a class="rate5" onclick="gm.rateClick(5);return false;">好顶赞！</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">当前得分：<strong id="currentrating">@rateUtil.getRating(blog.BlogID)</strong></td>
+                    </tr>
+                </table>
+                <h4 style="display:none" id="ratingmsg"></h4>
+                <br />
+            }
+            else
+            {
+                <br />
+                <div class="rating signout">
+                    <div class="rating-cell">
+                        当前得分：<strong>@rateUtil.getRating(blog.BlogID)</strong>
+                    </div>
+                    <div class="rating-cell">
+                        若希望参与评分，请先
+                        <a asp-action="Login" asp-controller="Account" asp-route-returnUrl="@ViewContext.HttpContext.Request.Path" class="btn btn-mini">登录</a>
+                    </div>
+                </div>
+            }
+            @await Component.InvokeAsync(nameof(Advertisement), new { AdType = AdvertisementType.Banner })
+        }
+        <br />
+    }
+    else if (blog.isApproved == false)
+    {
+        <table><tr>
+            <td rowspan="2"><img src="//static.gmgard.com/Images/ng.png" style="max-height:150px" /></td>
+            <td>
+                <h2>投稿审核不通过</h2><br />
+            </td>
+            </tr>
+            <tr><td>
+                <label style="cursor:default;">这个投稿未通过审核，请作者参照消息进行修改，修改完成后将重新参与审核。</label>
+            </td></tr>
+        </table>
+        TempData["defaultccs"] = "呃。。居然被管理猿打回来了。。。";
+        }
+        else
+        {
+        <table>
+            <tr>
+                <td rowspan="2"><img src="//static.gmgard.com/Images/warn.png" style="max-height:150px" /></td>
+                <td><h2>投稿尚未被审核</h2><br /></td>
+            </tr>
+            <tr>
+                <td><label style="cursor:default;">你可以对其进行评论。但是它不会显示在主页或其他列表中，也不能参与评分。</label></td>
+            </tr>
+        </table>
+        TempData["defaultccs"] = "看起来不错嘛，快找管理猿审核";
+        }
+    <harmony>
+        <div class="lazy-content" data-url="@Url.Action("Blog", "Recommendation", new { id = blog.BlogID })"></div>
+    </harmony>
+</div>
+}
+<div class="lazy-content" data-url="@Url.Action("Carousel", "Advertisement")"></div>
+
+<hr />
+
+<div id="replydiv" class="lazy-content" data-url="@Url.Action("ShowReply", "Reply", new { itemid = blog.BlogID, idtype = "1" })"></div>
+
+<div class="replyeditor">
+@if (User.Identity.IsAuthenticated)
+{
+    if (Model.Option.NoComment)
+    {
+        <i class="icon icon-warning-sign"></i><b id="no-comment">本投稿禁止了评论。</b>
+    }
+    else
+    {
+    <table>
+        <colgroup>
+            <col span="1" style="width: 100px;" />
+            <col span="1" />
+        </colgroup>
+        <tr>
+            <td rowspan="2" style="vertical-align:top;text-align:center;"><img src="@Url.Action("Show", "Avatar",new { name = User.Identity.Name})" style="max-height:100px;max-width:100px;" /></td>
+            <td style="text-align:left">添加评论：</td>
+        </tr>
+        <tr>
+            <td id="addreply_container">
+                @{
+                    ViewBag.itemtype = ItemType.Blog;
+                    ViewBag.itemid = blog.BlogID;
+                    await Html.RenderPartialAsync(!Model.Option.NoRate ? "AddReplyWithRate" : "AddReply", Model.blog);
+                }
+            </td>
+        </tr>
+    </table>
+    }
+}
+else
+{
+    <b>请登录后发表评论</b>
+    @Html.ActionLink("注册", "Register", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+    @Html.ActionLink("登录", "Login", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+
+}
+</div>
+@section scripts {
+    @if (Model.Option.NoComment)
+    {
+        <style>
+            .post-reply, .post-reply-reply {
+                color: initial;
+                cursor: not-allowed;
+            }
+        </style>
+    }
+}
+@section end_scripts{
+    <script data-cfasync="true" async src="~/Scripts/lib/lightbox.min.js" cdn></script>
+    <link href="~/Content/lightbox.min.css" rel="stylesheet" />
+    <script src="@JsConstant.CKEditor" cdn></script>
+    <script>
+        var gm = new gmDetail({
+            blogid : '@blog.BlogID',
+            rateurl : '@Url.Action("Rate")',
+            addfavurl : '@Url.Action("AddFav", new { id=blog.BlogID })',
+            removefavurl : '@Url.Action("RemoveFav", new { id=blog.BlogID })',
+            showflame : '@(User.Identity.IsAuthenticated && blogUtil.GetUserOption(User.Identity.Name, o => o.addFavFlameEffect))',
+            fetchtagsurl: '@Url.Action("FetchTags", "Search")',
+            edittagurl: "@Url.Action("EditTag")",
+            tagsearchurl: '@Url.Action("Tags", "Search")/',
+            deleteposturl: '@Url.Action("DeletePost", "Reply")',
+            deletereplyurl: '@Url.Action("DeleteReply", "Reply")',
+            listblogurl: '@Url.Action("List", "Blog", new { id = "" })',
+            replyposturl: "@Url.Action("AddPostReply", "Reply")",
+            findreplyurl: "@Html.Raw(Url.Action("FindReply", "Reply", new { itemtype = ItemType.Blog, itemid = blog.BlogID }))",
+            findposturl: "@Html.Raw(Url.Action("FindPost", "Reply", new { itemtype = ItemType.Blog, itemid = blog.BlogID }))",
+            showreplyurl: "@Html.Raw(Url.Action("ShowReply", "Reply", new { itemtype = ItemType.Blog, itemid = blog.BlogID }))",
+            userinfourl: "@Html.Raw(Url.Action("UserInfo", "Home"))",
+            rateposturl: "@Url.Action("RatePost", "Reply")",
+            editreplyurl: "@Url.Action("EditReply", "Reply")",
+            nocomment: $('#no-comment').length > 0,
+        })
+    </script>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div id="rptModal" class="modal hide fade" tabindex="-1" role="dialog" style="background-color:white;">
+        <form asp-action="Report" asp-controller="Message" id="report-form" method="post" style="margin:0">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3>汇报问题</h3>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" style="margin-bottom:0"><strong>注意：</strong>链接失效等补档问题请点击汇报给投稿者。
+                <br />汇报问题时请对所汇报问题进行说明，无说明的汇报不予处理。</div>
+                <h3>原因：</h3>
+            <textarea name="MsgContent" id="MsgContent" required style="width:95%;height:160px;resize:none;"></textarea>
+            </div><div class="modal-footer">
+            <button class="btn" data-dismiss="modal">关闭</button>
+            <button type="submit" name="type" value="rpt-admin" class="btn btn-inverse">汇报给管理员</button>
+            <button type="submit" name="type" value="rpt-author" class="btn btn-primary">汇报给投稿者</button>
+            <input type="hidden" name="id" id="rptblogid" value="@Model.blog.BlogID" />
+            <input type="hidden" name="itemType" value="@ItemType.Blog" />
+            <input type="hidden" name="postid" id="rptpostid" />
+            </div>
+        </form>
+        <script>
+            $('#report-form').submit(function (e) {
+                var $t = $(this);
+                e.preventDefault();
+                if (!$('#MsgContent').val().trim()) {
+                    return;
+                }
+                var type = document.activeElement.value,
+                    params = $t.serializeArray();
+                params.push({name:"type", value: type});
+                $.post($t.attr('action'), $.param(params), function (r) {
+                    if (r.msg) {
+                        $.globalMessenger().post(r.msg);
+                        $t[0].reset();
+                    }
+                    $('#rptModal').modal('hide');
+                })
+            })
+        </script>
+    </div>
+        if (blogUtil.CheckAdmin())
+        {
+        <div id="delModal" class="modal hide fade" tabindex="-1" role="dialog" style="background-color:white;">
+            <form asp-action="AdminDelete" asp-controller="Blog" asp-route-id="@blog.BlogID" asp-antiforgery="true" method="post" style="margin:0">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h3>删除通知</h3>
+                </div>
+                <div class="modal-body">
+                    <textarea name="MsgContent" id="delMsgContent" style="width:95%;height:160px;resize:none;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" value="确认" class="btn btn-inverse" /> <label class="checkbox inline"><input type="checkbox" name="sendmsg" value="true" checked />发送通知</label>
+                    <label class="checkbox inline"><input type="checkbox" name="unapprove" value="true" checked />退至审批不通过</label>
+                </div>
+            </form>
+        </div>
+    }
+    }
+    <div id="rtip" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="rtiplabel" aria-hidden="true">
+        <div class="modal-body">
+            <p>-1分或0分必须在评论中注明理由！</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" data-dismiss="modal" onclick="gm.gotoreply()">去评论</button>
+            <button class="btn" data-dismiss="modal" aria-hidden="true">取消</button>
+        </div>
+    </div>
+}

@@ -1,0 +1,129 @@
+﻿<br />
+<form asp-action="Start" asp-controller="Search" method="post" class="form-search" id="tagsearchform">
+    <div class="input-append">
+        <input type="search" id="searchbox" data-url="@Url.Action("FetchTags", "Search")" name="name" autocomplete="off" maxlength="80" placeholder="综合搜索" class="search-query span3 tagsearch" />
+        <input type="submit" class="btn searchbtn" value="搜索" />
+    </div>
+    <div style="white-space:nowrap;">
+        <label class="checkbox inline" style="font-size:small">
+            <input type="radio" name="searchmethod" value="query" checked />
+            综合
+        </label>
+        <label class="checkbox inline" style="font-size:small">
+            <input type="radio" name="searchmethod" value="tag" />
+            标签
+        </label>
+        <label class="checkbox inline" style="font-size:small">
+            <input type="radio" name="searchmethod" value="title" />
+            标题
+        </label>
+    </div>
+</form>
+
+@if (User.Identity.IsAuthenticated)
+{
+    await Html.RenderPartialAsync("_PunchInPartial");
+}
+
+<harmony>
+    <div>
+        @await Component.InvokeAsync(nameof(RankingSidebar))
+    </div>
+</harmony>
+
+@await Component.InvokeAsync(nameof(Advertisement), new { AdType = AdvertisementType.Sidebar })
+
+@inject IOptionsSnapshot<DataSettingsModel> dataSettings
+
+@if (dataSettings.Value.FriendLinks != null && dataSettings.Value.FriendLinks.Count > 0)
+{
+<div id="flinkdiv">
+    <br />
+    <h3>友情链接</h3>
+    @foreach (var link in dataSettings.Value.FriendLinks)
+    {
+        <a target="_blank" href="@link.Url" title="@link.Name"><img alt="@link.Name" src="@link.Img" /></a>
+    }
+</div>
+}
+
+@await Component.InvokeAsync(nameof(Advertisement), new { AdType = AdvertisementType.SidebarBanner1 })
+
+<harmony>
+    <div id="donatediv">
+        <b>如果您喜欢我们的网站，您可以</b>
+        <p><a href="@Url.Action("Donate", "Home")" type="button" target="_blank" class="sidebarbu btn btn-large btn-warning">捐助我们 &raquo;</a></p>
+    </div>
+</harmony>
+<br />
+<br />
+
+@await Component.InvokeAsync(nameof(Advertisement), new { AdType = AdvertisementType.SidebarBanner2 })
+
+<div id="admark" class="clear-fix"></div>
+<div id="adhook" style="top:20px">
+    @await Component.InvokeAsync(nameof(Advertisement), new { AdType = AdvertisementType.Sidebar, pos = "bottom" })
+</div>
+
+<script>
+    $._messengerDefaults = {
+	extraClasses: 'messenger-fixed messenger-theme-future messenger-on-top messenger-on-right'
+    }
+    $(function () {
+        $('#searchbox').one('focus', function () {
+            $.post($(this).data('url'), null, function (datasource) {
+                $('#searchbox').typeahead({ source: datasource });
+            });
+        });
+
+        $('#tagsearchform').submit(function (event){
+            if ($('#searchbox').val().trim().length < 1)
+                event.preventDefault();
+        })
+
+        $('input[name="searchmethod"]').change(function () {
+            if (this.value == 'query') {
+                $('#searchbox').prop('placeholder', '综合搜索');
+            }
+            else if (this.value == 'title'){
+                $('#searchbox').prop('placeholder', '搜索标题');
+            }
+            else {
+                $('#searchbox').prop('placeholder', '搜索标签');
+            }
+            window.localStorage['gmsearchbox'] = this.value;
+        });
+        $('#rankTab a').click(function (e) {
+            e.preventDefault();
+            window.localStorage['gmranktab'] = $(this).tab('show').attr('href');
+        })
+
+        var a = window.screen.availWidth >= 1200 ? 'right' : 'left',
+            b = (a == 'left' ? '#' : '') + 'body';
+        $('.rankblock a').tooltip({ container: b, placement: a });
+        a = window.localStorage['gmranktab'];
+        if (a) {
+            $('#rankTab a[href="' + a + '"]').tab('show');
+        }
+        a = window.localStorage['gmsearchbox'];
+        if (a) {
+            $('input[name="searchmethod"][value="'+a+'"]').prop('checked',true).trigger('change');
+        }
+        var $adhook = $('#adhook'), admark = document.getElementById('admark'), $body = $('#body');
+        $(window).scroll(function () {
+            var bodyheight = $body.height() + $body.offset().top - 20, curpos = $adhook.css('position');
+            if (curpos == 'static' && $adhook.height() + $adhook.offset().top == bodyheight) return;
+            var atbottom = $(window).scrollTop() + $adhook.height() > bodyheight,
+                pos = atbottom ? 'absolute' : (admark.getBoundingClientRect().top < 21 ? "fixed" : "static");
+            curpos != pos && $adhook.css({ 'position': pos, 'bottom': atbottom ? '20px' : '', 'top': atbottom ? '' : '20px' });
+        });
+
+        @if (TempData["QuestMsg"] != null)
+        {
+            <text>
+                $.globalMessenger().post('@TempData["QuestMsg"]');
+            </text>
+        }
+    });
+
+</script>

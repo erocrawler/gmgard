@@ -1,0 +1,58 @@
+<mat-card>
+    <h1>登录</h1>
+    <form fxLayout="column" *ngIf="!twoFactorAuth">
+        <mat-form-field>
+            <input matInput type="text" name="username" placeholder="用户名" [(ngModel)]="username">
+        </mat-form-field>
+
+        <mat-form-field>
+            <input matInput type="password" name="password" placeholder="密码" [(ngModel)]="password">
+        </mat-form-field>
+
+        <mat-form-field>
+            <img matPrefix alt="验证码" src="{{host}}/Captcha/CaptchaImage" />
+            <input matInput type="text" name="captcha" placeholder="等于多少？" [(ngModel)]="captcha">
+        </mat-form-field>
+
+        <div fxLayoutGap="8px">
+            <mat-error *ngIf="error">{{errorMessage}}</mat-error>
+            <mat-checkbox name="remember-me" [(ngModel)]="rememberMe">记住我？</mat-checkbox>
+            <button mat-raised-button color="primary" name="submit" (click)="login()">登陆</button>
+        </div>
+    </form>
+    <form fxLayout="column" *ngIf="twoFactorAuth && !useRecoveryCode">
+        <p>
+            <mat-icon>info</mat-icon>您的登陆受到两步验证保护。请输入您的验证码。
+        </p>
+        <mat-form-field>
+            <input matInput type="text" name="twoFactorCode" placeholder="验证码" [(ngModel)]="twoFactorCode">
+        </mat-form-field>
+
+        <div fxLayoutGap="8px">
+            <mat-error *ngIf="error">{{errorMessage}}</mat-error>
+            <mat-checkbox name="remember-machine" [(ngModel)]="rememberMachine">记住本设备，下次登陆跳过两步验证</mat-checkbox>
+            <button mat-raised-button color="primary" name="submit" (click)="twoFactorLogin()">登陆</button>
+        </div>
+        <div fxLayoutGap="8px">
+            <button mat-button name="cancel" (click)="reset()">取消</button>
+            <button mat-button color="accent" name="cancel" (click)="doRecoveryCode()">使用应急密码登陆</button>
+        </div>
+    </form>
+    <form fxLayout="column" *ngIf="useRecoveryCode">
+        <p>
+            <mat-icon>warning</mat-icon>您正在尝试使用应急密码登陆。在能够成功两步验证登陆或禁用两步验证前，本次登陆将不会被记忆，并在关闭浏览器后自动登出。
+        </p>
+        <mat-form-field>
+            <input matInput type="text" name="recoveryCode" placeholder="应急密码" [(ngModel)]="recoveryCode">
+        </mat-form-field>
+
+        <div fxLayoutGap="8px">
+            <mat-error *ngIf="error">{{errorMessage}}</mat-error>
+            <button mat-raised-button color="primary" name="submit" (click)="recoveryCodeLogin()">登陆</button>
+        </div>
+        <div>
+            <button mat-button name="cancel" (click)="reset()">取消</button>
+        </div>
+    </form>
+    <p><a href="{{host}}">返回主站</a></p>
+</mat-card>

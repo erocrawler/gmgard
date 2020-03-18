@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html style="overflow:hidden;background:white">
+<head>
+  <title>Loading TyranoScript</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<meta name="viewport" content="user-scalable=no" />  
+
+<link href="./tyrano/tyrano.css" rel="stylesheet" type="text/css"/>
+
+
+<script type="text/javascript" src="./tyrano/libs/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="./tyrano/libs/jquery-ui-1.8.20.custom.min.js"></script>
+<script type="text/javascript" src="./tyrano/libs/jquery.a3d.min.js"></script>
+<script type="text/javascript" src="./tyrano/libs/jsrender.min.js"></script>
+
+<script type="text/javascript" src="./tyrano/libs/html2canvas.js"></script>
+
+<script type="text/javascript" src="./tyrano/lang.js" ></script>
+<script type="text/javascript" src="./tyrano/libs.js" ></script>
+<script type="text/javascript" src="./tyrano/tyrano.js" ></script>
+<script type="text/javascript" src="./tyrano/tyrano.base.js" ></script>
+
+<link href="./tyrano/libs/textillate/assets/animate.css" rel="stylesheet">
+<script type="text/javascript" src="./tyrano/libs/textillate/assets/jquery.lettering.js"></script>
+<script type="text/javascript" src="./tyrano/libs/textillate/jquery.textillate.js"></script>
+
+<script type="text/javascript">
+function doScroll() { if (window.pageYOffset === 0) { window.scrollTo(0,1); } }  
+window.onload = function() { setTimeout(doScroll, 100); }  
+</script>  
+
+</head>
+
+<body onselectstart="return false" onContextmenu="return false" ontouchmove="event.preventDefault()">
+
+<div id="tyrano_base" class="tyrano_base" style="position:absolute;top:0;overflow:hidden" unselectable="on" >
+</div>
+
+</body>
+</html>

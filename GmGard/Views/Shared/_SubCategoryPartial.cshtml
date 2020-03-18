@@ -1,0 +1,19 @@
+﻿@model Category
+@if (Model != null && Model.SubCategories != null && Model.SubCategories.Count > 0)
+{
+    var dict = ViewBag.CategoryDict as IDictionary<int, HeaderDisplay>;
+<ul class="subcatnav dropdown-menu">
+    @foreach(var subcat in Model.SubCategories)
+    {
+        <li @if(subcat.SubCategories != null && subcat.SubCategories.Count > 0){<text>class="dropdown-submenu"</text>}>
+            <a href='@Url.Action("List", "Blog", new { id = subcat.CategoryID })'>@subcat.CategoryName
+                @if (dict[subcat.CategoryID].newItems > 0)
+                {
+                    <span class='cbadge badge'>+@dict[subcat.CategoryID].newItems</span>
+                }
+            </a>
+            @await Html.PartialAsync("_SubCategoryPartial", subcat)
+        </li>
+    }
+</ul>
+}

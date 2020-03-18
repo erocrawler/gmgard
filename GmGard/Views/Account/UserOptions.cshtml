@@ -1,0 +1,27 @@
+﻿@model UserOption
+
+<form id="user-options" asp-action="UserOptions" method="post" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#changeoptiondiv">
+    @if (ViewBag.Success != null)
+    {
+        <script>$.globalMessenger().post("已更改您的个人设置")</script>
+    }
+    <label class="checkbox inline" for="sendNoticeForNewReply">
+        <input type="checkbox" value="true" name="sendNoticeForNewReply" id="sendNoticeForNewReply" @if (Model == null || Model.sendNoticeForNewReply) { <text> checked</text>} ) />通知投稿的新回复
+        <input type="hidden" value="false" name="sendNoticeForNewReply" />
+    </label>
+    <label class="checkbox inline" for="sendNoticeForNewPostReply">
+        <input type="checkbox" value="true" name="sendNoticeForNewPostReply" id="sendNoticeForNewPostReply" @if (Model == null || Model.sendNoticeForNewPostReply) { <text> checked</text>} />通知评论的新回复
+        <input type="hidden" value="false" name="sendNoticeForNewPostReply" />
+    </label>
+    <label class="checkbox inline" for="addFavFlameEffect" id="effectlabel">
+        <input type="checkbox" value="true" name="addFavFlameEffect" id="addFavFlameEffect" @if (Model != null && Model.addFavFlameEffect) { <text> checked</text>} />添加收藏时显示火焰特效<i class="icon-exclamation-sign"></i>
+        <input type="hidden" value="false" name="addFavFlameEffect" />
+    </label>
+    <br />
+</form>
+<script>
+    $(function () {
+        $('#effectlabel').tooltip({ title: "特效会占用较多内存，可能会导致浏览器运行缓慢。" });
+        $('#user-options input[type="checkbox"]').change(function () { $('#user-options').submit(); });
+    });
+</script>

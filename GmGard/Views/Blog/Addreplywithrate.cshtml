@@ -1,0 +1,97 @@
+﻿@model Blog
+<form asp-action="AddReplyWithRate" asp-controller="Reply" id="AddReplyForm" method="post">
+    <input type="hidden" value="@ItemType.Blog" name="idtype" />
+    <input type="hidden" value="@Model.BlogID" name="itemid" />
+    <textarea id="addreplycontent" name="addreplycontent" rows="4"></textarea>
+    <br />
+    <p>
+        @await Html.PartialAsync("_Captcha")
+        <button id="SubmitReply" onclick="gm.submitReply(this);return false;" data-loading-text="提交中..." class="btn btn-primary">提交</button>
+        <span id="ratecheck" class="label" style="cursor:pointer"><i id="rchico" class="icon-runcheck" style="margin-top:0px"></i>同时评分</span>
+        <select id="score" style="width:auto;margin-bottom:4px;padding:initial;height:25px;display:none" name="rating" disabled>
+            <option value="1">-1</option>
+            <option value="2">&nbsp;0</option>
+            <option value="3">&nbsp;1</option>
+            <option value="4">&nbsp;3</option>
+            <option value="5" selected="selected">&nbsp;5</option>
+        </select>
+        <img id="loading" src="//static.gmgard.com/Images/loading2.gif" style="display:none;" />
+        <span id="addreplyerr" class="field-validation-error" data-valmsg-for="addreplycontent" data-valmsg-replace="true"></span>
+    </p>
+    @Html.ValidationMessage("添加回复")
+</form>
+@{
+    var random = new Random().Next(322);
+    var position = "right -90px top 100% no-repeat";
+    if (random == 190 || random == 191)
+    {
+        position = "right -39px top 100% no-repeat";
+    }
+}
+<style>
+iframe.cke_wysiwyg_frame {
+    background: url(//static.gmgard.com/Images/kancolle/kancolle_@(random.ToString().PadLeft(3,'0')).png) @position;
+}
+</style>
+<script>
+    $(function () {
+        $('#ratecheck').one('click', function (event, rateresult) {
+            var $this = $(this);
+            var score_map = { '-1': 1, '0': 2, '1': 3, '3': 4, '5': 5 };
+            var actual_score = document.getElementById("score");
+            var update_ratecheck = function (result) {
+                if (result.rating) {
+                    if (result.rating.HasPost) {
+                        $('#score').replaceWith('<span id="score" class="ratefail">已经评过分了！</span>').hide();
+                    }
+                    else if (result.rating) {
+                        var value = result.rating.index || score_map[result.rating.value];
+                        $('#score').val(value).prop('disabled', true);
+                        $this.parent().append('<input name="rating" id="hidden-rating" type="hidden" value=' + value + ' />');
+                        actual_score = document.getElementById("hidden-rating");
+                    }
+                }
+                else {
+                    $('#score').prop('disabled', false);
+                }
+                if (!$this.attr('data-check')) {
+                    $this.attr('data-check', 'unchecked');
+                }
+                $this.click(function (e, r) {
+                    if (r) {
+                        $this.off('click');
+                        update_ratecheck({ rating: { index: r.value, HasPost: false } });
+                        return;
+                    }
+                    var rcbc = this;
+                    var rci = document.getElementById("rchico");
+                    var sse = document.getElementById("score");
+                    if (rcbc.getAttribute("data-check") == "unchecked") {
+                        rcbc.className = "label label-info";
+                        rcbc.setAttribute("data-check", "checked");
+                        rci.className = "icon-rcheck";
+                        sse.style.display = "inline-block";
+                        actual_score.disabled = false;
+                    }
+                    else {
+                        rcbc.className = "label";
+                        rcbc.setAttribute("data-check", "unchecked");
+                        rci.className = "icon-runcheck";
+                        sse.style.display = "none";
+                        actual_score.disabled = true;
+                    }
+                });
+            };
+            if (rateresult)
+                update_ratecheck({ rating: { index: rateresult.value, HasPost: false } });
+            else {
+                $.post('@Url.Action("GetUsersRate", "Blog")', { blogid: @Model.BlogID }, function (result) {
+                    update_ratecheck(result);
+                    $this.trigger('click');
+                    $('#loading').hide();
+                });
+                $('#loading').show();
+            }
+        });
+    });
+</script>

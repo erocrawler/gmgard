@@ -1,0 +1,10 @@
+﻿<mat-grid-list rowHeight="200px" cols="3">
+  <mat-grid-tile class="image-tile" *ngFor="let image of images">
+    <img [src]="image.content" [alt]="image.file.name" />
+    <button class="remove-fab" (click)="removeFile(image)" mat-mini-fab><mat-icon>clear</mat-icon></button>
+  </mat-grid-tile>
+  <mat-grid-tile *ngIf="!disabled" class="new-image-tile">
+    <button (click)="file.click()" mat-fab><mat-icon>add</mat-icon></button>
+  </mat-grid-tile>
+</mat-grid-list>
+<input hidden #file accept="image/*" type="file" multiple id="file-input" (change)="addFiles(file)" />

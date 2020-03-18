@@ -1,0 +1,171 @@
+﻿@model GmGard.Models.BlogLink[]
+
+@{int i = 0;}
+<div style="position:relative">
+    <table style="width:100%">
+        <colgroup>
+            <col style="width:10em" />
+            <col style="width:auto" />
+            <col style="width:10em" />
+        </colgroup>
+        <thead>
+            <tr><th>显示名称</th><th>链接地址</th><th>提取码</th></tr>
+        </thead>
+        <tbody id="TextBoxesGroup">
+            <tr>
+                <td colspan="3">
+                    <a id="addButton"><i class="icon-plus-sign"></i></a><a id="removeButton"><i class="icon-minus-sign"></i></a>
+                    <div class="btfile">
+                        <input type="file" id="btfile" title="上传bt种子" />
+                    </div>
+                </td>
+            </tr>
+            @if (Model != null && Model.Length > 0)
+            {
+                for (; i < Model.Length; i++)
+                {
+                    <tr id="TextBoxRow@(i)">
+                        <td><input type="text" name="BlogLinks[@i].name" class="input-block-level" placeholder="选填" value="@Model[i].name" /></td>
+                        <td><input type="text" name="BlogLinks[@i].url" class="input-block-level" value="@Model[i].url" /></td>
+                        <td><input type="text" name="BlogLinks[@i].pass" class="input-block-level" value="@Model[i].pass" placeholder="选填" /></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td><input type="text" name="BlogLinks[0].name" class="input-block-level" placeholder="选填" /></td>
+                    <td><input type="text" name="BlogLinks[0].url" class="input-block-level" id="BlogLinks.url" /></td>
+                    <td><input type="text" name="BlogLinks[0].pass" class="input-block-level" placeholder="选填" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    $(function () {
+        var counter = $('#TextBoxesGroup tr').length - 1;
+        if (counter <= 1)
+            $("#removeButton i").addClass("icon-white");
+
+        $("#addButton").click(function () {
+            addRow("","","");
+        });
+        function addRow(name,url,pass){
+            var newTextBoxRow = $(document.createElement('tr'))
+                 .attr("id", 'TextBoxRow' + counter);
+            newTextBoxRow.append('<td>' +
+                '<input type="text" name="BlogLinks[' + counter + '].name" class="input-block-level" value="'+name+'" >' +
+                '</td><td>' +
+                '<input type="text" name="BlogLinks[' + counter + '].url" class="input-block-level" value="' + url + '" >' +
+                '</td><td>' +
+                '<input type="text" name="BlogLinks[' + counter + '].pass" class="input-block-level" value="' + pass + '" ></td>'
+            );
+            newTextBoxRow.appendTo("#TextBoxesGroup");
+            if (counter === 1)
+                $("#removeButton i").removeClass("icon-white");
+            counter++;
+
+            $('input[name^="BlogLinks"][name$="url"]').change(autofillname);
+            $('input[name^="BlogLinks"][name$="url"]').on("paste",function(){
+                handlePaste(this);
+            });
+        }
+        function handlePaste(e){
+            setTimeout(function(){
+                var txt = e.value;
+                var s = txt.indexOf('链接');
+                if(s >= 0){
+                    var t = txt.split(/密码[：:]/);
+                    if (t.length === 1) {
+                        t = txt.split(/提取码[：:]/);
+                    }
+                    if(t.length >= 2){
+                        var link = t[0].slice(s+3).trim();
+                        var pass = t[1].trim().split(' ')[0];
+                        e.value = link;
+                        $(e).parent().parent().find('input[name$="pass"]').val(pass);
+                        $(e).trigger('change');
+                    }
+                    else{
+                        e.value = txt.slice(s + 3).trim();
+                        $(e).trigger('change');
+                    }
+
+                }
+            }, 4);
+        }
+
+        $("#removeButton").click(function () {
+            if (counter === 1) {
+                return false;
+            }
+            counter--;
+            $("#TextBoxRow" + counter).remove();
+            if (counter === 1)
+                $("#removeButton i").addClass("icon-white");
+        });
+
+        $('#btfile').change(function (event) {
+            var file = $(this).val();
+            if(file){
+                var size = this.files[0].size;
+                if(size > 524288 * 2){
+                    alert("文件不得超过1MB");
+                }
+                else{
+                    var reader = new FileReader();
+                    reader.onloadend = function () {
+                        $.post('@Url.Action("GetMagnet")',{ data: reader.result.split(',')[1]}, getMagnet, "text");
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            }
+            $(this).val('');
+        });
+        $('input[name^="BlogLinks"][name$="url"]').change(autofillname);
+        $('input[name^="BlogLinks"][name$="url"]').on("paste",function(){
+            handlePaste(this);
+        });
+        function autofillname() {
+            var input = $(this).val();
+            var name = $(this).parent().parent().find('input[name$="name"]');
+            if(input && !name.val()){
+                if(input.indexOf("magnet") >= 0){
+                    name.val('磁力链');
+                } else if(input.indexOf("baidu") >= 0){
+                    name.val('度娘');
+                } else if(input.indexOf("jbpan") >= 0){
+                    name.val('菊爆盘');
+                } else if(input.indexOf("xunlei") >= 0){
+                    name.val('快船');
+                } else if(input.indexOf("howfile") >= 0){
+                    name.val('好盘');
+                } else if(input.indexOf("yunpan") >= 0){
+                    name.val('360盘');
+                } else if(input.indexOf("sharepoint.com") >= 0 || input.indexOf("onedrive.com") >= 0 || input.indexOf("1drv.com") >= 0){
+                    name.val('OneDrive');
+                }
+            }
+        }
+        function getMagnet(result){
+            if(!result){
+                alert("无效的种子文件！");
+            }
+            result = JSON.parse(result);
+            var inputs = $('input[name^="BlogLinks"][name$="url"]');
+            var added = false;
+            for(var i=0;i<inputs.length;i++){
+                if(!inputs[i].value){
+                    inputs[i].value = result;
+                    $('input[name^="BlogLinks"][name$="name"]')[i].value = "磁力链";
+                    added=true;
+                    break;
+                }
+            }
+            if(!added){
+                addRow("磁力链",result);
+            }
+        }
+    });
+</script>

@@ -1,0 +1,32 @@
+﻿@model UserProfile
+@inject BlogUtil blogUtil
+
+<div class="userinfo user-cover-bg @Model.quest?.PersonalBackground">
+    <div class="float-right">
+        <ul class="fwli user-numbers">
+            <li ><a asp-action="UserInfo" asp-controller="Home" asp-route-name="@Model.UserName"><span><i class="icon-edit"></i></span><h4 class="fwh">投稿</h4><p class="fwp">@ViewBag.UserBlogs</p></a></li>
+            <li ><a asp-action="Favorite" asp-controller="Home" asp-route-name="@Model.UserName"><span><i class="icon-star"></i></span><h4 class="fwh">收藏</h4><p class="fwp">@ViewBag.UserFavorites</p></a></li>
+            <li ><a asp-action="List" asp-controller="Follow" asp-route-name="@Model.UserName"><span><i class="icon-heart"></i></span><h4 class="fwh">关注</h4><p class="fwp">@ViewBag.UserFollows</p></a></li>
+            <li ><a asp-action="List" asp-controller="Follow" asp-route-name="@Model.UserName" asp-route-view="fans"><span><i class="icon-user"></i></span><h4 class="fwh">粉丝</h4><p class="fwp">@ViewBag.UserFans</p></a></li>
+        </ul>
+    </div>
+    <div class="avatar avatar-mid float-left" style="margin-left:10px;margin-right:10px">
+        <img src="@Url.Action("Show", "Avatar", new { name = Model.UserName })" alt="@Model.UserName" />
+    </div>
+    <div>
+        <a asp-action="UserInfo" asp-controller="Home" asp-route-name="@Model.UserName">
+            <h3 style="display:inline-block;">@blogUtil.GetNickName(Model.UserName)</h3>
+        </a> &nbsp;
+        @if (User.Identity.IsAuthenticated && Model.UserName != User.Identity.Name)
+        {
+            await Html.RenderPartialAsync("_FollowBtn", Model.UserName);
+        }
+        <br />
+        @if(!string.IsNullOrWhiteSpace(Model.UserComment)){
+        <div class="author-sign">
+            <p style="margin-bottom:0;">@Model.UserComment</p>
+        </div>
+        }
+    </div>
+    <p class="clear-fix" style="margin:0"></p>
+</div>

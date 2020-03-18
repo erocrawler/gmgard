@@ -1,0 +1,110 @@
+﻿<button class="btn" id="msgbtn"><i class="icon-envelope"></i>问题汇报<span></span></button>
+<i class="icon-question-sign tooltip-icon" title="补档模式中点击投稿可以为投稿快速增加新的链接与密码。"></i>
+
+<div class="popover bottom hide" id="msgpop" style="max-width:400px; width:400px">
+    <div class="arrow"></div>
+    <div class="popover-content" id="rpt-inbox">
+    @await Component.InvokeAsync(nameof(MessageView), new { context = "ReportInbox" })
+    </div>
+</div>
+
+<div class="popover bottom hide" id="patchpop" style="min-width:500px; max-width: initial;">
+    <div class="arrow"></div>
+    <form class="popover-content" action="@Url.Action("Patch", "Blog")">
+        <input type="hidden" name="BlogId" id="patchid" />
+        @await Html.PartialAsync("BlogPassword")
+        @await Html.PartialAsync("BlogLinkPartial")
+        <input type="submit" class="btn btn-primary" value="提交" />
+        <a id="dellink" class="float-right"><i class="icon-trash"></i>删除</a>
+    </form>
+</div>
+
+<script>
+    (function () {
+        $('.tooltip-icon').tooltip();
+        var $pop = $('#patchpop'), $btn = $('#patchbtn'), $msgbtn = $('#msgbtn'),
+            $msgpop = $('#msgpop');
+        $msgbtn.click(function () {
+            $msgpop.fadeToggle();
+            $msgbtn.toggleClass('active');
+        });
+        $btn.addClass('active').click(function() {
+            if (patchActive()) {
+                $btn.removeClass('active');
+                $("#patchdiv").hide(); $pop.hide();
+                $('#listdiv li').removeClass('selected');
+            } else {
+                $btn.addClass('active');
+                $("#patchdiv").show();
+                updatePatched();
+            }
+        });
+        function patchActive() {
+            return $btn.hasClass('active');
+        }
+        function addPatched(id) {
+            var list = sessionStorage['gmpatching'];
+            sessionStorage['gmpatching'] = list ? list + ',' + id : id;
+        }
+        function updatePatched() {
+            var patched = sessionStorage['gmpatching'];
+            if (patched) {
+                var ids = patched.split(',');
+                for (var i = 0; i < ids.length; i++) {
+                    $('#listdiv #' + ids[i]).addClass('selected');
+                }
+            }
+        }
+        Pager.instances[0].onchange = initPop;
+        initPop();
+        $('#listdiv').on('click', '.listlink', function (e) {
+            if (!patchActive()) return;
+            e.preventDefault();
+            var $tgt = $(this),
+                id = $tgt.attr('data-id'),
+                curid = $pop.appendTo('#listdiv').find('#patchid').val();
+            if (id == curid) {
+                $pop.fadeToggle();
+                return;
+            }
+            var listtop = $('#listdiv').offset().top, listleft = $('#listdiv').offset().left;
+            var left = $tgt.offset().left - listleft + ($tgt.width() - $pop.width()) / 2;
+            $pop.find('.arrow').css('left', left < 0 ? '20%' : '');
+            $pop.css({ top: $tgt.offset().top + $tgt.height() - listtop, left: left < 0 ? 0 : left }).fadeIn();
+            $pop.find('#patchid').val(id);
+        }).on('update-patched', updatePatched);
+        function initPop() {
+            updatePatched();
+            $pop.find('form').submit(function (e) {
+                e.preventDefault();
+                var $t = $(this);
+                var id = $t.find('#patchid').val();
+                $t.find('input[type="submit"]').prop('disabled', true);
+                $.post($t.attr('action'), $(this).serialize(), function () {
+                    $('#listdiv #' + id).addClass('selected');
+                    addPatched(id);
+                    $pop.fadeToggle();
+                    $pop.find('input[type="text"]').val('');
+                }).always(function () {
+                    $t.find('input[type="submit"]').prop('disabled', false);
+                });
+            });
+            $pop.find('#dellink').click(function () {
+                confirm('确认删除？') && $.post('@Url.Action("Delete")', { BlogId: $('#patchid').val() }, function () {
+                    $pop.hide();
+                    if ($('#rpt-filter').prop('checked')) {
+                        $('li#' + $('#patchid').val()).remove();
+                    } else {
+                        $('#jumppage').trigger('change');
+                    }
+                });
+            });
+
+            var bodyleft = $('#body').offset().left, bodytop = $('#body').offset().top;
+            $msgpop.css({
+                top: $msgbtn.offset().top + $msgbtn.outerHeight() - bodytop,
+                left: $msgbtn.offset().left - bodyleft + ($msgbtn.width() - $msgpop.width()) / 2
+            })
+        }
+    })()
+</script>

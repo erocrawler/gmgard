@@ -1,0 +1,9 @@
+﻿@model IEnumerable<string>
+@{
+    Layout = null;
+    string host = "//" + ViewBag.HostName;
+}
+@foreach (var item in Model)
+{
+    <text>.@item { background-image: url(@host/Images/title/@(item).jpg) } </text>
+}

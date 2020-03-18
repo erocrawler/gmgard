@@ -1,0 +1,56 @@
+﻿@model List<Advertisment>
+
+@if (Model != null && Model.Count > 0)
+{
+    var carousels = Model.Where(c => c.AdType == AdvertisementType.Carousel);
+    var banners = Model.Where(c => c.AdType == AdvertisementType.CarouselBanner);
+    <div>
+        <div class="cycle-slideshow addiv hide"
+            data-cycle-fx="scrollHorz"
+            data-cycle-timeout="10000"
+            data-cycle-slides="> div">
+            @foreach (var banner in banners)
+            {
+                <div style="width:100%;overflow:hidden;margin:10px auto">
+                    <a href="@banner.AdUrl" onclick="clickad(this)" target="_blank" data-id="@banner.AdID"><img src="@banner.ImgUrl" alt="@banner.AdTitle" /></a>
+                </div>
+            }
+            @if (carousels.Count() > 0)
+            {
+            <div>
+                <ul class="thumbnails">
+                    @{ int i = 0;
+                        foreach (var item in carousels)
+                        {
+                        <li class="span2">
+                            <a rel="nofollow" onclick="clickad(this)" target="_blank" data-id="@item.AdID" href="@item.AdUrl" class="thumbnail">
+                                <img src="@item.ImgUrl" alt="@item.AdTitle" />
+                                <div class="caption">
+                                    @item.AdTitle
+                                </div>
+                            </a>
+                        </li>
+                            if (++i % 4 == 0 && i != carousels.Count())
+                            {
+                            @Html.Raw("</ul></div><div><ul class='thumbnails'>")
+                            }
+                        }
+                    }
+                </ul>
+            </div>
+            }
+        </div>
+        <script>
+            function clickad(ele) {
+                var id = $(ele).attr('data-id');
+                if (id) {
+                    $.post('@Url.Action("Click","Advertisement")', { adid: id }, $.noop);
+                }
+                return true;
+            }
+            $(function () {
+                $('.addiv').removeClass('hide').cycle();
+            });
+        </script>
+    </div>
+}

@@ -1,0 +1,74 @@
+﻿@model string
+
+@if (User.Identity.IsAuthenticated && Model != null &&  !User.Identity.Name.Equals(Model, StringComparison.OrdinalIgnoreCase)) {
+<span class="follow-partial followbtn-@Model" style="display:none" data-name="@Model">
+    <button class="btn btn btn-follow btn-small" data-href="@Url.Action("Follow", "Follow", new { name = Model })"><em style="font-weight:bold;color:#04C;font-size:2em;vertical-align:-4px;">+</em>&nbsp;加关注</button>
+    <button class="btn disabled btn-unfollow btn-small" data-href="@Url.Action("UnFollow", "Follow", new { name = Model })"><i class="icon-ok"></i>&nbsp;已关注</button>
+</span>
+if (!Context.Items.ContainsKey("HasFollowScript"))
+{
+    Context.Items["HasFollowScript"] = true;
+    <script>
+        $(function () {
+            function saveFollow (name, followed) {
+                window.sessionStorage && (window.sessionStorage['gmf' + name + '~@User.Identity.Name'] = JSON.stringify({ f: followed.toString(), t: new Date() }));
+            }
+            function getFollow(name) {
+                localStorage.removeItem('gmf' + name + '~@User.Identity.Name');
+                var f = sessionStorage['gmf' + name + '~@User.Identity.Name'], j = false;
+                if (f) j = JSON.parse(f);
+                return j && ((new Date() - new Date(j.t)) / 1800000 < 1) ? j.f : null;
+            }
+            var names = $('.follow-partial').map(function (i, e) {
+                    var name = $(this).data('name');
+                    return { name: name, followed: getFollow(name) };
+                }),
+                unknownNames = names.filter(function () {
+                    return typeof this.followed !== 'string';
+                }).map(function() { return this.name }).get();
+            if (unknownNames.length > 0) {
+                $.post('@Url.Action("CheckFollows", "Follow")', { names: unknownNames }, function (response) {
+                    if (response) {
+                        names.each(function () {
+                            if (response[this.name]) {
+                                saveFollow(this.name, this.followed = response[this.name].toString());
+                            }
+                            else {
+                                saveFollow(this.name, this.followed = 'false');
+                            }
+                        });
+                        showButtons(names);
+                    }
+                });
+            }
+            else {
+                showButtons(names);
+            }
+            function showButtons(names) {
+                names.each(function () {
+                    if (typeof this.followed === 'string') {
+                        var btn = $('.followbtn-' + this.name).show();
+                        btn.find(this.followed.toLowerCase() == 'true' ? '.btn-follow' : '.btn-unfollow').hide();
+                    }
+                });
+            }
+            $('.btn-unfollow').click(function (e) {
+                $t = $(this); e.stopPropagation();
+                $.post($t.data('href'), null, function (r) {
+                    var followpartial = $t.hide().closest('.follow-partial');
+                    followpartial.find('.btn-follow').show();
+                    saveFollow(followpartial.data('name'), 'false');
+                });
+            });
+            $('.btn-follow').click(function (e) {
+                $t = $(this); e.stopPropagation();
+                $.post($t.data('href'), null, function (r) {
+                    var followpartial = $t.hide().closest('.follow-partial');
+                    followpartial.find('.btn-unfollow').show();
+                    saveFollow(followpartial.data('name'), 'true');
+                });
+            });
+        });
+    </script>
+}
+}

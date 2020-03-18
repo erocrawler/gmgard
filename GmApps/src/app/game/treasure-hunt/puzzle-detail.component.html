@@ -1,0 +1,41 @@
+<div fxLayout="column" fxLayoutGap="10px" fxLayoutAlign="center" style="text-align:center" ngStyle.gt-sm="min-width:400px">
+    <div>
+        <img ngStyle.lt-md="max-width:100%" [src]="puzzle.image" />
+    </div>
+    <div>
+        <h3>《{{puzzle.hint}}》</h3>
+        <hr />
+        <div fxLayout="row" fxLayoutAlign="center center">
+            <span>
+                <mat-form-field fxFlex="2em">
+                    <input matInput placeholder="字" maxlength="1" [(ngModel)]="letter" required />
+                </mat-form-field>
+            </span>
+            <span>
+                <mat-form-field fxFlex="5em">
+                    <input matInput placeholder="gm" maxlength="1" type="number" max="99999" min="1" [(ngModel)]="digits" required />
+                </mat-form-field>
+            </span>
+            <span>
+                <button mat-raised-button color="primary" (click)="submit()" [disabled]="shouldDisable">提交</button>
+            </span>
+        </div>
+        <p>
+            <span *ngIf="isCorrect===true"><mat-icon>done</mat-icon>回答正确！</span>
+            <span *ngIf="isCorrect===false"><mat-icon>clear</mat-icon>回答错误…</span>
+            <span *ngIf="exceedLimit"><mat-icon>warning</mat-icon>已达每日尝试上限。</span>
+        </p>
+        <p *ngIf="isCorrect">恭喜！你是第{{rank}}位完成此问题的绅士！</p>
+        <div class="history" *ngIf="attempts.length > 0">
+            <mat-list>
+                <h4 matSubheader>历史提交</h4>
+                <mat-list-item *ngFor="let t of attempts">
+                    {{ t.ans }} | {{ t.date | date }}
+                </mat-list-item>
+            </mat-list>
+        </div>
+    </div>
+</div>
+<mat-dialog-actions>
+    <button mat-button mat-dialog-close>关闭</button>
+</mat-dialog-actions>

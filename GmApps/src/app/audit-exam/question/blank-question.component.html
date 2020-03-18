@@ -1,0 +1,16 @@
+﻿<h3>
+  <strong>第{{question.id}}题</strong> {{question.description}} 
+</h3>
+<p *ngIf="result">
+  <mat-icon>{{ result.correct ? 'done' : 'clear' }}</mat-icon>
+  得分：{{result.point}}
+</p>
+<p *ngIf="result?.comment">
+  {{result.comment}}
+</p>
+<p>
+    {{question.choices[0]}}
+    <mat-form-field>
+      <input matInput [disabled]="!active" [value]="answer" #blank (change)="emit(blank.value)">
+    </mat-form-field>
+</p>

@@ -1,0 +1,124 @@
+﻿@model CategoryOptionDisplay
+@inject CategoryUtil catUtil
+@{
+    IEnumerable<Category> categoryList = catUtil.GetCategoryList();
+    var PCateID = -1;
+    var selectedIds = Model.SelectedIds ?? new HashSet<int>();
+    var counts = Model.CategoryItemCount ?? new Dictionary<int, long>();
+    ViewBag.SelectedIds = selectedIds;
+    ViewBag.CategoryItemCount = counts;
+    if (ViewBag.CategoryId != null)
+    {
+        categoryList = categoryList.Where(h => h.ParentCategoryID == ViewBag.CategoryId);
+        PCateID = catUtil.GetAncestor(ViewBag.CategoryId);
+    }
+    else
+    {
+        categoryList = categoryList.Where(h => h.ParentCategoryID == null);
+    }
+}
+<ul class="scful">
+    <li>
+        <ul class="spdiv">
+            @foreach (var category in categoryList)
+            {
+                <li class="sfltdiv  scate-@(ViewBag.CategoryId != null? PCateID:category.CategoryID)">
+                    <span class="label filterlabel" data-scata="@category.CategoryID" data-sflt-check="false" data-indeter="false" style="cursor:pointer">
+                        @if(counts.ContainsKey(category.CategoryID))
+                        {
+                            <span class="badge cbadge count-badge">@counts[category.CategoryID].KiloFormat(true)</span>
+                        }
+                        &nbsp;@(category.CategoryName)<i class="icon-scheck"></i>
+                    </span>
+                    <input type="checkbox" name="CategoryIds" value="@category.CategoryID" checked="@selectedIds.Contains(category.CategoryID)" style="display:none" />
+                    <harmony>
+                        @if (category.SubCategories != null)
+                        {
+                            await Html.RenderPartialAsync("_SubCategorySelectPartial", category);
+                        }
+                    </harmony>
+                </li>
+            }
+        </ul>
+        @if (categoryList.Count() > 0)
+        {
+            <span class="label filterlabel @(ViewBag.CategoryId != null? "scate-" + ViewBag.CategoryId:"scall")" data-scata="all" data-sflt-check="false" data-indeter="false" style="cursor:pointer;margin-left:0px">全选<i class="icon-scheck"></i></span>
+        }
+    </li>
+</ul>
+
+<script>
+    $(function () {
+        $('.filterlabel').click(function (e) {
+            var $t = $(this),
+                checked = $t.attr("data-sflt-check") === "true" ? "false" : "true",
+                container = $t.parent(),
+                schecked = checked === "true";
+            $t.attr("data-sflt-check", checked)
+
+            container.find('.filterlabel').attr({
+                "data-indeter": "false",
+                "data-sflt-check": checked
+            });
+
+            function checkSiblings(el) {
+                if (!el || el.length == 0) return;
+                var siblings = el.parent().children(),
+                    activeChildren = siblings.find('.filterlabel'),
+                    all = true,
+                    parent = el.parent().closest('li');
+
+                siblings.find('.filterlabel').each(function () {
+                    return all = ($(this).attr("data-sflt-check") === checked);
+                });
+
+                if (all && schecked) {
+                    activeChildren.add(parent.children('.filterlabel')).attr({
+                        "data-indeter": "false",
+                        "data-sflt-check": checked
+                    });
+                    checkSiblings(parent);
+                } else if (all && !schecked) {
+                    activeChildren.attr("data-sflt-check", checked);
+                    activeChildren.attr("data-indeter", (siblings.find('.filterlabel[data-sflt-check="true"]').length > 0));
+                    parent.children('.filterlabel').attr("data-indeter", parent.find('.filterlabel[data-sflt-check="true"]').length > 0);
+                    checkSiblings(parent);
+                } else {
+                    el.parents("li").children('.filterlabel').attr({
+                        "data-indeter": "true",
+                        "data-sflt-check": "false"
+                    });
+                }
+            }
+            function changefclass(fl) {
+                var fla = fl.closest('.scful');
+                fla.find('.filterlabel[data-sflt-check="true"]').addClass("sactive");
+                fla.find('.filterlabel[data-sflt-check="false"]').removeClass("sactive");
+                fla.find('.filterlabel[data-indeter="true"]').addClass("sinde");
+                fla.find('.filterlabel[data-indeter="false"]').removeClass("sinde");
+            }
+
+            function changebox(fls) {
+                var fla = fls.closest('.scful');
+                fla.find('.filterlabel[data-sflt-check="true"]').siblings('input[type="checkbox"]').prop("checked", true);
+                fla.find('.filterlabel[data-sflt-check="false"]').siblings('input[type="checkbox"]').prop("checked", false);
+            }
+
+            checkSiblings(container);
+            changefclass($t);
+            changebox($t);
+        })
+        $(".scful").find('input[type="checkbox"]:disabled').siblings('.filterlabel').each(function () {
+            $(this).off('click').data("disabled", true).removeAttr("data-sflt-check").removeClass("sactive").find('i').replaceWith('<i class="icon-white icon-remove icon-dcheck"></i>')
+        });
+        var prebox = $(".scful").find('input[type="checkbox"]:checked');
+        if (!prebox.length)
+            $('.filterlabel[data-scata="all"]').trigger("click");
+        else
+            prebox.siblings('.filterlabel').each(function () {
+                if (($(this).hasClass("subcatelab") == "1" && $(this).siblings("ul").length == 0) || $(this).siblings("ul").length == 0)
+                    $(this).trigger("click");
+            });
+        
+    });
+</script>

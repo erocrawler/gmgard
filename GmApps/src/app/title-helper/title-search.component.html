@@ -1,0 +1,10 @@
+﻿<mat-progress-bar *ngIf="searchActive" mode="indeterminate"></mat-progress-bar>
+<mat-nav-list class="blogs">
+  <h3 matSubheader *ngIf="blogs?.length">已存在的投稿</h3>
+  <a mat-list-item *ngFor="let blog of blogs" [href]="blog.url" target="_blank">
+    <h4 matLine>{{blog.title}}</h4>
+    <p matLine [innerHTML]="blog.brief"></p>
+    <small matLine>投稿日期：{{blog.createDate | date:'medium'}}</small>
+    <img [src]="blog.thumbUrl" [alt]="blog.title" />
+  </a>
+</mat-nav-list>

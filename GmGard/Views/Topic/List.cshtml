@@ -1,0 +1,42 @@
+﻿@model IEnumerable<Topic>
+@inject CategoryUtil catUtil
+@await Html.PartialAsync("_ListOptionsPartial", ViewBag.SearchModel as SearchModel)
+
+@{
+    string str = ViewContext.RouteData.Values["id"] as string;
+    int id;
+    if (int.TryParse(str, out id))
+    {
+        string desc;
+        str = catUtil.categoryInfo(id, out desc);
+
+        <h2 style="display: inline" title="@desc">@str</h2>
+    }
+    else
+    {
+        str = "专题列表";
+        <h2 style="display: inline">@str</h2>
+    }
+    ViewBag.Title = str;
+}
+
+<div class="btn-toolbar" style="display: inline-block;margin:15px 0 0 15px;position:absolute;">
+    <div class="btn-group">
+        <a class="btn btn-small" href="@Url.Action("List", "Blog", new { id = ViewContext.RouteData.Values["id"] })">资源</a>
+        <a class="btn btn-small active">专题</a>
+    </div>
+</div>
+<hr />
+<div id="listdiv">
+    <ul class="listview image fluid">
+        @foreach (var item in Model)
+        {
+            @await Html.PartialAsync("_TopicListPartial", item);
+        }
+    </ul>
+
+    @await Html.PartialAsync("_SearchPagerPartial", Model)
+</div>
+@section end_scripts{
+    @await Html.PartialAsync("_ListScripts")
+}

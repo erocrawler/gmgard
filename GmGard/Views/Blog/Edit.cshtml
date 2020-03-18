@@ -1,0 +1,310 @@
+﻿@model BlogEdit
+@inject ConstantUtil constUtil
+@inject CategoryUtil catUtil
+@{
+    ViewBag.Title = "文章编辑";
+    int id = ViewBag.id;
+}
+
+<h2>编辑模式</h2>
+<hr />
+<div asp-validation-summary="All"></div>
+<form asp-action="Edit" asp-controller="Blog" asp-route-id="@id" method="post" id="editform" enctype="multipart/form-data">
+    <label asp-for="CategoryID">分类：</label>
+    <div class="bcategorydiv">
+        <input type="hidden" id="category-tree" value="@Json.Encode(catUtil.GetCategoryTrees())" />
+        <select asp-for="CategoryID" asp-items="ViewBag.CategoryList as IEnumerable<SelectListItem>"></select>
+    </div>
+    <a class="btn butnfix btn-small float-right" href="#title-helper-modal" role="button" data-toggle="modal"><i class="icon-list-alt"></i> 标题助手</a>
+    <label asp-for="BlogTitle">标题：</label>
+    <input asp-for="BlogTitle" maxlength="120" class="input-block-level" />
+    <br />
+    @if (Model.IsLocalImg)
+    {
+        var paths = Model.ImagePath?.Split(';') ?? new string[] { };
+        var first = paths.ElementAt(0);
+        <div id="herodiv" class="editthumbs">
+            <a class="del" title="删除" onclick="del(0);"></a>
+            <img id="heroimg" src="@first" alt="@Model.BlogTitle " style="max-height:300px;max-width:400px;" />
+            <a class="ins" title="嵌入" onclick="insertAttach(0,false);"></a>
+        </div><br />
+        @for (int i = 1; i < paths.Count(); i++)
+        {
+            var imgurl = paths.ElementAt(i);
+            <div id="imgdiv@(i)" class="editthumbs">
+                <a title="主预览图" onclick="set(@i);" class="set"></a>
+                <a title="删除" onclick="del(@i);" class="del"></a>
+                <a title="嵌入" onclick="insertAttach(@i);" class="ins"></a>
+                <img id="thumb@(i)" src="@imgurl" class="thumbs" />
+            </div>
+        }
+        <br />
+    }
+    <div id="upload_resizable" class="uploaddiv" style="overflow:hidden;position:relative;border:1px solid;display:inline-block;width:35em;margin:2em auto;white-space:nowrap;">
+        <label class="uploadtext" style="margin:5px">添加预览图(最大4MB每张):</label>
+        <hr />
+        <div class="upinputdiv">
+            <div class="upinput">
+                <input type="file" id="file1" name="files" /><a class="hide" title="删除" onclick="removeup(0)"><i class="icon-remove-sign"></i></a> <a class="hide" style="top:15px;" title="嵌入文中" onclick="insertAttach(0 , true);"><i class="icon-picture"></i></a>
+            </div>
+            <div class="form-inline" style="display:inline-block;">
+                <label class="checkbox"><input type="checkbox" class="CheckBox" id="checkbox1" name="setmain" value="true" />作为主预览图</label>
+            </div><br />
+            @for (int j = 2; j <= 4; j++)
+            {
+                <div class="upinput">
+                    <input type="file" id="file@(j)" tabindex="-1" name="files" /><a class="hide" title="删除" onclick="removeup(@(j-1))"><i class="icon-remove-sign"></i></a> <a class="hide" style="top:15px;" title="嵌入文中" onclick="insertAttach(@(j-1), true);"><i class="icon-picture"></i></a>
+                </div><br />
+            }
+        </div>
+    </div>
+    <input type="hidden" id="ImagePath" name="ImagePath" value="@Model.ImagePath" />
+    <input type="hidden" asp-for="IsLocalImg" />
+    <br />
+    <textarea asp-for="Content" id="EditBlogContent"></textarea>
+    <br />
+
+    <h3>链接</h3>
+    @await Html.PartialAsync("BlogLinkPartial", Model.BlogLinks)
+
+    <h3>标签</h3>
+
+    <input class="text-box single-line" id="BlogTags" type="text" maxlength="20" autocomplete="off">
+    <span class="field-validation-error" id="BlogTagError" style="display:none">请输入至少一个标签</span>
+    <span class="hide" id="prefilled-tags">@Model.BlogTags</span>
+    <Label ID="Label1" class="validation-summary-errors"></Label>
+    <br />
+    <div>
+        @await Html.PartialAsync("BlogOptionPartial", Model.Option ?? new BlogOption())
+    </div>
+    <input type="submit" id="SubmitButton" data-loading-text="提交中..." autocomplete="off" value="提交" onclick="submitimgs();" class="btn btn-primary" />
+    <img src="//static.gmgard.com/Images/loading2.gif" id="loadinggif" style="display:none;" />
+    <br />
+
+</form>
+
+@section Scripts {
+    <style>
+        #title-helper-modal {
+            height: 80%;
+            width: 80%;
+            left: 10%;
+            margin: 0;
+            min-height: 480px;
+        }
+
+            #title-helper-modal iframe {
+                border: none;
+                width: 100%;
+                height: 90%;
+                height: calc(100% - 60px);
+                border-radius: 6px 6px 0 0;
+                display: block;
+            }
+    </style>
+}
+
+@section end_scripts{
+    <div id="title-helper-modal" class="modal hide fade" data-base-href="@constUtil.AppHost">
+    <div class="modal-footer">
+        <span>如果无法显示，请尝试<a href="@(constUtil.AppHost)/title-helper" target="_blank">在新窗口中打开</a></span>
+        <button class="btn" data-dismiss="modal">取消</button>
+        <button class="btn btn-primary hide" id="title-helper-commit" data-dismiss="modal">完成</button>
+    </div>
+</div>
+    <script data-cfasync="true" async src="@JsConstant.CKEditor" onload="CKEDITOR.replace('Content')"></script>
+    <link href="/Content/tagmanager.css" rel="stylesheet" />
+    <script src="~/Scripts/tagmanager.min.js" cdn></script>
+    <script type="text/javascript">
+        function getImages() {
+            return $('#ImagePath').val().split(';');
+        }
+        var hasimg = !!$('#IsLocalImg').val();
+        var imglist = hasimg ? getImages() : [];
+        var imgcount = imglist.length;
+        var linehigh = $('.upinput').outerHeight(true);
+        $('.uploadtext').height(linehigh - 10);
+        var isvalid = true;
+        $(document).ready((function () {
+            $('.icon-question-sign').tooltip();
+            var resize = $("#upload_resizable");
+            if (imgcount >= 0 && imgcount < 4) {
+                resize.height((4 - imgcount + 1) * linehigh);
+                if (imgcount == 0)
+                    $("#checkbox1").attr('disabled', 'disabled');
+            }
+            else {
+                resize.hide();
+            }
+            $('#editform').submit(function(e){
+                if ($(this).valid() && isvalid && validateTags() && validateCategory()) {
+                    $('#SubmitButton').button('loading');
+                    $('#loadinggif').show();
+                    submitimgs();
+                } else {
+                    e.preventDefault();
+                }
+            });
+            $('input[name="files"]').change(function (event) {
+                if (event.target.files) {
+                    $(this).siblings('a').show();
+                }
+                else {
+                    $(this).siblings('a').hide();
+                }
+                if (event.target.files && event.target.files[0].size >= 4096 * 1024) { // 4MB
+                    $('#filemsg').show();
+                    isvalid = false;
+                }
+                else {
+                    $('#filemsg').hide();
+                    isvalid = true;
+                }
+            });
+
+            $('#BlogTags').focus(function () {
+                $('#BlogTagError').hide();
+            }).tagsManager({ prefilled: $('#prefilled-tags').text(), maxTags: 10, hiddenTagListName: "BlogTags" });
+            $.post('@Url.Action("FetchTags", "Search")', null, function (data) {
+                $('#BlogTags').typeahead({ source: data });
+            });
+
+            $('#title-helper-modal').one('show', function () {
+                var iframe = document.createElement('iframe'), $t = $(this);
+                iframe.src = $t.data('base-href') + '/title-helper;id=' + $('#CategoryID').val();
+                $t.prepend(iframe);
+                $(window).one('message', function (ev) {
+                    if (ev.originalEvent.data !== "gminit") {
+                        return;
+                    }
+                    window.addEventListener("message", function (event) {
+                        if (event.origin !== $t.data('base-href'))
+                            return;
+                        $('#BlogTitle').val(event.data);
+                    });
+                    $('#title-helper-commit').show().click(function () {
+                        iframe.contentWindow.postMessage("gmget", $t.data('base-href'));
+                    });
+                });
+            });
+        }));
+        function removeup(id) {
+            id++;
+            var elem = $('#file' + id)
+            elem.val('');
+            elem.siblings('a').hide();
+        }
+        function set(pos) {
+            var hero = document.getElementById('heroimg');
+            var thumb = document.getElementById('thumb' + pos);
+            var tmp = imglist[0];
+            imglist[0] = imglist[pos];
+            imglist[pos] = tmp;
+            hero.setAttribute('src', imglist[0]);
+            thumb.setAttribute('src', imglist[pos]);
+            var editor = CKEDITOR.instances.EditBlogContent;
+            var data = editor.getData();
+            data = data.ReplaceAll("[img" + pos + "]", "[imgtmp]");
+            data = data.ReplaceAll("[img0]", "[img" + pos + "]");
+            editor.setData(data.ReplaceAll("[imgtmp]", "[img0]"));
+            return false;
+        }
+        function del(pos) {
+            //if (pos >= imgcount){
+            //    return false;
+            //}
+            var editor = CKEDITOR.instances.EditBlogContent;
+            var data = editor.getData();
+            if(data.indexOf("[img" + pos + "]") >= 0 ){
+                data = data.ReplaceAll("[img" + pos + "]", "");
+                var i = pos;
+                for (++i; i < 4; i++) {
+                    data = data.ReplaceAll("[img" + i + "]", "[img" + (i - 1) + "]");
+                }
+                editor.setData(data.toString());
+            }
+            var resize = $("#upload_resizable");
+            resize.show();
+            if (imgcount == 1) {
+                imglist = null;
+                var thumb = document.getElementById('herodiv');
+                thumb.style.display = 'none';
+                imgcount = 0;
+                $("#checkbox1").attr('disabled', 'disabled');
+                resize.height((4 - imgcount + 1) * linehigh);
+                return false;
+            }
+            if (pos == 0) {
+                var a = 1;
+                for (a = 1; a < imglist.length ; a++) {
+                    if (imglist[a] != null)
+                        break;
+                }
+                imglist[0] = imglist[a];
+                var hero = document.getElementById('heroimg');
+                hero.setAttribute('src', imglist[0]);
+                pos = a;
+            }
+            imglist[pos] = null;
+            $('#imgdiv' + pos).hide();
+            imgcount--;
+            resize.height((4 - imgcount + 1) * linehigh);
+            return false;
+        }
+        function submitimgs() {
+            var hidden = document.getElementById("ImagePath");
+            var editor = CKEDITOR.instances.EditBlogContent;
+            editor.setMode('wysiwyg');
+            if (imglist) {
+                if (imgcount == 0)
+                    hidden.value = '';
+                else {
+                    var i = 0;
+                    var b = Array();
+                    for (i = 0; i < imglist.length; i++) {
+                        if (imglist[i] != null)
+                            b.push(imglist[i]);
+
+                    }
+                    hidden.value = b.join(';');
+                }
+            }
+            else
+                hidden.value = "";
+        }
+        function insertAttach(id, isnew) {
+            var tag = isnew ? "nimg" : "img";
+            if (isnew) {
+                var upload = document.getElementById('file' + (id + 1));
+                if (upload.value.length < 1)
+                    return;
+            }
+            var editor = CKEDITOR.instances.EditBlogContent;
+            editor.insertHtml('[' + tag + id + ']');
+        }
+        function showerror(msg) {
+            $('.validation-summary-errors').remove();
+            var $e = $('<div class="validation-summary-errors"><ul><li>' + msg + '</li></ul></div>');
+            $('#createform').prepend($e);
+            $('html, body').animate({
+                scrollTop: ($e.offset().top - 200) + 'px'
+            }, 'fast');
+        }
+        function validateTags() {
+            $('#BlogTags').tagsManager('pushTag', $('#BlogTags').val());
+            var tags = $('input[name="BlogTags"]').val();
+            if (tags.length > 0) {
+                return true;
+            }
+            $('#BlogTagError').show();
+            return false;
+        }
+        function validateCategory() {
+            if (!$('#CategoryID').data('leaf') || !$('#CategoryID').val()) {
+                showerror('请选择次级分类。');
+                return false;
+            }
+            return true;
+        }
+</script>
+}

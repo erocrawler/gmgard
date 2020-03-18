@@ -1,0 +1,14 @@
+<mat-card class="index-card">
+    <mat-card-header>
+        <mat-card-title>永世之环</mat-card-title>
+    </mat-card-header>
+    <img mat-card-image src="/assets/eternal-circle/暂用封面.jpg" alt="永世之环">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <mat-card-actions *ngIf="!loading && status.progress == 0">
+        <button mat-button color="primary" [routerLink]="['/game/eternal-circle', 'play']">开始游戏</button>
+    </mat-card-actions>
+    <mat-card-actions *ngIf="!loading && status.progress > 0">
+        <button mat-button color="primary" [routerLink]="['/game/eternal-circle', 'play']">继续游戏</button>
+        <button mat-button (click)="confirmRetry()">重新开始</button>
+    </mat-card-actions>
+</mat-card>

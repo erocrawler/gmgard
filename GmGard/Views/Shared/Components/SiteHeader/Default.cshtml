@@ -1,0 +1,43 @@
+﻿@model Dictionary<int, HeaderDisplay>
+@{
+    ViewBag.CategoryDict = Model;
+}
+<ul class="catenav nav nav-tabs">
+    @{
+        var currentAction = (string)ViewContext.RouteData.Values["action"];
+        var currentId = (string)ViewContext.RouteData.Values["id"];
+    }
+    @foreach (var c in Model.Values.Where(h => h.category.ParentCategoryID == null))
+    {
+        var id = c.category.CategoryID;
+        <li @if (string.Equals(currentAction, "List", StringComparison.CurrentCultureIgnoreCase) && currentId == id.ToString())
+        { <text> class="active" </text>  }>
+            <a asp-controller="Blog" asp-action="List" asp-route-id="@id">
+                @c.category.CategoryName
+                @if (c.newItems > 0)
+                {
+                    <span class='cbadge badge'>+@c.newItems</span>
+                }
+            </a>
+            <harmony>
+                @if (c.category.SubCategories != null && c.category.SubCategories.Count > 0)
+                {
+                    await Html.RenderPartialAsync("_SubCategoryPartial", c.category);
+                }
+            </harmony>
+        </li>
+    }
+</ul>
+<script>
+    $('.catenav li').hover(function (e) {
+        e.type == 'mouseenter' ? $(this).addClass('open') : $(this).removeClass('open');
+    });
+    $(function () {
+        $(".catenav>li>.subcatnav").each(function () {
+            var w = parseInt($(this).css("width")) / 2,
+                pw = parseInt($(this).parent("li").css("width")) / 2,
+                l = pw - w - 2;
+            $(this).css("left", l + "px");
+        });
+    });
+</script>

@@ -1,0 +1,52 @@
+﻿@model List<BlogAudit>
+
+@if (Model == null)
+{
+<div class="alert alert-error">
+    <i class="icon-warning-sign"></i>投稿可能已被审核，请刷新重试。
+</div>
+}
+else if (Model.Count == 0)
+{
+<p>
+    <i class="icon-info-sign"></i>暂无投票。
+</p>
+}
+else
+{
+    foreach (var decision in Model.Where(b => b.AuditAction == BlogAudit.Action.Approve || b.AuditAction == BlogAudit.Action.Deny))
+    {
+        <h4>@(decision.AuditAction == BlogAudit.Action.Approve ? "通过" : "不通过")</h4>
+        <hr />
+        <p>
+            @if (decision.Auditor != "admin")
+            {
+                <strong> @Html.ActionLink(decision.Auditor, "UserInfo", "Home", new { name = decision.Auditor }, null) </strong>
+            }
+            @decision.Reason
+            <span class="small">@decision.AuditDate</span>
+        </p>
+    }
+    if (Model.Any(b => b.AuditAction == BlogAudit.Action.VoteApprove))
+    {
+        <h4>通过票</h4>
+        <hr />
+        foreach (var audit in Model.Where(ba => ba.AuditAction == BlogAudit.Action.VoteApprove).OrderByDescending(ba => ba.AuditDate))
+        {
+            <p>
+                <strong><a asp-action="UserInfo" asp-controller="Home" asp-route-name="@audit.Auditor">@audit.Auditor</a></strong> <span class="small">@audit.AuditDate</span>
+            </p>
+        }
+    }
+    if (Model.Any(b => b.AuditAction == BlogAudit.Action.VoteDeny))
+    {
+        <h4>反对票</h4>
+        <hr />
+        foreach (var audit in Model.Where(ba => ba.AuditAction == BlogAudit.Action.VoteDeny).OrderByDescending(ba => ba.AuditDate))
+        {
+            <p>
+                <strong><a asp-action="UserInfo" asp-controller="Home" asp-route-name="@audit.Auditor">@audit.Auditor</a></strong>：@audit.Reason <span class="small">@audit.AuditDate</span>
+            </p>
+        }
+    }
+}

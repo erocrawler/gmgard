@@ -1,0 +1,223 @@
+﻿@model UserRanking
+@inject BlogUtil blogUtil
+@{
+    ViewBag.Title = "用户排行";
+    bool contain = false;
+    string name = null;
+    if(User.Identity.IsAuthenticated){
+        name = User.Identity.Name.ToLower();
+    }
+    var nickNames = blogUtil.GetNickNames(Model.Exp.Select(u => u.Name).Concat(Model.Blog.Select(u => u.Name)).Concat(Model.Post.Select(u => u.Name)).Concat(Model.Sign.Select(u => u.Name)));
+    var userNick = blogUtil.GetNickName(name);
+}
+
+<h2>用户排行</h2>
+<hr />
+<div class="rankings">
+<div class="row-fluid">
+    <div class="span6">
+    <h2>绅士度排行</h2>
+    <div class="row-fluid">
+        <div class="span4">用户</div>
+        <div class="span4">总经验</div>
+        <div class="span4">排名</div>
+    </div>
+        @{
+            foreach (var item in Model.Exp)
+            {
+                <div class="row-fluid @if(item.Name.ToLower() == name){
+                    contain = true; <text>glow</text>
+                                      }">
+                    <div class="span4">
+                        @Html.ActionLink(nickNames[item.Name], "UserInfo", new {name = item.Name})
+                    </div>
+                    <div class="span4">
+                        @item.Value
+                    </div>
+                    <div class="span4">
+                        @item.Ranking
+                    </div>
+                </div>
+            }
+            if (!contain && User.Identity.IsAuthenticated && Model.MyExp != null)
+            {
+                var item = Model.MyExp;
+                <div class="row-fluid">
+                    <div class="span4">
+                        @Html.ActionLink(userNick, "UserInfo")
+                    </div>
+                    <div class="span4">
+                        @item.Item1
+                    </div>
+                    <div class="span4">
+                        @item.Item2
+                    </div>
+                </div>
+            }
+            contain = false;
+        }
+    </div>
+    <div class="span6">
+    <h2>连续签到排行</h2>
+    <div class="row-fluid">
+        <div class="span4">用户</div>
+        <div class="span4">当前连续签到</div>
+        <div class="span4">排名</div>
+    </div>
+        @{
+            foreach (var item in Model.Sign)
+            {
+                <div class="row-fluid @if(item.Name.ToLower() == name){
+                    contain = true; <text>glow</text>
+                                      }">
+                    <div class="span4">
+                        @Html.ActionLink(nickNames[item.Name], "UserInfo", new {name = item.Name})
+                    </div>
+                    <div class="span4">
+                        @item.Value
+                    </div>
+                    <div class="span4">
+                        @item.Ranking
+                    </div>
+                </div>
+            }
+            if (!contain && User.Identity.IsAuthenticated && Model.MySign != null)
+            {
+                var item = Model.MySign;
+                <div class="row-fluid">
+                    <div class="span4">
+                        @Html.ActionLink(userNick, "UserInfo")
+                    </div>
+                    <div class="span4">
+                        @item.Item1
+                    </div>
+                    <div class="span4">
+                        @item.Item2
+                    </div>
+                </div>
+            }
+            contain = false;
+        }
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span6">
+    <h2>投稿排行</h2>
+    <div class="row-fluid">
+        <div class="span4">用户</div>
+        <div class="span4">总投稿</div>
+        <div class="span4">排名</div>
+    </div>
+        @{
+            foreach (var item in Model.Blog)
+            {
+                <div class="row-fluid @if(item.Name.ToLower() == name){
+                    contain = true; <text>glow</text>
+                                      }">
+                    <div class="span4">
+                        @Html.ActionLink(nickNames[item.Name], "UserInfo", new {name = item.Name})
+                    </div>
+                    <div class="span4">
+                        @item.Value
+                    </div>
+                    <div class="span4">
+                        @item.Ranking
+                    </div>
+                </div>
+            }
+            if (!contain && User.Identity.IsAuthenticated && Model.MyBlog !=null)
+            {
+                var item = Model.MyBlog;
+                <div class="row-fluid">
+                    <div class="span4">
+                        @Html.ActionLink(userNick, "UserInfo")
+                    </div>
+                    <div class="span4">
+                        @item.Item1
+                    </div>
+                    <div class="span4">
+                        @item.Item2
+                    </div>
+                </div>
+            }
+            contain = false;
+        }
+    </div>
+    <div class="span6">
+    <h2>评论排行</h2>
+    <div class="row-fluid">
+        <div class="span4">用户</div>
+        <div class="span4">总评论</div>
+        <div class="span4">排名</div>
+    </div>
+        @{
+            foreach (var item in Model.Post)
+            {
+                <div class="row-fluid @if(item.Name.ToLower() == name){
+                    contain = true; <text>glow</text>
+                                      }">
+                    <div class="span4">
+                        @Html.ActionLink(nickNames[item.Name], "UserInfo", new {name = item.Name})
+                    </div>
+                    <div class="span4">
+                        @item.Value
+                    </div>
+                    <div class="span4">
+                        @item.Ranking
+                    </div>
+                </div>
+            }
+            if (!contain && User.Identity.IsAuthenticated && Model.MyPost != null)
+            {
+                var item = Model.MyPost;
+                <div class="row-fluid">
+                    <div class="span4">
+                        @Html.ActionLink(userNick, "UserInfo")
+                    </div>
+                    <div class="span4">
+                        @item.Item1
+                    </div>
+                    <div class="span4">
+                        @item.Item2
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+    <h4>统计时间：@Model.rankdate</h4>
+</div>
+@section end_scripts{
+    <style>
+        .rankings .span4
+        {
+            text-align:center;
+            padding:3px 0;
+        }
+        .glow
+        {
+            -webkit-transition: box-shadow 1s linear;
+            -moz-transition: box-shadow 1s linear;
+            transition: box-shadow 1s linear;
+            transition-delay: 0.5s;
+            -webkit-transition-delay: 0.5s;
+            -webkit-box-shadow: 0 0 1px blue;
+            -moz-box-shadow: 0 0 1px blue;
+            box-shadow: 0 0 1px blue;
+            border-radius:5px;
+        }
+
+            .glow.active
+            {
+                -webkit-box-shadow: 0 0 6px blue;
+                -moz-box-shadow: 0 0 6px blue;
+                box-shadow: 0 0 6px blue;
+            }
+    </style>
+    <script>
+        var glower = $('.glow');
+        window.setInterval(function () {
+            glower.toggleClass('active');
+        }, 2000);
+    </script>
+}

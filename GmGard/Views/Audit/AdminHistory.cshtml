@@ -1,0 +1,110 @@
+﻿@model PagedList.IPagedList<BlogAudit>
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@{
+    ViewBag.Title = "审核历史（管理员）";
+}
+<div class="float-right">
+    <form class="input-prepend input-append" style="margin:0" action="@Url.Action("AdminHistory", new {})" method="get">
+        <span class="add-on">gm</span>
+        <input type="text" name="id" value="@ViewBag.BlogID" placeholder="输入资源gm号" class="span2" />
+        <input type="submit" value="查看" class="btn" />
+    </form>
+</div>
+<h1>审核历史（管理员）</h1>
+<div id="auditdiv">
+    @if (Model == null || Model.Count == 0)
+    {
+        <strong>无记录。</strong>
+    }
+    else
+    {
+        <ul class="listview image fluid">
+            @foreach (var audit in Model)
+            {
+                var blog = audit.blog;
+                var categories = catUtil.GetParentCategories(blog.CategoryID);
+                categories.Add(blog.CategoryID);
+                string iconClass = "";
+                string actionName = "";
+                switch (audit.AuditAction)
+                {
+                    case BlogAudit.Action.VoteApprove:
+                        iconClass = "icon-thumbs-up";
+                        actionName = "通过票";
+                        break;
+                    case BlogAudit.Action.VoteDeny:
+                        iconClass = "icon-thumbs-down";
+                        actionName = "反对票";
+                        break;
+                    case BlogAudit.Action.Approve:
+                        iconClass = "icon-ok";
+                        actionName = "通过";
+                        break;
+                    case BlogAudit.Action.Deny:
+                        iconClass = "icon-remove";
+                        actionName = "不通过";
+                        break;
+                    default:
+                        break;
+                }
+                <li>
+                    <div class="badge">
+                        @string.Join(" > ", categories.Select(c => catUtil.categoryInfo(c)))
+                    </div>
+                    <div class="listlink">
+                        <div class="icon">
+                            <div class="imgcenter" data-src="@BlogHelper.firstImgPath(blog)">
+                                <a class="nohover" target="_blank" href="@Url.Action("Details", "Blog", new { id = blog.BlogID })">
+                                    <img src='@(BlogHelper.firstImgPath(blog, true))' />
+                                </a>
+                            </div>
+                        </div>
+                        <div class="data">
+                            <h4>@Html.ActionLink(blog.BlogTitle, "Details", "Blog", new { id = blog.BlogID }, new { target = "_blank" }) </h4>
+                            <p>  @blogUtil.GetFirstLine(blog, true)</p>
+                            <strong>投稿：@Html.ActionLink(blog.Author, "UserInfo", "Home", new { name = blog.Author }, null)</strong>
+                            <br />
+                            &nbsp;<span class="lfoot">投票者：@Html.ActionLink(audit.Auditor, "UserInfo", "Home", new { name = audit.Auditor }, null)</span>
+                            <span class="lfoot">投票：<i class="@iconClass"></i>@actionName</span> @if(!string.IsNullOrEmpty(audit.Reason)) { <i class="icon-info-sign" title="@audit.Reason"></i> }
+                            <div class="posttime">
+                                投票日期： @audit.AuditDate &nbsp;&nbsp;
+                            </div>
+                        </div>
+                        <br />
+                    </div>
+                </li>
+            }
+        </ul>
+        if (Model.HasNextPage || Model.HasPreviousPage)
+        {
+            await Html.RenderPartialAsync("_PagerPartial", Model);
+        }
+    }
+</div>
+
+@section end_scripts {
+    <script src="~/Scripts/lib/jquery.imgpreview.min.js" cdn></script>
+    <script>
+        (function () {
+            new Pager({
+                pager_init: function () {
+                    $('.icon-info-sign').tooltip({ container: 'html' });
+                    try {
+                        $('.imgcenter').imgPreview({
+                            imgCSS: {
+                                // Limit preview size:
+                                'max-width': 600,
+                                border: "2px solid"
+                            },
+                            containerLoadingClass: 'imgloading',
+                            srcAttr: 'data-src',
+                        });
+                    } catch (e) { console.log(e, e.stack) }
+                },
+                destination: '#auditdiv',
+                source: '#auditdiv'
+            })
+        })()
+    </script>
+}

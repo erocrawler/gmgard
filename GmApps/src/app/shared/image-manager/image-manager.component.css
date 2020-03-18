@@ -1,0 +1,17 @@
+﻿.remove-fab {
+  position:absolute;
+  display:none;
+}
+
+.image-tile img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.image-tile:hover .remove-fab {
+  display:inline-block;
+}
+
+.new-image-tile {
+  border: 1px dashed;
+}

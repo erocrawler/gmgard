@@ -1,0 +1,292 @@
+﻿@model RegisterModel
+@inject IOptionsSnapshot<RegisterSettingsModel> regSettings
+@{
+    ViewBag.Title = "注册";
+}
+
+<div>
+    <hgroup class="title">
+        <h1>@ViewBag.Title</h1>
+        <h2>创建新帐户。</h2>
+    </hgroup>
+
+    <div class="alert alert-danger">
+        <strong>注意！</strong>请勿购买被出售的邀请码或账号。使用被出售的邀请码注册的账号和被出售的账号均会被封禁。
+    </div>
+
+    <form asp-action="Register" method="post" enctype="multipart/form-data" asp-antiforgery="true">
+        <div asp-validation-summary="ModelOnly"></div>
+        <fieldset>
+            <legend>注册表单</legend>
+            <ol class="rnopoint">
+                @if (regSettings.Value.RequireCode)
+                {
+                    <li class="code">
+                        <label asp-for="RegisterCode"></label>
+                        <input type="hidden" asp-for="RegisterCode" />
+                        <input type="text" id="hash-code" asp-for="RegisterCode" data-val="true" data-val-required="请输入邀请码" />
+                        <span asp-validation-for="RegisterCode" class="field-validation-error" id="hash-err" data-valmsg-for="hash-code" data-valmsg-replace="true">
+                        </span>
+                    </li>
+                }
+                <li>
+                    <label asp-for="UserName"></label>
+                    <input asp-for="UserName" maxlength="20" />
+                    <span asp-validation-for="UserName"></span>
+                </li>
+                <li>
+                    <label asp-for="NickName"></label>
+                    <input asp-for="NickName" maxlength="20" />
+                    <span asp-validation-for="NickName"></span>
+                </li>
+                <li>
+                    <label asp-for="Password"></label>
+                    <input asp-for="Password" />
+                    <span asp-validation-for="Password"></span>
+                </li>
+                <li>
+                    <label asp-for="ConfirmPassword"></label>
+                    <input asp-for="ConfirmPassword" />
+                    <span asp-validation-for="ConfirmPassword"></span>
+                </li>
+                <li>
+                    <label asp-for="Email"></label>
+                    <input type="email" asp-for="Email" />
+                    <span asp-validation-for="Email"></span>
+                </li>
+                <li id="imgli">
+                    <label asp-for="avatar"></label>
+                    <input type="file" id="avatar" name="avatar" /><br />
+                    <span asp-validation-for="avatar"></span>
+                    <a class="hide" title="清除选区" onclick="crop.release();"><i class="icon-remove-sign"></i></a><br />
+                    <img src="//:0" id="newavatar" style="max-width:500px;max-height:500px;display:none;" />
+
+                    <span id="imgerror" style="color:red;"></span>
+                </li>
+                @if (Model.RegisterQuestionIndex >= 0)
+                {
+                    <li>
+                        <textarea hidden disabled id="question" class="hide">
+                            @Model.GetRegisterQuestion(regSettings.Value)
+                        </textarea>
+                        <label asp-for="RegisterAnswer"></label>
+                        <input placeholder="回答" asp-for="RegisterAnswer" />
+                        <span asp-validation-for="RegisterAnswer"></span>
+                    </li>
+                }
+                <li>
+                    <img alt="Captcha" src="@Url.Action("CaptchaImage", "Captcha")" style="" />等于多少?
+                    <input asp-for="Captcha" />
+                    <span asp-validation-for="Captcha"></span>
+                </li>
+            </ol>
+            <input type="hidden" asp-for="RegisterQuestionIndex" />
+            <input type="hidden" asp-for="X" /><input type="hidden" asp-for="Y" /><input type="hidden" asp-for="H" /><input type="hidden" asp-for="W" />
+            <input type="submit" style="margin-left: 24px" value="注册" class="btn btn-primary" />
+            <script>
+                $(function () {
+                    document.getElementById('avatar').addEventListener('change', updateimg, false);
+                });
+            </script>
+        </fieldset>
+    </form>
+    @if (ViewContext.HttpContext.Request.IsAjaxRequest())
+    {
+        <style>
+            .main-content {
+                -webkit-backface-visibility: hidden;
+                -moz-backface-visibility: hidden;
+                backface-visibility: hidden;
+                top: 0;
+                right: 10px;
+                -moz-transition: border .8s, box-shadow .8s;
+                -o-transition: border .8s, box-shadow .8s;
+                -webkit-transition: border .8s, box-shadow .8s;
+                transition: border .8s, box-shadow .8s;
+            }
+
+                .main-content.form {
+                    display: none;
+                    -webkit-transform: rotateY(180deg);
+                    -webkit-box-sizing: border-box;
+                    -moz-transform: rotateY(180deg);
+                    -moz-box-sizing: border-box;
+                    -o-transform: rotateY(180deg);
+                    transform: rotateY(180deg);
+                    box-sizing: border-box;
+                    padding: 10px;
+                    color: white;
+                    text-align: center;
+                    background-color: #aaa;
+                    text-align: left;
+                    /*position:absolute;*/
+                }
+
+            #main.阿卡林 .main-content {
+                display: none;
+            }
+
+                #main.阿卡林 .main-content.form {
+                    display: block;
+                    -webkit-backface-visibility: visible;
+                    -moz-backface-visibility: visible;
+                    backface-visibility: visible;
+                }
+
+            #body {
+                -webkit-perspective: 1000px;
+                -moz-perspective: 1000px;
+                perspective: 1000px;
+                -moz-perspective-origin: top;
+                -ms-perspective-origin: top;
+                -webkit-perspective-origin: top;
+                perspective-origin: top;
+            }
+
+            #main {
+                -webkit-transform-style: preserve-3d;
+                -webkit-transition: all 1.5s ease-in-out;
+                -moz-transition: all 1.5s ease-in-out;
+                -o-transition: all 1.5s ease-in-out;
+                transform-style: preserve-3d;
+                transition: all 1.5s ease-in-out;
+            }
+
+                #main.form {
+                    -webkit-transform: rotateY(90deg);
+                    -moz-transform: rotateY(90deg);
+                    -o-transform: rotateY(90deg);
+                    transform: rotateY(90deg);
+                }
+
+                    #main.form.阿卡林 {
+                        -webkit-transform: rotateY(180deg);
+                        -moz-transform: rotateY(180deg);
+                        -o-transform: rotateY(180deg);
+                        transform: rotateY(180deg);
+                    }
+        </style>
+    }
+</div>
+
+
+@section Scripts {
+<link href="~/Jcrop/css/jquery.Jcrop.min.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="~/Jcrop/js/jquery.Jcrop.min.js"></script>
+<script>
+    var data; var type; var crop;
+    function updateimg(evt) {
+        var file = evt.target.files[0];
+        if (checkfile(file)) {
+            var reader = new FileReader();
+            reader.onloadend = (function (theFile) {
+                return function (e) {
+                    // Render thumbnail.
+                    $("#newavatar").attr("src", e.target.result);
+                    $("#newavatar").attr("title", file.name);
+                    $('#submitbtn').show();
+                    $('a.hide').show();
+                    data = e.target.result.split(',')[1];
+                    type = file.type;
+                    setTimeout(function () {
+                        $('#newavatar').Jcrop({ onSelect: storeCoords, onRelease: resetCoords }, function () { crop = this; crop.setSelect([0, 0, $(".jcrop-holder").width(), $(".jcrop-holder").height()]); });
+                    }, 100);
+                };
+            })(file);
+            if (crop) {
+                crop.destroy();
+                $("#newavatar").css('width', '');
+                $("#newavatar").css('height', '');
+            }
+            else {
+                $("#newavatar").show();
+            }
+            reader.readAsDataURL(file);
+            $('#imgerror').html("");
+        }
+    }
+    function storeCoords(c) {
+        $('#X').val(c.x);
+        $('#Y').val(c.y);
+        $('#W').val(c.w);
+        $('#H').val(c.h);
+    }
+    function resetCoords() {
+        $('#X').val(0);
+        $('#Y').val(0);
+        $('#W').val($('#newavatar').width());
+        $('#H').val($('#newavatar').height());
+    }
+    function checkfile(file) {
+        //var file = document.getElementById('avatar').files[0];
+        if (!file) {
+            return false;
+        }
+        if (!file.type.match("image.*")) {
+            $('#imgerror').html("必须是图像！");
+            return false;
+        }
+        else if (file.size > 524288 * 2) {
+            $('#imgerror').html("图像不得超过1MB");
+            return false;
+        }
+        else
+            return true;
+    }
+    var z;
+    $(z=function () {
+        $('#UserName').tooltip({title:"用户名是登陆网站时使用的凭证，不直接显示在网站中，注册后不可修改。用户名最长为20字符，不支持!#$%^&*()等特殊符号。推荐使用常用的字母数字组合作为用户名，以免遗忘。",placement:'right',trigger:'focus'});
+        $('#NickName').tooltip({title:"昵称是用户显示在网站上的名字，昵称项留空则与用户名相同。支持数字、英文字母以及中、日文字符，与用户名同样为最长20字符且不支持!#?等特殊符号。注册后每次修改昵称需要消耗200棒棒糖。",placement:'right',trigger:'focus'});
+        $('#Password').tooltip({title:"密码最少6字符，支持英文字母与符号。密码区分大小写。",placement:'right',trigger:'focus'});
+        $('#ConfirmPassword').tooltip({title:"请在此栏中再输入一次在密码栏中设定的密码。",placement:'right',trigger:'focus'});
+        $('#Email').tooltip({title:"请填写常用的邮箱，以便日后进行用户名密码找回等操作时使用。",placement:'right',trigger:'focus'});
+        $('#avatar').tooltip({ title: "上传头像，最大1MB，可上传后裁剪。注册后可以在账号设置页面更改。", placement: 'right' });
+        var $ra = $('#RegisterAnswer'), q = $('#question').val();
+        if (q) {
+            if (q.indexOf('_') >= 0) {
+                var qh = q.replace(/_+/g, function (m, o, s) {
+                    return ' <input type="text" class="answer-input" name="a" maxlength="{l}" style="width:{l}em" pattern=".{{l},}"> '.replace(/{l}/g, m.length);
+                });
+                $('<div class="well">' + qh + '</div>').insertAfter($ra.hide());
+                $ra.closest('form').submit(function () {
+                    var ans = [];
+                    $('.answer-input').removeAttr('name').each(function (i, e) { ans.push(this.value) });
+                    $ra.val(ans.join(' '));
+                });
+            } else {
+                $('<div class="well">' + q + '</div>').insertBefore($ra);
+            }
+        }
+    });
+</script>
+}
+@section end_scripts {
+    @if (regSettings.Value.RequireCode)
+    {
+        <script src="~/Scripts/lib/hashdown.min.js" cdn></script>
+        <script>
+            (function() {
+                $('.rnopoint li:not(.code)').hide();
+                $('input[type = "submit"]').prop('disabled', true);
+                $("#hash-code").on('input change', function () {
+                    var regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+                    var val = this.value;
+                    if (!regex.test(val)) {
+                        var decoded = $hashdown.decode(this.value);
+                        val = decoded.text;
+                    }
+                    if (regex.test(val)) {
+                        $('input[name="RegisterCode"]').val(val);
+                        $('#hash-err').hide();
+                        $('.rnopoint li:not(.code)').fadeIn();
+                        $('input[type = "submit"]').prop('disabled', false);
+                    } else {
+                        $('#hash-err').text('无效的邀请码').show();
+                        $('.rnopoint li:not(.code)').fadeOut();
+                        $('input[type = "submit"]').prop('disabled', true);
+                    }
+                }).val() && $("#hash-code").trigger('change');
+            })()
+        </script>
+    }
+}

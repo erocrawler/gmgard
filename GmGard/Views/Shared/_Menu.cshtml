@@ -1,0 +1,128 @@
+﻿@inject BlogUtil blogUtil
+@inject IOptionsSnapshot<DataSettingsModel> dataSettings
+@functions{
+            bool isCurrentPage(string action, string controller)
+            {
+                var currentAction = (string)Html.ViewContext.RouteData.Values["action"];
+                var currentControl = (string)Html.ViewContext.RouteData.Values["controller"];
+                return (string.Equals(currentAction, action, StringComparison.CurrentCultureIgnoreCase) &&
+                    string.Equals(currentControl, controller, StringComparison.CurrentCultureIgnoreCase));
+            }
+            bool isCurrentPage(string controller)
+            {
+                var currentControl = (string)Html.ViewContext.RouteData.Values["controller"];
+                return string.Equals(currentControl, controller, StringComparison.CurrentCultureIgnoreCase);
+            }
+            Microsoft.AspNetCore.Html.IHtmlContent MenuItem(string text, string action, string controller)
+            {
+                var item = new TagBuilder("li");
+                if (text == "审核")
+                {
+                    int count = blogUtil.GetUnapproveCount();
+                    item.InnerHtml.AppendHtml(string.Format("<a href='{0}'>{1} <span class='label label-important'>{2}</span></a>", Url.Action(action, controller), text, count > 0 ? count.ToString() : ""));
+                }
+                else if (text == "意见建议" && blogUtil.CheckAdmin())
+                {
+                    string count = blogUtil.GetNewSuggestionCount();
+                    item.InnerHtml.AppendHtml(string.Format(
+                        "<a style='position:relative' href='{0}'>{1} <span style='opacity:0.8' class='cbadge badge'>{2}</span></a>", Url.Action(action, controller), text, count=="0/0/0" ? string.Empty : count));
+                }
+                else
+                {
+                    item.InnerHtml.AppendHtml(Html.RouteLink(text, "default", new { action, controller, id="" }, null));
+                }
+                if (isCurrentPage(action, controller))
+                {
+                    item.AddCssClass("active");
+                }
+                return item;
+            }
+        }
+<ul class="pnav nav nav-pills">
+    @MenuItem("主页", "Index", "Home")
+    @MenuItem("资源列表", "List", "Blog")
+    @MenuItem("汉化组专版", "Index", "Han")
+    @MenuItem("意见建议", "Suggestions", "Home")
+    @if (!User.Identity.IsAuthenticated)
+        {
+            @MenuItem("投稿", "Create", "Blog")
+    }
+    else if (blogUtil.CheckAdmin(true))
+    {
+        <li class="dropdown @if (isCurrentPage("Create", "Blog"))
+                            {<text>active</text>}">
+            <a class="dropdown-toggle" data-toggle="dropdown">
+                投稿
+                <b class="caret" style="border-top-color:rgb(255, 226, 226)"></b>
+            </a>
+            <ul class="dropdown-menu" role="menu" style="margin: 0;min-width: 65px; text-align:center">
+                <li>
+                    @Html.ActionLink("投　稿", "Create", "Blog")
+                </li>
+                <li>
+                    @Html.ActionLink("投专题", "Create", "Topic")
+                </li>
+            </ul>
+        </li>
+    }
+    else
+    {
+        <li class="dropdown @if (isCurrentPage("Create", "Blog"))
+                            {<text>active</text>}">
+            <a class="dropdown-toggle" data-toggle="dropdown">
+                投稿
+                <b class="caret" style="border-top-color:rgb(255, 226, 226)"></b>
+            </a>
+            <ul class="dropdown-menu" role="menu" style="margin: 0;min-width: 65px; text-align:center">
+                <li>
+                    @Html.ActionLink("投　稿", "Create", "Blog")
+                </li>
+                <li>
+                    @Html.ActionLink("待审核", "UserInfo", "Home", null, null, "listdiv", new { view = "UnApprove" }, new { })
+                </li>
+            </ul>
+        </li>
+    }
+
+    @if (blogUtil.CheckAdmin(false))
+    {
+        int count = blogUtil.GetUnapproveCount();
+        <li id="auditdrop" class="dropdown @if (isCurrentPage("Audit"))
+                            {<text>active</text>}">
+            <a class="dropdown-toggle" href="@Url.Action("Admin", "Audit")">
+                审核 <span class='label label-important'>@if (count > 0) { @count }</span>
+                <b class="caret" style="border-top-color:rgb(255, 226, 226)"></b>
+            </a>
+            <ul class="dropdown-menu" role="menu" style="margin: 0;min-width: 65px; text-align:center">
+                <li>
+                    @Html.ActionLink("投　票", "Index", "Audit")
+                </li>
+                <li>
+                    @Html.ActionLink("记　录", "AdminHistory", "Audit")
+                </li>
+            </ul>
+        </li>
+    }
+    else if (User.IsInRole("Auditor"))
+    {
+        @MenuItem("审核", "Index", "Audit")
+    }
+    else if (User.IsInRole("Writers") || (User.Identity.IsAuthenticated && dataSettings.Value?.JoinAuditorLevel > 0))
+    {
+        @MenuItem("加入审核", "Join", "Audit")
+    }
+    @if (blogUtil.CheckAdmin(false))
+    {
+        @MenuItem("管理", "Manage", "Admin")
+    }
+    @if (User.IsInRole("AdManager"))
+    {
+        @MenuItem("广告管理", "Manage", "Admin")
+    }
+</ul>
+
+<script>
+    $(function () {
+        $('#auditdrop').hover(function () { $(this).toggleClass("open") });
+    })
+</script>

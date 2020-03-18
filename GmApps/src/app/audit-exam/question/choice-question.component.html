@@ -1,0 +1,13 @@
+﻿<h3>
+  <strong>第{{question.id}}题</strong> {{question.description}} 
+</h3>
+<p *ngIf="result">
+  <mat-icon>{{ result.correct ? 'done' : 'clear' }}</mat-icon>
+  得分：{{result.point}}
+</p>
+<p *ngIf="result?.comment">
+  {{result.comment}}
+</p>
+<p *ngFor="let choice of question.choices; let i=index">
+  <mat-checkbox [value]="i" [disabled]="!active" [checked]="this.selected.indexOf(i) >= 0" (change)="updateAnswer()"><span [innerHtml]="choice"></span></mat-checkbox>
+</p>

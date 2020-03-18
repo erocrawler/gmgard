@@ -1,0 +1,87 @@
+﻿@model GmGard.Models.AdminViewModel
+
+@{
+    ViewBag.Title = "管理员";
+    string context = ViewBag.Context ?? "Data";
+}
+<div class="navbar">
+    <div class="navbar-inner">
+    <ul class="nav" id="admin-menu">
+        <li @if (context == null || context == "Data")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Data" })">数据</a></li>
+        @if (User.IsInRole("Administrator") || User.IsInRole("Moderator"))
+        {
+            <li @if (context == "Users")
+                { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Users" })">人员管理</a></li>
+        }
+        @if (User.IsInRole("Administrator") || User.IsInRole("AdManager"))
+        {
+        <li @if (context == "AdManage")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "AdManage" })">广告管理</a></li>
+        }
+        @if (User.IsInRole("Administrator"))
+        {
+        <li @if (context == "Category")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Category" })">栏目与汉化组管理</a></li>
+        <li @if (context == "Register")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Register" })">注册管理</a></li>
+        <li @if (context == "Background")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Background" })">背景管理</a></li>
+        <li @if (context == "Parameter")
+            { <text>class="active"</text>}><a href="@Url.Action("Manage", new { context = "Parameter" })">网站参数设置</a></li>
+        }
+    </ul>
+    </div>
+</div>
+
+<div id="maindiv">
+    @await Html.PartialAsync(context + "Partial", Model)
+</div>
+
+@section scripts{
+    <link href="~/Content/admin.min.css" rel="stylesheet" />
+}
+
+@section end_scripts{
+<script>
+    (function () {
+        if (window.history.replaceState) {
+            window.history.replaceState($('#maindiv').html(), document.title, document.location.href);
+        }
+        if (typeof window.onpopstate !== 'undefined') {
+            window.onpopstate = function (event) {
+                if (event.state) {
+                    $('#maindiv').html(event.state);
+                    $('#admin-menu li').removeClass('active');
+                    $('#admin-menu a[href="' + document.location.pathname + '"]').parent().addClass('active');
+                }
+            }
+        }
+        $('#admin-menu a').click(function (e) {
+            e.preventDefault();
+            var parent = $(this).parent();
+            if (parent.hasClass('active')) {
+                return;
+            }
+            $('#maindiv').html('<img src="//static.gmgard.com/Images/loading.gif"></img>');
+            $('#admin-menu li').removeClass('active');
+            parent.addClass('active');
+            var href = this.href
+            $.get(href, null, function (view) {
+                $('#maindiv').html(view);
+                if (history.pushState && view) {
+                    history.pushState(view, document.title, href);
+                }
+            });
+
+        });
+    })();
+    function displayerror(r) {
+        if (r.responseText) {
+            document.write(r.responseText);
+
+        }
+
+    }
+</script>
+}

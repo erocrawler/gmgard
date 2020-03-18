@@ -1,0 +1,118 @@
+﻿<div id="bg-modal" class="bg-modal hide">Background Model</div>
+<section class="bodybtn btn-toolbar">
+<div class="btn-group">
+    <button id="revealbg" class="btn btn-small" title="查看背景"><i class="icon-resize-vertical"></i></button>
+    <button class="btn btn-small" id="switchbg" title="选择背景" data-href="@Url.Action("Background", "Home")"><i class="icon-picture"></i></button>
+    <button class="btn btn-small" id="togglesnow" title="开关下雪"><i class="snowflake-icon"></i></button>
+    <button class="btn btn-small" id="togglehanabi" title="开关烟花"><i class="icon-asterisk"></i></button>
+    <button class="btn btn-small" id="togglepara" title="视差背景"><i class="icon-camera"></i></button>
+</div>
+<script>
+    (function (w) {
+        var hanabi, snow;
+        var bgqueue = document.body.getAttribute('data-bg').split(',');
+        window.switchbg = function (next) {
+            var $h = $('html'), $b = $('body'), cur = $h.data('class');
+            if (!next) {
+                next = bgqueue[(bgqueue.indexOf(cur) + 1) % bgqueue.length];
+            }
+            $h.removeClass(cur);
+            $b.removeClass(cur);
+            setCookie('bgtype', next);
+            $h.addClass(next);
+            $b.addClass(next);
+            $h.data('class', next);
+            $(window).trigger('initoffset');
+        }
+        $('#canvas').one('init-canvas', function (e, cb) {
+            $.getScript("/Scripts/canvas/min.js", cb);
+        });
+        $('.bodybtn').hover(function () { $(this).addClass('active'); }, function () { $(this).removeClass('active'); });
+        $('#revealbg').click(function () {
+            $(document.getElementById('login').firstElementChild).toggleClass('active');
+        });
+        $('#switchbg').one('click', function () {
+            $.get(this.getAttribute('data-href'), function (view) {
+                $('#bg-modal').html(view).fadeIn().find('.thumbnail').click(function () {
+                    window.switchbg($(this).data('name'));
+                    $('#bg-modal').fadeOut();
+                });
+                $('#switchbg, #bg-modal .close').click(function () {
+                    $('#bg-modal').fadeToggle();
+                });
+            });
+        });
+        $('#togglesnow').click(function () {
+            var e = $('#canvas');
+            if (localStorage['bganime'] == 'firework') {
+                hanabi.stop();
+                e.addClass('hide');
+            }
+            if (e.hasClass('hide')) {
+                e.removeClass('hide');
+                localStorage['bganime'] = 'snow';
+                if (snow) {
+                    snow.start();
+                } else if (window.SNOW) {
+                    snow = new SNOW();
+                } else {
+                    e.trigger('init-canvas', function () { snow = new SNOW(); });
+                }
+            }
+            else {
+                e.addClass('hide');
+                snow.stop();
+                localStorage['bganime'] = false;
+            }
+        });
+        $('#togglehanabi').click(function () {
+            var e = $('#canvas');
+            if (localStorage['bganime'] == 'snow') {
+                snow.stop();
+                e.addClass('hide');
+            }
+            if (e.hasClass('hide')) {
+                e.removeClass('hide');
+                localStorage['bganime'] = 'firework';
+                if (hanabi) {
+                    hanabi.start();
+                } else if (window.HANABI) {
+                    hanabi = new HANABI();
+                } else {
+                    e.trigger('init-canvas', function () { hanabi = new HANABI(); });
+                }
+            }
+            else {
+                e.addClass('hide');
+                hanabi.stop();
+                localStorage['bganime'] = false;
+            }
+        });
+        $('#togglepara').click(function () {
+            $('html,body').removeAttr('style').toggleClass('fixed-bg');
+            localStorage['parallax'] = localStorage['parallax'] == 'off' ? 'on' : 'off';
+            $(window).trigger('initoffset');
+        });
+        if (localStorage['parallax'] != 'off') {
+            $('html,body').addClass('fixed-bg');
+        }
+
+        window.localStorage.removeItem('bgsnow');
+        if (!localStorage['bganime'] || localStorage['bganime'] == 'hanabi') {
+            localStorage['bganime'] = 'false';
+        }
+
+        if (localStorage['bganime'] == 'false') {
+            $('#canvas').addClass('hide');
+        }
+
+        $(function () {
+            if (window.localStorage['bganime'] === 'firework') {
+                $('#canvas').trigger('init-canvas', function () { hanabi = new HANABI(); });
+            } else if (window.localStorage['bganime'] === 'snow') {
+                $('#canvas').trigger('init-canvas', function () { snow = new SNOW(); });
+            }
+        });
+    })(window);
+</script>
+</section>

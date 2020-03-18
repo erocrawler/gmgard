@@ -1,0 +1,52 @@
+<mat-card>
+    <mat-card-title>
+        邀请码管理
+    </mat-card-title>
+    <mat-button-toggle-group [(ngModel)]="searchMode">
+        <mat-button-toggle value="byUser">按用户</mat-button-toggle>
+        <mat-button-toggle value="byCode">按邀请码</mat-button-toggle>
+    </mat-button-toggle-group>
+    <br />
+    <br />
+    <div *ngIf="searchMode === 'byUser'">
+        <mat-form-field style="width: 100%">
+            <input matInput placeholder="用户名" [(ngModel)]="username" (keyup.enter)="search()">
+        </mat-form-field>
+    </div>
+    <div *ngIf="searchMode === 'byCode'">
+        <mat-form-field style="width: 100%">
+            <input matInput placeholder="邀请码" [(ngModel)]="code" (keyup.enter)="search()">
+        </mat-form-field>
+    </div>
+    <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="search()">查询</button>
+    </mat-card-actions>
+</mat-card>
+
+<br />
+
+<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+<mat-card *ngIf="result">
+    <mat-card-header>
+        <img mat-card-avatar [src]="result.user.avatar" />
+        <mat-card-title>
+            <button mat-button (click)="searchUser(result.user.userName)">{{result.user.userName}}</button>
+        </mat-card-title>
+        <mat-card-subtitle *ngIf="result.invitedBy">
+            邀请人：<button mat-button (click)="searchUser(result.invitedBy.userName)">{{result.invitedBy.userName}}</button>
+        </mat-card-subtitle>
+    </mat-card-header>
+    <mat-list *ngIf="result.codes && result.codes.length > 0; else emptyCode">
+        <mat-list-item *ngFor="let code of result.codes">
+            {{ code.code }}
+            <span *ngIf="code.usedBy; else deleteBlock">
+                &nbsp;
+                <button mat-button color="primary" (click)="searchUser(code.usedBy.userName)">{{code.usedBy.userName}}</button>
+            </span>
+            <ng-template #deleteBlock>
+                <button mat-icon-button (click)="confirmDelete(code.code)"><mat-icon>delete</mat-icon></button>
+            </ng-template>
+        </mat-list-item>
+    </mat-list>
+    <ng-template #emptyCode><mat-icon>info</mat-icon>无邀请码</ng-template>
+</mat-card>

@@ -1,0 +1,23 @@
+<mat-card *ngIf="pool" [innerHtml]="pool.poolDescription"></mat-card>
+<mat-card>
+  <p>
+    <button [disabled]="loadActive" color="primary" mat-raised-button (click)="confirm(1)">召唤1次</button> &nbsp;
+    <button [disabled]="loadActive" color="primary" mat-raised-button (click)="confirm(10)">召唤10次</button>
+  </p>
+  <mat-progress-bar *ngIf="loadActive; else settingsBlock" [mode]="progressMode" [value]="progressValue" ></mat-progress-bar>
+  <ng-template #settingsBlock>
+    <h4>召唤设置:</h4>
+    <p style="line-height:36px">
+      <mat-slide-toggle [disabled]="!supportAnimation" [(ngModel)]="showAnimation">召唤动画</mat-slide-toggle>
+      <mat-button-toggle-group *ngIf="showAnimation" [(ngModel)]="quality">
+        <mat-button-toggle value="low">
+          低清(36MB/图像序列)
+        </mat-button-toggle>
+        <mat-button-toggle value="high">
+          高清(22MB/MP4视频)
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </p>
+    <p *ngIf="!supportVideoPhone"><mat-icon>info</mat-icon>注：手机可能不支持播放mp4视频，使用手机时建议关闭动画，或使用兼容性高的图像序列。</p>
+  </ng-template>
+</mat-card>

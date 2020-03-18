@@ -1,0 +1,28 @@
+﻿<mat-card>
+  <p>
+    欢迎参加审核组测试！本测试用于开放用户审核的同时保证审核质量。题目内容均为审核工作中的常见问题。本测试答题时间不限，完成任意一组测试即可加入审核组。
+  </p>
+</mat-card>
+<mat-card *ngIf="!allExams; else examBlock" fxLayout="row" fxLayoutAlign="center">
+  <mat-spinner></mat-spinner>
+</mat-card>
+<ng-template #examBlock>
+  <mat-card>
+    <mat-nav-list>
+      <a mat-list-item *ngFor="let exam of allExams" [routerLink]="['/audit-exam', 'do', { version: exam.examVersion }]">
+        <div style="width:100%" fxLayout="row" fxLayoutAlign="space-between center">
+          <span>试题版本：{{exam.examVersion}}</span>
+          <span *ngIf="exam.isSubmitted; else draftBlock">
+            提交时间：{{exam.submitTime | date}}
+            得分：{{exam.score}}
+            <mat-icon>{{ exam.hasPassed ? 'done' : 'clear' }}</mat-icon>
+            {{ exam.hasPassed ? '通过' : '未通过' }}
+          </span>
+          <ng-template #draftBlock>
+            <span *ngIf="exam.submitTime">草稿保存于：{{exam.submitTime | date}}</span>
+          </ng-template>
+        </div>
+      </a>
+    </mat-nav-list>
+  </mat-card>
+</ng-template>

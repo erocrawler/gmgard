@@ -1,0 +1,23 @@
+﻿<form asp-action="AddReply" asp-controller="Reply" id="AddReplyForm" method="post">
+    <textarea id="addreplycontent" name="addreplycontent" rows="4"></textarea>
+    <br />
+    @await Html.PartialAsync("_Captcha")
+    <button id="SubmitReply" onclick="gm.submitReply(this);return false;" data-loading-text="提交中..." class="btn btn-primary">提交</button>
+    <input type="hidden" name="itemid" value="@ViewData["itemid"]" />
+    <input type="hidden" name="idtype" value="@ViewData["itemtype"]" />
+    <img id="loading" src="//static.gmgard.com/Images/loading2.gif" style="display:none;" />
+    <span id="addreplyerr" class="field-validation-error" data-valmsg-for="addreplycontent" data-valmsg-replace="true"></span>
+</form>
+@{
+    var random = new Random().Next(322);
+    var position = "right -90px top 100% no-repeat";
+    if (random == 190 || random == 191)
+    {
+        position = "right -39px top 100% no-repeat";
+    }
+}
+<style>
+    iframe.cke_wysiwyg_frame {
+        background: url(//static.gmgard.com/Images/kancolle/kancolle_@(random.ToString().PadLeft(3,'0')).png) @position;
+    }
+</style>

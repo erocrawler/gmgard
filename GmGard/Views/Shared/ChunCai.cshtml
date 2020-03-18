@@ -1,0 +1,75 @@
+﻿@inject WidgetUtil widgetUtil
+<link href="~/Content/chuncai.min.css" rel="stylesheet" />
+
+<div id="smchuncai" onfocus="this.blur();" style="color: rgb(98, 98, 98); z-index: 999; left: 467px; top: 281px; width: 60px; height: 77px; display:none">
+    <div id="chuncaiface" style="width: 60px; height: 77px;"></div>
+    <div id="dialog_chat" class="rectangle-speech-border">
+        <div id="dialog_chat_contents">
+            <div id="dialog_chat_loading" style="display: none;"></div>
+            <div id="tempsaying" style="display: block;">蓝蓝路</div>
+            <div id="showchuncaimenu" style="display: none;">
+                <ul>
+                    <li class="wcc_mlist" id="shownotice">显示公告</li>
+                    <li class="wcc_mlist" id="showranking">用户排行</li>
+                    <li class="wcc_mlist" id="switchbackground">切换背景</li>
+                    <li class="wcc_mlist" id="foods">吃 零 食</li>
+                    <li class="wcc_mlist" id="blogmanage">@if (User.Identity.IsAuthenticated)
+                                                          { <text>个人设置</text>}
+                                                          else
+                                                          {<text>登&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;录</text>}</li>
+                    <li class="wcc_mlist" id="chatTochuncai">聊&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;天</li>
+                    <li class="wcc_mlist" id="lifetimechuncai">生存时间</li>
+                    <li class="wcc_mlist" id="randomgmchuncai">试试手气</li>
+                    <li class="wcc_mlist" id="closechuncai">关闭馆长</li>
+                </ul>
+            </div>
+            <div>
+                <ul id="chuncaisaying" style="display: none;"></ul>
+            </div>
+            <div id="getmenu" style="display: block;">|&nbsp;&nbsp;菜单&nbsp;&nbsp;|</div>
+        </div>
+    </div>
+    <div id="addinput" style="display: none;">
+        <div id="inp_l">
+            <select id="talk">
+                <option value=""></option>
+            </select>
+        </div>
+        <div id="inp_r">X </div>
+    </div>
+</div>
+<div id="callchuncai">召唤馆长</div>
+<script>
+    (function(){
+        if (!window.chuncai) return;
+        var img = new Image();
+        img.src = chuncai.imgs[0];
+        @if (ViewContext.HttpContext.Request.Cookies["imgbackup"] == null) {
+        <text>
+        img.onerror = function () {
+            if (navigator.cookieEnabled) {
+                setCookie('imgbackup', 'tu.gmgard.com');
+                window.location.reload();
+            }
+        }
+        </text>
+        }
+        img.onload = function () {
+            $('#chuncaiface').css("background","url("+chuncai.imgs[0]+") no-repeat scroll 50% 0% transparent;");
+            chuncai.imagewidth = img.width;
+            chuncai.imageheight = img.height;
+            chuncai.loadChuncai();
+        }
+        var imgs = [img];
+        for(var i =1;i<chuncai.imgs.length; i++) {
+            var m = new Image();
+            m.src = chuncai.imgs[i];
+            imgs.push(m);
+        }
+        chuncai.data = @Html.Raw(widgetUtil.GetData()) ;
+        @if (TempData["defaultccs"] != null)
+        {
+            <text>chuncai.data.defaultccs = "@TempData["defaultccs"]" ;</text>
+        }
+    })()
+</script>

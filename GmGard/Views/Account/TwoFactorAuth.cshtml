@@ -1,0 +1,47 @@
+﻿@model Login2FaModel
+@{
+    ViewData["Title"] = "两步验证";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+<div class="alert alert-info">
+    您的登陆受到两步验证保护。请输入您的验证码。
+</div>
+<div class="row">
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" class="form-horizontal">
+        <input asp-for="RememberMe" type="hidden" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="control-group">
+            <label asp-for="TwoFactorCode" class="control-label"></label>
+            <div class="controls">
+                <input asp-for="TwoFactorCode" class="form-control" autocomplete="off" />
+                <span asp-validation-for="TwoFactorCode" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="controls">
+                <label asp-for="RememberMachine" class="checkbox" title="本设备登录时跳过两步验证">
+                    <input asp-for="RememberMachine" />
+                    @Html.DisplayNameFor(m => m.RememberMachine)
+                </label>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="controls"><button type="submit" class="btn btn-default">登陆</button></div>
+        </div>
+    </form>
+</div>
+<p>
+    没有两步验证所需的设备？您可以尝试
+    <a asp-action="RecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">使用应急密码登陆</a>。
+</p>
+<p><small>当前服务器时间：@DateTimeOffset.Now</small></p>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#RememberMachine').tooltip({ placement: 'right', trigger: 'focus' });
+        });
+    </script>
+}

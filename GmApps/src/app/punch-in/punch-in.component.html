@@ -1,0 +1,18 @@
+<mat-card>
+    <mat-card-header *ngIf="user">
+        <img fxFlex="40px" mat-card-avatar [src]="user?.avatar" />
+        <mat-card-title>
+            {{ user?.nickName }}
+        </mat-card-title>
+        <mat-card-subtitle>连续签到{{consecutiveSign}}天</mat-card-subtitle>
+    </mat-card-header>
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <mat-calendar [minDate]="minDate"
+                  [maxDate]="maxDate"
+                  [dateClass]="dateClasses"
+                  (selectedChange)="onSelect($event)">
+    </mat-calendar>
+    <p *ngIf="activeDate?.get('month') === 0 && legacySign">
+        1月25日前的连续签到数：{{legacySign}}
+    </p>
+</mat-card>

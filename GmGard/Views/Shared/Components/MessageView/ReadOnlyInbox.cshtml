@@ -1,0 +1,81 @@
+﻿@model PagedList.IPagedList<Message>
+<table style="width:100%;table-layout:fixed;">
+        <colgroup>
+            <col style="width:20%;overflow:hidden;" />
+            <col style="width:40%;overflow:hidden;" />
+            <col style="width:40%;overflow:hidden;" />
+        </colgroup>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="3">没有消息。</td></tr>
+            }
+            else
+            {
+                    foreach (var Item in Model)
+                    {
+                <tr class="msglist-item" onclick="getmsg(@Item.MsgId);">
+
+                    <td>
+                    @Item.Sender
+                    </td>
+                    <td>
+                    <p id="msg@(Item.MsgId)">@(Item.MsgTitle == null ? "无标题" : (Item.MsgTitle.Length > 0 ? Item.MsgTitle : "无标题"))</p>
+                    </td>
+                    <td>
+                    <div class="msgtime">
+                        发送日期： @Item.MsgDate &nbsp;&nbsp;
+                    </div>
+                    </td>
+                </tr>
+                    }
+
+            }
+        </tbody>
+    </table>
+
+@if (Model.HasNextPage || Model.HasPreviousPage)
+{
+    ViewBag.PostUrl = Url.Action("ShowAdminInbox", "Message");
+    ViewBag.DisplaySelector = "#replydiv";
+    await Html.RenderPartialAsync("_AjaxPager");
+}
+
+<div id="popupdiv" class="popupdiv pseudos modal hide fade" role="dialog" style="display:none;">
+        <div class="modal-header">
+            <a data-dismiss="modal" class="close icon-remove-sign"></a>
+            <h3 id="popuptitle"></h3>
+            <h4 id="popuptime" style="float:right;white-space:nowrap"></h4>
+            <h4 id="popupsubtitle"></h4>
+            <form asp-action="MsgAction" asp-controller="Message" method="post" style="margin:0;text-align:right;">
+                <input type="hidden" id="msgid" name="msgid" />
+                <button class="btn btn-small" type="submit" id="ReplyButton" name="act" value="reply">回复</button>
+                <button class="btn btn-small" type="submit" id="ForwardButton" name="act" value="forward">转发</button>
+            </form>
+        </div>
+
+        <div id="popupcontent" class="modal-body"></div>
+    </div>
+
+<script>
+    function getmsg(id) {
+        $.post('@Url.Action("GetAdminMsg","Message")', { id: id }, showMsg);
+    }
+    function showMsg(message) {
+        debugmessage = message;
+        var hastitle = false;
+        if (message.MsgTitle && message.MsgTitle.length > 0)
+            hastitle = true;
+        $("#popuptitle").text(hastitle ? message.MsgTitle : "无标题");
+        $("#popupsubtitle").html("发件人：<a href='/User/" + message.Sender + "'>" + message.Sender + "</a>" + "  收件人：" + message.Recipient);
+        var date = new Date(message.MsgDate);
+        $("#popuptime").text(date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日" + ("00" + date.getHours()).slice(-2) + ':' + ("00" + date.getMinutes()).slice(-2) + ':' + ("00" + date.getSeconds()).slice(-2));
+        $("#popupcontent").html(message.MsgContent.replace(/\n/g, "<br />"));
+        $("#msgid").val(message.MsgId);
+        $('#popupdiv').modal("show");
+    }
+    $(function () {
+        $('body>#popupdiv').remove();
+        $('#popupdiv').appendTo('body');
+    });
+</script>

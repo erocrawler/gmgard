@@ -1,0 +1,17 @@
+﻿<mat-card *ngIf="!user; else userBlock" fxLayout="row" fxLayoutAlign="center">
+  <mat-spinner></mat-spinner>
+</mat-card>
+<ng-template #userBlock>
+  <mat-card fxLayout="row">
+    <img fxFlex="40px" mat-card-avatar [src]="user.avatar" />
+    <span class="mat-card-header-text" fxFlex>
+      {{ user.nickName }}
+      <button mat-raised-button color="accent" [routerLink]="['ask']">提问</button>
+      <button mat-raised-button>我的问题</button>
+      <button mat-raised-button>我的回答</button>
+    </span>
+  </mat-card>
+</ng-template>
+<br />
+  
+<router-outlet></router-outlet>

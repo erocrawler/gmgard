@@ -1,0 +1,31 @@
+<mat-card>
+  <mat-card-title>卡牌一览</mat-card-title>
+  <mat-spinner *ngIf="!stats; else show"></mat-spinner>
+  <ng-template #show>
+      <mat-expansion-panel>
+          <mat-expansion-panel-header>
+              <mat-panel-title>
+                  当前收集情况：
+              </mat-panel-title>
+              <mat-panel-description>
+                  {{stats.userCards.length}} / {{stats.totalCards}} 种
+              </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ul>
+              <li *ngFor="let progress of stats.progresses">{{progress}}</li>
+          </ul>
+      </mat-expansion-panel>
+      <br />
+      <mat-grid-list cols="5" rowHeight="1:1">
+          <mat-grid-tile *ngFor="let item of pagedCards">
+              <div (click)="showDetails(item.name)" class="card-display" [style.background-image]="cardUrl(item.name)">
+              </div>
+          </mat-grid-tile>
+      </mat-grid-list>
+      <mat-paginator [length]="stats.userCards.length" [pageSize]="20"
+                     [pageSizeOptions]="[20, 50, 100]" (page)="updatePage($event)"></mat-paginator>
+      <mat-card-actions>
+          <a mat-button [routerLink]="['/gacha']">返回</a>
+      </mat-card-actions>
+  </ng-template>
+</mat-card>

@@ -1,0 +1,294 @@
+﻿@model PagedList.IPagedList<Blog>
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@{
+    ViewBag.Title = "审核（管理员）";
+    bool showunapprove = (bool)ViewBag.showunapprove;
+    var nicknames = blogUtil.GetNickNames(Model.Select(m => m.Author));
+}
+
+<h2>审核（管理员）</h2>
+@if (showunapprove)
+{
+    @Html.ActionLink("显示待审核项目", "Admin", new object())
+}
+else
+{
+    <div class="alert alert-info">
+        当前待定投票数：@ViewBag.CurrentVoteCount 总投票数：@ViewBag.TotalVoteCount 
+        平均正确率：@string.Format("{0:P2}", ViewBag.AverageAccuracy ?? 0)
+        @Html.ActionLink("显示不通过项目", "Admin", new { showunapprove = true })
+    </div>
+}
+<hr />
+<div id="auditdiv" style="padding-bottom:200px">
+    @if (Model.Count == 0)
+    {
+        <table>
+            <tr>
+                <td>没有未审核的项目。</td>
+            </tr>
+        </table>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <colgroup>
+                <col style="width:15%" />
+                <col style="width:20%" />
+                <col style="width:15%" />
+                <col style="width:14%" />
+                <col style="width:8%" />
+                <col style="width:10%" />
+                <col style="width:18%" />
+            </colgroup>
+            <thead>
+                <tr style="background-color:#DCDCDC;color: #000000;">
+                    <th>标题</th>
+                    <th>内容</th>
+                    <th>附图</th>
+                    <th>时间</th>
+                    <th>类别</th>
+                    <th>作者</th>
+                    <th>
+                        <span class="singleactions">操作</span>
+                        <span class="multiactions hide"><input type="checkbox" id="checkall" /> &nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        <button id="multiact" class="btn btn-mini" data-toggle="button"><i class="icon-check"></i>批量</button>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Blog b in Model)
+                {
+                    <tr id="row_@b.BlogID">
+                        <td>
+                            <a href='@Url.Action("Details", "Blog", new { id = b.BlogID })' id="title_@b.BlogID">@b.BlogTitle</a>
+                            @if(b.isHarmony)
+                            {
+                                <span style="padding: 5px;" class="label label-danger"><i class="icon-white icon-exclamation-sign"></i>表站可见</span>
+                            }
+                        </td>
+                        <td>
+                            <p> @BlogHelper.getFirstLine(b.Content, 50, true)</p>
+                        </td>
+                        <td>
+                            @{string path = BlogHelper.firstImgPath(b);}
+                            <a class="imghover" data-img-href href='@path'> <p>@b.ImagePath</p> </a>
+                        </td>
+                        <td>
+                            <p>@b.BlogDate</p>
+                        </td>
+                        <td>
+                            <p class="label label-inverse">@catUtil.categoryInfo(catUtil.GetAncestor(b.CategoryID))</p>
+                            <p class="label label-info">@catUtil.categoryInfo(b.CategoryID)</p>
+                        </td>
+                        <td>
+                            <p><a asp-action="UserInfo" asp-controller="Home" asp-route-name="@b.Author">@nicknames[b.Author]</a></p>
+                        </td>
+                        <td class="hover">
+                            <div class="singleactions">
+                                <button title="通过" data-id="@b.BlogID" class="approve-btn btn btn-primary btn-small"><i class="icon-ok icon-white"></i></button>
+                                <div class="btn-group">
+                                    <button title="不通过" data-id="@b.BlogID" class="deny-btn btn dropdown-toggle btn-small"><i class="icon-remove"></i></button>
+                                    <div id="dialog_@b.BlogID" class="dropdown-menu"></div>
+                                </div>
+                                <div class="btn-group">
+                                    <button data-id="@b.BlogID" class="stats-btn btn dropdown-toggle btn-small"><i class="icon-question-sign"></i></button>
+                                    <div class="dropdown-menu stats-menu">
+                                        <div class="popover-title">
+                                            <span class="close stats-close">×</span> 投票记录
+                                        </div>
+                                        <div class="popover-content">
+                                            <div class="stats-content"><img src="~/Images/loading2.gif" alt="loading" /></div>
+                                        </div>
+                                    </div>
+                                </div><br />
+                                <label class="checkbox small hovershow">@Html.CheckBox("updatetime", b.Rating > 0, new { id="", @class = "updatetime-check" }) 不更新投稿时间</label>
+                            </div>
+                            <div class="multiactions hide">
+                                <input type="checkbox" name="multiblogids" value="@b.BlogID" />
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div id="multibuttons" style="float:right;display:none">
+            <button id="multipass" class="btn btn-primary btn-small"><i class="icon-ok icon-white"></i>通过</button>
+            <button id="multifail" class="btn btn-small"><i class="icon-remove"></i>不通过</button>
+            <button id="multidel" class="btn btn-inverse btn-small"><i class="icon-white icon-trash"></i>删除</button>
+            <label class="checkbox inline"><input type="checkbox" name="sendmsg" value="true" checked />发送通知</label>
+        </div>
+        if (Model.HasNextPage || Model.HasPreviousPage)
+        {
+            if (showunapprove)
+            {
+                ViewBag.PagerRouteValues = new { showunapprove = true };
+            }
+            await Html.RenderPartialAsync("_PagerPartial", Model);
+        }
+    }
+</div>
+
+@section scripts {
+<style>
+    #auditdiv .dropdown-menu {
+         left:initial;
+         right:0;
+         width:300px;
+         padding: 0;
+    }
+    #auditdiv .btn-group {
+        margin-left: 0;
+    }
+</style>    
+}
+
+@section end_scripts{
+    @if (Model.Count > 0)
+    {
+        <form hidden id="token" asp-antiforgery="true"></form>
+        <form asp-action="UnApprove" asp-controller="Audit" asp-antiforgery="false" method="post" id="DeleteForm" style="display:none;">
+            <div class="popover-title">
+                <h4>审批通知（投稿地址自动附在最后）</h4>
+                <b class="reatitle">选择原因:</b>
+                <select id="unprovereason" class="unprovereason" name="原因">
+                    <option value="请参照投稿须知中的要求修改标题">标题</option>
+                    <option value="标题中标出资源数，正文中列出资源列表或将资源列表截图上传">合集</option>
+                    <option value="预览图请打码">预览图</option>
+                    <option value="标题请用原名而不是译名或罗马音">原名</option>
+                    <option value="撞了，投稿前请先搜站内">撞车</option>
+                    <option value="同人作请标RJ号而不是发售日期">RJ号</option>
+                    <option value="商业作请标发售日期而不是RJ号">商业作</option>
+                    <option value="请参照生存手册中的内容补至少一个有效标签">标签</option>
+                    <option value="正文中请补资源内容的简介">简介</option>
+                    <option value="投稿前请先详细阅读站规内的投稿须知">须知</option>
+                    <option value="正文中请说明纯爱/凌辱/NTR/乱交或其它属性">属性</option>
+                </select>
+                <input type="button" class="addreason btn btn-small" value="插入" />
+            </div>
+            <div class="popover-content">
+                <textarea name="MsgContent" id="delMsgContent" class="delMsgContent" style="width:95%;height:160px;resize:none;"></textarea>
+                <br />
+                <input type="submit" value="确认" class="btn btn-inverse" /> <label class="checkbox inline"><input type="checkbox" name="sendmsg" value="true" checked />发送通知</label>
+                <label class="checkbox inline"><input type="checkbox" name="delete" value="true" />立即删除</label>
+                <input type="hidden" name="blogid" id="delblogid" />
+            </div>
+        </form>
+        <form asp-action="Pass" asp-controller="Audit" asp-antiforgery="false" method="post" id="PassForm" style="display:none;">
+            <input type="hidden" name="blogid" id="passblogid" />
+            <input type="hidden" name="updatetime" value="true" id="updatetime" />
+        </form>
+        <form asp-action="MultiAudit" asp-controller="Audit" asp-antiforgery="false" method="post" id="MultiAudit" style="display:none;">
+            <input type="hidden" name="blogids" id="multiblogids" />
+            <input type="hidden" name="sendmsg" value="true" />
+            <input type="hidden" name="action" />
+        </form>
+    }
+    <script src="~/Scripts/lib/jquery.imgpreview.min.js" cdn></script>
+    <script>
+        (function () {
+            var pager = new Pager({
+                pager_init: function () {
+                    var delformpos = 0, dialog = null;
+                    $('#checkall').click(function () {
+                        $('input[name="multiblogids"]').prop("checked", $(this).prop("checked"));
+                    });
+                    $('#multiact').click(function () {
+                        $('.singleactions').toggle();
+                        $('.multiactions').toggle();
+                        $('#multibuttons').toggle();
+                    });
+                    $('#multidel, #multipass, #multifail').click(function () {
+                        if (this.id == 'multidel' && !window.confirm('确认删除?')) {
+                            return false;
+                        }
+                        var par = $(this).parent();
+                        var form = $('#MultiAudit');
+                        var ids = [];
+                        form.find('input[name="sendmsg"]').val(par.find('input[name="sendmsg"]').val());
+                        $('input[name="multiblogids"]:checked').each(function (i, e) {
+                            ids.push($(e).val());
+                        });
+                        $('#multiblogids').val(ids.join());
+                        form.find('input[name="action"]').val(this.id);
+                        form.submit();
+                    });
+                    $('.approve-btn').click(function () {
+                        $this = $(this);
+                        $('#passblogid').val($this.data('id'));
+                        $('#updatetime').val(!$this.closest('.singleactions').find('.updatetime-check').prop('checked'));
+                        $('#PassForm').submit();
+                    });
+                    $('.deny-btn').click(function () {
+                        var form = $('#DeleteForm').clone(true), $this = $(this), pos = $(this).data('id'), parent = $this.parent();
+                        if (delformpos != pos) {
+                            if (dialog) {
+                                dialog.parent().removeClass('open');
+                                dialog.hide();
+                            }
+                            dialog = $('#dialog_' + pos);
+                            var msgtitle = $('#title_' + pos).text();
+                            $('#delMsgContent', form).val("您的投稿 " + msgtitle + " 未通过审核。\n原因：");
+                            $('#delblogid', form).val(pos);
+                            delformpos = pos;
+                            form.appendTo(dialog).show();
+                        }
+                        if (parent.hasClass('open')) {
+                            parent.removeClass('open');
+                            dialog.hide();
+                        }
+                        else {
+                            parent.addClass('open');
+                            dialog.show();
+                        }
+                    });
+                    $('.stats-btn').click(function () {
+                        var $t = $(this), id = $t.data('id');
+                        $t.siblings('.stats-menu').hide();
+                        if ($t.hasClass('active')) {
+                            $t.removeClass('active');
+                            return;
+                        }
+                        $t.addClass('active');
+                        var $s = $t.siblings('.stats-menu').show();
+                        $.post('@Url.Action("Stats")', { id: id, __RequestVerificationToken: $token.val() }, function (ret) {
+                            $s.find('.stats-content').html(ret);
+                        })
+                    });
+                    $('.stats-close').click(function () {
+                        $(this).closest('.btn-group').find('.stats-menu').hide().end().find('.stats-btn').removeClass('active');
+                    });
+                    try {
+                        $('.imghover').imgPreview({
+                            imgCSS: {
+                                // Limit preview size:
+                                'max-width': 600,
+                                border: "2px solid"
+                            },
+                            containerLoadingClass: 'imgloading'
+                        });
+                    } catch (e) { console.log(e, e.stack) }
+                },
+                destination: '#auditdiv',
+                source: '#auditdiv'
+            });
+
+            var $token = $('#token input').detach();
+            $('.addreason').click(function () {
+                var orirea = $(".delMsgContent:visible").val();
+                var addrea = $(".unprovereason:visible").val();
+                $(".delMsgContent:visible").val(orirea + addrea);
+            });
+            $('#PassForm, #DeleteForm, #MultiAudit').submit(function (e) {
+                var $form = $(this);
+                e.preventDefault();
+                $token.appendTo($form);
+                $.post($form.attr('action'), $form.serialize(), function () {
+                    pager.refreshPage();
+                    $.globalMessenger().post('操作成功');
+                });
+            });
+        })()
+    </script>
+}

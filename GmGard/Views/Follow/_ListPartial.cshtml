@@ -1,0 +1,45 @@
+﻿@model GmGard.Models.Blog
+@inject BlogUtil blogUtil
+@inject CategoryUtil catUtil
+@inject IVisitCounter visitCounter
+@{
+    var href = Url.Action("Details", "Blog", new { id = Model.BlogID });
+}
+<li class="feed-item">
+    <div class="feed-header">
+        @foreach (var parentID in catUtil.GetParentCategories(Model.CategoryID))
+        {
+            <span class="badge badge-info" >@catUtil.categoryInfo(parentID)</span><span>&nbsp;</span><i class="icon icon-chevron-right icon-fix"></i>
+        }
+        <span class="badge badge-info">
+            @catUtil.categoryInfo(Model.CategoryID)
+        </span>
+        <a target="_blank" href="@href">
+            <strong>
+                @Model.BlogTitle
+            </strong>
+        </a>
+        <a target="_blank" title="得分" class="label label-rating" style="float:right;" href="@Url.Action("Details","Blog",new {id = Model.BlogID})#rating"><i class="icon-certificate icon-white icon-fix"></i>@(Model.Rating ?? 0)</a>
+    </div>
+    <div class="feed-body">
+        <a target="_blank" href="@href">
+            <span class="img">
+                <img src="@BlogHelper.firstImgPath(Model)" alt="@Model.BlogTitle" />
+            </span>
+        </a>
+        <p> @blogUtil.GetFirstLine(Model, true)</p>
+    </div>
+    <div class="feed-footer">
+        <div class="line-one">
+            <time class="float-right">@Model.BlogDate</time>
+            <i class="icon-user"></i><a target="_blank" href="@Url.Action("UserInfo", "Home", new { name = Model.Author })">
+    <strong>@blogUtil.GetNickName(Model.Author)</strong>
+</a>
+        </div>
+        <div class="line-two">
+            <span title="评论"><i class="icon-comment icon-fix"></i>&nbsp;@blogUtil.GetPostCount(Model)</span> |
+            <span title="浏览"><i class="icon-eye-open icon-fix"></i> @visitCounter.GetBlogVisit(Model.BlogID)</span>
+                <span ><a target="_blank" class="float-right btn btn-info btn-mini" style="line-height:15px" href="@href">详细 &raquo;</a></span>
+</div>
+    </div>
+</li>

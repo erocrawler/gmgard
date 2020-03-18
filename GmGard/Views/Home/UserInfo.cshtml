@@ -1,0 +1,128 @@
+﻿@model UserInfoModel
+@inject BlogUtil blogUtil
+@inject ExpUtil expUtil
+@inject Microsoft.AspNetCore.Identity.UserManager<UserProfile> userManager
+@{
+    var profile = Model.Profile;
+    ViewBag.Title = profile.UserName;
+    string name = profile.UserName;
+    string nickname = blogUtil.GetNickName(profile.UserName);
+    string leveltitle = expUtil.getLevelTitle(profile.Level);
+    int points = profile.Points;
+    int exp = profile.Experience;
+    var nameObj = new { name = name };
+    string view = Model.UserView;
+    bool IsSelf = User.Identity.IsAuthenticated && User.Identity.Name.Equals(name, StringComparison.OrdinalIgnoreCase);
+}
+
+@section featured{
+    <div class="user-bg user-cover-bg @Model.UserBackground">
+        <div class="user-avatar">
+            <div class="avatar">
+                <img alt="@name" src="@Url.Action("Show", "Avatar", nameObj)" />
+            </div>
+        </div>
+        <div class="user-numbers-div">
+            <ul class="user-numbers">
+                <li><a href="@Url.Action("Favorite", "Home", nameObj)"><span><i class="icon-star"></i></span><h4 class="fwh1">收藏</h4><p class="fwp1">@Model.UserFavorites</p></a></li>
+                <li><a href="@Url.Action("List", "Follow", nameObj)"><span><i class="icon-heart"></i></span><h4 class="fwh1">关注</h4><p class="fwp1">@Model.UserFollows</p></a></li>
+                <li><a href="@Url.Action("List", "Follow", new { name = profile.UserName, view = "fans" })"><span><i class="icon-user"></i></span><h4 class="fwh1">粉丝</h4><p class="fwp1">@Model.UserFans</p></a></li>
+            </ul>
+            @if (Model.UserRoles.Contains("Auditor") && !(Model.UserRoles.Contains("Administrator") || Model.UserRoles.Contains("Moderator")) && profile.auditor != null)
+            {
+                <div style="margin-left:10px">
+                    <p class="label label-info">参与审核数：@profile.auditor.AuditCount 个</p>
+                    <p class="label label-info">审核正确率：@string.Format("{0:P2}", profile.auditor.Accuracy)</p>
+                </div>
+            }
+            @if (User.Identity.IsAuthenticated && User.Identity.Name != name)
+            {
+                await Html.RenderPartialAsync("_FollowBtn", profile.UserName);
+                <a title="给他发消息" href="@Url.Action("Msg", nameObj)" class="btn btn-primary btn-small"><i class="icon-envelope icon-white"></i> 发消息</a>
+            }
+        </div>
+        <h2>@nickname</h2>
+        <br />
+        <div class="user-stats">
+            <ul>
+                <li>UID: <span class="badge badge-inverse">@profile.Id</span></li>
+                <li>用户名：@name</li>
+                <li>注册于：<span>@profile.CreateDate</span></li>
+                <li>上次登录时间：<span>@profile.LastLoginDate</span></li>
+                @if (blogUtil.CheckAdmin() && !Model.UserRoles.Contains("Administrator"))
+                {
+                    <li>上次登录地址：<span>@profile.LastLoginIP</span></li>
+                }
+                <li>投稿：<span class="label label-info">@(Model.UserBlogs)件</span></li>
+                <li>评论：<span class="label label-info">@(Model.UserPosts)条</span></li>
+                <li>
+                    等级：@if (Model.UserRoles.Contains("Administrator"))
+                    {<span class="label label-important">LV ?? 绅士庭长</span>}
+                    else
+                    {<span class="label label-warning">LV @profile.Level @leveltitle</span>}
+                    <a target="_blank" id="aboutlvl" title="关于等级" href="@Url.Action("About", "Home")#aboutlevel" class="icon-question-sign"></a>
+                </li>
+                <li><i title="绅士度" class="ico-shinshi"></i>：<span class="label label-inverse">@(exp)点</span></li>
+                <li><i title="棒棒糖" class="ico-lolly"></i>：<span class="label label-success">@(points)根</span></li>
+            </ul>
+        </div>
+        <br />
+        @if (profile.UserComment != null)
+        {
+            <div class="user-comment">
+                <p style="margin:1em;">@profile.UserComment</p>
+            </div>
+        }
+        <div class="clear-fix"></div>
+    </div>
+
+}
+<hr />
+<ul class="nav nav-pills" id="user-menu">
+    <li @if (view == "UserBlog") { <text> class="active" </text> }>
+        <a href="@Url.Action("UserInfo", new { name = name, view = "UserBlog" })">@(nickname)的投稿</a>
+    </li>
+    @if (IsSelf || blogUtil.CheckAdmin(true))
+    {
+        <li @if (view == "UnApprove") { <text> class="active" </text> }>
+            <a href="@Url.Action("UserInfo", new { name = name, view = "UnApprove" })">未审核</a>
+        </li>
+    }
+    <li @if (view == "UserReply") { <text> class="active" </text> }>
+        <a href="@Url.Action("UserInfo", new { name = name, view = "UserReply" })">@(nickname)的评论</a>
+    </li>
+</ul>
+@if (view == "UserBlog")
+{
+    SearchBlogResult result = Model.SearchResult;
+    SearchModel search = result?.SearchModel ?? new SearchModel();
+    await Html.RenderPartialAsync("_ListOptionsPartial", search);
+    if (IsSelf)
+    {
+        <div style="margin-top:10px;display:inline-block">
+            <button class="btn" id="patchbtn" data-href="@Url.Action("Patch", "Blog", nameObj)"><i class="icon-edit"></i>补档模式</button>
+            <span id="patchdiv" class="hide">
+                <img src="//static.gmgard.com/Images/loading2.gif" />
+            </span>
+            <script>
+                $('#patchbtn').one('click', function () {
+                    $("#patchdiv").show().load(this.getAttribute("data-href"), $.noop);
+                });
+            </script>
+        </div>
+    }
+    <div class="clear-fix"></div>
+    await Html.RenderPartialAsync("SearchPartial", search);
+    <hr />
+}
+
+@await Html.PartialAsync(view + "Partial", Model.SubModel)
+
+@section scripts {
+    <link href="~/Content/userinfo.css" rel="stylesheet" asp-append-version="true" />
+    <bg-user />
+}
+
+@section end_scripts{
+    @await Html.PartialAsync("_ListScripts")
+}

@@ -1,0 +1,122 @@
+﻿@model AdminViewModel
+
+@{ 
+    Func<AdvertisementType, AdViewModel> makeModel = (t) =>
+        new AdViewModel { Type = t, Ads = Model.AllAds.Where(a => a.AdType == t) };
+}
+
+<h2>广告管理</h2>
+
+<h2>侧边栏广告管理</h2>
+<p>每次访问将对于每一个侧边栏位置随机选取一个显示。</p>
+@await Html.PartialAsync("_SidebarManage", makeModel(AdvertisementType.Sidebar))
+<h2>侧边栏轮播广告</h2>
+<p>每次访问将随机选取一组轮播显示。</p>
+<h3>侧边栏（上）</h3>
+@await Html.PartialAsync("_SidebarBannerManage", makeModel(AdvertisementType.SidebarBanner1))
+<h3>侧边栏（下）</h3>
+@await Html.PartialAsync("_SidebarBannerManage", makeModel(AdvertisementType.SidebarBanner2))
+
+<h2>横幅广告管理</h2>
+<p>每次访问将对于每一个位置随机选取一个显示。</p>
+@await Html.PartialAsync("_BannerManage", makeModel(AdvertisementType.Banner))
+<h2>轮播广告管理</h2>
+<p>广告顺序为：横幅，手动顺序，点击量前4，随机剩余广告，填满至少3页（12个）。</p>
+<h3>轮播横幅</h3>
+<hr />
+@await Html.PartialAsync("_CarouselBannerManage", makeModel(AdvertisementType.CarouselBanner))
+<h3>轮播单元</h3>
+<hr />
+@await Html.PartialAsync("_CarouselManage", makeModel(AdvertisementType.Carousel))
+
+
+<form asp-action="AdManage" asp-controller="Admin" id="manageads" asp-antiforgery="true">
+    <input type="hidden" name="AdID" id="AdID" />
+    <input type="hidden" name="AdUrl" id="AdUrl" />
+    <input type="hidden" name="ImgUrl" id="AdImg" />
+    <input type="hidden" name="AdTitle" id="AdTitle" />
+    <input type="hidden" name="AdOrder" id="AdOrder" />
+    <input type="hidden" name="AdType" id="AdType" />
+    <input type="hidden" name="action" id="action" />
+</form>
+
+<script>
+    $(function () {
+        var title = {}, url = {}, img = {}, order = {};
+        function init(ctx) {
+            $(".ad-edit", ctx).click(function () {
+                var $this = $(this);
+                var id = $this.closest('tr').data('id');
+                var tr = $('#tre' + id).show().height($('#tr' + id).hide().height());
+                title[id] = tr.find('.edit-title').val();
+                url[id] = tr.find('.edit-url').val();
+                img[id] = tr.find('.edit-img').val();
+                order[id] = tr.find('.edit-order').val();
+            });
+            $(".ad-cancel", ctx).click(function () {
+                var $this = $(this);
+                var id = $this.closest('tr').data('id');
+                $('#tre' + id).hide();
+                var tr = $('#tr' + id).show();
+                tr.find('.edit-title').val(title[id]);
+                tr.find('.edit-url').val(url[id]);
+                tr.find('.edit-img').val(img[id]);
+                tr.find('.edit-order').val(order[id]);
+            });
+            $(".ad-del", ctx).click(function () {
+                if (confirm("确认删除？")) {
+                    var $this = $(this);
+                    var id = $this.closest('tr').data('id');
+                    $('#AdID').val(id);
+                    $('#action').val('del');
+                    $('#AdType').val($this.closest('table').data('type'));
+                    $('#manageads').submit();
+                }
+            });
+            $(".ad-submit", ctx).click(function () {
+                var $this = $(this);
+                var tr = $this.closest('tr')
+                var id = tr.data('id');
+                $('#AdID').val(id);
+                $('#AdTitle').val(tr.find('.edit-title').val());
+                $('#AdUrl').val(tr.find('.edit-url').val());
+                $('#AdImg').val(tr.find('.edit-img').val());
+                $('#AdOrder').val(tr.find('.edit-order').val());
+                $('#AdType').val(tr.closest('table').data('type'));
+                $('#action').val('edit');
+                $('#manageads').submit();
+            });
+            $(".ad-new", ctx).click(function () {
+                var tr = $(this).closest('tr');
+                $('#AdTitle').val(tr.find('.newtitle').val());
+                $('#AdUrl').val(tr.find('.newurl').val());
+                $('#AdImg').val(tr.find('.newimg').val());
+                $('#AdOrder').val(tr.find('.neworder').val());
+                $('#AdType').val(tr.closest('table').data('type'));
+                $('#action').val('new');
+                $('#manageads').submit();
+            });
+        }
+        init(document);
+        $('#manageads').submit(function (e) {
+            e.preventDefault();
+            var $t = $(this);
+            var type = $('#AdType').val();
+            $.post($t.attr('action'), $t.serialize(), function (view) {
+                if (view.err) {
+                    $.globalMessenger().post({
+                        message: view.err,
+                        type: "error"
+                    });
+                    return;
+                }
+                var $v = $(view);
+                $('table[data-type="' + type + '"]').replaceWith($v);
+                init($v);
+                $.globalMessenger().post('设置成功');
+                $t[0].reset();
+            });
+        });
+    })
+</script>
+<link href="~/Content/tagmanager.min.css" rel="stylesheet" />

@@ -1,0 +1,14 @@
+﻿@model List<Advertisment>
+
+@if (Model != null)
+{
+    foreach (var ad in Model)
+    {
+        <a rel="nofollow" onclick="var id = $(this).attr('data-id');id&&$.post('@Url.Action("Click","Advertisement")', { adid: id }, $.noop);"
+           target="_blank" data-id="@ad.AdID" href="@ad.AdUrl">
+            <img class="img220" src="@ad.ImgUrl" alt="绅士周边" />
+        </a>
+        <br />
+        <br />
+    }
+}

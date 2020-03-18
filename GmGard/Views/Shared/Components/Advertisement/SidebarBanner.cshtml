@@ -1,0 +1,19 @@
+﻿@model IEnumerable<Advertisment>
+
+@if (Model != null && Model.Count() > 0)
+{
+    <div class="cycle-slideshow sidebar-ad"
+         data-cycle-fx="scrollHorz"
+         data-cycle-timeout="10000"
+         data-cycle-slides="> a">
+        @foreach (var banner in Model)
+        {
+            <a rel="nofollow" onclick="var id = $(this).attr('data-id');id&&$.post('@Url.Action("Click","Advertisement")', { adid: id }, $.noop);"
+               target="_blank" data-id="@banner.AdID" href="@banner.AdUrl">
+                <img style="max-width:220px" src="@banner.ImgUrl" alt="绅士推荐" />
+            </a>
+        }
+    </div>
+    <br />
+    <br />
+}

@@ -1,0 +1,26 @@
+<mat-card>
+  <div [hidden]="animationFinished" style="position:relative">
+    <canvas style="width: 100%" #Canvas></canvas>
+    <div class="card-container" #container></div>
+    <button class="skip-button" (click)="skipAnimation()" mat-fab>
+      <mat-icon>skip_next</mat-icon>
+    </button>
+  </div>
+  <ng-template [ngIf]="animationFinished">
+    <mat-card-title>灵基召唤</mat-card-title>
+    <mat-grid-list cols="5" rowHeight="1:1">
+      <mat-grid-tile *ngFor="let item of result.items">
+        <div (click)="showDetails(item.name)" class="card-display" [style.background-image]="cardUrl(item.name)">
+        </div>
+      </mat-grid-tile>
+    </mat-grid-list>
+    <ul>
+      <li *ngFor="let bonus of result.rewards">{{bonus}}</li>
+    </ul>
+    <mat-card-actions>
+      <a mat-button [routerLink]="['/gacha', {showType: showType}]">返回</a>
+      <a mat-button [routerLink]="['/gacha', {showType: showType, count: count}]">再次召唤</a>
+      <a mat-button [routerLink]="['/gacha', 'list']">一览</a>
+    </mat-card-actions>
+  </ng-template>
+</mat-card>

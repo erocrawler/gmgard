@@ -1,0 +1,54 @@
+<div style="position:relative">
+    <div style="position: absolute" *ngIf="loading"><mat-spinner></mat-spinner></div>
+    <canvas style="width: 100%" #stage1 [hidden]="showStage2"></canvas>
+    <canvas style="width: 100%" #stage2 [hidden]="!showStage2"></canvas>
+    <button class="hint-button" (click)="showHint()" mat-fab>
+        <mat-icon>help</mat-icon>
+    </button>
+    <button class="switch-button" *ngIf="hasStage2 && showStage2" (click)="transitStage(false)" mat-fab>
+        A
+    </button>
+    <button class="switch-button" *ngIf="hasStage2 && !showStage2" (click)="transitStage(true)" mat-fab>
+        B
+    </button>
+</div>
+
+<mat-card *ngIf="status">
+    <mat-card-header>
+        <img mat-card-avatar [src]="status.currentPlayer.avatar" [alt]="status.currentPlayer.userName" />
+        <mat-card-title>
+            完成度：{{completedCount}}/{{status.puzzles.length}}
+            已获得奖励：{{status.currentPlayer.reward}}
+        </mat-card-title>
+        <mat-card-subtitle>
+            本日错误尝试：{{dailyAttempts}}/{{maxAttempt}}
+            活动已于{{status.endTime | date:"medium"}}结束。答题不再可以获得奖励。
+        </mat-card-subtitle>
+    </mat-card-header>
+    <h3>Top10 排行榜</h3>
+    <mat-list *ngIf="status.topPlayers.length > 0; else nobody">
+        <mat-list-item *ngFor="let p of status.topPlayers">
+            <img matListAvatar [src]="p.avatar" [alt]="p.nickName">
+            <p matLine>
+                <span> {{p.nickName}}  </span>
+                <span> -- 完成时间： {{p.completionTime | date:"medium"}} </span>
+            </p>
+        </mat-list-item>
+        <h3 matSubheader>总完成人数：{{status.completedUserCount}} </h3>
+        <ng-template [ngIf]="!isTopPlayer && status.currentPlayer.completionTime">
+            <h3 matSubheader>我的排行</h3>
+            <mat-list-item>
+                <img matListAvatar [src]="status.currentPlayer.avatar" [alt]="status.currentPlayer.nickName">
+                <p matLine>
+                    <span> {{status.currentPlayer.nickName}}  </span>
+                    <span> —— 完成时间： {{status.currentPlayer.completionTime | date:"medium"}} </span>
+                </p>
+            </mat-list-item>
+        </ng-template>
+
+    </mat-list>
+    <ng-template #nobody>
+        <p>还没有人完成。</p>
+    </ng-template>
+    <p *ngIf="isAdmin">注意：管理员不计入排行统计！</p>
+</mat-card>

@@ -1,0 +1,49 @@
+﻿@{
+    ViewBag.Title = "密码找回";
+}
+
+<h2>密码找回</h2>
+<div class="alert alert-warning">
+    <p>
+        <strong>注意！</strong>目前发现QQ邮箱会由于发送过于频繁而<a href="http://service.mail.qq.com/cgi-bin/help?subtype=1&&id=20022&&no=1000725" rel="nofollow noreferrer">拒收邮件</a>。
+        如果您在10分钟内没有收到邮件，可以尝试过一段时间重新申请，或者联系管理员检查退件箱。
+    </p>
+</div>
+<div class="alert alert-info" id="showrespond">
+    <p>请输入您的电子邮箱地址，系统将使用admin@gmgard.us向您的邮箱发送一封邮件。</p>
+    <p>邮件内将包含您的用户名与重设密码的链接。如果无法收到邮件，请检查您的邮箱设置。</p>
+</div>
+<form asp-action="Forget" asp-controller="Account" asp-antiforgery="true" method="post" data-ajax="true" data-ajax-begin="showloading" data-ajax-complete="showresult" data-ajax-failure="showerror">
+    <fieldset>
+        <legend>“忘记密码”表单</legend>
+        <label for="forget-email">Email地址</label>
+        <input id="forget-email" placeholder="Email地址" data-val="true" data-val-email="无效的电子邮箱" data-val-regex="无效的电子邮箱" data-val-regex-pattern="^[a-z0-9_\+-]+(\.[a-z0-9_\+-]+)*@@[a-z0-9]+(\.[a-z0-9]+)*\.([a-z]{2,4})$" data-val-required="电子邮箱 字段是必需的。" name="email" type="email">
+        @Html.ValidationMessage("email")<br />
+        <img alt="Captcha" src="@Url.Action("CaptchaImage","Captcha")" style="" />等于多少？
+        <input class="span2" autocomplete="off" type="text" name="Captcha" data-val="true" data-val-required="请输入验证码" />
+        @Html.ValidationMessage("Captcha")<br />
+        <input type="submit" class="btn" value="发送" />
+    </fieldset>
+</form>
+
+<script>
+    function showerror(error) {
+        if (error && error.responseText) {
+            document.write(error.responseText);
+        }
+    }
+    function showloading() {
+        $("#showrespond").html('<p><img src="/Images/loading.gif" alt="载入中" /><strong>请稍候。</strong>系统正在准备发送邮件。。。</p>');
+    }
+    function showresult(result) {
+        if (result.responseJSON) {
+            result = result.responseJSON;
+        }
+        if (result.ok) {
+            $('#showrespond').html("<p><strong>完成。</strong>系统已向您的邮箱发送了一封邮件，请按邮件内的指示进行下一步操作。</p>")
+        }
+        else if (result.err) {
+            $('#showrespond').html("<p><strong>出错了。</strong>" + result.err + "</p>");
+        }
+    }
+</script>

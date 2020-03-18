@@ -1,0 +1,184 @@
+﻿@model AdminViewModel
+@{
+    var settings = Model.backgroundsetting;
+}
+<form asp-action="ManageBackgrounds" asp-controller="Admin" method="post" id="manage-bg-form" asp-antiforgery="true">
+    <div asp-validation-summary="All" class="text-error"></div>
+    <table class="table table-striped bg-table">
+        <colgroup>
+            <col />
+            <col />
+            <col style="width:85px;" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th>背景名</th>
+                <th>设定</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (settings != null && settings.Backgrounds != null)
+            {
+                for (int i = 0; i < settings.Backgrounds.Count(); i++)
+                {
+                    var Item = settings.Backgrounds.ElementAt(i);
+                    <tr class="bg-row control-group">
+                        <td>
+                            <input type="text" name="Backgrounds[@i].Name" value="@Item.Name" class="span2" />
+                        </td>
+                        <td>
+                            <label class="small">背景URL<input class="bg-field" type="text" name="Backgrounds[@i].BackgroundUrl" value="@Item.BackgroundUrl" /></label>
+                            <label class="small">前景URL<input class="banner-field" type="text" name="Backgrounds[@i].BannerUrl" value="@Item.BannerUrl" /></label>
+                            <label class="small">背景位置<input type="text" name="Backgrounds[@i].Position" value="@Item.Position" /></label>
+                            <label class="small">背景位置(1440px)<input type="text" name="Backgrounds[@i].Position1440" value="@Item.Position1440" /></label>
+                            <label class="small">
+                                <input type="checkbox" name="Backgrounds[@i].Type" value="@BackgroundCss.BackgroundType.Fixed"
+                                        @if (Item.Type == BackgroundCss.BackgroundType.Fixed) { <text> checked</text>} /> 固定背景
+                            </label>
+                            <input type="hidden" name="Backgrounds[@i].Type" value="@BackgroundCss.BackgroundType.Normal" />
+                        </td>
+                        <td>
+                            <input type="button" class="btn delete-bg" value="删除" />
+                        </td>
+                    </tr>
+                }
+            }
+            <tr id="new-bg-row">
+                <td colspan="2">
+                    <strong>警告！所有值将被直接用于生成CSS，请确认无误后再保存！</strong>
+                    <small>注：最后一条背景名固定为new</small>
+                </td>
+                <td>
+                    <input type="button" class="btn new-bg" value="添加" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="table table-striped cookie-table">
+        <colgroup>
+            <col />
+            <col />
+            <col style="width:85px;" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th>cookie值/图片域名</th>
+                <th>背景类名</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (settings.BackgroundClasses != null)
+            {
+                foreach (var item in settings.BackgroundClasses)
+                {
+                    <tr class="cookie-row control-group">
+                        <td>
+                            <input type="text" class="cookie span3" value="@item.Key" />
+                        </td>
+                        <td>
+                            <input type="text" class="className span2" value="@item.Value" />
+                        </td>
+                        <td>
+                            <input type="button" class="btn delete-bg" value="删除" />
+                        </td>
+                    </tr>
+                }
+            }
+            <tr id="new-cookie-row">
+                <td colspan="2">
+                    <strong>注意！确保cookie值所在的域名无误。将直接用于图片链接。</strong>
+                </td>
+                <td>
+                    <input type="button" class="btn new-cookie" value="添加" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <input class="btn btn-primary btn-large" type="submit" value="保存" />
+</form>
+<script type="text/template" id="bg-template">
+    <tr class="bg-row control-group">
+        <td>
+            <input type="text" name="Backgrounds[{{index}}].Name" value="new" class="span2" />
+        </td>
+        <td>
+            <label class="small">背景URL<input class="bg-field" type="text" name="Backgrounds[{{index}}].BackgroundUrl" value="Images/bg{{nindex}}.jpg" /></label>
+            <label class="small">前景URL<input class="banner-field" type="text" name="Backgrounds[{{index}}].BannerUrl" value="Images/banner{{nindex}}.jpg" /></label>
+            <label class="small">背景位置<input type="text" name="Backgrounds[{{index}}].Position" value="" /></label>
+            <label class="small">背景位置(1440px)<input type="text" name="Backgrounds[{{index}}].Position1440" value="" /></label>
+            <input type="hidden" name="Backgrounds[{{index}}].Type" value="@BackgroundCss.BackgroundType.Normal" />
+            <label class="small"><input type="checkbox" name="Backgrounds[{{index}}].Type" value="@BackgroundCss.BackgroundType.Fixed" /> 固定背景
+            </label>
+        </td>
+    <td>
+            <input type="button" class="btn delete-bg" value="删除" />
+        </td>
+    </tr>
+</script>
+<script type="text/template" id="cookie-template">
+    <tr class="cookie-row control-group">
+        <td>
+            <input type="text" class="cookie span3" value="" />
+        </td>
+        <td>
+            <input type="text" class="className span2" value="" />
+        </td>
+        <td>
+            <input type="button" class="btn delete-bg" value="删除" />
+        </td>
+    </tr>
+</script>
+<script type="text/template" id="hidden-cookie-template">
+    <input type="hidden" name="BackgroundClasses[{{cookie}}]" value="{{className}}" />
+</script>
+<script src="~/Scripts/lib/mustache.min.js"></script>
+<script>
+    (function () {
+        var checkboxHandler = function () {
+            var $this = $(this),
+                $tr = $this.closest('tr'),
+                $banner = $tr.find('.banner-field').prop('readonly', $this.prop('checked'));
+            if ($this.prop('checked')) {
+                $tr.find('.bg-field').change(function () {
+                    $tr.find('.banner-field').val(this.value);
+                }).trigger('change');
+            }
+            else {
+                $tr.find('.bg-field').off('change');
+            }
+        };
+        $('.table').on('click', '.delete-bg', function () {
+            var $this = $(this);
+            $this.closest('tr').toggleClass('warning').find('input:not(input[type="button"])').toggleClass('disabled').prop('disabled', $this.toggleClass('disabled').hasClass('disabled'));
+            $this.val($this.hasClass('disabled') ? '将删除' : '删除');
+        }).on('click', 'input[type="checkbox"]', checkboxHandler);
+        $('.bg-table input[type="checkbox"]:checked').each(checkboxHandler);
+        $('.new-bg').click(function () {
+            var qrow = $('.bg-row'),
+                qnext = qrow.length,
+                qtemplate = $('#bg-template').html(),
+                qnew = Mustache.render(qtemplate, { index: qnext, nindex: function () { return qnext + 1; } });
+            qrow.last().find('input[value="new"]').val('bg' + qnext);
+            $('#new-bg-row').before(qnew);
+        });
+        $('#manage-bg-form').submit(function () {
+            var $form = $(this), ctemplate = $('#hidden-cookie-template').html();
+            $form.find('.bg-row.warning').remove().end().find('.bg-row').each(function (i, e) {
+                $(this).find('input[name^="Backgrounds"]').each(function () {
+                    this.name = this.name.replace(/(\d+)/, i);
+                });
+            }).end().find('.cookie-row:not(.warning)').each(function (i, e) {
+                $form.append(Mustache.render(ctemplate, { cookie: $(this).find('.cookie').val(),
+                    className: $(this).find('.className').val()}));
+            });
+        });
+
+        $('.new-cookie').click(function () {
+            var cnew = $('#cookie-template').html();
+            $('#new-cookie-row').before(cnew);
+        });
+    })();
+</script>

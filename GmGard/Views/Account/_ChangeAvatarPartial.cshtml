@@ -1,0 +1,93 @@
+﻿@inject ExpUtil expUtil
+
+<fieldset>
+    <legend>修改头像</legend>
+
+<img style="max-height:200px;max-width:200px;" src="@Url.Action("Show","Avatar",new { name = User.Identity.Name})" /><br />
+@if(ViewBag.ChangeSuccess != null){
+    <span class="text-success">已更改您的头像</span><br />
+}
+<input type="file" id="avatar" name="avatar" data-val="true" data-val-required="请选择文件" />
+    <div style="display:inline-block">
+    <div id="submitbtn" class="inline" style="display:none">
+        <input type="button" value="提交" class="btn" onclick="submitfile(this)" />
+        @if(expUtil.getUserLvl(User.Identity.Name) >=6){
+         <button type="button"  value="original" class="btn btn-success" onclick="submitfile(this)">原图提交</button>
+        }
+    </div>
+    </div>
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <span id="imgerror" style="color:red;"></span><br />
+    <a class="hide" title="清除选区" onclick="crop.release();"><i class="icon-remove-sign"></i></a><br />
+    <img src="//:0" id="newavatar" style="max-width:500px;max-height:500px;display:none;" />
+</fieldset>
+
+<script>
+    var data; var type; var crop;
+    $(function () {
+        $('#avatar').change(checkfile);
+    });
+    function checkfile(evt) {
+        var file = evt.target.files[0];
+        if (!file.type.match("image.*")) {
+            $('#imgerror').html("必须是图像！");
+            $('#submitbtn').hide();
+        }
+        else if (file.size > 524288 * 2) {
+            $('#imgerror').html("图像不得超过1MB");
+            $('#submitbtn').hide();
+        }
+        else {
+            var reader = new FileReader();
+            reader.onload = (function (theFile) {
+                return function (e) {
+                    // Render thumbnail.
+                    $("#newavatar").attr("src", e.target.result);
+                    $("#newavatar").attr("title", file.name);
+                    $("a.hide").show();
+                    $('#submitbtn').show();
+                    data = e.target.result.split(',')[1];
+                    type = file.type;
+                    setTimeout(function () {
+                        $('#newavatar').Jcrop({ onSelect: storeCoords, onRelease: resetCoords }, function () { crop = this; crop.setSelect([0, 0, $(".jcrop-holder").width(), $(".jcrop-holder").height()]); });
+                    }, 100);
+                };
+            })(file);
+            if (crop) {
+                crop.destroy();
+                $("#newavatar").css('width', '');
+                $("#newavatar").css('height', '');
+            }
+            else {
+                $("#newavatar").show();
+            }
+            reader.readAsDataURL(file);
+            $('#imgerror').html("");
+        }
+    }
+    var coords = { x: 0, y: 0, w: 500, h: 500 };
+    function storeCoords(c) {
+        coords = c;
+        //jQuery('#X').val(c.x);
+        //jQuery('#Y').val(c.y);
+        //jQuery('#W').val(c.w);
+        //jQuery('#H').val(c.h);
+    }
+    function releaseCrop() {
+        crop.release();
+    }
+    function resetCoords() {
+        coords.x = 0;
+        coords.y = 0;
+        coords.h = $('#newavatar').height();
+        coords.w = $('#newavatar').width();
+    }
+    function submitfile(id) {
+        $.post('@Url.Action("ChangeAvatar")', { avatardata: data, filetype: type, x: coords.x, y: coords.y, w: coords.w, h: coords.h, op: id.value }, updatediv)
+        //startsubmit(id);
+    }
+    function updatediv(response) {
+        var img = $('#changeavatardiv').html(response).find('img');
+        img.attr('src', img.attr('src') + '?' + Math.random());
+    }
+</script>

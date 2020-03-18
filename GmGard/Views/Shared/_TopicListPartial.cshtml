@@ -1,0 +1,26 @@
+﻿@model Topic
+@inject BlogUtil blogUtil
+@inject TopicUtil topicUtil
+@inject IVisitCounter visitCounter
+<li>
+    <div class="badge info">
+        @topicUtil.getBlogCount(Model.TopicID) 资源
+    </div>
+    <a class="listlink" target="_blank" href="@Url.Action("Details", "Topic", new {id = Model.TopicID})">
+        <div class="icon">
+            <div class="imgcenter">
+                <img class="img-small" src="@Model.ImagePath.Replace("/upload/", "/thumbs/")" data-src="@Model.ImagePath" />
+                <img class="img-large" src="@Model.ImagePath" />
+            </div>
+        </div>
+        <div class="data">
+            <h4>
+                @Model.TopicTitle
+            </h4>
+            <p style="word-break:keep-all"> @BlogHelper.getFirstLine(Model.Content, 100, true)</p>
+            <strong>投稿：@blogUtil.GetNickName(Model.Author)</strong>
+            <br />
+            &nbsp;<span class="lfoot"><i class="icon-eye-open ico"></i> @visitCounter.GetTopicVisit(Model.TopicID)</span><span class="lfoot"><i class="icon-comment ico"></i> @topicUtil.getPostCount(Model)</span>
+        </div>
+    </a>
+</li>

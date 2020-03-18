@@ -1,0 +1,15 @@
+﻿@model GmGard.Models.Category
+
+@if (Model.SubCategories != null && Model.SubCategories.Count > 0)
+{
+    var selectedIds = ViewBag.SelectedIds as HashSet<int>;
+    <ul>
+        @foreach (var subcat in Model.SubCategories) {
+        <li>
+            <span class="label filterlabel" data-sflt-check="false" data-indeter="false" style="cursor:pointer">&nbsp;次级分类1&nbsp;&nbsp;<i class="icon-scheck" style="margin-top:0px"></i></span>
+            <input type="hidden" name="CategoryIds" value="@subcat.CategoryID" @(selectedIds.Contains(subcat.CategoryID) ? "" : "disabled") />
+            @await Html.PartialAsync("SubcategoryCheckboxPartial", subcat)
+        </li>
+        }
+    </ul>
+}

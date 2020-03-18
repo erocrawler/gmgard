@@ -1,0 +1,118 @@
+﻿@model PagedList.IPagedList<GmGard.Models.AdminLog>
+
+@functions{
+    string DisplayAction(AdminLog log,  out string target)
+    {
+        string name = log.Action;
+        target = null;
+        switch (log.Action)
+        {
+            case "approve":
+                name = "审核通过";
+                target = Url.Action("Details", "Blog", new { id = log.Target });
+                break;
+            case "unapprove":
+                name = "审核不通过";
+                target = Url.Action("Details", "Blog", new { id = log.Target });
+                break;
+            case "editexp":
+                name = "修改经验/积分";
+                break;
+            case "editblog":
+                name = "编辑投稿";
+                target = Url.Action("Details", "Blog", new { id = log.Target });
+                break;
+            case "edittopic":
+                name = "编辑专题";
+                target = Url.Action("Details", "Topic", new { id = log.Target });
+                break;
+            case "editreply":
+                name = "编辑评论";
+                target = '/' + log.Target;
+                break;
+            case "deletereply":
+            case "deletepost":
+                name = "删除评论";
+                target = '/' + log.Target;
+                break;
+            case "reject":
+                name = "打回不通过";
+                target = Url.Action("Details", "Blog", new { id = log.Target });
+                break;
+            case "deleteblog":
+                name = "删除投稿";
+                break;
+            case "deletetopic":
+                name = "删除专题";
+                break;
+            case "deletecode":
+                name = "删除邀请码";
+                target = Url.Action("UserInfo", "Home", new { name = log.Target });
+                break;
+            case "封禁":
+                break;
+            case "解封":
+                break;
+            default:
+                break;
+        }
+        return name;
+    }
+}
+
+<h2>操作记录</h2>
+
+<div class="row-fluid">
+    <div class="span3">
+        操作人
+    </div>
+    <div class="span3">
+        操作
+    </div>
+    <div class="span3">
+        目标
+    </div>
+    <div class="span3">
+        时间
+    </div>
+</div>
+
+@foreach (var item in Model) {
+    string targeturl;
+    <div class="row-fluid">
+        <div class="span3">
+            @Html.ActionLink(item.Actor, "UserInfo", "Home", new { name = item.Actor }, null)
+        </div>
+        <div class="span3">
+            @DisplayAction(item, out targeturl)
+            @if (!string.IsNullOrWhiteSpace(item.Reason))
+            {
+                <i class="icon-info-sign" data-toggle="tooltip" title="@item.Reason"></i>
+            }
+        </div>
+        <div class="span3">
+            @if(targeturl != null){
+            <a href="@targeturl">@item.Target</a>
+            }
+            else{
+                @item.Target
+            }
+        </div>
+        <div class="span3">
+            @Html.DisplayFor(modelItem => item.LogTime)
+        </div>
+    </div>
+}
+
+@{
+    if(Model.HasNextPage || Model.HasPreviousPage){
+        ViewBag.PostUrl = Url.Action("Log");
+        ViewBag.DisplaySelector = "#adminlog";
+        await Html.RenderPartialAsync("_AjaxPager", Model);
+    }
+}
+<script>
+    $(function () {
+        $('#adminlog .icon-info-sign').tooltip();
+    });
+</script>

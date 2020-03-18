@@ -1,0 +1,89 @@
+﻿@model PagedList.IPagedList<Message>
+@inject BlogUtil blogUtil
+@{
+    var nicknames = blogUtil.GetNickNames(Model.Select(m => m.Sender));
+}
+<p><label class="checkbox"><input type="checkbox" id="rpt-filter" @if(Model.Count == 0) {<text>disabled</text>} /> 只显示问题投稿</label></p>
+<hr />
+<ul class="rpt-msg" data-pagenum="@Model.PageNumber" data-totalnum="@Model.TotalItemCount">
+@if (Model.Count > 0) {
+foreach (var message in Model)
+{
+    <li data-id="@message.MsgId" class="hover">
+        <div class="float-right hovershow" style="padding-left:5px">
+            <a class="rpt-solve"><i class="icon-ok tooltip-icon" data-placement="left" title="标为已解决"></i></a><br />
+            <a class="rpt-delete"><i class="icon-trash tooltip-icon" data-placement="left" title="删除"></i></a><br />
+            <a class="rpt-reply" href="@Url.Action("MsgAction", "Message", new { msgid = message.MsgId, act = "回复" })" target="_blank">
+                <i class="icon-pencil tooltip-icon" data-placement="left" title="回信"></i>
+            </a><br />
+        </div>
+        <p><small>汇报者：@nicknames[message.Sender]</small><br />
+        <small>@message.MsgDate</small></p>
+        <p class="rpt-text">@Html.Raw(message.MsgContent)</p>
+    </li>
+}
+} else {
+   <li><span class="ratesuccess">没有问题汇报</span></li>
+}
+</ul>
+@if (Model.HasNextPage || Model.HasPreviousPage)
+{
+    ViewBag.PostUrl = Url.Action("ReportInbox", "Message");
+    ViewBag.HasReplace = true;
+    await Html.RenderPartialAsync("_AjaxPager");
+}
+<script>
+    function replace(result) {
+        var checked = $('#rpt-filter').prop('checked');
+        $('#rpt-inbox').html(result);
+        $('#rpt-inbox .tooltip-icon').tooltip();
+        if (checked) {
+            $('#rpt-filter').prop('checked', true).trigger('change');
+            $('html, body').animate({ scrollTop: $('#listdiv').offset().top - 200 }, 'fast');
+        }
+    }
+    (function () {
+        function reportAction(id, action) {
+            $.post('@Url.Action("ReportAction", "Message")', { id: id, act: action })
+                .success(function() {
+                    var pagenum = $('.rpt-msg').data('pagenum');
+                    if (window.gotopage) {
+                        gotopage($('.rpt-msg').find('li').length == 1 ? --pagenum : pagenum);
+                    } else {
+                        $('.rpt-msg').find('li[data-id="' + id + '"]').fadeOut(500, function () { $(this).remove() });
+                        $('.rpt-msg').find('li').length == 1 && $('#rpt-filter').prop({ 'disabled': true, 'checked': false }).trigger('change');
+                    }
+                });
+        }
+        $('.rpt-solve').click(function () {
+            var id = $(this).closest('li').data('id');
+            reportAction(id, 'solve');
+        });
+        $('.rpt-delete').click(function () {
+            var id = $(this).closest('li').data('id');
+            confirm("确认删除？") && reportAction(id, 'delete');
+        });
+        $('#rpt-filter').change(function () {
+            $('#rpt-listdiv').remove();
+            if (this.checked) {
+                $('.listoption').children().slice(0, 3).hide();
+                $('#user-listdiv').hide().after('<div id="rpt-listdiv"><p class="text-center"><img src="/Images/loading.gif"></img></p></div>');
+                var ids = [], reg = /\/gm(\d+)/;
+                $('.rpt-text a').each(function (i, e) {
+                    if (e.href && reg.test(e.href)) {
+                        var i = e.href.match(reg)[1];
+                        ids.indexOf(i) < 0 && ids.push(i);
+                    }
+                });
+                $.post('@Url.Action("FetchBlogs", "Blog")', { view:"_ListUserBlogPartial", ids: ids }, function (content) {
+                    $('#rpt-listdiv').html(content).append($('#rpt-inbox .ajax-pager').clone(true));
+                    $('#listdiv').trigger('update-patched');
+                });
+            } else {
+                $('.listoption').children().slice(0, 3).show();
+                $('#user-listdiv').show();
+            }
+        });
+        $('#msgbtn span').text(' (' + $('.rpt-msg').data('totalnum') + ')');
+    })()
+</script>

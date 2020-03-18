@@ -1,0 +1,14 @@
+﻿<mat-progress-bar *ngIf="searchActive" mode="indeterminate"></mat-progress-bar>
+<p *ngIf="notFound">
+  找不到符合关键字“{{title}}”的结果。如果您的关键字包含括号（如社团名，发售日期），请尝试去除括号及其内容。
+</p>
+<mat-list>
+  <mat-list-item *ngFor="let entry of entries">
+    <h3 matLine> <a [href]="entry.url" target="_blank" rel="noreferrer">{{entry.title}}</a> </h3>
+    <p matLine>
+      <button matTooltip="点击复制" mat-button ngxClipboard [cbContent]="entry.rjCode" > <strong>{{entry.rjCode}}</strong> </button>
+      <a [href]="entry.circleUrl" target="_blank" rel="noreferrer">{{entry.circle}}</a>
+    </p>
+    <p matLine> {{entry.description}} </p>
+  </mat-list-item>
+</mat-list>

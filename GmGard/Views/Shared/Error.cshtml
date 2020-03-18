@@ -1,0 +1,24 @@
+﻿@model ErrorContextModel
+
+@{
+    ViewBag.Title = "错误";
+    Exception inner = Model.Exception.InnerException;
+}
+
+<div class="errorimg">
+    <img src="~/Images/error.jpg" />
+</div>
+
+@if (Model.Exception is Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException || Model.Exception.Message == "The antiforgery token could not be decrypted.")
+{
+    <div class="alert alert-info">您可能是在本页面闲置时间太久，表单已失效了……囧TL</div>
+} else {
+    <div class="well">
+        <p>以下是错误信息，请刷新重试。如多次出错，请向管理员汇报</p>
+        @if (Model.ControllerActionPath != null)
+        {
+            <p>请求地址：@Model.ControllerActionPath</p>
+        }
+        <p>@Model.Exception.Message</p>
+    </div>
+}

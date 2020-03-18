@@ -1,0 +1,98 @@
+﻿.user-avatar {
+    display: inline-block;
+    float: right;
+    width: 150px;
+    padding: 2px;
+    margin-top: 18px;
+    border: 0px solid
+}
+
+.user-bg > h2, .user-bg > .user-stats, .user-bg > .user-numbers-div, .userinfo h3 {
+    background-color: rgba(239, 238, 239, 0.7);
+    display: inline-block;
+    margin: 0;
+}
+
+.user-stats {
+    font-weight: bold;
+}
+
+.user-numbers-div {
+    display: inline-block;
+    float: right;
+    width: 160px;
+    clear: both
+}
+
+.user-numbers {
+    margin: 0;
+    list-style: none;
+}
+
+    .user-numbers li {
+        float: left;
+        text-align: center;
+        width: 43px;
+        padding: 0 3px 3px;
+        border-right: 1px solid #AAA;
+        overflow: hidden;
+    }
+
+        .user-numbers li:last-child {
+            border-right: 0;
+        }
+
+.userinfo > .float-right {
+    background-color: rgba(239, 238, 239, 0.7);
+}
+
+
+.fwp {
+    font-size: 20px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    margin-top: 5px;
+}
+
+.fwh {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #444;
+}
+
+.fwli li {
+    padding: 21px 3px 24px 3px
+}
+
+.fwh1 {
+    margin-top: 0px;
+    font-size: 14px;
+    color: #444;
+}
+
+.fwp1 {
+    margin-bottom: 0px;
+}
+
+.user-comment {
+    display: inline-block;
+    margin-left: 20px;
+    margin-right: 20px;
+    border: #037dd5 outset 3px;
+    border-radius: 5px;
+    padding: 5px;
+    background: #FFFFFF;
+}
+
+#body #main {
+    padding:0;
+}
+
+    #body #main > * {
+        padding: 0 10px 20px 5px;
+    }
+
+.user-cover-bg {
+    background-size: cover;
+    background-position: center;
+}

@@ -1,0 +1,185 @@
+﻿@inject BlogUtil blogUtil
+@inject HtmlUtil htmlUtil
+@{
+    ViewBag.Title = "意见建议";
+    int blogid = "Report".Equals(ViewBag.pos, StringComparison.OrdinalIgnoreCase) ? PostConstant.Problems : PostConstant.Suggestions;
+}
+@if (!blogUtil.CheckAdmin())
+{
+<h2>意见建议</h2>
+<hr />
+}
+else
+{
+<h2>问题反馈（管理员）</h2>
+<hr />
+}
+
+@if (User.Identity.IsAuthenticated)
+{
+    <table border="1" style="width:100%; margin-left: .25em;">
+        <colgroup>
+            <col span="1" style="width: 100px;" />
+            <col span="1" />
+        </colgroup>
+        <tr>
+            <td rowspan="2" style="vertical-align:top;text-align:center;"><img src="@Url.Action("Show", "Avatar",new { name = User.Identity.Name})" style="max-height:100px;max-width:100px;" /></td>
+            <td style="text-align:left">发表建议：</td>
+        </tr>
+        <tr>
+            <td id="addreply_container">
+            @{
+                ViewBag.itemtype = ItemType.Blog;
+                ViewBag.itemid = PostConstant.Suggestions;
+                await Html.RenderPartialAsync("AddReply");
+            }
+            </td>
+        </tr>
+    </table>
+    <hr />
+    <ul class="nav nav-pills" id="msgmenu">
+    @if(blogUtil.CheckAdmin())
+    {
+
+          <li @if (blogid == PostConstant.Suggestions)
+              {<text>class="active"</text>}>
+            <a href="#" onclick="selected(this, '@Url.Action("ShowReply", "Reply", new { itemid = PostConstant.Suggestions, idtype = "1", hottest=false })');return false;">意见反馈</a>
+          </li>
+          <li @if (blogid == PostConstant.Problems) {<text>class="active"</text>}>
+            <a href="#" onclick="selected(this, '@Url.Action("ShowReply", "Reply", new { itemid = PostConstant.Problems, idtype = "1", hottest=false })');return false;">问题举报</a>
+          </li>
+            if (User.IsInRole("Administrator"))
+            {
+          <li><a href="#" onclick="selected(this, '@Url.Action("ShowAdminInbox", "Message")');return false;">Admin信箱</a></li>
+            }
+
+    }
+    else
+    {
+          <li @if (blogid == PostConstant.Suggestions)
+              {<text>class="active"</text>}>
+            <a href="#" onclick="selected(this, '@Url.Action("ShowUserReply", "Reply", new { itemid = PostConstant.Suggestions, name = User.Identity.Name, hottest=false })');return false;">意见反馈</a>
+          </li>
+          <li @if (blogid == PostConstant.Problems) {<text>class="active"</text>}>
+            <a href="#" onclick="selected(this, '@Url.Action("ShowUserReply", "Reply", new { itemid = PostConstant.Problems, name = User.Identity.Name, hottest=false })');return false;">问题举报</a>
+          </li>
+    }
+    </ul>
+    <script>
+        function selected(obj, posturl) {
+            if (obj.parentElement.className == "active")
+                return;
+            //alert(obj);
+            var ullist = document.getElementById('msgmenu');
+            var lilist = ullist.getElementsByTagName('li');
+            for (i = 0; i < lilist.length; i++) {
+                lilist[i].className = "";
+            }
+            obj.parentElement.className = "active";
+
+            $.get(posturl, null, displayview);
+            $("#replydiv").hide();
+            $("#loading2").css('display', 'block');
+        }
+        function displayview(response) {
+            //alert(response);
+            data = response;
+            $("#replydiv").html(response);
+            $('form').removeData('validator');
+            $('form').removeData('unobtrusiveValidation');
+            if ($.validator) {
+                $.validator.unobtrusive.parse('form');
+            }
+            $("#replydiv").show();
+            $("#loading2").hide();
+        }
+    </script>
+}
+else
+{
+    <h3>请登录后发表建议</h3>
+    <a class="btn" asp-action="Register" asp-controller="Acccount" asp-route-returnUrl="@ViewContext.HttpContext.Request.Path.ToString()">注册</a>
+    <a class="btn" asp-action="Login" asp-controller="Acccount" asp-route-returnUrl="@ViewContext.HttpContext.Request.Path.ToString()">登录</a>
+}
+<div id="replydiv">
+    @if (blogUtil.CheckAdmin())
+    {
+        @await Component.InvokeAsync(nameof(ReplyView), new { itemid = blogid, idtype = ItemType.Blog })
+    }
+    else if (User.Identity.IsAuthenticated)
+    {
+        <h3>这里显示你的所有留言</h3>
+        @await Component.InvokeAsync(nameof(ReplyView), new { itemid = blogid, name = User.Identity.Name })
+    }
+</div>
+<img id="loading2" src="//static.gmgard.com/Images/loading.gif" style="display:none;margin:0 auto 100px auto;" />
+
+<harmony>
+    <h2 id="versions">版本更新历史</h2>
+    <hr />
+    <span>当前版本：</span>
+    @if (User.IsInRole("Administrator"))
+    {
+    <input type="text" id="versiontitle" value="@ViewBag.versiontitle" />
+    }
+    else
+    {
+    <span class="badge">@ViewBag.versiontitle</span>
+    }
+    <div id="versiondiv" style="max-height: 1000px;overflow: auto;">
+        @htmlUtil.ContentWithRewrite(ViewBag.versiondata)
+    </div>
+</harmony>
+<harmony show="true">
+    <span>当前版本：</span>
+    <span class="badge">@ViewBag.versiontitle</span>
+</harmony>
+
+@if (User.IsInRole("Administrator"))
+{
+    <button class="btn" onclick="editversion(true);" id="editversion">编辑</button>
+    <button class="btn cancelversion" onclick="editversion(false);" style="display:none;">取消</button>
+    <button class="btn cancelversion" onclick="rmspace();" title="应该是编辑器的bug，每次编辑都会增加空格。。。" style="display:none;">消除空行</button>
+    <script>
+    function rmspace() {
+        $(document.querySelector('#cke_versiondiv iframe').contentDocument.body).find('p').each(function () { if (!$(this).text().trim()) { $(this).remove() } })
+    }
+    var versioneditor;
+    function editversion(isedit) {
+        if (!isedit && versioneditor) {
+            versioneditor.destroy();
+            versioneditor = null;
+            $('.cancelversion').hide();
+        }
+        else if (isedit && !versioneditor) {
+            versioneditor = CKEDITOR.replace("versiondiv");
+            $('.cancelversion').show();
+        }
+        else if (isedit && versioneditor) {
+            $.post('@Url.Action("EditVersion", "Admin")', { data: versioneditor.getData(), version: $("#versiontitle").val() }, function () {
+                versioneditor.destroy();
+                versioneditor = null;
+                $('.cancelversion').hide();
+            });
+        }
+    }
+    </script>
+}
+
+@section end_scripts{
+    <script cdn src="@JsConstant.CKEditor"></script>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <script>
+            var gm = new gmDetail({
+                deleteposturl: '@Url.Action("DeletePost", "Reply")',
+                deletereplyurl: '@Url.Action("DeleteReply", "Reply")',
+                replyposturl: "@Url.Action("AddPostReply", "Reply")",
+                findreplyurl: "@Html.Raw(Url.Action("FindReply", "Reply", new { itemtype = ItemType.Blog, itemid = blogid }))",
+                findposturl: "@Html.Raw(Url.Action("FindPost", "Reply", new { itemtype = ItemType.Blog, itemid = blogid }))",
+                rateposturl: "@Url.Action("RatePost", "Reply")",
+                editreplyurl: "@Url.Action("EditReply", "Reply")"
+            });
+        </script>
+    }
+}

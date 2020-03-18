@@ -1,0 +1,50 @@
+﻿@model PagedList.IPagedList
+@using Microsoft.AspNetCore.Routing;
+
+@{
+    string actionname = ViewBag.PageActionName as string;
+    if (actionname == null)
+    {
+        actionname = ViewContext.RouteData.Values["action"] as string;
+    }
+    RouteValueDictionary route = null;
+    if (ViewBag.PagerRouteValues != null)
+    {
+        route = new RouteValueDictionary(ViewBag.PagerRouteValues);
+    }
+    else{
+        route = new RouteValueDictionary();
+    }
+    var dict = new Dictionary<string, object>();
+    dict["class"] = "btn btn-mini";
+}
+
+<div class="pager">
+    @if (Model.HasPreviousPage)
+    {
+        route["page"] = 1;
+        @Html.ActionLink("第1页",actionname, route, dict)
+        @Html.Raw(" ")
+        route["page"] = Model.PageNumber - 1;
+        @Html.ActionLink("上一页",actionname, route,dict)
+    }
+    else{
+        <a class="btn btn-mini disabled">第1页</a> <a class="btn btn-mini disabled">上一页</a>
+    }
+    @{string lastpage = "第"+Model.PageCount+"页";}
+    @if (Model.HasNextPage)
+    {
+        route["page"] = Model.PageNumber + 1;
+        @Html.ActionLink("下一页",actionname, route,dict)
+        @Html.Raw(" ")
+        route["page"] = Model.PageCount;
+        @Html.ActionLink(lastpage,actionname, route,dict)
+    }
+    else{
+        <a class="btn btn-mini disabled">下一页</a> <a class="btn btn-mini disabled">@lastpage</a>
+    }
+    &nbsp;
+    <span>第
+        @Html.TextBox("jumppage", Model.PageNumber, new {style="width: 2em;height: 1em;padding: 3px;margin: 0px;", data_pagecount=Model.PageCount })
+       页</span>
+</div>

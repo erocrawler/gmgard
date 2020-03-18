@@ -1,0 +1,40 @@
+﻿@model BlogOption
+@inject BlogUtil blogUtil
+@{
+    var disabledObj = new { disabled = "disabled" };
+    bool isAdmin = blogUtil.CheckAdmin();
+    bool isWriter = blogUtil.CheckAdmin(true);
+}
+<h3>附加选项<input type="button" value="展开" class="btn btn-mini" id="toggle-options" onclick="$(this).toggleClass('active'); $('#blog-options').toggle();" /></h3>
+<div id="blog-options" class="hide">
+<div class="row-fluid">
+    <div class="span5"><label class="checkbox">@Html.CheckBox("Option.LockTags", Model.LockTags, isWriter ? null : disabledObj)
+        <span @if(!isWriter){<text>class="muted"</text>}>锁定标签</span></label>
+        <i class="icon-question-sign" title="仅作者可设置。锁定标签后一般用户无法编辑标签，只有投稿者本人和管理员可以编辑"></i>
+    </div>
+    <div class="span5"><label class="checkbox">@Html.CheckBox("Option.NoRate", Model.NoRate, isAdmin ? null : disabledObj)
+        <span @if (!isAdmin) {<text>class="muted"</text>}>不参与评分</span></label>
+        <i class="icon-question-sign" title="仅管理员可设置。设定后，投稿不再展示评分界面。"></i>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span5">
+        <label class="checkbox">
+            @Html.CheckBox("Option.NoComment", Model.NoComment, isAdmin ? null : disabledObj)
+            <span @if (!isAdmin) { <text> class="muted" </text> }>禁止评论</span>
+        </label>
+        <i class="icon-question-sign" title="仅管理员可设置。设置后一般用户无法评论或回复评论，只有投稿者本人和管理员可以评论"></i>
+    </div>
+    <div class="span5">
+        <label class="checkbox">
+            @Html.CheckBox("Option.NoApprove", Model.NoApprove, isAdmin ? null : disabledObj)
+            <span @if (!isAdmin) { <text> class="muted" </text> }>不审核</span>
+        </label>
+        <i class="icon-question-sign" title="仅管理员可设置。设置后投稿不参与审核并固定为不通过。"></i>
+    </div>
+</div>
+<label class="small">固定签名：@Html.TextArea("Option.LockDesc", Model.LockDesc, new { maxlength = 200, @class="span5", id="LockDesc" })</label>
+</div>
+<script>
+    $('#blog-options').find('input[type="checkbox"]:checked, textarea').filter(function () { return !!this.value }).length > 0 && $('#toggle-options').trigger('click');
+</script>

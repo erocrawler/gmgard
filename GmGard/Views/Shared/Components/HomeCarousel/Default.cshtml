@@ -1,0 +1,30 @@
+﻿@model IEnumerable<CarouselDisplay>
+@inject ConstantUtil constantUtil
+
+<div @if (Model.Count() > 0) { <text> class="cycle-slide" style="position:static" </text>     }>
+    <div class="intro-slide">
+        <hgroup class="title">
+            <h2>@constantUtil.SiteName ♦@constantUtil.SiteHost♦</h2>
+        </hgroup>
+        <div style="position:relative">
+            <div style="display:inline-block;position:relative;top:-26px">进站必读：&nbsp;<a target="_blank" style="margin-bottom: 5px" class="btn btn-danger" href="@Url.Action("About")">站规</a></div>
+            <div style="display:inline-block">
+                <a target="_blank" asp-action="Details" asp-controller="Topic" asp-route-id="14" class="btn btn-danger" style="width:158px">绅士之庭生存手册</a>
+                <div class="btn-group" style="display:block;margin-top:2px">
+                    <a target="_blank" asp-action="Details" asp-controller="Blog" asp-route-id="14628" class="btn btn-danger">第1章</a>
+                    <a target="_blank" asp-action="Details" asp-controller="Blog" asp-route-id="36383" class="btn btn-danger">第2章</a>
+                    <a target="_blank" asp-action="Details" asp-controller="Blog" asp-route-id="45650" class="btn btn-danger">第3章</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@foreach (var item in Model)
+{
+    <a href="@item.Url" target="_blank" class="cycle-slide" data-src="@item.BannerPath">
+        <div class="cycle-caption">
+            <span class="oneline">@item.Title</span>
+        </div>
+    </a>
+}

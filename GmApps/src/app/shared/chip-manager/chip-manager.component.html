@@ -1,0 +1,8 @@
+﻿<mat-form-field hintLabel="按空格添加{{maxHint}}" class="chip-manager-list">
+  <mat-chip-list>
+    <mat-chip *ngFor="let chip of chips">
+      {{chip}} <button class="mini" mat-icon-button (click)="remove(chip)"><mat-icon>clear</mat-icon></button>
+    </mat-chip>
+  </mat-chip-list>
+  <input matInput #t (input)="oninput(t)" />
+</mat-form-field>

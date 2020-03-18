@@ -1,0 +1,18 @@
+﻿@model IEnumerable<Blog>
+
+<h3>绅士推荐</h3>
+<div class="recommendation">
+    <ul class="thumbnails">
+        @foreach (var blog in Model)
+        {
+            <li>
+                <a asp-controller="Blog" asp-action="Details" asp-route-id="@blog.BlogID" class="thumbnail" target="_blank">
+                    <img src="@BlogHelper.firstImgPath(blog, true)" alt="@blog.BlogTitle" />
+                    <p class="caption" title="@blog.BlogTitle">
+                        @blog.BlogTitle
+                    </p>
+                </a>
+            </li>
+        }
+    </ul>
+</div>

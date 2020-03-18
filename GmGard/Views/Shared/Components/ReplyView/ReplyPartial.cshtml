@@ -1,0 +1,28 @@
+﻿@model Reply
+@inject HtmlUtil htmlUtil
+@{ 
+    var nicknames = ViewBag.nicknames as IDictionary<string, string>;
+    if (nicknames == null)
+    {
+        @inject BlogUtil blogUtil
+        nicknames = blogUtil.GetNickNames(new[] { Model.Author });
+    }
+}
+<li id="reply@(Model.ReplyId)">
+    <a class="avatar" href="@Url.Action("UserInfo","Home", new {name = Model.Author})"><img src="@Url.Action("Show","Avatar", new {name = Model.Author})" /></a>
+    <div class="reply">
+        <span class="replyact">
+        @if (User.IsInRole("Administrator") || User.IsInRole("Moderator") || User.Identity.Name == Model.Author)
+        {
+            <span class="del">
+                <a onclick="gm.delPostReply(@Model.ReplyId)">删除</a>@Html.Raw(" | ")
+            </span>
+        }
+        @Model.ReplyDate
+        @if (User.Identity.IsAuthenticated){
+        <a class="post-reply-reply" onclick="gm.replyReply(@Model.ReplyId, this.getAttribute('data-nickname'))" data-nickname="@nicknames[Model.Author]">回复</a>
+        }</span>
+        <a href="@Url.Action("UserInfo","Home",new {name = Model.Author})">@nicknames[Model.Author]</a><br />
+        @htmlUtil.ContentWithRewrite(Model.Content)
+    </div>
+</li>

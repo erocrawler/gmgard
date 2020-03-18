@@ -1,0 +1,10 @@
+﻿<?xml version="1.0"?>
+<!-- 
+  Visual Studio global web project settings.
+-->
+<VisualWebDeveloper>
+
+  <Globals>
+    <UserProperties src_4tsconfig_1app_1json__JSONSchema="http://json.schemastore.org/tsconfig"/>
+  </Globals>
+</VisualWebDeveloper>

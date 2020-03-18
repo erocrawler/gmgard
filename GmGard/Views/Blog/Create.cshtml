@@ -1,0 +1,364 @@
+﻿@model GmGard.Models.BlogEdit
+@inject BlogUtil blogUtil
+@inject CategoryUtil catUtil
+@inject ConstantUtil constUtil
+@{
+    ViewBag.Title = "投稿";
+}
+
+<h2>新增条目</h2>
+
+@if(!blogUtil.CheckAdmin(true)) {
+    <span class="label label-important" style="font-size: 20px;line-height:25px">为保证您的投稿能顺利通过审核，投稿前请先阅读&nbsp;</span>
+    <a target="_blank" style="margin-bottom: 5px" class="btn btn-primary" href="@Url.Action("About","Home")#aboutcontri">投稿须知</a>
+    <small>推荐使用标题助手规范标题。</small>
+}
+
+<form asp-action="Create" enctype="multipart/form-data" id="createform" method="post">
+    <div asp-validation-summary="ModelOnly"></div>
+    <table style="width:100%">
+        <colgroup>
+            <col style="width:40px;" />
+            <col style="width:91%" />
+        </colgroup>
+        <tbody>
+            <tr>
+                <td><label for="CategoryID">分类</label></td>
+                <td>
+                    <div class="bcategorydiv">
+                        <input type="hidden" id="category-tree" value="@Json.Encode(catUtil.GetCategoryTrees())" />
+                        <select asp-items="ViewBag.CategoryList" asp-for="CategoryID"></select>
+                    </div>
+                    <a class="btn butnfix btn-small float-right" href="#title-helper-modal" role="button" data-toggle="modal"><i class="icon-list-alt"></i> 标题助手</a>
+                </td>
+            </tr>
+            @{
+                var UserHanGroup = ViewBag.UserHanGroup as List<HanGroup>;
+                if (UserHanGroup != null && UserHanGroup.Count > 0)
+                {
+                    <tr>
+                        <td colspan="2">
+                            @if (UserHanGroup.Count == 1)
+                            {
+                                <label class="checkbox">
+                                    <input type="checkbox" name="HanGroupID" id="HanGroupID" value="@UserHanGroup[0].HanGroupID" />
+                                    添加至@(UserHanGroup[0].Title)
+                                </label>
+                            }
+                            else
+                            {
+                                <label class="radio inline">
+                                    <input type="radio" name="HanGroupID" value="" checked /> 不添加至汉化组
+                                </label>
+                                foreach (var HanGroup in UserHanGroup)
+                                {
+                                    <label class="radio inline">
+                                        <input type="radio" name="HanGroupID" value="@HanGroup.HanGroupID" /> 添加至@(HanGroup.Title)
+                                    </label>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            <tr>
+                <td>
+                    @Html.LabelFor(model => model.BlogTitle)
+                </td>
+                <td>
+                    @Html.TextBoxFor(model => model.BlogTitle, new { maxlength = 120, @class = "input-block-level" })
+                    @Html.ValidationMessageFor(model => model.BlogTitle)
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2">
+                    @Html.TextAreaFor(model => model.Content)
+                </td>
+            </tr>
+            <tr><td colspan="2"><span class="label label-info">提取码请填写在链接处。解压密码若非默认密码请直接在正文中标出（请使用“样式→内联元素样式→Label”标记密码以便于复制。）</span></td></tr>
+            <tr>
+                <td style="vertical-align: top;padding-top: 1em;">
+                    <label for="BlogLinks.url">链接<span id="linkhelp" title="请在此处添加你的资源的链接，便于管理与补档。如果有额外的密码，请直接在正文中直接标出。" data-placement="right" class="icon-question-sign"></span></label>
+                </td>
+                <td>
+                    @await Html.PartialAsync("BlogLinkPartial", Model?.BlogLinks ?? new BlogLink[0])
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="upinputdiv" style="border:1px solid black; padding:10px">
+                        <label class="uploadtext">添加预览图(最多4张，每张最大4MB，第一张为主预览图):<span id="filehelp" class="icon-question-sign" title="firefox和chrome可以直接将本地图片拖到上传框中，IE不支持此功能。图片将被转换为JPG，如有特殊需求请使用外链。" data-placement="bottom"></span></label>
+                        <hr style="margin:6px 0;" />
+                        @{int j = 0;
+                            for (j = 0; j < 4; j++)
+                            {
+                                <span class="upinput" style="display:none;">
+                                    <input type="file" id="BlogImage@(j)" name="files" />
+                                    <a class="hide" title="删除" onclick="removeup(@j)"><i class="icon-remove-sign"></i></a>
+                                    <a class="hide" style="top:20px;" title="嵌入文中" onclick="insertAttach(@j);"><i class="icon-picture"></i></a>
+                                </span>
+                            }
+
+                        }
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="BlogTags">标签<span id="taghelp" title="为你的资源添加标签，有助于他人进行搜索。记得输入逗号、分号、空格、回车或tab键以添加一个新标签。最多10个，每个最长20字符" data-placement="right" class="icon-question-sign"></span></label>
+                </td>
+                <td>
+                    <input class="text-box single-line" id="BlogTagInput" type="text" maxlength="20" autocomplete="off">
+                    <span class="field-validation-error" id="BlogTagError" style="display:none">请输入至少一个标签</span>
+                    @if (Model != null)
+                    {
+                        <span class="hide" id="prefilled-tags">@Model.BlogTags</span>
+                    }
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div>
+        @await Html.PartialAsync("BlogOptionPartial", Model?.Option ?? new BlogOption())
+    </div>
+    @await Html.PartialAsync("_Captcha")
+    <p>
+        <input type="submit" autocomplete="off" class="btn btn-primary" data-loading-text="提交中" id="submitbtn" value="提交" /> <img src="//static.gmgard.com/Images/loading2.gif" id="loadinggif" class="hide" />
+        <strong id="filemsg" class="text-error hide">上传文件不得超过4MB</strong>
+    </p>
+    <div id="uploadprogress" class="progress progress-striped active hide">
+        <div class="bar" style="width: 1%"></div>
+    </div>
+    <div id="checknow" class="hide">
+        <h3>已投稿件：</h3>
+        <ul class="listview image fluid four"></ul>
+    </div>
+</form>
+
+@section Scripts {
+    <style>
+        #title-helper-modal {
+            height: 80%;
+            width: 80%;
+            left: 10%;
+            margin: 0;
+            min-height: 480px;
+        }
+            #title-helper-modal iframe {
+                border: none;
+                width: 100%;
+                height: 90%;
+                height: calc(100% - 60px);
+                border-radius: 6px 6px 0 0;
+                display: block;
+            }
+    </style>
+}
+
+@section end_scripts {
+    <div id="title-helper-modal" class="modal hide fade" data-base-href="@constUtil.AppHost">
+        <div class="modal-footer">
+            <span>如果无法显示，请尝试<a href="@(constUtil.AppHost)/title-helper" target="_blank">在新窗口中打开</a></span>
+            <button class="btn" data-dismiss="modal">取消</button>
+            <button class="btn btn-primary hide" id="title-helper-commit" data-dismiss="modal">完成</button>
+        </div>
+    </div>
+    <script data-cfasync="true" async src="@JsConstant.CKEditor" onload="CKEDITOR.replace('Content')"></script>
+    <link href="~/Content/tagmanager.min.css" rel="stylesheet" />
+    <script src="~/Scripts/tagmanager.min.js" cdn></script>
+    <script>
+        var isvalid = true;
+        $(function () {
+            if (!$('#Content').val()) {
+                $('#Content').val('<p></p><p>密码： <span class="label label-inverse">gmgard.com</span></p>');
+            }
+            $('.icon-question-sign').tooltip();
+            $('input[name="files"]').tooltip({ title: "文件会在提交时上传", placement: 'right' });
+            $('#BlogTagInput').focus(function () {
+                $('#BlogTagError').hide();
+            }).tagsManager({  prefilled: $('#prefilled-tags').text(),
+                maxTags: 10, hiddenTagListName: "BlogTags",
+                checkOnEnter: function () {
+                    return $('#BlogTagInput').siblings('.typeahead').is(':visible');
+                }
+            });
+            $('input[name="files"]').one('change', function () {
+                $(this).parent().next('.upinput').show();
+            }).change(function (event) {
+                if(event.target.files){
+                    $(this).siblings('a').show();
+                }
+                else{
+                    $(this).siblings('a').hide();
+                }
+                if(event.target.files && event.target.files[0].size >= 4096 * 1024){ // 4MB
+                    $('#filemsg').show();
+                    isvalid = false;
+                }
+                else{
+                    $('#filemsg').hide();
+                    isvalid = true;
+                }
+            }).filter(function () { return !!this.value }).trigger('change').add($('input[name="files"]').first()).parent().show();
+            $('#createform').submit(function (event) {
+                CKEDITOR.instances.Content.setMode('wysiwyg');
+                $('#Content').val(CKEDITOR.instances.Content.getData());
+                if ($(this).valid() && customValidate()) {
+                    $('#submitbtn').button('loading');
+                    if (window.FormData) {
+                        var progress = $('#uploadprogress').show().children().eq(0).css('width', '1%');
+                        var fdata = new FormData(this);
+                        $.ajax({
+                            url: this.getAttribute('action'),
+                            type: "POST",
+                            data: fdata,
+                            processData: false,  // tell jQuery not to process the data
+                            contentType: false,   // tell jQuery not to set contentType
+                            xhr: function () {
+                                var request = new XMLHttpRequest();
+                                request.upload.onprogress = function (evt) {
+                                    if (evt.lengthComputable) {
+                                        var percentComplete = evt.loaded / evt.total * 100;
+                                        progress.css('width', percentComplete + '%');
+                                    }
+                                };
+                                return request;
+                            }
+                        }).always(function(){
+                            $('#submitbtn').button('reset');
+                            $('#uploadprogress').removeClass('active').fadeOut();
+                        }).fail(function (evt) {
+                            $.globalMessenger().post({
+                                message: '上传出错，请重试。',
+                                type: 'error'
+                            });
+                        }).done(function (msg) {
+                            if (msg.err) {
+                                showerror(msg.err);
+                                $('.captchaimg').trigger('click');
+                            }
+                            else {
+                                $.globalMessenger().post("投稿成功");
+                                emptyform();
+                                $('#checknow').show().find('ul').append('<li><a href="/gm' + msg.id + '" target="_blank" class="icon"><div class="imgcenter"><img src="' + msg.src + '" /></div></a></li>');
+                            }
+                        });
+                        event.preventDefault();
+                    }
+                    else {
+                        window.onbeforeunload = null;
+                        $('#loadinggif').show();
+                    }
+                }
+                else{
+                    event.preventDefault();
+                }
+                window.localStorage["gmcategory"] = $('#CategoryID').val();
+            });
+
+            $.post('@Url.Action("FetchTags", "Search")', null, function (data) {
+                $('#BlogTagInput').typeahead({ source: data });
+            });
+
+            $('#title-helper-modal').one('show', function () {
+                var iframe = document.createElement('iframe'), $t = $(this);
+                iframe.src = $t.data('base-href') + '/title-helper;id=' + $('#CategoryID').val();
+                $t.prepend(iframe);
+                $(window).one('message', function (ev) {
+                    if (ev.originalEvent.data !== "gminit") {
+                        return;
+                    }
+                    window.addEventListener("message", function (event) {
+                        if (event.origin !== $t.data('base-href'))
+                            return;
+                        $('#BlogTitle').val(event.data);
+                    });
+                    $('#title-helper-commit').show().click(function () {
+                        iframe.contentWindow.postMessage("gmget", $t.data('base-href'));
+                    });
+                });
+            });
+        });
+        function customValidate() {
+            if (isvalid) {
+                var data = CKEDITOR.instances.Content.getData();
+                if (!data) {
+                    showerror('正文不能为空！');
+                    return false;
+                }
+            }
+            if (!$('#CategoryID').data('leaf') || !$('#CategoryID').val()) {
+                showerror('请选择次级分类。');
+                return false;
+            }
+            if ($('#LockDesc').val().length > 200) {
+                showerror('签名不得超过200字符');
+                return false;
+            }
+            return isvalid && validateTags();
+        }
+        function showerror(msg) {
+            $('.validation-summary-errors').remove();
+            var $e = $('<div class="validation-summary-errors"><ul><li>' + msg + '</li></ul></div>');
+            $('#createform').prepend($e);
+            $('html, body').animate({
+                scrollTop: ($e.offset().top - 200) + 'px'
+            }, 'fast');
+        }
+        function validateTags() {
+            $('#BlogTagInput').tagsManager('pushTag', $('#BlogTagInput').val());
+            var tags = $('input[name="BlogTags"]').val();
+            if (tags.length > 0) {
+                return true;
+            }
+            $('#BlogTagError').show();
+            return false;
+        }
+        function removeup(id) {
+            var elem = $('#BlogImage' + id)
+            elem.val('');
+            elem.siblings('a').hide();
+        }
+        function insertAttach(id) {
+            var editor = CKEDITOR.instances.Content;
+            var upload = document.getElementById('BlogImage' + id);
+            if (upload.value.length < 1)
+                return;
+            editor.setMode('wysiwyg');
+            editor.insertHtml('[img'+id+']');
+        }
+        function imgvalidate(source, arguments) {
+            var editor = CKEDITOR.instances.Content;
+            var celement = $(editor.getData());
+            var imgelement = celement.find('img').first().attr('src');
+            alert(imgelement);
+            if (imgelement && imgelement.width != 0) {
+                alert(imgelement);
+                arguments.IsValid = true;
+            }
+            else if (arguments.value.length != 0) {
+                alert(arguments.value);
+                arguments.IsValid = true;
+            }
+            else
+                arguments.IsValid = false;
+        }
+        function emptyform() {
+            $('.validation-summary-errors').remove();
+            $('#BlogTagInput').tagsManager('empty');
+            $('#createform').find('input[type="text"],textarea, input[type="file"]').val('');
+            CKEDITOR.instances.Content.setData('');
+            $("#clearPassButton").trigger('click');
+        }
+        window.onbeforeunload = function (e) {
+            if (!CKEDITOR.instances.Content.checkDirty()) return;
+            var message = "您的投稿尚未提交，确认离开？",
+            e = e || window.event;
+            if (e) {
+                e.returnValue = message;
+            }
+            return message;
+        };
+    </script>
+}

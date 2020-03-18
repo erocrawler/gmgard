@@ -1,0 +1,5 @@
+appsettings.*.json
+Log/*
+rss.xml
+wwwroot/Images/Avatar/*
+Properties/PublishProfiles

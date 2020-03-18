@@ -1,0 +1,50 @@
+﻿<script src="~/Scripts/lib/jquery.imgpreview.min.js"></script>
+<script>
+    new Pager({
+        pager_init: function () {
+            if ($('.listoption button').length > 2) {
+                var option = localStorage["gmlistdisplay"];
+                if (option) {
+                    if (option == "two") {
+                        $('.listoption button')[1].className += " active";
+                        changeclass(option);
+                    }
+                    else if (option == "three") {
+                        $('.listoption button')[2].className += " active";
+                        changeclass(option);
+                    }
+                    else if (option == "img") {
+                        $('.listoption button')[3].className += " active";
+                        changeclass(option);
+                    }
+                    else {
+                        $('.listoption button')[0].className += " active";
+                    }
+                }
+                else {
+                    $('.listoption button')[0].className += " active";
+                }
+            }
+            $('#randomgm').tooltip({ container: 'html', placement: 'right' });
+            if ($('.listview .imgcenter').length > 0) {
+                $('.listview .img-small').imgPreview({
+                    imgCSS: {
+                        // Limit preview size:
+                        'max-width': 500,
+                        'max-height': 500,
+                        border: "2px solid"
+                    },
+                    srcAttr: "data-src",
+                    containerLoadingClass: 'imgloading'
+                });
+            }
+        },
+        destination: '#listdiv',
+        source: '#listdiv'
+    });
+    function changeclass(classname){
+        $('.listview').attr('class', 'listview image fluid ' + classname);
+        localStorage['gmlistdisplay'] = classname;
+    }
+    $('.unpromark').tooltip({ placement: 'right' });
+</script>

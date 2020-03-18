@@ -1,0 +1,83 @@
+﻿@model AdViewModel
+
+<table class="manage-table manage-ads" data-type="@AdvertisementType.Carousel">
+    <colgroup>
+        <col style="width:auto" />
+        <col style="width:100px" />
+        <col style="width:30%;" />
+        <col style="width:10%;" />
+        <col style="width:5%;" />
+        <col style="width:10%" />
+    </colgroup>
+    <tr>
+        <th>网址</th>
+        <th>图片</th>
+        <th>标题</th>
+        <th>手动顺序<i class="icon-info-sign" data-toggle="tooltip" title="若不为空，则优先按照此顺序排序，不论顺序数值，手动顺序总在最前。"></i></th>
+        <th>点击量</th>
+        <th>操作</th>
+    </tr>
+    @if(Model.Ads != null) {
+        foreach (var Item in Model.Ads)
+        {
+    <tr class="hide" data-id="@Item.AdID" id="tre@(Item.AdID)">
+        <td>
+            <input type="text" class="edit-url" value="@Item.AdUrl" />
+        </td>
+        <td>
+            <input type="text" class="edit-img" value="@Item.ImgUrl" />
+        </td>
+        <td>
+            <input type="text" class="edit-title" value="@Item.AdTitle" />
+        </td>
+        <td>
+            <input type="number" class="edit-order" value="@Item.AdOrder" />
+        </td>
+        <td>
+            @Item.ClickCount
+        </td>
+        <td>
+            <button class="ad-cancel">取消</button><button class="ad-submit">确认</button>
+        </td>
+    </tr>
+    <tr data-id="@Item.AdID" id="tr@(Item.AdID)">
+        <td>
+            @Item.AdUrl
+        </td>
+        <td>
+            <img src="@Item.ImgUrl" />
+        </td>
+        <td>
+            @Item.AdTitle
+        </td>
+        <td>
+            @Item.AdOrder
+        </td>
+        <td>
+            @Item.ClickCount
+        </td>
+        <td>
+            <button class="ad-del">删除</button><button class="ad-edit">编辑</button>
+        </td>
+    </tr>
+        }
+    }
+    <tr>
+        <td>
+            <input type="text" class="newurl" value="" data-val="true" maxlength="1000" data-val-required="请输入URL" />
+        </td>
+        <td>
+            <input type="text" class="newimg" value="" data-val="true" maxlength="1000" data-val-required="请输入图片" />
+        </td>
+        <td>
+            <input type="text" class="newtitle" value="" data-val="true" maxlength="100" data-val-required="请输入标题" />
+        </td>
+        <td>
+            <input type="text" class="neworder" value="" data-val="true" maxlength="100" placeholder="可选" />
+        </td>
+        <td></td>
+        <td>
+            <button class="ad-new">添加</button>
+        </td>
+    </tr>
+</table>

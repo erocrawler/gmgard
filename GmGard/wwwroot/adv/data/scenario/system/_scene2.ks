@@ -1,0 +1,7 @@
+[preload  storage="./data/bgimage/bg_005.png"  ]
+[preload  storage="./data/bgimage/001.jpg"  ]
+[preload  storage="./data/bgimage/1C4203207E097627ED0AA1E50D4A642E.jpg"  ]
+[preload  storage="./data/bgimage/01.jpg"  ]
+[preload  storage="./data/bgimage/无标题.jpg"  ]
+[preload  storage="./data/bgimage/寺院内部.jpg"  ]
+[return]

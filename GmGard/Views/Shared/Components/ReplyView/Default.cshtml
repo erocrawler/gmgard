@@ -1,0 +1,138 @@
+﻿@model PagedList.IPagedList<Post>
+@inject HtmlUtil htmlUtil
+@if (Model.Count != 0)
+{
+    var nicknames = ViewBag.nicknames as IDictionary<string, string>;
+    var ratings = ViewBag.ratings as IDictionary<int, BlogRating>;
+    <input type="hidden" id="curpagenum" value="@Model.PageNumber" />
+    @if (ViewBag.itemid != PostConstant.Problems && ViewBag.itemid != PostConstant.Suggestions)
+    {
+    <ul class="post-nav nav nav-pills">
+        <li class="@((ViewBag.hottest == true) ? "active" : "")">
+            <a asp-action="ShowReply" 
+               asp-controller="Reply" 
+               asp-route-itemid="@ViewBag.itemid" 
+               asp-route-idtype="@ViewBag.idtype" 
+               asp-route-hottest="true">
+                热门评论
+            </a>
+        </li>
+        <li class="@((ViewBag.hottest != true) ? "active" : "")">
+            <a asp-action="ShowReply" 
+               asp-controller="Reply"
+               asp-route-itemid="@ViewBag.itemid"
+               asp-route-idtype="@ViewBag.idtype"
+               asp-route-hottest="false">
+                最新评论
+            </a>
+        </li>
+    </ul>
+    }
+    foreach(Post post in Model)
+    {
+        <div id="@("listpost"+post.PostId)" class="replytable hover row-fluid">
+            <div class="span2">
+                <div class="replyavatar">
+                    <a href="@Url.Action("UserInfo","Home",new {name = post.Author})">
+                        <img src="@Url.Action("Show","Avatar",new {name = post.Author})" style="max-height:100px;" />
+                    </a>
+                </div>
+            </div>
+            <div class="span10">
+                <div style="text-align:left">
+                    <a asp-action="UserInfo" asp-controller="Home" asp-route-name="@post.Author">@nicknames[post.Author]</a> 发表于 @post.PostDate
+                    &nbsp;
+                    <span class="post-action">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <a class="post-reply" onclick="gm.reply(@post.PostId);"><i class="icon-retweet"></i>回复</a>
+                            <span>• <span class="label post-rating">@post.Rating</span></span>
+                            <a onclick="gm.ratePost(@post.PostId, 1)"> <i class="icon-thumbs-up"></i>顶</a>
+                            <text>&nbsp;&nbsp;</text>
+                            <a onclick="gm.ratePost(@post.PostId, -1)"> <i class="icon-thumbs-down"></i>踩</a>
+                            if (post.ItemId > 0)
+                            {
+                                <a onclick="gm.rptReply(@post.PostId);" data-toggle="modal" role="button" href="#rptModal" class="hovershow"><i class="icon-flag"></i>举报</a><span>&nbsp;</span>
+                            }
+}
+                        &nbsp;
+                        @if (User.IsInRole("Administrator") || User.IsInRole("Moderator") || User.Identity.Name == post.Author)
+                        {
+                            <a onclick="gm.editReply(@post.PostId);" class="hovershow">编辑</a>@Html.Raw("  ")
+                            <a onclick="gm.delReply(@post.PostId);" class="hovershow">删除</a>
+                        }
+                    </span>
+                    @if (ratings != null && ratings.ContainsKey(post.PostId))
+                    {
+                        var rating = ratings[post.PostId];
+                        <span class="rate-label label @switch (rating.value) {
+                                            case 0: <text>label-inverse</text>; break;
+                                            case 1: <text>label-success</text>; break;
+                                            case 3: <text>label-warning</text>; break;
+                                            case 5: <text>label-important</text>; break;
+                                        }">评分：@rating.value.ToString().PadLeft(2)</span>
+                    }
+                </div>
+                <p class="clear-fix"></p>
+                <div><div id='postcontent@(post.PostId)' class="bubble">
+                    <div class="reply">
+                        @htmlUtil.ContentWithRewrite(post.Content)
+                    </div>
+                    <div style="display:none;" id="btnarea_@post.PostId">
+                    @if (User.IsInRole("Administrator") || User.IsInRole("Moderator") || User.Identity.Name == post.Author)
+                    {
+                        <input type="button" id="editreplybtn_@post.PostId" value ="提交" class="btn btn-small" onclick="gm.editClick(@post.PostId);">
+                        @Html.Raw(" ")
+                        <input type="button" id="canceleditbtn_@post.PostId" value ="取消" class="btn btn-small" onclick="gm.cancelClick();" >
+                        <span class = "field-validation-error" id ="editerror_@post.PostId"></span>
+                    }
+                    </div>
+                    <div class="postreply">
+                    @if (post.Replies.Count > 0)
+                    {
+                        <ul data-postid="@post.PostId">
+                            @foreach (var reply in post.Replies)
+                            {
+                                await Html.RenderPartialAsync("ReplyPartial.cshtml", reply);
+                            }
+                        </ul>
+                    }
+                    </div>
+                    <div class="addReply hide">
+                        <textarea style="visibility:hidden"></textarea>
+                        <button onclick="gm.replyPost(@post.PostId)" style="margin-top: 2px" class="btn btn-small btn-primary">发表</button>
+                        <button style="margin-top: 2px" class="btn btn-small" onclick="gm.cancelClick();">取消</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    }
+    if (Model.HasNextPage || Model.HasPreviousPage)
+    {
+        await Html.RenderPartialAsync("_AjaxPager.cshtml", Model);
+    }
+    <script>
+        $(function () {
+            var hash = location.hash;
+            if (hash && hash != 'replydiv' && (hash.indexOf("listpost") != -1 || hash.indexOf("reply") != -1)) {
+                $(hash).css("background-color", "lightGrey").delay(3000).queue(function () {
+                    $(hash).css('transition', 'background-color linear 2s').css("background-color", "inherit");
+                });
+            }
+            $(".postreply>ul").each(function (i, e) { $(e).scrollTop(e.scrollHeight); });
+            $('.post-nav a').click(function (e) { e.preventDefault(); $.post(this.href, postreplace) });
+            var expandBtn = $('<button class="btn btn-mini btn-inverse reply-expand hovershow"><i class="icon-white icon-chevron-down"></i></button>').click(function () {
+                $(this).prev().toggleClass("expand");
+            }), hasScroll = function (i, e) { return e.scrollHeight > e.clientHeight };
+            $('.replytable').find('.bubble>.reply, .postreply>ul').filter(hasScroll).after(expandBtn.clone(true));
+        });
+        function postreplace(result) {
+            $('html, body').animate({ scrollTop: $('#replydiv').html(result).offset().top }, 'slow');
+        }
+    </script>
+}
+else
+{
+    <h3>暂无评论。</h3>
+}

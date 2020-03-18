@@ -1,0 +1,64 @@
+﻿@model PagedList.IPagedList
+
+@{
+    /**
+     * using ViewBag for parameters in this page.
+     * ViewBag.DisplaySelector (string) the element selector to replace new view
+     * ViewBag.PostUrl (string) the url to request page
+     * ViewBag.HasReplace (bool) has defined custom replace function or not
+     */
+    string DisplaySelector = ViewBag.DisplaySelector ?? "#multiview";
+  //ViewBag.PostUrl
+  //ViewBag.HasReplace
+}
+
+<div class="ajax-pager">
+     @if (Model.HasPreviousPage)
+    {
+        <a class="btn btn-mini" onclick="gotopage(1);">第1页</a>
+        @Html.Raw(" ")
+        <a class="btn btn-mini" onclick="gotopage(@Model.PageNumber-1);">上一页</a>
+    }
+    else{
+        <a class="btn btn-mini disabled">第1页</a>@Html.Raw(" ")<a class="btn btn-mini disabled">上一页</a>
+    }
+    @{string lastpage = "第"+Model.PageCount+"页";}
+    @if (Model.HasNextPage)
+    {
+        <a class="btn btn-mini" onclick="gotopage(@Model.PageNumber+1);">下一页</a>
+        @Html.Raw(" ")
+        <a class="btn btn-mini" onclick="gotopage(@Model.PageCount);">@lastpage</a>
+    }
+    else{
+        @:<a class="btn btn-mini disabled">下一页</a> <a class="btn btn-mini disabled">@lastpage</a>
+    }
+    &nbsp;
+    <span>第
+        @Html.TextBox("jumppage", Model.PageNumber, new {style="width: 2em;height: 1em;padding: 3px;margin: 0px;" })
+       页</span>
+    <script>
+        $(function () {
+            $('#jumppage').change(function () {
+                var pagenum = parseInt(this.value);
+                var pagecount = '@Model.PageCount';
+                if (pagenum > 0 && pagenum <= pagecount) {
+                    gotopage(pagenum);
+                }
+            });
+        });
+        function gotopage(pagenum) {
+            var pagecount = '@Model.PageCount';
+            if (pagenum > 0 && pagenum <= pagecount) {
+                $.post('@ViewBag.PostUrl', { pagenum: pagenum }, replace);
+            }
+        }
+        @if (ViewBag.HasReplace == null)
+        {
+        <text>
+        function replace(result) {
+            $('html, body').animate({ scrollTop: $('@DisplaySelector').html(result).offset().top }, 'slow');
+        }
+        </text>
+        }
+    </script>
+</div>

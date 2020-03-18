@@ -1,0 +1,114 @@
+﻿@inject ExpUtil expUtil
+@inject BlogUtil blogUtil
+@inject MessageUtil msgUtil
+@if (User.Identity.IsAuthenticated) {
+    int start; int next; int lvlp; string lvl; string title; double width;
+    int points = expUtil.getUserPoints(User.Identity.Name);
+    expUtil.getUserExp(User.Identity.Name, out start, out next, out lvlp);
+
+    if(lvlp == 99){
+        lvl = "??";
+    }
+    else{
+        lvl = lvlp.ToString();
+    }
+    title = expUtil.getLevelTitle(lvlp);
+    if(next != 0){
+        width = (double)start/next * 100;
+    }
+    else{
+        width=0;
+    }
+
+    <div class="login-wrapper">
+    <div class="loguseravatar">
+        <div class="imgcenter">
+            <a title="个人信息" href="@Url.Action("UserInfo","Home",new { name = ""})">
+                <img src="@Url.Action("Show","Avatar",new { name = User.Identity.Name})" />
+            </a>
+            <span id="lvnum" class="badge lvl" title="当前等级">lv.@lvl <span class="hide lvtitle">@title</span></span>
+            <div class="scorediv">
+                <span id="lolly" class="label lolly" title="棒棒糖：@(points)根"><i class="ico-lolly"></i> × @points</span>
+                <br />
+                <a data-href='@Url.Action("Quest","Home")' class="questlink" data-target="#questmodal"><span class="label label-info quest" title="当前任务进行情况">任务：@expUtil.GetQuestProgress()</span></a>
+                <br />
+                <a href="@Url.Action("Favorite", "Home")" title="我的收藏" class="label label-info quest">收藏：@blogUtil.GetFavCount(User.Identity.Name)</a>
+            </div>
+        </div>
+    </div>
+    <br />
+        <div>
+        <div class="logusername">
+            <div class="progress progress-success expbar">
+                <div class="bar" style="width: @width%;"></div>
+                <span title="绅士度" class="exp">@start/@next</span>
+            </div>
+            你好,@blogUtil.GetNickName(User.Identity.Name) !
+        </div>
+            @using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm"})) {
+                @Html.AntiForgeryToken()
+            <div style="margin-right:-10px">
+                <div class="btn-group logaddbar" data-status="close" id="logaddbar">
+                    <a onclick="barhideshow();" class="btn btn-small btn-info" style="width:0px;padding-left:0px;padding-right:14px;"><i style="opacity:1" id="arrico" class="icon-chevron-left icon-white"></i></a>
+                    <a href="@Url.Action("Manage", "Account")" title="账号设定" class="btn btn-small btn-info"><i class="icon-cog icon-white"></i></a>
+                    <a href="@Url.Action("Invite", "Account")" title="邀请码" class="btn btn-small btn-info"><i class="icon-gift icon-white"></i></a>
+                    <a href="@Url.Action("Favorite", "Home")" title="我的收藏" class="btn btn-small btn-info"><i class="icon-star icon-white"></i></a>
+                    <a data-href='@Url.Action("Quest","Home")' title="任务" class="questlink btn btn-small btn-info"><i class="icon-screenshot icon-white"></i></a>
+                    <button class="btn btn-small hide"></button>
+                </div>
+                <div class="btn-group">
+                <button class="btn btn-small hide"></button>
+                <a href="@Url.Action("Index","Follow",new { name = ""})" class="btn btn-small btn-info" title="关注主页"><i class="icon-book icon-white"></i></a>
+                <a href="@Url.Action("Index","Message")" title="消息中心" class="btn btn-small btn-info"><i class="icon-envelope icon-white"></i><span style="margin-left: 2px" class="label label-important">@msgUtil.GetUnreadMsg(User.Identity.Name)</span></a>
+                <a href="javascript:document.getElementById('logoutForm').submit()" class=" btn btn-small btn-info" title="注销"><i class="icon-off icon-white"></i></a>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    <div id="questmodal" class="modal hide fade" style="background:white">
+        <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h2 style="text-align:left">任务</h2>
+        </div>
+        <div class="modal-body" style="max-height:500px">
+        </div>
+    </div>
+    <script>
+    $(function () {
+        $(".questlink").click(function (ev) {
+            ev.preventDefault();
+            $.ajax({
+                cache: false,
+                url: this.getAttribute("data-href"),
+                success: function (result) {
+                $("#questmodal .modal-body").html(result);
+                $("#questmodal").modal("show");
+            }});
+        });
+    });
+    function barhideshow() {
+        var bar = document.getElementById("logaddbar");
+        var arr = document.getElementById("arrico");
+        if (bar.getAttribute("data-status") == "close") {
+            bar.className = "btn-group logaddbar baropen";
+            bar.setAttribute("data-status", "open");
+            arr.className = "icon-chevron-right icon-white";
+        }
+        else{
+            bar.className = "btn-group logaddbar bardelay";
+            bar.setAttribute("data-status", "close");
+            arr.className = "icon-chevron-left icon-white";
+        }
+    }
+    </script>
+}
+else
+{
+    <div class="login-wrapper">
+        <ul>
+            <li>@Html.ActionLink("注册", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink", @class = "btn btn-small btn-primary" })</li>
+            <li>@Html.ActionLink("登录", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink", @class = "btn btn-small btn-primary" })</li>
+        </ul>
+    </div>
+}

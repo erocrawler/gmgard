@@ -1,0 +1,46 @@
+﻿<div id="bounty-list">
+  <mat-card>
+    <nav mat-tab-nav-bar fxLayoutAlign="end">
+      <a mat-tab-link [routerLink]="[]" routerLinkActive
+         [queryParams]="{show:'All'}" [active]="showType === 'All'">
+        全部
+      </a>
+      <a mat-tab-link
+         [routerLink]="[]" routerLinkActive
+         [queryParams]="{show:'Pending'}" [active]="showType === 'Pending'">
+        未采纳
+      </a>
+      <a mat-tab-link
+         [routerLink]="[]" routerLinkActive
+         [queryParams]="{show:'Answered'}" [active]="showType === 'Answered'">
+        已采纳
+      </a>
+    </nav>
+  </mat-card>
+  <ng-container *ngIf="bounties && bounties.items.length > 0; else emptyBlock">
+    <mat-card *ngFor="let bounty of bounties.items">
+      <mat-card-header>
+        <img mat-card-avatar [src]="bounty.authorAvatar" [alt]="bounty.author">
+        <mat-card-title> {{bounty.title}} </mat-card-title>
+        <mat-card-subtitle> {{bounty.author}} </mat-card-subtitle>
+      </mat-card-header>
+      <img mat-card-image *ngIf="bounty.image" [src]="bounty.image" />
+      <mat-card-content>
+        {{bounty.content}}
+      </mat-card-content>
+      <mat-card-footer>
+        <button mat-button>阅读全部</button>
+      </mat-card-footer>
+    </mat-card>
+  </ng-container>
+  <ng-template #emptyBlock>
+    <mat-card>
+      <p>无数据！</p>
+    </mat-card>
+  </ng-template>
+</div>
+
+<mat-card>
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+  <pagination [paged]="bounties" (pageChange)="navigate($event)"></pagination>
+</mat-card>

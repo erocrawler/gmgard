@@ -1,0 +1,46 @@
+<mat-card *ngIf="is2faEnabled" class="card-top">
+    <mat-card-title>
+        两步验证已启用
+    </mat-card-title>
+    <div>
+        <p *ngIf="recoveryCodesLeft == 0">
+            <mat-icon>warning</mat-icon><strong>您已没有剩余应急密码</strong><br />
+            您必须立即生成新的应急密码以应对两步验证无法使用的情况。
+        </p>
+        <p *ngIf="recoveryCodesLeft <= 3">
+            <mat-icon>info</mat-icon><strong>您只有 {{recoveryCodesLeft}} 个应急密码剩余。</strong><br />
+            您应该生成新的应急密码。
+        </p>
+        <p *ngIf="recoveryCodesLeft > 3">
+            <mat-icon>info</mat-icon>您有 {{recoveryCodesLeft}} 个应急密码剩余。<br />
+        </p>
+    </div>
+    <mat-card-actions>
+        <button mat-button (click)="forgetClient()" *ngIf="isMachineRemembered">忘记此设备的两步验证</button>
+        <button mat-button (click)="disable2fa(false)">禁用两步验证</button>
+        <button mat-button (click)="generateRecoveryCodes()" class="btn btn-default">重设应急密码</button>
+    </mat-card-actions>
+</mat-card>
+
+<mat-card *ngIf="!is2faEnabled" class="card-top">
+    <mat-card-title>
+        两步验证未启用
+    </mat-card-title>
+    <div style="text-align:center" mat-card-image>
+        <img style="max-width:740px; width:100%" src="/assets/two-factor-authentication-02.png" />
+    </div>
+    <p>
+        <mat-icon>warning</mat-icon>为保障您的账户安全，推荐启用两步验证。<br />
+        两步验证旨在确保只有您可以访问自己的帐户，即使其他人知道您的密码也无法访问。当您在新设备上登录时，必须使用两步验证APP来验证登陆。
+    </p>
+</mat-card>
+
+<mat-card class="action-buttons" fxLayoutGap="8px">
+    <ng-container *ngIf="!hasAuthenticator">
+        <button mat-raised-button color="primary" [routerLink]="['/account', 'enable2fa']" class="btn btn-default">启用两步验证</button>
+    </ng-container>
+    <ng-container *ngIf="hasAuthenticator">
+        <button mat-raised-button color="primary" [routerLink]="['/account', 'enable2fa']" class="btn btn-default">设置两步验证</button>
+        <button mat-raised-button (click)="disable2fa(true)" class="btn btn-default">重设验证秘钥</button>
+    </ng-container>
+</mat-card>

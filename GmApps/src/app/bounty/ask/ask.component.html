@@ -1,0 +1,25 @@
+﻿<mat-card>
+  <mat-card-title> 发布问题 </mat-card-title>
+  <mat-card-content fxLayout="column">
+    <h2>标题</h2>
+    <mat-form-field>
+      <input [(ngModel)]="title" matInput required />
+    </mat-form-field>
+    <h2>问题说明</h2>
+    <ckeditor [(ngModel)]="content" [config]="config" debounce="500"></ckeditor>
+    <h2>上传图像</h2>
+    <image-manager [disabled]="shouldDisableImage" (update)="updateImages($event)"></image-manager>
+    <p *ngIf="images.length > 0">图像总大小：{{imageSize | fileSize}}，最大可上传10MB。</p>
+    <h2>标签</h2>
+    <chip-manager [(chips)]="tags" max="5"></chip-manager>
+    <h2>悬赏棒棒糖</h2>
+    <div>
+      <mat-form-field hintLabel="当前棒棒糖{{maxPoint}}个，输入0则不悬赏">
+        <input [(ngModel)]="points" type="number" [max]="maxPoint" min="0" matInput />
+      </mat-form-field>
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-raised-button color="primary" (click)="publish()">发布</button>
+  </mat-card-actions>
+</mat-card>

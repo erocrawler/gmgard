@@ -1,0 +1,20 @@
+<mat-card>
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <h1>七色谷X绅士之庭福利抽奖活动</h1>
+    <img mat-card-image src="https://static.gmgard.com/Images/upload/13051071725143981.jpg" alt="飞机杯" />
+    <div *ngIf="isActive; else elseBlock">
+        <ul>
+            <li>活动时间：2019年3月7日 18：00 —— 3月18日 24:00</li>
+            <li>彩券价格：{{ cost }}</li>
+            <li>当前棒棒糖： {{ points }}</li>
+            <li>一个账号限购一次</li>
+        </ul>
+        <div style="text-align:center">
+            <button *ngIf="!hasRaffle" mat-raised-button color="primary" (click)="buy()" [disabled]="loading || points < cost">购买彩券</button>
+            <button *ngIf="hasRaffle" mat-raised-button disabled>已购买</button>
+        </div>
+    </div>
+    <ng-template #elseBlock>
+        抽奖已结束！抽奖结果请稍后参阅公告。
+    </ng-template>
+</mat-card>

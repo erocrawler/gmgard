@@ -1,0 +1,25 @@
+﻿@{
+    ViewBag.Title = "404 - 页面未找到";
+    var prev = ViewContext.HttpContext.Request.Query["prev"];
+}
+
+<div class="errorimg">
+    <img src="~/Images/404.jpg" />
+</div>
+<div class="alert alert-info">
+@if (!string.IsNullOrEmpty(prev))
+{
+<p>找不到请求的页面： @(ViewContext.HttpContext.Request.Scheme + "://" + ViewContext.HttpContext.Request.Host + prev)</p>
+<p>请尝试 @Html.ActionLink("登录", "Login", "Account", new { ReturnUrl = prev }, new { @class = "btn btn-primary btn-small" })</p>
+}
+else
+{
+<p>找不到请求的页面： @ViewBag.RequestedUrl</p>
+}
+@if (ViewBag.ReferrerUrl != null) {
+<p>请返回 <a href="@ViewBag.ReferrerUrl">上一页</a>。</p>
+}
+</div>
+@* Error page must be longer than 512 bytes for IE and Chrome to show it.
+   So add padding in case we're short. *@
+@(new string(' ', 512))

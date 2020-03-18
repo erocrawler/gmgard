@@ -1,0 +1,19 @@
+<mat-card class="gacha-nav">
+  <nav mat-tab-nav-bar fxLayoutAlign="end">
+    <a *ngFor="let pool of pools" mat-tab-link [routerLink]="['/gacha', {showType: pool.poolName}]"
+       routerLinkActive [active]="url === pool.poolName">
+      {{ pool.poolDisplay }}
+    </a>
+    <a mat-tab-link
+       [routerLink]="['/gacha', {showType: 'common'}]" routerLinkActive
+       [active]="url === 'common'">
+      普通卡池
+    </a>
+    <a mat-tab-link
+       [routerLink]="['/gacha', 'list']" routerLinkActive
+       [active]="url === 'list'">
+      卡牌一览
+    </a>
+  </nav>
+</mat-card>
+<router-outlet></router-outlet>

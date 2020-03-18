@@ -1,0 +1,27 @@
+﻿@model LoginWithRecoveryCodeModel
+@{
+    ViewData["Title"] = "应急密码验证";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+<div class="alert alert-info">
+    您正在尝试使用应急密码登陆。在能够成功两步验证登陆或禁用两步验证前，本次登陆将不会被记忆，并在关闭浏览器后自动登出。
+</div>
+<div class="row">
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" class="form-horizontal">
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="control-group">
+            <div class="controls">
+                <label asp-for="RecoveryCode"></label>
+                <input asp-for="RecoveryCode" class="form-control" autocomplete="off" />
+                <span asp-validation-for="RecoveryCode" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="controls">
+                <button type="submit" class="btn btn-default">登陆</button>
+            </div>
+        </div>
+    </form>
+</div>

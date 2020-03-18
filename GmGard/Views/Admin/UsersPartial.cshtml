@@ -1,0 +1,172 @@
+﻿@model GmGard.Models.AdminViewModel
+@inject Microsoft.AspNetCore.Identity.UserManager<UserProfile> userManager
+@inject ConstantUtil constUtil
+
+<div class="alert alert-info">所有组员变动需要最多30分钟生效。注销并重新登录可以使变动立即生效。</div>
+<p><a target="_blank" href="@(constUtil.AppHost)/admin/registration">管理用户邀请码<i class="icon icon-share"></i></a></p>
+<div class="accordion" id="userlist">
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#userlist" href="#adminlist">
+                <strong>管理员名单</strong>
+            </a>
+        </div>
+        <div id="adminlist" class="accordion-body collapse in">
+            <div class="accordion-inner">
+                @if (User.IsInRole("Administrator"))
+                {
+                    <div id="manageadmindiv">
+                        <form asp-action="ManageAdmin" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#adminmsg" method="post">
+                            <input id="adminname" name="adminname" placeholder="用户名称" type="text" data-val="true" data-val-regex="无效的名字" data-val-regex-pattern="^[a-zA-Z0-9_\u4e00-\u9fa5]{1,20}$" data-val-required="请输入名字" />
+                            <label class="checkbox" for="admanager"><input type="checkbox" id="admanager" value="true" name="admanager" />广告管理者</label>
+                            <input type="submit" class="btn btn-primary butnfix" value="添加管理员" name="behaviour" /> <input type="submit" class="btn butnfix" value="删除管理员" name="behaviour" />
+                            <h4 data-valmsg-for="adminname" data-valmsg-replace="true"></h4>
+                            <h4 class="text-info" id="adminmsg"></h4>
+                        </form>
+                    </div>
+                }
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr><th>用户名</th><th>邮箱</th><th>上次登录日期</th><th>职称</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var admin in Model.Admins)
+                        {
+                            <tr>
+                                <td>@admin.UserName</td>
+                                <td>@admin.Email</td>
+                                <td>@admin.LastLoginDate</td>
+                                <td>@string.Join(",", await userManager.GetRolesAsync(admin)) </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#userlist" href="#writerlist">
+                <strong>作者名单</strong>
+            </a>
+        </div>
+        <div id="writerlist" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div id="managewriterdiv">
+                    <form asp-action="ManageRole" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#writermsg" method="post">
+                        <input id="writername" name="name" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+                        <input type="submit" class="btn btn-primary butnfix" value="添加作者" name="behaviour" /> <input type="submit" class="btn butnfix" value="删除作者" name="behaviour" />
+                        <h4 data-valmsg-for="writername" data-valmsg-replace="true"></h4>
+                        <h4 class="text-info" id="writermsg"></h4>
+                    </form>
+                </div>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr><th>用户名</th><th>邮箱</th><th>上次登录日期</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Writers)
+                        {
+                            <tr>
+                                <td>@user.UserName</td>
+                                <td>@user.Email</td>
+                                <td>@user.LastLoginDate</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#userlist" href="#auditlist">
+                <strong>审核组成员</strong>
+            </a>
+        </div>
+        <div id="auditlist" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div id="manageauditor">
+                    <form asp-action="ManageRole" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#auditormsg" method="post">
+                        <input id="auditorname" name="name" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+                        <input type="submit" class="btn btn-primary butnfix" value="加入审核组" name="behaviour" /> <input type="submit" class="btn butnfix" value="移除审核组" name="behaviour" />
+                        <h4 data-valmsg-for="auditorname" data-valmsg-replace="true"></h4>
+                        <h4 class="text-info" id="auditormsg"></h4>
+                    </form>
+                </div>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr><th>用户名</th><th>邮箱</th><th>上次登录日期</th><th>审核数</th><th>正确率</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Auditors)
+                        {
+                            <tr>
+                                <td>@user.UserName</td>
+                                <td>@user.Email</td>
+                                <td>@user.LastLoginDate</td>
+                                <td>@(user.auditor?.AuditCount)</td>
+                                <td>@string.Format("{0:P2}", user.auditor?.Accuracy ?? 1)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#userlist" href="#banlist">
+                <strong>封禁列表</strong>
+            </a>
+        </div>
+        <div id="banlist" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div id="managebandiv">
+                    <form asp-action="ManageBan" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#banmsg" method="post">
+                        <input id="banname" name="banname" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+                        <input id="bancomment" name="bancomment" placeholder="备注" type="text" maxlength="200" data-val="true" />
+                        <input type="submit" class="btn btn-inverse butnfix" value="封禁" name="behaviour" /> <input type="submit" class="btn butnfix" value="解封" name="behaviour" />
+                        <label class="checkbox inline">@Html.CheckBox("deletecomment") 同时删除所有评论</label>
+                        <h4 data-valmsg-for="banname" data-valmsg-replace="true"></h4>
+                        <h4 class="text-info" id="banmsg"></h4>
+                    </form>
+                </div>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr><th>用户名</th><th>邮箱</th><th>封禁日期</th><th>备注</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.BannedUsers)
+                        {
+                            <tr>
+                                <td>@user.UserName</td>
+                                <td>@user.Email</td>
+                                <td>@user.LastLoginDate</td>
+                                <td>@user.UserComment</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<h2>经验与积分调整</h2>
+<div id="manageexpdiv">
+    <form asp-action="ManageExp" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#expmsg" method="post">
+        <input id="expname" name="expname" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+        <input name="expcount" title="经验" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
+        <input name="ptscount" title="积分" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
+        <input type="submit" class="btn butnfix" value="提交" /><br />
+        <input name="reason" type="text" class="span6" placeholder="原因" maxlength="100" />
+        <label for="reasoncheck" class="inline checkbox">
+            <input type="checkbox" id="reasoncheck" value="true" name="reasoncheck" /> 发送通知
+        </label>
+        <h4 data-valmsg-for="expname" data-valmsg-replace="true"></h4>
+        <h4 class="text-info" id="expmsg"></h4>
+    </form>
+</div>
+<script>
+    $(function () { $('#manageexpdiv input[type="number"]').tooltip(); })
+</script>

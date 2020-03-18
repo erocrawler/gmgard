@@ -1,0 +1,13 @@
+<h1 mat-dialog-title>删除邀请码</h1>
+<div mat-dialog-content fxFlexLayout="column">
+    <p>确认删除{{data.user}}的邀请码？</p>
+    <p>{{data.code}}</p>
+    <mat-form-field style="width:100%">
+        <textarea matInput placeholder="原因" [(ngModel)]="data.reason"></textarea>
+    </mat-form-field>
+    <mat-checkbox [(ngModel)]="data.notice">发送通知</mat-checkbox>
+</div>
+<div mat-dialog-actions>
+    <button mat-button (click)="close(false)">取消</button>
+    <button mat-raised-button color="primary" (click)="close(true)" cdkFocusInitial>确认</button>
+</div>

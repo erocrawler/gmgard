@@ -1,0 +1,51 @@
+<mat-card>
+  <mat-card-title>查看考卷</mat-card-title>
+  <mat-form-field>
+    <input matInput [value]="username" #userInput placeholder="用户名">
+  </mat-form-field>
+  <mat-form-field>
+    <mat-select placeholder="版本" #versionInput [ngModel]="version">
+      <mat-option *ngFor="let v of allVersions" [value]="v">{{v}}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <button mat-raised-button (click)="lookup(userInput.value, versionInput?.selected?.value)">查看</button>
+</mat-card>
+<br />
+<mat-card *ngIf="requestActive" fxLayout="row" fxLayoutAlign="center">
+  <mat-spinner></mat-spinner>
+</mat-card>
+<div *ngIf="(!requestActive && !!currentResult); then resultBlock"></div>
+<ng-template #resultBlock>
+  <mat-card>
+    用户 {{username}} 的考卷，总得分：{{totalPoints}}。
+    {{currentResult.hasPassed ? '通过'  : '未通过'}}。
+    试卷提交于：{{ currentResult.submitTime | date:'medium' }}
+  </mat-card>
+  <mat-card *ngFor="let question of exam.questions">
+    <mat-card-content [ngSwitch]="questionType[question.type]">
+      <p *ngSwitchCase="questionType.Information">
+        <mat-icon>info</mat-icon> {{ question.description }}
+      </p>
+      <blank-question *ngSwitchCase="questionType.FillInBlank"
+                      [active]="examActive"
+                      [question]="question"
+                      [result]="resultMap[question.id]">
+      </blank-question>
+      <choice-question *ngSwitchCase="questionType.MultipleChoices"
+                       [active]="examActive"
+                       [question]="question"
+                       [result]="resultMap[question.id]">
+      </choice-question>
+      <title-question *ngSwitchCase="questionType.TitleCombination"
+                      [active]="examActive"
+                      [question]="question"
+                      [result]="resultMap[question.id]">
+      </title-question>
+    </mat-card-content>
+  </mat-card>
+</ng-template>
+<mat-card *ngIf="!requestActive && !currentResult && !!username">
+  <mat-icon>warning</mat-icon> 
+  <span *ngIf="version; else noVersion">未找到用户 {{ username }} 的考卷。</span>
+  <ng-template #noVersion>请选择版本。</ng-template>
+</mat-card>

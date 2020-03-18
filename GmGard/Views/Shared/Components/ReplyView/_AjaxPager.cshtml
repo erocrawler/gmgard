@@ -1,0 +1,53 @@
+﻿@model PagedList.IPagedList
+
+@{
+    int? itemid = ViewData["itemid"] as int?;
+    ItemType? idtype = ViewData["idtype"] as ItemType?;
+    string name = ViewBag.relplyusername as string;
+    bool hottest = ViewBag.hottest == true;
+  }
+
+<div class="pager">
+    @if (Model.HasPreviousPage)
+    {
+        <a class="btn btn-mini" onclick="postgotopage(1);">第1页</a>
+        @Html.Raw(" ")
+        <a class="btn btn-mini" onclick="postgotopage(@Model.PageNumber-1);">上一页</a>
+    }
+    else{
+        <a class="btn btn-mini disabled">第1页</a>@Html.Raw(" ")<a class="btn btn-mini disabled">上一页</a>
+    }
+    @{string lastpage = "第"+Model.PageCount+"页";}
+    @if (Model.HasNextPage)
+    {
+        <a class="btn btn-mini" onclick="postgotopage(@Model.PageNumber+1);">下一页</a>
+        @Html.Raw(" ")
+        <a class="btn btn-mini" onclick="postgotopage(@Model.PageCount);">@lastpage</a>
+    }
+    else{
+        @:<a class="btn btn-mini disabled">下一页</a> <a class="btn btn-mini disabled">@lastpage</a>
+    }
+    &nbsp;
+    <span>第
+        @Html.TextBox("postjumppage", Model.PageNumber, new {style="width: 2em;height: 1em;padding: 3px;margin: 0px;" })
+       页</span>
+    <script>
+        $(function(){
+            $('#postjumppage').change(function () {
+                var pagenum = parseInt(this.value);
+                postgotopage(pagenum);
+            });
+        });
+        function postgotopage(pagenum) {
+            var pagecount = '@Model.PageCount';
+            if (pagenum > 0 && pagenum <= pagecount) {
+                @if(name == null){
+                <text>$.post('@Url.Action("ShowReply", "Reply")', { itemid: '@itemid', pagenum: pagenum, idtype: '@idtype', hottest: '@hottest' }, postreplace);</text>
+                }
+                else{
+                 <text>$.post('@Url.Action("ShowUserReply", "Reply")', { itemid: '@itemid', name: '@name', pagenum: pagenum, idtype: '@idtype' }, postreplace); </text>
+                }
+            }
+        }
+    </script>
+</div>

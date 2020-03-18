@@ -1,0 +1,25 @@
+﻿@model Category
+@{
+    var selectedIds = ViewBag.SelectedIds as ISet<int>;
+    var counts = ViewBag.CategoryItemCount as IDictionary<int, long>;
+}
+
+@if (Model.SubCategories != null)
+{
+    <ul>
+        @foreach (var subcat in Model.SubCategories)
+        {
+            <li>
+                <span class="label filterlabel subcatelab" data-scata="@(subcat.CategoryID)" data-sflt-check="false" data-indeter="false" style="cursor:pointer">
+                    @if (counts.ContainsKey(subcat.CategoryID))
+                    {
+                        <span class="badge cbadge count-badge">@counts[subcat.CategoryID].KiloFormat(true)</span>
+                    }
+                    &nbsp;@subcat.CategoryName<i class="icon-scheck"></i>
+                </span>
+                <input type="checkbox" name="CategoryIds" value="@subcat.CategoryID" checked="@selectedIds.Contains(subcat.CategoryID)" style="display:none" />
+                @await Html.PartialAsync("_SubCategorySelectPartial", subcat)
+            </li>
+        }
+    </ul>
+}

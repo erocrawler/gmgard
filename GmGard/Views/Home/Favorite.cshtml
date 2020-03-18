@@ -1,0 +1,51 @@
+﻿@model SearchBlogResult
+@inject BlogUtil blogUtil
+@{
+    blogUtil.PrepareListCache(Model.Blogs);
+    var username = ViewBag.name as string;
+    if (string.IsNullOrEmpty(username))
+    {
+        username = User.Identity.Name;
+    }
+    var nickname = blogUtil.GetNickName(username);
+    ViewBag.Title = nickname + "的收藏";
+    var dict = Model.SearchModel.ToRouteDictionary();
+    dict.Add("name", ViewBag.name);
+}
+@(await Component.InvokeAsync<UserStatus>(new { UserName = username }))
+
+@await Html.PartialAsync("_ListOptionsPartial", Model.SearchModel)
+<h2 class="clear-fix">@Html.ActionLink(nickname, "UserInfo", new { name = username })的收藏</h2>
+@await Html.PartialAsync("SearchPartial", Model.SearchModel)
+
+<hr />
+@if (Model.Blogs.Count == 0)
+{
+    <strong>什么也没有</strong>
+}
+else
+{
+    <div id="listdiv">
+        <ul class="listview image fluid">
+            @{
+                ViewBag.CategoryBadge = true;
+                ViewBag.AncestorBadge = true;
+                foreach (var blog in Model.Blogs)
+                {
+                    await Html.RenderPartialAsync("_ListPartial", blog);
+                }
+            }
+        </ul>
+        @if (Model.Blogs.PageCount > 1)
+        {
+            await Html.RenderPartialAsync("_SearchPagerPartial", Model.Blogs);
+        }
+    </div>
+}
+@section scripts {
+    <link href="~/Content/userinfo.css" rel="stylesheet" asp-append-version="true" />
+    <bg-user />
+}
+@section end_scripts{
+    @await Html.PartialAsync("_ListScripts")
+}

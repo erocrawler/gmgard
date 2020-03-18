@@ -1,0 +1,32 @@
+﻿@model PagedList.IPagedList<Blog>
+@inject BlogUtil blogUtil
+@{
+    blogUtil.PrepareListCache(Model);
+    ViewBag.Title = "我的关注";
+}
+<div class="feed-user">
+    @await Component.InvokeAsync(nameof(UserStatus))
+</div>
+@if (Model.Count > 0) {
+    <div id="follow-feeds" class="feeds">
+        <ul class="column span5">
+            @foreach (var blog in Model)
+	        {
+                await Html.RenderPartialAsync("_ListPartial", blog);
+	        }
+        </ul>
+    </div>
+    <p class="clear-fix"></p>
+@await Html.PartialAsync("_PagerPartial", Model)
+}
+else
+{
+    <div id="follow-feeds" class="feeds">
+        <strong class="ratefail" style="color: black">什么也没有……</strong>
+    </div>
+}
+@section scripts {
+    <link href="~/Content/follow.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/Content/userinfo.css" rel="stylesheet" asp-append-version="true" />
+    <bg-user />
+}

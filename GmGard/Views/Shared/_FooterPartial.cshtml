@@ -1,0 +1,48 @@
+﻿@inject ConstantUtil constantUtil
+@inject IOptionsSnapshot<DataSettingsModel> datatSettings
+<div class="totop-wrapper hidden">
+    <div class="totop" title="返回顶部喵~" onclick="$('html, body').animate({scrollTop:0}, 'slow');"></div>
+</div>
+<footer class="max-width">
+    <div class="content-wrapper">
+        <div class="float-left">
+            <div>
+                &copy; @DateTime.Now.Year - @constantUtil.SiteName | <a asp-action="Index" asp-controller="Home"><i class="icon-home"></i>主页</a> |
+                <a asp-action="About" asp-controller="Home"><i class="icon-info-sign"></i>关于</a> |
+                <a asp-action="UserRanking" asp-controller="Home"><i class="icon-flag"></i>用户排行</a> |
+                <a target="_blank" rel="noreferrer noopener" href="http://tieba.baidu.com/f?kw=gmgard"><i class="icon-share"></i>贴吧</a> |
+                <harmony>
+                    <a href="/rss.xml"><i class="rss-icon"></i>RSS订阅</a> |
+                    <span><i class="qq-icon"></i>QQ群：<span class="label label-inverse">@datatSettings.Value.QQGroupNumber</span></span>
+                    <a target="_blank" href="@datatSettings.Value.QQGroupUrl">
+                        <img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="@constantUtil.SiteName" title="@constantUtil.SiteName" />
+                    </a>
+                </harmony>
+            </div>
+            <script>
+                (function (i, s, o, g, r, a, m) {
+                    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                        (i[r].q = i[r].q || []).push(arguments)
+                    }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                    m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+                ga('create', 'UA-43089740-1', 'auto');
+                ga('send', 'pageview');
+            </script>
+        </div>
+    </div>
+</footer>
+<script src="~/Scripts/jquery.validation.min.js" asp-append-version="true"></script>
+<script src="~/bootstrap/js/bootstrap.min.js" asp-append-version="true"></script>
+<link href="~/Content/messenger.min.css" asp-append-version="true" rel="stylesheet" />
+<script src="~/Scripts/messenger.min.js" asp-append-version="true"></script>
+<script src="~/Scripts/lib/jquery.cycle2.min.js"></script>
+<environment names="Staging,Production">
+    <script src="~/Scripts/site.min.js" asp-append-version="true"></script>
+</environment>
+<environment names="Development">
+    <script asp-src-include="~/Scripts/*.js" asp-src-exclude="~/Scripts/*.min.js,~/Scripts/tagmanager.js"></script>
+</environment>
+@await Html.PartialAsync("ChunCai")
+<link href="~/Content/dataurl/dataurl.min.css" asp-append-version="true" rel="stylesheet" />

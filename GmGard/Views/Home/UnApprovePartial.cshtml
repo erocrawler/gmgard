@@ -1,0 +1,53 @@
+﻿@model PagedList.IPagedList<Blog>
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@{
+    blogUtil.PrepareListCache(Model);
+    ViewBag.Title = "未通过审核投稿";
+}
+<div id="listdiv">
+<pre style="color:#d02626">如果您一个月内无问题（未被退回过）通过审核的投稿有<span class="label label-important">连续10个以上</span>，您便可以发消息到管理员信箱来申请作者权限。如果您的申请被接受您便会进入作者用户组。作者用户组中的用户投稿时不必输入验证码，且投稿不需要被审核。
+若用户进入作者用户组后连续进行不符合要求的投稿，我们保留将用户从作者用户组中移出的权利。
+
+若要使未通过的投稿被重新审核，在未通过的投稿页面点“编辑”按钮并按要求修改投稿后，点“提交”按钮后投稿会再次进入待审核，无须删掉旧投稿重新投稿。
+</pre>
+
+<ul  class="listview image info fluid">
+    @if (Model == null || Model.Count == 0)
+    {
+        <li>没有投稿</li>
+    }
+    else{
+            foreach (Blog b in Model)
+            {
+                <li @if(b.isApproved==false){<text>class="selected warning"</text>}>
+                    <div class="badge">
+                        @catUtil.categoryInfo(b.CategoryID)
+                    </div>
+                    <a class="listlink" target="_blank" href="@Url.Action("Details", "Blog", new {id = b.BlogID})">
+                        <div class="icon">
+                            <div class="imgcenter">
+                                <img src='@(BlogHelper.firstImgPath(b, true))' />
+                            </div>
+                        </div>
+                        <div class="data">
+                            <h4>@b.BlogTitle </h4>
+                            <p style="word-break:keep-all">  @blogUtil.GetFirstLine(b, true)</p>
+                            <br />
+                            <span class="lfoot">浏览：@b.BlogVisit 次 评论：@blogUtil.GetPostCount(b) 条</span>
+                            <div class="posttime">
+                                投稿日期： @b.BlogDate &nbsp;&nbsp;
+                            </div>
+                        </div>
+                    </a>
+                </li>
+            }
+    }
+    </ul>
+@if (Model != null && (Model.HasNextPage || Model.HasPreviousPage))
+{
+    ViewBag.PageActionName = "UserInfo";
+    ViewBag.PagerRouteValues = new { view = "UnApprove", name = ViewBag.UserName };
+    @await Html.PartialAsync("_PagerPartial", Model)
+}
+</div>

@@ -1,0 +1,67 @@
+﻿@model AdViewModel
+
+<table class="manage-table manage-ads" data-type="@AdvertisementType.Banner">
+    <colgroup>
+        <col style="width:auto" />
+        <col style="width:220px" />
+        <col style="width:45px;" />
+        <col style="width:5%;" />
+        <col style="width:10%" />
+    </colgroup>
+    <tr>
+        <th>网址</th>
+        <th>图片(宽740)</th>
+        <th>位置</th>
+        <th>点击量</th>
+        <th>操作</th>
+    </tr>
+    @if (Model.Ads != null)
+    {
+        foreach (var Item in Model.Ads)
+        {
+            <tr data-id="@Item.AdID" class="hide" id="tre@(Item.AdID)">
+                <td>
+                    <input type="text" class="edit-url" value="@Item.AdUrl" />
+                </td>
+                <td>
+                    <input type="text" class="edit-img" value="@Item.ImgUrl" />
+                </td>
+                <td>
+                    <input type="text" style="width:30px"  class="edit-order" value="@Item.AdOrder" />
+                </td>
+                <td>@Item.ClickCount</td>
+                <td>
+                    <button class="ad-cancel">取消</button><button class="ad-submit">确认</button>
+                </td>
+            </tr>
+            <tr data-id="@Item.AdID" id="tr@(Item.AdID)">
+                <td>
+                    @Item.AdUrl
+                </td>
+                <td>
+                    <img class="img220" src="@Item.ImgUrl" />
+                </td>
+                <td>@Item.AdOrder</td>
+                <td>@Item.ClickCount</td>
+                <td>
+                    <button class="ad-del" name="@Item.AdID">删除</button><button class="ad-edit" name="@Item.AdID">编辑</button>
+                </td>
+            </tr>
+        }
+    }
+    <tr>
+        <td>
+            <input type="text" class="newurl" value="" data-val="true" maxlength="1000" data-val-required="请输入URL" />
+        </td>
+        <td>
+            <input type="text" class="newimg" value="" data-val="true" maxlength="1000" data-val-required="请输入图片地址" />
+        </td>
+        <td>
+            <input type="text" class="neworder" value="" data-val="true" maxlength="1000" data-val-required="请输入顺序" />
+        </td>
+        <td></td>
+        <td>
+            <button class="ad-new">添加</button>
+        </td>
+    </tr>
+</table>

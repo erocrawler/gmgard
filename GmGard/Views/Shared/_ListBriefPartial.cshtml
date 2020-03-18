@@ -1,0 +1,27 @@
+﻿@model Blog
+@inject BlogUtil blogUtil
+@inject CategoryUtil catUtil
+@inject RatingUtil rateUtil
+<li data-id="@Model.BlogID">
+    <div class="badge bottom">
+        @catUtil.categoryInfo(Model.CategoryID)
+    </div>
+    <div class="badge">
+        评分：@(Model.Rating ?? rateUtil.GetRating(Model.BlogID).Total)
+    </div>
+    <a class="listlink" target="_blank" href="@Url.Action("Details", "Blog", new {id = Model.BlogID})">
+        <div class="icon">
+            <div class="imgcenter">
+                <img class="img-small" src="@BlogHelper.firstImgPath(Model, true)"  data-src="@BlogHelper.firstImgPath(Model)" />
+                <img class="img-large" src="@BlogHelper.firstImgPath(Model)" />
+            </div>
+        </div>
+        <div class="data">
+            <h4>
+                @Model.BlogTitle
+            </h4>
+            <strong>投稿：@blogUtil.GetNickName(Model.Author)</strong>
+            <br />
+        </div>
+    </a>
+</li>

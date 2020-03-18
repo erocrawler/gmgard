@@ -1,0 +1,136 @@
+﻿@model MonthRanking
+
+@{
+    ViewBag.Title = "历届榜单";
+}
+
+<textarea hidden class="hide" id="calender-data">
+    @Json.Serialize(Model)
+</textarea>
+<div class="main-calender">
+	<div class="custom-calendar-wrap custom-calendar-full">
+	    <div class="custom-header clearfix">
+		    <h2 style="display:inline-block">历届榜单</h2>
+		    <div class="custom-month-year">
+                <img src="//static.gmgard.com/Images/loading2.gif" class="hide" id="loading" alt="loading" />&nbsp;
+			    <span id="custom-month" class="custom-month"></span>
+			    <span id="custom-year" class="custom-year"></span>
+			    <nav>
+				    <span id="custom-prev" class="custom-prev"></span>
+				    <span id="custom-next" class="custom-next"></span>
+				    <span id="custom-current" class="custom-current" title="前往本月"></span>
+			    </nav>
+		    </div>
+	    </div>
+        <div class="monthly-container">
+            <div class="monthly-head"><span style="padding:5px;">月榜</span></div>
+            <div class="monthly-row"></div>
+        </div>
+	    <div id="calendar" class="fc-calendar-container" data-update-url="@Url.Action("History")">
+            <div id="custom-inner" class="hide"></div>
+            <div class="weekly-container">
+                <div class="weekly-head">
+                    周榜
+                </div>
+                <div class="weekly-body">
+                </div>
+            </div>
+	    </div>
+    </div>
+</div>
+
+<section class="reply-section">
+    <div id="replydiv" class="lazy-content" data-url="@Url.Action("ShowReply", "Reply", new { itemid = PostConstant.HistoryRankings, idtype = "1" })"></div>
+    <div class="lazy-content" data-url="@Url.Action("Carousel", "Advertisement")"></div>
+    <div class="replyeditor">
+    @if (User.Identity.IsAuthenticated)
+    {
+        <table>
+            <colgroup>
+                <col span="1" style="width: 100px;" />
+                <col span="1" />
+            </colgroup>
+            <tr>
+                <td rowspan="2" style="vertical-align:top;text-align:center;"><img src="@Url.Action("Show", "Avatar",new { name = User.Identity.Name})" style="max-height:100px;max-width:100px;" /></td>
+                <td style="text-align:left">添加评论：</td>
+            </tr>
+            <tr>
+                <td id="addreply_container">
+                @{
+                    ViewBag.itemtype = ItemType.Blog;
+                    ViewBag.itemid = PostConstant.HistoryRankings;
+                    await Html.RenderPartialAsync("AddReply");
+                }
+                </td>
+            </tr>
+        </table>
+
+    }
+    else
+    {
+        <b>请登录后发表评论</b>
+        @Html.ActionLink("注册", "Register", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+        @Html.ActionLink("登录", "Login", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+
+    }
+    </div>
+</section>
+@section end_scripts {
+    <link href="~/Content/calendar.min.css" asp-append-version="true" cdn rel="stylesheet" />
+    <script src="~/Scripts/lib/jquery.calendario.min.js" cdn></script>
+    <script src="~/Scripts/lib/mustache.min.js" cdn></script>
+    <script id="calendar-template" type="text/template">
+        {{#.}}
+        <a href="{{BlogUrl}}" onclick="return false;" style="background-image:url({{BlogThumb}})" title="{{BlogTitle}}">
+            {{BlogTitle}}
+        </a>
+        {{/.}}
+    </script>
+    <script id="popup-template" type="text/template">
+        <div id="custom-content-reveal" class="custom-content-reveal">
+            <span class="close">×</span>
+            <h2 style="margin-left:10px">{{year}}年{{month}}月{{rankName}}
+                {{#prev}}<a onclick="{{.}}" style="color:white">&lt;</a>{{/prev}}
+                {{#next}}<a onclick="{{.}}" style="color:white">&gt;</a>{{/next}}
+            </h2>
+            <hr />
+            <div class="calender-detail">
+                {{#Blog}}
+                <div class="rblock" style="margin:5px">
+                    <a target="_blank" href="{{BlogUrl}}">
+                        <i class="rimg"></i>
+                        <div class="thumbnail rthumb" style="padding:0">
+                            <img src="{{BlogThumb}}" alt="{{BlogTitle}}" class="rtimg" style="max-width:90px;max-height:90px;margin-top:-5px" />
+                        </div>
+                        <div class="calcaption">
+                            <strong title="{{BlogTitle}}">{{BlogTitle}}</strong>
+                            <br />
+                            <span class="label label-info" title="投稿者"><i class="icon-user icon-white"></i> {{Author}}</span>
+                            <span class="label label-info" title="投稿时间"><i class="icon-time icon-white"></i> {{#formatDate}}{{{BlogDate}}}{{/formatDate}}</span>
+                            <br />
+                            <span class="label label-important calscore" title="总分">{{Rating}}</span>
+                            <span class="label label-info" title="浏览数"><i class="icon-eye-open icon-white"></i> {{BlogVisit}}</span>
+                            <span class="label label-info" title="评论数"><i class="icon-comment icon-white"></i> {{PostCount}}</span>
+                            {{#Deleted}}<span class="label label-warning"><i class="icon-remove-circle icon-white"></i> 已删除</span>{{/Deleted}}
+                        </div>
+                    </a>
+                </div>
+                {{/Blog}}
+            </div>
+        </div>
+    </script>
+    <script src="@JsConstant.CKEditor" cdn></script>
+    <script>
+        var gm = new gmDetail({
+            blogid : '@PostConstant.HistoryRankings',
+            deleteposturl: '@Url.Action("DeletePost", "Reply")',
+            deletereplyurl: '@Url.Action("DeleteReply", "Reply")',
+            replyposturl: "@Url.Action("AddPostReply", "Reply")",
+            findreplyurl: "@Html.Raw(Url.Action("FindReply", "Reply", new { itemtype = ItemType.Blog, itemid = PostConstant.HistoryRankings }))",
+            findposturl: "@Html.Raw(Url.Action("FindPost", "Reply", new { itemtype = ItemType.Blog, itemid = PostConstant.HistoryRankings }))",
+            showreplyurl: "@Html.Raw(Url.Action("ShowReply", "Reply", new { itemtype = ItemType.Blog, itemid = PostConstant.HistoryRankings }))",
+            rateposturl: "@Url.Action("RatePost", "Reply")",
+            editreplyurl: "@Url.Action("EditReply", "Reply")",
+        })
+    </script>
+}

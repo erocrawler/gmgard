@@ -1,0 +1,251 @@
+﻿@model GmGard.Models.AdminViewModel
+@inject CategoryUtil catUtil
+
+<h2>栏目管理</h2>
+<h4 class="text-info">@ViewBag.CategoryMsg</h4>
+    <table id="categorytable" class="manage-table">
+        <colgroup>
+            <col style="width:25%" />
+            <col style="width:50%" />
+            <col style="width:25%" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th>分类名称</th>
+                <th>父分类</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+    @foreach (var Item in Model.allCategory)
+    {
+        <tr style="display:none;">
+            <td>
+                <input type="text" id="editname@(Item.CategoryID)" value="@Item.CategoryName" />
+            </td>
+            <td>
+                <select asp-items="catUtil.GetCategoryDropdown(Item.ParentCategoryID.HasValue ? Item.ParentCategoryID.Value : 0)" id="editparent@(Item.CategoryID)" name="ParentCategory"></select>
+            </td>
+            <td>
+                <button class="cancelbtn btn btn-mini" name="@Item.CategoryID">取消</button><button class="submitbtn btn btn-mini" name="@Item.CategoryID">确认</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                @Item.CategoryName
+            </td>
+            <td>
+                @(Item.ParentCategoryID.HasValue ? Item.ParentCategory.CategoryName : "")
+            </td>
+            <td>
+                <button class="delbtn btn btn-mini" name="@Item.CategoryID">删除</button><button class="editbtn btn btn-mini" name="@Item.CategoryID">编辑</button>
+            </td>
+        </tr>
+    }
+        </tbody>
+        <tfoot>
+        <tr>
+            <td>
+                <input type="text" id="newname" value="" data-val="true" data-val-regex="无效的名字" data-val-regex-pattern="^[a-zA-Z0-9_\u4e00-\u9fa5]{1,20}$" data-val-required="请输入名字" />
+            </td>
+            <td>
+                <select asp-items="catUtil.GetCategoryDropdown()" id="newparent" name="ParentCategory"></select>
+            </td>
+            <td>
+                <Button ID="NewCategory" class="btn">添加</Button>
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+
+<h2>汉化组管理</h2>
+<h4 class="text-info">@ViewBag.HgMsg</h4>
+    <table id="hantable" class="manage-table">
+        <colgroup>
+            <col style="width:25%" />
+            <col style="width:25%" />
+            <col style="width:25%" />
+            <col style="width:25%" />
+        </colgroup>
+        <thead>
+            <tr style="background-color: #E0FFFF;color: #333333;">
+                <th>汉化组识别码</th>
+                <th>汉化组名称</th>
+                <th>汉化组代表</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.allHanGroup)
+        {
+            var members = string.Join(", ", item.members.Where(h => h.GroupLvl == 1).Select(h => h.Username));
+            <tr style="display:none;" data-id="@(item.HanGroupID)">
+                <td>
+                    <input type="text" id="edithuri@(item.HanGroupID)" value="@item.GroupUri" />
+                </td>
+                <td>
+                    <input type="text" id="edithtitle@(item.HanGroupID)" value="@item.Title" />
+                </td>
+                <td>
+                    <textarea id="edithmember@(item.HanGroupID)">@members</textarea>
+                </td>
+                <td>
+                    <button class="cancelbtn btn btn-mini">取消</button><button class="submitbtn btn btn-mini" >确认</button>
+                </td>
+            </tr>
+            <tr data-id="@(item.HanGroupID)">
+                <td>
+                    @item.GroupUri
+                </td>
+                <td>
+                    @item.Title
+                </td>
+                <td>
+                    @members
+                </td>
+                <td>
+                    <button class="delbtn btn btn-mini" >删除</button><button class="editbtn btn btn-mini" >编辑</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+        <tr>
+            <td>
+                <input type="text" id="newhuri" value="" data-val="true" data-val-regex="无效的识别码" data-val-regex-pattern="^[a-zA-Z0-9_\u4e00-\u9fa5]{1,20}$" data-val-required="请输入识别码" />
+            </td>
+                        <td>
+                <input type="text" id="newhtitle" value="" data-val="true" data-val-regex="无效的标题" data-val-regex-pattern="^[a-zA-Z0-9_\u4e00-\u9fa5]{1,100}$" data-val-required="请输入标题" />
+            </td>
+            <td>
+                <textarea id="newhmember" data-val="true" data-val-required="请输入成员"></textarea>
+            </td>
+            <td>
+                <Button ID="NewHg" class="btn">添加</Button>
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+
+<form asp-action="ManageCategory" asp-controller="Admin" method="post" id="managecategory" asp-antiforgery="true">
+    <input type="hidden" name="CategoryID" id="categoryid" />
+    <input type="hidden" name="CategoryName" id="categoryname" />
+    <input type="hidden" name="ParentCategoryID" id="categoryparent" />
+    <input type="hidden" name="action" id="action" />
+</form>
+<form asp-action="ManageHangroup" asp-controller="Admin" method="post" id="managehg" asp-antiforgery="true">
+    <input type="hidden" name="id" id="hangroupid" />
+    <input type="hidden" name="uri" id="hangroupuri" />
+    <input type="hidden" name="title" id="hangrouptitle" />
+    <input type="hidden" name="members" id="hangroupmembers" />
+    <input type="hidden" name="action" id="hgaction" />
+</form>
+
+<script>
+    $("#categorytable .editbtn").click(function () {
+        var $this = $(this);
+        var id = $this.attr('name');
+        var tr = $this.parents('tr');
+        tr.hide();
+        tr.prev().show();
+        //$('#tr'+id).hide();
+        //$('#tre' + id).show();
+        var title = $('#editname' + id).val();
+        var parent = $('#editparent' + id).val();
+        $('#editname' + id).data('title', title);
+        $('#editparent' + id).data('parent', parent);
+    });
+    $("#categorytable .cancelbtn").click(function () {
+        var $this = $(this);
+        var id = $this.attr('name');
+        var tr = $this.parents('tr');
+        tr.hide();
+        tr.next().show();
+        $('#editname' + id).val($('#editname' + id).data('title'));
+        $('#editparent' + id).val($('#editparent' + id).data('parent'));
+    });
+    $("#categorytable .delbtn").click(function () {
+        if (confirm("确认删除？（无法删除非空栏目）")) {
+            var $this = $(this);
+            var id = $this.attr('name');
+            $('#categoryid').val(id);
+            $('#action').val('del');
+            $('#managecategory').submit();
+        }
+    });
+    $("#categorytable .submitbtn").click(function () {
+        var $this = $(this);
+        var id = $this.attr('name');
+        $('#categoryid').val(id);
+        var parent = $('#editparent' + id).val();
+        var title = $('#editname' + id).val();
+        $('#categoryname').val(title);
+        $('#categoryparent').val(parent);
+        $('#action').val('edit');
+        $('#managecategory').submit();
+    });
+    $("#NewCategory").click(function () {
+        var nparent = $('#newparent').val();
+        var ntitle = $('#newname').val();
+        $('#categoryname').val(ntitle);
+        $('#categoryparent').val(nparent);
+        $('#action').val('new');
+        $('#managecategory').submit();
+    });
+
+    $("#hantable .editbtn").click(function () {
+        var $this = $(this);
+        var tr = $this.parents('tr');
+        var id = tr.attr('data-id');
+        tr.hide();
+        tr.prev().show();
+        var uri = $('#edithuri' + id).val();
+        var title = $('#edithtitle' + id).val();
+        var member = $('#edithmember' + id).val();
+        $('#edithuri' + id).data('uri', title);
+        $('#edithtitle' + id).data('title', title);
+        $('#editmember' + id).data('member', member);
+    });
+    $("#hantable .cancelbtn").click(function () {
+        var $this = $(this);
+        var tr = $this.parents('tr');
+        var id = tr.attr('data-id');
+        tr.hide();
+        tr.next().show();
+        $('#edithuri' + id).val($('#edithuri' + id).data('uri'));
+        $('#edithtitle' + id).val($('#edithtitle' + id).data('titile'));
+        $('#edithmember' + id).val($('#edithmember' + id).data('member'));
+    });
+    $("#hantable .delbtn").click(function () {
+        if (confirm("确认删除？（无法删除非空组）")) {
+            var $this = $(this);
+            var id = $this.parents('tr').attr('data-id');
+            $('#hangroupid').val(id);
+            $('#hgaction').val('del');
+            $('#managehg').submit();
+        }
+    });
+    $("#hantable .submitbtn").click(function () {
+        var $this = $(this);
+        var id = $this.parents('tr').attr('data-id');
+        $('#hangroupid').val(id);
+        var uri = $('#edithuri' + id).val();
+        var title = $('#edithtitle' + id).val();
+        var member = $('#edithmember' + id).val();
+        $('#hangroupuri').val(uri);
+        $('#hangrouptitle').val(title);
+        $('#hangroupmembers').val(member);
+        $('#hgaction').val('edit');
+        $('#managehg').submit();
+    });
+    $("#NewHg").click(function () {
+        var uri = $('#newhuri').val();
+        var title = $('#newhtitle').val();
+        var member = $('#newhmember').val();
+        $('#hangroupuri').val(uri);
+        $('#hangrouptitle').val(title);
+        $('#hangroupmembers').val(member);
+        $('#hgaction').val('new');
+        $('#managehg').submit();
+    });
+</script>

@@ -1,0 +1,20 @@
+﻿<h3>
+  <strong>第{{question.id}}题</strong> {{question.description}} 
+</h3>
+<p *ngIf="result">
+  <mat-icon>{{ result.correct ? 'done' : 'clear' }}</mat-icon>
+  得分：{{result.point}}
+</p>
+<p *ngIf="result?.comment">
+  {{result.comment}}
+</p>
+<ul>
+  <li *ngFor="let choice of question.choices">
+    {{ choice }}
+  </li>
+</ul>
+<div>
+  <mat-form-field fxFlexFill>
+    <input matInput placeholder="标题" [disabled]="!active" [value]="answer" #title (change)="emit(title.value)">
+  </mat-form-field>
+</div>

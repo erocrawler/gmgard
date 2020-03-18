@@ -1,0 +1,14 @@
+<h1 mat-dialog-title>两步验证应急密码</h1>
+<div mat-dialog-content fxFlexLayout="column">
+    <p><mat-icon>done</mat-icon>两步验证已启用。请妥善保存以下应急密码，在两步验证APP不可用时，您可以使用这些应急密码登陆。应急密码为一次性密码，成功登陆后该密码将作废。</p>
+    <p><mat-icon>info</mat-icon><strong>本信息只显示一次</strong>，请在关闭前保存此信息至安全位置。例如邮箱，在线笔记文档等。</p>
+    <p class="codes" (mouseenter)="selectText($event)">
+        <ng-container *ngFor="let d of data">
+            <code>{{d}}</code> &nbsp;
+        </ng-container>
+    </p>
+    <p>如果您曾有其他应急密码，旧密码已作废并由以上{{data.length}}个密码替换。</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-flat-button color="primary" mat-dialog-close>我已记录应急密码</button>
+</div>

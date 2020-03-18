@@ -1,0 +1,182 @@
+﻿@model AdminViewModel
+
+<h2>数据设置</h2>
+<form asp-action="DataSettings" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#datamsg" method="post" asp-antiforgery="true" id="data-settings-form">
+    <div class="row-fluid">
+        <div class="span6">
+            <h4>置顶文章id，用[,]分隔，最多5个。</h4>
+            <input type="text" name="FeaturedBlogIds" value="@Model.datasettings.FeaturedBlogIds" />
+            <h4>轮播专题id，用[,]分隔，最多5个。</h4>
+            <input type="text" name="BannerTopicIds" value="@Model.datasettings.BannerTopicIds" />
+            <h4>轮播投稿id，用[,]分隔，最多5个。(优先级高于置顶)</h4>
+            <input type="text" name="BannerBlogIds" value="@Model.datasettings.BannerBlogIds" />
+            <h4>投稿投票通过阈值（小于等于0则禁用）</h4>
+            <input type="number" name="BlogApproveThreshold" min="0" step="0.01" value="@Model.datasettings.BlogApproveThreshold" />
+            <h4>投稿投票否决阈值（小于等于0则禁用）</h4>
+            <input type="number" name="BlogDenyThreshold" min="0" step="0.01" value="@Model.datasettings.BlogDenyThreshold" />
+        </div>
+        <div class="span6">
+            <h4>馆长公告</h4>
+            <input type="text" name="chuncainotice" value="@Model.datasettings.chuncaiNotice" placeholder="欢迎来到绅士之庭~" />
+            <h4>QQ群号</h4>
+            <input type="text" name="QQGroupNumber" value="@Model.datasettings.QQGroupNumber" />
+            <h4>加入QQ群URL</h4>
+            <input type="text" name="QQGroupUrl" value="@Model.datasettings.QQGroupUrl" />
+            <h4>加入审核组等级（小于等于0则禁用）</h4>
+            <input type="number" name="JoinAuditorLevel" min="0" step="1" value="@Model.datasettings.JoinAuditorLevel" />
+        </div>
+    </div>
+    <div class="row-fluid">
+        <h4>友链设置</h4>
+        <table class="table table-striped">
+            <colgroup>
+                <col />
+                <col />
+                <col />
+                <col style="width:85px;" />
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>图片</th>
+                    <th>网址</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="new-link-row">
+                    <td colspan="3"></td>
+                    <td>
+                        <input type="button" class="btn new-link" value="添加" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <input type="submit" value="设置" class="btn butnfix" />
+    <p class="text-info" id="datamsg"></p>
+</form>
+
+<h2>网站参数</h2>
+<form asp-action="ManageSettings" asp-controller="Admin" asp-antiforgery="true">
+    <h3>和谐设置</h3>
+    <p>当前和谐条目数：@Model.harmonyblogcount</p>
+    <label asp-for="appsettings.HarmonySettings.Harmony">
+        和谐模式 <input asp-for="appsettings.HarmonySettings.Harmony" />
+    </label>
+    <label asp-for="appsettings.HarmonySettings.WhitelistCategories">白名单分类ID（用[,]分隔）</label>
+    <input type="text" id="WhitelistCategories" asp-for="appsettings.HarmonySettings.WhitelistCategories" list-value-value="@Model.appsettings.HarmonySettings.WhitelistCategories" />
+    <label for="WhitelistTags">表站隐藏的标签ID（用[,]分隔）</label>
+    <input type="text" id="WhitelistTags" asp-for="appsettings.HarmonySettings.WhitelistTags" list-value-value="@Model.appsettings.HarmonySettings.WhitelistTags" />
+    <label for="BlacklistTags">黑名单标签ID</label>
+    <input type="text" id="BlacklistTags" asp-for="appsettings.HarmonySettings.BlacklistTags" list-value-value="@Model.appsettings.HarmonySettings.BlacklistTags" />
+    <label for="WhitelistIds">表站显示的投稿ID</label>
+    <input type="text" id="WhitelistIds" asp-for="appsettings.HarmonySettings.WhitelistIds" list-value-value="@Model.appsettings.HarmonySettings.WhitelistIds" />
+    <br /><input type="submit" class="btn" value="设置" />
+    <div class="row">
+        <div class="span5">
+            <h3>参数设置</h3>
+            <label for="noLinkCategories">无需链接的栏目编号（用[,]分隔）</label>
+            <input type="text" id="noLinkCategories" asp-for="appsettings.NoLinkCategories" list-value-value="@Model.appsettings.NoLinkCategories" />
+            <label for="NoRankCategories">不上榜的栏目编号（用[,]分隔）</label>
+            <input type="text" id="NoRankCategories" asp-for="appsettings.NoRankCategories" list-value-value="@Model.appsettings.NoRankCategories" />
+            <label for="updateinterval">排行更新间隔（分钟）</label>
+            <input type="number" id="updateinterval" asp-for="appsettings.UpdateInterval" />
+            <label for="expaddonpass">审核通过奖励</label>
+            <input type="number" id="expaddonpass" asp-for="appsettings.ExpAddOnPass" />
+            <label for="expaddondays">连续登陆奖励（用[,]分隔）</label>
+            <input type="text" id="expaddondays" asp-for="appsettings.ExpAddOnDay" list-value-value="@Model.appsettings.ExpAddOnDay" />
+            <label for="expaddondays">日榜奖励（用[,]分隔）</label>
+            <input type="text" id="DailyReward" asp-for="appsettings.DailyReward" list-value-value="@Model.appsettings.DailyReward" />
+            <label for="expaddondays">周榜奖励（用[,]分隔）</label>
+            <input type="text" id="WeeklyReward" asp-for="appsettings.WeeklyReward" list-value-value="@Model.appsettings.WeeklyReward" />
+            <label for="expaddondays">总榜奖励（每月）（用[,]分隔）</label>
+            <input type="text" id="MonthlyReward" asp-for="appsettings.MonthlyReward" list-value-value="@Model.appsettings.MonthlyReward" />
+            <label>评分记录模式</label>
+            <label class="radio inline">
+                <input type="radio" value="I" asp-for="appsettings.RateCredentialType" />
+                每日IP
+            </label>
+            <label class="radio inline">
+                <input type="radio" value="A" asp-for="appsettings.RateCredentialType" />
+                账号
+            </label>
+        </div>
+        <div class="span4">
+            <h3>页数设置</h3>
+            <label for="homepagesize">主页列表每页条目</label>
+            <input type="number" id="homepagesize" asp-for="appsettings.HomePageSize" />
+            <label for="userpagesize">用户投稿每页条目</label>
+            <input type="number" id="userpagesize" asp-for="appsettings.UserPageSize" />
+            <label for="auditpagesize">审核列表每页条目</label>
+            <input type="number" id="auditpagesize" asp-for="appsettings.AuditPageSize" />
+            <label for="listpagesize">资源列表每页条目</label>
+            <input type="number" id="listpagesize" asp-for="appsettings.ListPageSize" />
+            <label for="msgpagesize">消息列表每页条目</label>
+            <input type="number" id="msgpagesize" asp-for="appsettings.MsgPageSize" />
+            <label for="replypagesize">回复列表每页条目</label>
+            <input type="number" id="replypagesize" asp-for="appsettings.ReplyPageSize" />
+            <label for="rankingsize">排行显示个数</label>
+            <input type="number" id="rankingsize" asp-for="appsettings.RankingSize" />
+            <label for="rankingsize">专题轮播显示个数</label>
+            <input type="number" id="TopicCarouselsize" asp-for="appsettings.TopicCarouselSize" />
+            <label asp-for="appsettings.EnableImageProxy">启用图片代理地址 <input type="checkbox" asp-for="appsettings.EnableImageProxy" /></label>
+        </div>
+    </div>
+    <input type="submit" class="btn" value="设置" />
+</form>
+
+<textarea hidden class="hide" id="link-data">
+@if (Model.datasettings != null)
+{
+    @Json.Encode(Model.datasettings.FriendLinks)
+}
+</textarea>
+<script type="text/template" id="link-template">
+    <tr class="link-row control-group">
+        <td>
+            <input style="width:100px" type="text" name="FriendLinks[{{index}}].Name" value="{{name}}" />
+        </td>
+        <td>
+            <input type="text" name="FriendLinks[{{index}}].Img" value="{{img}}" />
+        </td>
+        <td>
+            <input type="text" name="FriendLinks[{{index}}].Url" value="{{url}}" />
+        </td>
+        <td>
+            <input type="button" class="btn btn-small delete-link" value="删除" />
+        </td>
+    </tr>
+</script>
+<script src="~/Scripts/lib/mustache.min.js"></script>
+<script>
+    (function () {
+        let qtemplate = $('#link-template').html(),
+            qdata = $('#link-data').val().trim();
+        $('.table').on('click', '.delete-link', function () {
+            let $this = $(this);
+            $this.closest('tr').toggleClass('warning').find('input[type="text"]').toggleClass('disabled').prop('disabled', $this.toggleClass('disabled').hasClass('disabled'));
+            $this.val($this.hasClass('disabled') ? '将删除' : '删除');
+        });
+        $('.new-link').click(function () {
+            var qrow = $('.link-row'),
+                qnext = qrow.length,
+                qnew = Mustache.render(qtemplate, { index: qnext });
+            $('#new-link-row').before(qnew);
+        });
+        $('#data-settings-form').submit(function () {
+            $(this).find('.link-row.warning').remove().end().find('.link-row').each(function (i, e) {
+                $(this).find('[name^="FriendLinks"]').each(function () {
+                    this.name = this.name.replace(/(\d+)/, i);
+                });
+            });
+        });
+
+        if (qdata) {
+            let qd = JSON.parse(qdata);
+            for (let i = 0; i < qd.length; i++) {
+                let qnew = Mustache.render(qtemplate, { index: i, name: qd[i].Name, img: qd[i].Img, url: qd[i].Url });
+                $('#new-link-row').before(qnew);
+            }
+        }
+    })();
+</script>

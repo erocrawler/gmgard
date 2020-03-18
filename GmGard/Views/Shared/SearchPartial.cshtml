@@ -1,0 +1,130 @@
+﻿@model SearchModel
+@inject CategoryUtil catUtil
+@{
+    var categoryList = catUtil.GetCategoryList();
+    var selectedIds = new HashSet<int>(Model.CategoryIds);
+    var action = ViewBag.SearchAction as string ?? ViewContext.RouteData.Values["action"] as string;
+    var controller = ViewBag.SearchController as string ?? ViewContext.RouteData.Values["controller"];
+}
+
+<form asp-action="@action" asp-controller="@controller" method="get" id="searchform" class="well hide">
+    <input type="hidden" value="@Model.SortOptions().CurrentSort" name="sort" />
+    <harmony>
+        @await Html.PartialAsync("_CategorySelectPartial", Model.GetCategoryOptions())
+    </harmony>
+    <harmony show="true">
+        @if (ViewBag.CategoryId == null)
+        {
+            @await Html.PartialAsync("_CategorySelectPartial", Model.GetCategoryOptions())
+        }
+    </harmony>
+    <br />
+    <div class="searchradio">
+        @if (!action.Equals("Favorite", StringComparison.OrdinalIgnoreCase))
+        {
+            <label asp-for="Query"></label>
+            <input asp-for="Query" maxlength="120" type="search" />
+            <span asp-validation-for="Query"></span>
+            <br />
+        }
+        <label asp-for="Title"></label>
+        <input asp-for="Title" maxlength="120" />
+        <label class="radio inline small">
+            <input asp-for="TitleMatchAny" type="radio" value="false" />
+            精确
+        </label>
+        <label class="radio inline small">
+            <input asp-for="TitleMatchAny" type="radio" value="true" />
+            任意<i class="match-info icon-info-sign"></i>
+        </label>
+        <span asp-validation-for="Title"></span>
+        <br />
+        <label asp-for="Tags"></label>
+        <input asp-for="Tags" maxlength="120" />
+        <label class="radio inline small">
+            <input asp-for="TagsMatchAny" type="radio" value="false" />
+            精确
+        </label>
+        <label class="radio inline small">
+            <input asp-for="TagsMatchAny" type="radio" value="true" />
+            任意<i class="match-info icon-info-sign"></i>
+        </label>
+        <span asp-validation-for="Tags"></span>
+        <label asp-for="StartDate">投稿时间</label>
+        <div class="row-fluid dates">
+            <div class="span4">
+                自 <input class="text-box single-line" data-val="true" data-val-date="必须是日期" asp-for="StartDate"
+                         type="date" value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+                <span asp-validation-for="StartDate"></span>
+            </div>
+            <div class="span4" style="margin:0">
+                至 <input class="text-box single-line" data-val="true" data-val-date="必须是日期" asp-for="EndDate"
+                         type="date" value="@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+                <span asp-validation-for="EndDate"></span>
+            </div>
+        </div>
+        <input type="submit" class="btn btn-primary btn-large float-right" value="搜索" />
+        <p class="clear-fix"></p>
+    </div>
+</form>
+
+<script>
+    (function () {
+        $('#advanced-search').click(function () {
+            $(this).toggleClass('active'),
+            $('#searchform').slideToggle(200);
+        }).css("display", "inline-block");
+        var inputs = $('#searchform').find('input[type="checkbox"]:checked, input[type="text"]');
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs.eq(i).val()) {
+                $('#advanced-search').addClass('active'),
+                $('#searchform').show();
+                break;
+            }
+        }
+        // Determine if this browser supports the date input type.
+        if (!(function () {
+            var el = document.createElement('input'),
+                invalidVal = 'foo'; // Any value that is not a date
+            el.setAttribute('type', 'date');
+            el.setAttribute('value', invalidVal);
+            // A supported browser will modify this if it is a true date field
+            return el.value !== invalidVal;
+        }())) {
+            $('<link href="/Content/datepicker.min.css" rel="stylesheet">').appendTo('head');
+            $.getScript("/Scripts/datepicker.min.js", function () {
+                $('#StartDate').datepicker({
+                    defaultDate: "-1w",
+                    changeMonth: true,
+                    numberOfMonths: 2,
+                    maxDate: $("#EndDate").val() || "0d",
+                    onClose: function (selectedDate) {
+                        $("#EndDate").datepicker("option", "minDate", selectedDate);
+                    }
+                });
+                $('#EndDate').datepicker({
+                    changeMonth: true,
+                    numberOfMonths: 2,
+                    maxDate: "0d",
+                    minDate: $("#StartDate").val(),
+                    onClose: function (selectedDate) {
+                        $("#StartDate").datepicker("option", "maxDate", selectedDate);
+                    }
+                });
+            });
+        } else {
+            var today = new Date();
+            var todayString = today.getFullYear() + '-' + ("0" + (today.getMonth() + 1)).slice(-2) + '-' + ('0' + today.getDate()).slice(-2);
+            $('#StartDate').attr('max', todayString).change(function () {
+                $('#EndDate').attr('min', this.value);
+            }).trigger('change');
+            $('#EndDate').attr('max', todayString).change(function () {
+                $('#StartDate').attr('max', this.value || todayString);
+            }).trigger('change');
+        }
+
+    })();
+    $(function () {
+        $('.match-info').tooltip({ title: "多关键词请用空格分隔，精确将匹配包含全部关键词的投稿，而任意将匹配包含任意关键词的投稿" });
+    });
+</script>

@@ -1,0 +1,33 @@
+﻿@model string
+<h3>更改个人签名（最多200字）</h3>
+
+<form asp-action="ChangeComment" asp-controller="Account" class="change-comment">
+    <fieldset>
+        <legend>“更改签名”表单</legend>
+        <textarea id="comment" name="comment" placeholder="设置后，你的签名将在投稿中显示" maxlength="200" style="width: 100%;height: 145px;padding: 0px;resize:vertical">@Model</textarea>
+        <input type="submit" class="btn" value="更改" />
+        <span id="comment-update-message" class="text-success"></span>
+    </fieldset>
+</form>
+
+<script>
+    (function () {
+        var originalComment = $('#comment').val();
+        $('.change-comment').submit(function (e) {
+            e.preventDefault();
+            if (originalComment == $('#comment').val()) {
+                return;
+            }
+            $.post($(this).attr('action'), $(this).serialize(), function (result) {
+                if (result && result.success) {
+                    $('#comment-update-message').attr('class', 'text-success').text('已更改您的个人签名');
+                } else {
+                    var $message = $('#comment-update-message').attr('class', 'text-error').text('出错了，请刷新重试');
+                    if ($('#comment').val().length > 200) {
+                        $message.text('签名不得超过200字符。');
+                    }
+                }
+            });
+        })
+    })()
+</script>

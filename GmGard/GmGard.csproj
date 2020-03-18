@@ -1,0 +1,207 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <DefineConstants>$(DefineConstants);IS_CORE</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <AssemblyName>GmGard</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>GmGard</PackageId>
+    <UserSecretsId>aspnet5-GmGard-20160626032909</UserSecretsId>
+    <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
+    <Configurations>Debug;Release;Staging</Configurations>
+    <StartupObject>GmGard.Startup</StartupObject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Staging|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" />
+
+  <ItemGroup>
+    <Content Remove="appsettings.override.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="wwwroot\**\*;Views\**\*">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="wwwroot\bower_components\**\*;wwwroot\_references.js;">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspNet.Identity.EntityFramework6\AspNet.Identity.EntityFramework6.csproj" />
+    <ProjectReference Include="..\GmGard.JobRunner\GmGard.JobRunner.csproj" />
+    <ProjectReference Include="..\GmGard.Models\GmGard.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.2.0" />
+    <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.1.3" />
+    <PackageReference Include="HtmlSanitizer" Version="4.0.207" />
+    <PackageReference Include="HybridModelBinding" Version="0.14.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.CookiePolicy" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.HttpsPolicy" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Tools" Version="1.1.0-preview4-final" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.IIS" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.2.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.3" />
+    <PackageReference Include="MonoTorrent" Version="0.9.0" />
+    <PackageReference Include="NEST" Version="6.5.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="PagedList" Version="1.17.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.10.0" />
+    <PackageReference Include="LinqKit" Version="1.1.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.IISIntegration" Version="2.2.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="2.0.2" />
+    <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.4.0" />
+    <PackageReference Include="System.IO" Version="4.3.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="4.5.3" />
+    <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="Terradue.ServiceModel.Syndication" Version="1.0.4" />
+    <PackageReference Include="FluentScheduler" Version="5.3.0" />
+    <PackageReference Include="ImageProcessor" Version="2.7.0.100" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.TagHelpers" Version="2.2.0" />
+    <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0-msbuild3-final" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Models\App\PunchInCost.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>PunchInCost.cs.d.ts</LastGenOutput>
+    </Compile>
+    <Compile Update="Models\App\PunchInHistoryResponse.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>PunchInHistoryResponse.cs.d.ts</LastGenOutput>
+    </Compile>
+    <Compile Update="Models\App\TwoFactorAuth.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>TwoFactorAuth.cs.d.ts</LastGenOutput>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Models\App\BlogDetails.cs.d.ts">
+      <DependentUpon>BlogDetails.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\BlogPreview.d.ts">
+      <DependentUpon>BlogPreview.cs</DependentUpon>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.Production.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+    <None Update="Models\App\BountyPreview.d.ts">
+      <DependentUpon>BountyPreview.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\BountyShowType.d.ts">
+      <DependentUpon>BountyShowType.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\DLsite.d.ts">
+      <DependentUpon>DLsite.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\ExamResult.d.ts">
+      <DependentUpon>ExamResult.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\ExamSubmission.d.ts">
+      <DependentUpon>ExamSubmission.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\GachaResult.cs.d.ts">
+      <DependentUpon>GachaResult.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\GachaSetting.cs.d.ts">
+      <DependentUpon>GachaSetting.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\GachaStats.cs.d.ts">
+      <DependentUpon>GachaStats.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\NewItemCount.cs.d.ts">
+      <DependentUpon>NewItemCount.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\PunchInCost.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PunchInCost.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\PunchInHistoryResponse.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PunchInHistoryResponse.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\TreasureHuntStatus.cs.d.ts">
+      <DependentUpon>TreasureHuntStatus.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\TwoFactorAuth.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TwoFactorAuth.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\User.cs.d.ts">
+      <DependentUpon>User.cs</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Advertisement\" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <TypeScriptTarget>ES6</TypeScriptTarget>
+    <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+    <TypeScriptModuleKind>ES6</TypeScriptModuleKind>
+    <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+    <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
+    <TypeScriptOutFile />
+    <TypeScriptOutDir />
+    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+    <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+    <TypeScriptSourceMap>True</TypeScriptSourceMap>
+    <TypeScriptMapRoot />
+    <TypeScriptSourceRoot />
+  </PropertyGroup>
+</Project>

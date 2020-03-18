@@ -1,0 +1,7 @@
+﻿@model IEnumerable<Blog>
+<ul class="listview image fluid">
+@foreach (var blog in Model)
+{
+    await Html.RenderPartialAsync((string)ViewBag.PartialView, blog);
+}
+</ul>

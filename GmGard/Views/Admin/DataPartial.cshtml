@@ -1,0 +1,15 @@
+﻿@model GmGard.Models.AdminViewModel
+
+<ul>
+    <li>总注册人数：@Model.totalusercount </li>
+    <li>当前待审批条目：@Model.auditcount
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    当前总条目：@Model.totalauditcount </li>
+    <li>今日新增条目：@Model.todaynewitem
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    昨日新增条目：@Model.yesterdaynewitem</li>
+    <li>和谐条目数：@Model.harmonyblogcount</li>
+</ul>
+<div id="adminlog">
+    @await Html.PartialAsync("Log", ViewBag.AdminLogs as PagedList.IPagedList<AdminLog>)
+</div>

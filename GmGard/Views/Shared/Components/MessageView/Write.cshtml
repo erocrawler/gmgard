@@ -1,0 +1,77 @@
+﻿@model Message
+@inject MessageUtil msgUtil
+
+<form asp-action="Write" asp-controller="Message" asp-antiforgery="true" id="write-form" method="post">
+    <input asp-for="Recipient" placeholder="收件人" maxlength="20" data-val-remote="查无此人，请输入用户名" data-val-remote-additionalfields="*.Recipient" data-val-remote-type="Post" data-val-remote-url="@Url.Action("CheckUsername", "Message")" />
+    <span asp-validation-for="Recipient"></span><br />
+    <input placeholder="标题" asp-for="MsgTitle" maxlength="80" /> <span asp-validation-for="MsgTitle"></span><br />
+    <textarea asp-for="MsgContent" rows="10" style="width:95%" placeholder="正文"></textarea> <br />
+    <input type="hidden" asp-for="Sender" value="@User.Identity.Name" />
+    @await Html.PartialAsync("_Captcha")
+    <input type="submit" class="btn btn-primary" data-loading-text="发送中" onclick="encode(); startsubmit(this);" value="发送" /><span asp-validation-for="MsgContent"></span><br />
+</form>
+<script>
+    function encode(){
+        var val = $('#MsgContent').val();
+        val = val.replace(/</g, '&lt;').replace( />/g, '&gt;');
+        $('#MsgContent').val(val);
+        val = $('#MsgTitle').val();
+        if (val) {
+            val = val.replace(/</g, '&lt;').replace( />/g, '&gt;');
+            $('#MsgTitle').val(val);
+        }
+    }
+    function startsubmit(btn) {
+        if ($('#write-form').valid()) {
+            setTimeout(function () {
+                $(btn).button('reset');
+            }, 5000);
+            $(btn).button('loading');
+        }
+    }
+    $(function () {
+        var cache = {};
+        var fail_cache = [];
+        var check_fail = function (str) {
+            for (var i = 0; i < fail_cache.length; i++) {
+                if (str.lastIndexOf(fail_cache[i], 0) === 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        $('#Recipient').typeahead({
+            source: function (query, cb) {
+                if (cache[query]) {
+                    return $.map(cache[query], function (item, index) {
+                        return item.nickname + ' (' + item.username + ')';
+                    });
+                } else if (check_fail(query)) {
+                    return;
+                }
+                $.post('@Url.Action("Mentions", "Home")', { typed: query }, function (rsp) {
+                    if (rsp && rsp.length > 0) {
+                        cache[query] = rsp;
+                        cb($.map(rsp, function (item, index) {
+                            return item.nickname + ' (' + item.username + ')';
+                        }));
+                    } else {
+                        fail_cache.push(query);
+                    }
+                });
+            },
+            updater: function (item) {
+                setTimeout(function () {
+                    $('#Recipient').trigger('change');
+                }, 100);
+                var pos = item.lastIndexOf('(');
+                if (pos > 0) {
+                    item = item.slice(pos + 1, item.lastIndexOf(')'));
+                }
+                return item;
+            },
+            minLength: 2
+        });
+    });
+    updateval(@msgUtil.GetUnreadMsg(User.Identity.Name));
+</script>

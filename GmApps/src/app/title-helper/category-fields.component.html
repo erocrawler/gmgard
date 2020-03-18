@@ -1,0 +1,25 @@
+<div>
+  <form (ngSubmit)="onSubmit()" [formGroup]="categoryForm">
+    <mat-form-field class="前缀">
+      <input matInput placeholder="前缀" formControlName="前缀"  matTooltip="例：(全彩)、[无修正]" />
+    </mat-form-field>
+    <ng-container *ngFor="let field of category.fields">
+      <mat-checkbox *ngIf="field.fixed && !field.required; else inputBlock" 
+                   [formControlName]="field.name">{{field.name}}</mat-checkbox>
+      <ng-template #inputBlock>
+        <mat-form-field [class]="field.name" [floatLabel]="field.fixed ? 'never' : 'auto'">
+          <input matInput
+                 [formControlName]="field.name"
+                 [placeholder]="field.name"
+                 [required]="field.required"
+                 [readonly]="field.fixed"
+                 [matTooltip]="field.hint"
+                 [class.short]="field.fixed" />
+        </mat-form-field>
+      </ng-template> 
+    </ng-container>
+    <mat-form-field class="后缀">
+      <input matInput placeholder="后缀" formControlName="后缀"  matTooltip="例：[1-11话]、[DL版]、[2.33GB]" />
+    </mat-form-field>
+  </form>
+</div>

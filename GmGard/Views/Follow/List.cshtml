@@ -1,0 +1,102 @@
+﻿@model PagedList.IPagedList<FollowModel>
+@inject BlogUtil blogUtil
+@inject ExpUtil expUtil
+@{
+    ViewBag.Title = blogUtil.GetNickName(ViewBag.UserName) + (ViewBag.View == "fans" ? "的粉丝" : "关注的人");
+    var username = ViewBag.UserName;
+    ViewBag.PagerRouteValues = new { view = ViewBag.View, name = ViewBag.UserName };
+}
+@(await Component.InvokeAsync<UserStatus>(new { UserName = username }))
+<hr />
+<h2>@ViewBag.Title</h2>
+<ul id="follow-userlist" class="listview image fluid two">
+    @foreach (var follow in Model)
+    {
+        var avatar = Url.Action("Show", "Avatar", new { name = follow.UserName });
+        int lvl = expUtil.getUserLvl(follow.UserName);
+        <li data-href="@Url.Action("UserInfo", "Home", new { name = follow.UserName })">
+            <div class="icon">
+                <div class="imgcenter">
+                    <img alt="@follow.UserName" src="@avatar" />
+                </div>
+            </div>
+            <div class="data">
+                <h4>
+                    @blogUtil.GetNickName(follow.UserName)
+                </h4>
+                <p> @Html.Raw(follow.UserComment)</p>
+
+                @if (User.Identity.IsAuthenticated && User.Identity.Name == username)
+                {
+
+                    <span class="lfoot tunfollow" @if (ViewBag.View == "fans" && !follow.FollowEachOther) { <text> style="display:none" </text> }>
+                        &nbsp;
+                        @if (follow.FollowEachOther)
+                        {
+                            <i class="icon-retweet"></i> <text>已互粉</text>
+                        }
+                        else
+                        {
+                            <i class="icon-ok"></i> <text>已关注</text>
+                        }
+                        <a data-href="@Url.Action("UnFollow", new { name = follow.UserName })" data-name="@follow.UserName" href="#">取消</a>
+                    </span>
+                    <span class="lfoot tfollow">
+                        <button data-href="@Url.Action("Follow", new { name = follow.UserName })" data-name="@follow.UserName" class="btn btn-small @(ViewBag.View == "fans" && !follow.FollowEachOther ? "": "hide")"><i class="icon-plus"></i> 关注</button>
+                    </span>
+                }
+                else
+                {
+                    await Html.RenderPartialAsync("_FollowBtn", follow.UserName);
+                }
+                <br />
+                <span class="lfoot">
+                    <span class="badge lvl">lv.@lvl @expUtil.getLevelTitle(lvl)</span>
+                </span>
+                <span class="lfoot">
+                    <i class="ico-shinshi" title="绅士度"></i> × @follow.Experience
+                </span>
+            </div>
+        </li>
+    }
+</ul>
+
+@await Html.PartialAsync("_PagerPartial", Model)
+
+@if (ViewBag.UserName == User.Identity.Name && Model.Count < 18)
+{
+    <div class="lazy-content" data-url="@Url.Action("Suggestions")"></div>
+}
+
+<script>
+    $(function () {
+        function localFollow(name) {
+            return 'gmf' + name + '~@User.Identity.Name';
+        }
+        $('.tunfollow a').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $t = $(this);
+            $.post($t.data('href'), null, function (r) {
+                $t.parent().hide().next('.tfollow').find('button').show();
+                sessionStorage[localFollow($t.data('name'))] = 'false';
+            });
+        });
+        $('.tfollow button').click(function (e) {
+            e.stopPropagation();
+            $t = $(this);
+            $.post($t.data('href'), null, function (r) {
+                $t.hide().parent().prev('.tunfollow').show();
+                sessionStorage[localFollow($t.data('name'))] = 'true';
+            });
+        });
+        $('#follow-userlist li').click(function () {
+            window.open($(this).data('href'));
+        });
+    });
+</script>
+
+@section scripts {
+    <link href="~/Content/userinfo.css" rel="stylesheet" asp-append-version="true" />
+    <bg-user />
+}

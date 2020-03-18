@@ -1,0 +1,221 @@
+﻿@model PagedList.IPagedList<AuditModel>
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@{
+    ViewBag.Title = "审核";
+    var myaudit = ViewBag.Auditor as Auditor;
+}
+<h1>审核</h1>
+<div class="alert alert-info">
+    我的审核数：@myaudit.AuditCount 正确率：@string.Format("{0:P2}", myaudit.Accuracy)
+    <strong>@Html.ActionLink("我的投票历史", "History", new { name = User.Identity.Name })</strong>
+    &nbsp;<strong>@Html.ActionLink("说明", "Join")</strong>
+</div>
+
+<p>遇到不确定情况可以加入审核组群：<span class="label">189836722</span>进行讨论。</p>
+<hr />
+<br />
+
+<div id="auditdiv">
+    @if (Model == null || Model.Count == 0)
+    {
+        <strong>没有未审核的项目。</strong>
+    }
+    else
+    {
+        <ul class="listview image fluid">
+            @foreach (var BlogAudit in Model)
+            {
+                var blog = BlogAudit.blog;
+                var categories = catUtil.GetParentCategories(blog.CategoryID);
+                categories.Add(blog.CategoryID);
+            <li>
+                <div class="badge">
+                    @string.Join(" > ", categories.Select(c => catUtil.categoryInfo(c)))
+                </div>
+                @if (blog.isHarmony)
+                {
+                <div class="badge bottom warning">
+                    <i class="icon-white icon-exclamation-sign"></i>表站可见
+                </div>
+                }
+                <div class="listlink">
+                    <div class="icon">
+                        <div class="imgcenter" data-src="@BlogHelper.firstImgPath(blog)">
+                            <a class="nohover" target="_blank" href="@Url.Action("Details", "Blog", new { id = blog.BlogID })">
+                                <img src='@(BlogHelper.firstImgPath(blog, true))' />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="audit-action btn-group btn-group-vertical float-right" data-id="@blog.BlogID" data-action="@(BlogAudit.audit?.AuditAction)">
+                        <button class="btn approve" title="通过"><i class="icon-thumbs-up"></i></button>
+                        <button class="btn deny" title="反对"><i class="icon-thumbs-down"></i></button>
+                        <button class="btn stats" title="投票记录"><i class="icon-question-sign"></i></button>
+                        <div class="dropdown-menu deny-menu hide">
+                            <div class="popover-title">
+                                <span class="close deny-close">×</span> 反对原因
+                                <select id="unprovereason" class="unprovereason" name="原因">
+                                    <option value="请参照投稿须知中的要求修改标题。">标题</option>
+                                    <option value="标题中标出资源数，正文中列出资源列表或将资源列表截图上传。">合集</option>
+                                    <option value="预览图请打码。">预览图</option>
+                                    <option value="标题请用原名而不是译名或罗马音。">原名</option>
+                                    <option value="撞了，投稿前请先搜站内。">撞车</option>
+                                    <option value="同人作请标RJ号而不是发售日期。">RJ号</option>
+                                    <option value="商业作请标发售日期而不是RJ号。">商业作</option>
+                                    <option value="请参照生存手册中的内容补至少一个有效标签。">标签</option>
+                                    <option value="正文中请补资源内容的简介。">简介</option>
+                                    <option value="投稿前请先详细阅读站规内的投稿须知。">须知</option>
+                                    <option value="正文中请说明纯爱/凌辱/NTR/乱交或其它属性。">属性</option>
+                                </select>
+                                <input type="button" class="addreason btn btn-small" value="插入" />
+                            </div>
+                            <div class="popover-content">
+                                <textarea class="deny-reason" style="width:95%;height:160px;resize:none;"></textarea>
+                                <br />
+                                <button class="btn btn-inverse submit-deny">确认</button>
+                            </div>
+                        </div>
+                        <div class="dropdown-menu stats-menu hide">
+                            <div class="popover-title">
+                                <span class="close stats-close">×</span>投票记录
+                            </div>
+                            <div class="popover-content">
+                                <div class="stats-content"><img src="~/Images/loading2.gif" alt="loading" /></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="data">
+                        <h4>@Html.ActionLink(blog.BlogTitle, "Details", "Blog", new { id = blog.BlogID }, new { target = "_blank" }) </h4>
+                        <p>  @blogUtil.GetFirstLine(blog, true)</p>
+                        <strong>投稿：@Html.ActionLink(blog.Author, "UserInfo", "Home", new { name = blog.Author }, null)</strong>
+                        <br />
+                        <div class="posttime">
+                            <span>投稿日期： </span>@blog.BlogDate &nbsp;&nbsp;
+                        </div>
+                    </div>
+                    <br />
+                </div>
+            </li>
+            }
+        </ul>
+        if (Model.HasNextPage || Model.HasPreviousPage)
+        {
+            await Html.RenderPartialAsync("_PagerPartial", Model);
+        }
+    }
+</div>
+
+@section scripts {
+    <style>
+        .audit-action .dropdown-menu {
+            left: initial;
+            right: 0;
+            width: 300px;
+            padding: 0;
+        }
+
+        .audit-action .active {
+            border-color: black;
+        }
+    </style>
+}
+
+@section end_scripts {
+    <form hidden id="token">@Html.AntiForgeryToken()</form>
+    <script src="~/Scripts/lib/jquery.imgpreview.min.js" cdn></script>
+    <script>
+        (function () {
+            var voting = null;
+            function vote(id, type, reason) {
+                if (voting) { voting.abort(); }
+                voting = $.post('@Url.Action("Vote")', { id: id, auditAction: type, reason: reason, __RequestVerificationToken: $token.val() }, function (ret) {
+                    if (!ret.success) {
+                        var err = ret.blogGone ? '操作失败，投稿可能已被审核，请刷新' : '无效操作，请刷新重试';
+                        $.globalMessenger().post({ message: err, type: 'error' });
+                    }
+                    else if (ret.needRefresh) { pager.refreshPage(); }
+                }).error(function () { $.globalMessenger().post({ message: '投票失败，请重试', type: 'error' }) });
+            }
+            var pager = new Pager({
+                pager_init: function () {
+                    $('.audit-action .approve, .audit-action .deny').click(function () {
+                        var $t = $(this), id = $t.closest('.audit-action').data('id');
+                        $t.siblings('.deny-menu').hide();
+                        if ($t.hasClass('active')) {
+                            $t.removeClass('active');
+                            vote(id, 'none');
+                            return;
+                        }
+                        $t.siblings('.stats-menu').hide();
+                        $t.closest('.audit-action').find('.active').removeClass('active');
+                        $t.addClass('active');
+                        if ($t.hasClass('approve')) {
+                            vote(id, 'VoteApprove');
+                        } else {
+                            $t.siblings('.deny-menu').show();
+                        }
+                    });
+                    $('.audit-action .deny-close').click(function () {
+                        $(this).closest('.deny-menu').hide().siblings('.deny').removeClass('active');
+                    });
+                    $('.audit-action .submit-deny').click(function () {
+                        var $t = $(this), reason = $('<p />').text($t.siblings('.deny-reason').val()).html();
+                        if (!reason.trim()) {
+                            return;
+                        }
+                        $t.closest('.deny-menu').hide();
+                        vote($t.closest('.audit-action').data('id'), 'VoteDeny', reason);
+                    });
+                    $('.audit-action .stats').click(function () {
+                        var $t = $(this), id = $t.closest('.audit-action').data('id');
+                        $t.siblings('.stats-menu').hide();
+                        if ($t.hasClass('active')) {
+                            $t.removeClass('active');
+                            return;
+                        }
+                        if ($t.siblings('.deny-menu').is(':visible')) {
+                            $t.siblings('.deny-menu').hide().end().siblings('.deny').removeClass('active');
+                        }
+                        $t.addClass('active');
+                        var $s = $t.siblings('.stats-menu').show();
+                        $.post('@Url.Action("Stats")', { id: id }, function (ret) {
+                            $s.find('.stats-content').html(ret);
+                        })
+                    });
+                    $('.audit-action .stats-close').click(function () {
+                        $(this).closest('.audit-action').find('.stats-menu').hide().end().find('.stats').removeClass('active');
+                    });
+                    $('.audit-action').each(function (i, e) {
+                        var act = $(e).data('action');
+                        if (act == 'VoteApprove') {
+                            $(e).find('.approve').addClass('active');
+                        } else if (act == 'VoteDeny') {
+                            $(e).find('.deny').addClass('active');
+                        }
+                    });
+                    $('.addreason').click(function () {
+                        var $t = $(this),
+                            $orirea = $t.closest('.audit-action').find(".deny-reason"),
+                            addrea = $t.siblings(".unprovereason").val();
+                        $orirea.val($orirea.val() + addrea);
+                    });
+                    try {
+                        $('.imgcenter').imgPreview({
+                            imgCSS: {
+                                // Limit preview size:
+                                'max-width': 600,
+                                border: "2px solid"
+                            },
+                            containerLoadingClass: 'imgloading',
+                            srcAttr: 'data-src',
+                        });
+                    } catch (e) { console.log(e, e.stack) }
+                },
+                destination: '#auditdiv',
+                source: '#auditdiv'
+            });
+
+            var $token = $('#token input').detach();
+        })()
+    </script>
+}

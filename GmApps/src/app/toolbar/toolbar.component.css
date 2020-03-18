@@ -1,0 +1,11 @@
+﻿a {
+  font-size: large;
+  font-family: Roboto,"Helvetica Neue",sans-serif;
+}
+
+@media (max-width: 600px) {
+  a {
+    font-size: small;
+    min-width: 50px;
+  }
+}

@@ -1,0 +1,61 @@
+﻿@inject IOptionsSnapshot<DataSettingsModel> dataSetting
+@inject ConstantUtil constUtil
+@{
+    ViewBag.Title = "加入审核组";
+    var setting = dataSetting.Value;
+}
+<h1>加入审核组</h1>
+<h4>关于审核组：</h4>
+<p>
+    @if(setting.JoinAuditorLevel > 0)
+    {
+        <text>等级达到 @setting.JoinAuditorLevel 级或</text>
+    }
+    作者组成员通过审核组测试后可以自助加入审核组。加入审核组后可以与其他审核组成员一同对待审投稿进行审核。
+</p>
+
+<h4>加入审核组需要注意：</h4>
+<ul>
+    <li>需要通过<a href="@(constUtil.AppHost)/audit-exam">审核组测试。</a></li>
+    <li>需要熟知站规与投稿须知，能发现所有常见问题。</li>
+    <li>有不确定的投稿或任何问题可以加入审核群<span class="label">189836722</span>进行讨论。</li>
+    <li>管理员有最终判定权。</li>
+</ul>
+
+<h4>审核说明</h4>
+<ul>
+    <li>通过点击<i class="icon-thumbs-up"></i>（通过票）或<i class="icon-thumbs-down"></i>（打回票）进行投票审核。</li>
+    <li>投票权重根据审核者的正确率决定。审核正确率越高的审核者投票权重越高。（正确率100%时权重为1，50%时为0.5，0%时为0，以此类推)</li>
+    <li>
+        对待审投稿的投票的权重值之和到达一定数值后该投稿会被自动通过/打回。
+        通过票权重值之和<strong>≥@(setting.BlogApproveThreshold)</strong>时投稿通过，反对票权重值之和<strong>≥@(setting.BlogDenyThreshold)</strong>时投稿打回。
+</li>
+    <li>初始权重为1，投票的投稿通过/打回后会开始计算权重。</li>
+    <li>投票在投稿通过/打回前可以随意更改，投票仅在投稿通过/打回后计入个人审核记录的正确率。</li>
+</ul>
+
+<div class="text-center">
+    <div asp-validation-summary="All"></div>
+    @if (User.IsInRole("Auditor"))
+    {
+        <div class="alert alert-info">
+            您已经是审核组的成员了。
+        </div>
+    }
+    else if (ViewBag.CanJoin == true)
+    {
+        <form asp-antiforgery="true" method="post">
+            <input type="submit" value="了解以上事项，立即加入" class="btn btn-large btn-primary" />
+        </form>
+    }
+    else if (ViewBag.HasPassed == false)
+    {
+        <a href="@(constUtil.AppHost)/audit-exam" class="btn btn-large btn-primary">参与测试</a>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            抱歉，您尚未达到加入审核组的条件。
+        </div>
+    }
+</div>

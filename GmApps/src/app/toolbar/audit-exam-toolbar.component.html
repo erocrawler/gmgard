@@ -1,0 +1,9 @@
+﻿<div *ngIf="showAdmin; then adminBlock"></div>
+<ng-template #adminBlock>
+  <a mat-button [routerLink]="['/audit-exam']">
+    答题
+  </a>
+  <a mat-button [routerLink]="['/audit-exam', 'admin']">
+    管理员
+  </a>
+</ng-template>

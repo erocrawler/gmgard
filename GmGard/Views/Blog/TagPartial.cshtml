@@ -1,0 +1,186 @@
+﻿@model EditTagModel
+@inject BlogUtil blogUtil
+@{
+    bool IsAdmin = blogUtil.CheckAdmin();
+}
+<div class="manage-tag-wrp">
+    @using (Html.BeginForm("EditTag", "Blog", FormMethod.Post, new { id = "mng-tag-form" }))
+    {
+        <input type="hidden" name="BlogID" value="@Model.BlogID" />
+        <textarea class="hide" id="prefilled" data-count="@Model.TagsInBlog.Count()">
+            @Json.Encode(Model.TagsInBlog.ToDictionary(tib => tib.tag.TagName, tib => new {
+                user = tib.AddBy,
+                nick = tib.AddBy == null ? null : Model.NickNames[tib.AddBy],
+                href=Url.Action("Tags", "Search", new { id = tib.TagID }),
+                id = tib.TagID,
+                removable = tib.IsRemovable(Model.Author, User.Identity.Name, IsAdmin, Model.BlackListTagIDs),
+            }))
+        </textarea>
+        <span id="ntags">
+            <i class="icon-tags"></i><span> 标签(<span id="tag-num">0</span>/10)：</span>
+        </span>
+        <div style="display:inline" class="input-append input-tag">
+            <input class="span2" id="tag-input" maxlength="20" autocomplete="off" type="text">
+            <input type="button" class="btn" id="add-tag" value="添加" />
+        </div>
+        <div class="float-right">
+            <span id="tag-error" class="field-validation-error"></span>
+            <input type="button" class="btn btn-inverse" id="tag-discard" value="放弃" />
+            <input type="submit" class="btn btn-primary" id="tag-submit" value="完成编辑" />
+        </div>
+        <p class="clear-fix"></p>
+        <div class="tag-info">
+            <div><strong>标签删除记录</strong> <a id="toggle-hist" class="btn btn-mini">展开</a></div>
+            <div>
+                <ul class="del-history hide">
+                @if (Model.TagHistories.Count() > 0)
+                {
+                    foreach (TagHistory tag in Model.TagHistories)
+                    {
+                        <li>
+                            <div>
+                                <span>@tag.TagName</span>
+                                <span>@if(!string.IsNullOrEmpty(tag.AddBy)) { <text>由 @(tag.AddBy) 添加；</text>}由 @(tag.DeleteBy) 删除。</span>
+                                <a class="restore text-small" data-tag="@tag.TagName"><i class="icon-repeat"></i><small>重新添加</small></a>
+                            </div>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li>无记录。</li>
+                }
+                </ul>
+            </div>
+            <hr />
+            <h4>说明</h4>
+            <ul>
+                <li>标签旨在为他人更为方便地搜索投稿，请善用标签功能；</li>
+                <li>若觉得其他用户添加的标签内容不妥，您可进行删除，严重者请使用汇报问题功能举报；</li>
+                <li>投稿者添加的标签只可被投稿者和管理员删除；</li>
+                <li>部分特殊标签添加后不可在本界面删除；</li>
+            </ul>
+        </div>
+    }
+</div>
+<link href="~/Content/tagmanager.min.css" rel="stylesheet" />
+<style>
+    .tm-tag-info span {
+        cursor: pointer;
+    }
+    .input-tag input {
+        margin: 0;
+    }
+    .tag-info {
+        max-height:400px;
+        overflow:auto;
+    }
+</style>
+<script>
+    $.getScript('/Scripts/tagmanager.min.js', function () {
+        var tagPrefilled = JSON.parse($('#prefilled').val()),
+            tagCount = $('#prefilled').data('count'),
+            tagTmpl = $('<a class="label label-info"></a> '),
+            base = "@Url.Action("Tags", "Search")/",
+            userInfo = "@Url.Action("User", "Home")",
+            tagToDel = {},
+            $tagInput = $('#tag-input');
+        $tagInput.one('focus', function () {
+            $.post('@Url.Action("FetchTags", "Search")', null, function (datasource) {
+                $tagInput.typeahead({ source: datasource });
+            });
+        }).tagsManager({
+            maxTags: Math.max(tagCount, 10), hiddenTagListName: "TagToAdd",
+            tagsContainer: '#ntags',
+            deleteTagsOnBackspace: false,
+            checkOnEnter: function () {
+                return $('#tag-input').siblings('.typeahead').is(':visible');
+            },
+            pushedListener: function (event, tag, removeId) {
+                var $remove = $('#' + removeId).click(updateTagNum);
+                if (tag in tagPrefilled) {
+                    var tagDetail = tagPrefilled[tag];
+                    $remove.click(function () {
+                        $('#edit-tag .popover').remove();
+                        if (confirm('确认删除“' + tag + '”？')) {
+                            tagToDel[tag.toLowerCase()] = tagDetail.id
+                        } else {
+                            addTag(tag);
+                        }
+                    }).siblings('span').click(function () { window.open(tagDetail.href); })
+                       .parent().addClass('tm-tag-info').data(tagDetail);
+                    if (!tagDetail.removable) {
+                        $remove.remove();
+                    }
+                }
+                updateTagNum();
+            }
+        });
+        for (var t in tagPrefilled) { addTag(t); }
+        function updateTagNum() {
+            var l = $('#ntags .tm-tag').length;
+            $('#tag-num').text(l);
+            $('#add-tag').prop('disabled', l >= 10);
+            $('#tag-submit').prop('disabled', l == 0);
+        }
+        $('#mng-tag-form').submit(function (e) {
+            e.preventDefault();
+            var $ntags = $('input[name="TagToAdd"]'),
+                newTags = $ntags.val().split(','), res = [],
+                $err = $('#tag-error').hide();
+
+            for (var i = 0; i < newTags.length; i++) {
+                var nt = newTags[i];
+                if (tagToDel[nt.toLowerCase()]) {
+                    delete tagToDel[nt.toLowerCase()];
+                } else if (!(nt in tagPrefilled)) {
+                    res.push(nt);
+                }
+            }
+            for (var nt in tagToDel) {
+                $('<input type="hidden" name="TagToDel" />').val(tagToDel[nt]).appendTo(this);
+            }
+            $ntags.val(res.join());
+            $.post(this.getAttribute('action'), $(this).serialize(), function (addTags) {
+                if (addTags.errmsg) {
+                    $err.text(addTags.errmsg).show();
+                    return;
+                }
+                var $tags = $('#tags').find('a').filter(function () {
+                    return $(this).data('tag') in tagToDel;
+                }).remove().end().end();
+                for (var id in addTags) {
+                    $tags.append(tagTmpl.clone().attr({ "href": base + id, "data-tag": addTags[id] }).text(addTags[id])).append(' ');
+                }
+                endEdit();
+            })
+        });
+        $('#toggle-hist').click(function () { $(this).toggleClass('active'); $('.del-history').toggle(); });
+        $('.restore').click(function () { addTag($(this).data('tag')); });
+        $('#add-tag').click(function () { addTag($tagInput.val()); });
+        $('#tag-discard').click(endEdit);
+        function addTag(tag) { $tagInput.tagsManager('pushTag', tag) }
+        function endEdit() {
+            $('.manage-tag-wrp').remove();
+            $('#tag-div').show();
+        }
+        function makeContent(user, nick) {
+            return '添加者：<a href="' + userInfo + '/' + user + '">' + nick + '</a>';
+        }
+        var prevtip;
+        $('#edit-tag').on('mouseenter', '.tm-tag', function () {
+            var $e = $(this);
+            if ($e.data('user')) {
+                prevtip && prevtip != this && $(prevtip).popover('hide');
+                prevtip = this;
+                if (!$e.data('popovered')) {
+                    $e.popover({ trigger: 'manual', html: true, placement: 'top', content: makeContent($e.data('user'), $e.data('nick')) }).data('popovered', true);
+                }
+                $e.popover('show');
+                var $s = $e.add($e.next('.popover'));
+                $s.on('mouseover', function () { clearTimeout($e.data('timeout')) })
+                    .on('mouseout', function () { clearTimeout($e.data('timeout')); $e.data('timeout', setTimeout(function () { $e.popover('hide'); $s.off('mouseout mouseover'); }, 500)) });
+            }
+        })
+    });
+</script>

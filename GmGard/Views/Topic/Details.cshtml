@@ -1,0 +1,294 @@
+﻿@model GmGard.Models.TopicDisplay
+@inject BlogUtil blogUtil
+@inject CategoryUtil catUtil
+@inject IVisitCounter visitCounter
+@inject HtmlUtil htmlUtil
+@{
+    Topic topic = Model.topic;
+    ViewBag.Title = topic.TopicTitle;
+    ViewBag.Description = BlogHelper.getFirstLine(Model.topic.Content, 100, true);
+    string picurl = BlogHelper.firstImgPath(topic.ImagePath);
+}
+
+@section featured
+{
+<div id="blog" class="detaillayout">
+            <h2>@topic.TopicTitle</h2>
+            <br />
+                <i class="icon-list"></i> 分类：
+                @foreach (var parentID in catUtil.GetParentCategories(topic.CategoryID))
+                {
+                    <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.categoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
+                }
+                <a class="badge badge-info" href="@Url.Action("List", "Topic", new { id = topic.CategoryID })">@catUtil.categoryInfo(topic.CategoryID)</a>
+            <hr />
+            <span style="font-size:small"><a href="@Url.Action("UserInfo", "Home", new { name = topic.Author })"><i class="icon-user"></i>@blogUtil.GetNickName(topic.Author)</a> 于 @topic.CreateDate 发布，最后更新于 @topic.UpdateDate
+                &nbsp;<i class="icon-eye-open"></i> <span style="color: #808080">@(topic.TopicVisit)</span> 次浏览&nbsp;
+                @if (User.Identity.IsAuthenticated)
+                {<a href="#rptModal" class="btn btn-small" style="margin-bottom: 5px" onclick="rptTopic()" data-toggle="modal">汇报问题</a> }
+                @if (User.Identity.IsAuthenticated && (User.Identity.Name == topic.Author || blogUtil.CheckAdmin()))
+                {
+                    @Html.ActionLink("编辑", "Edit", new { id = topic.TopicID });
+                    <a id="dellink" onclick="delclick('@topic.TopicID');">删除</a>
+                }
+            </span><hr />
+            @if (topic.isLocalImg)
+            {
+                string imgpath = BlogHelper.firstImgPath(topic.ImagePath);
+                <div id="imgdiv0">
+            <a style="text-decoration:none;" href="@imgpath" rel="lightbox[g]" onclick="return false;">
+                <img class="uimg" src="@imgpath" alt="@topic.TopicTitle" />
+            </a>
+            <br /><br /></div>
+            }
+            <div id="blogcontent">
+                    @htmlUtil.ContentWithRewrite(topic.Content)
+            </div>
+            <br />
+            @{
+                var json = Model.blogs.Select(b => new
+                {
+                    BlogID = b.BlogID,
+                    BlogTitle = b.BlogTitle,
+                    imgpath = BlogHelper.firstImgPath(b),
+                    firstLine = blogUtil.GetFirstLine(b, true).ToString(),
+                    href = Url.Action("Details", "Blog", new { id = b.BlogID }),
+                    rating = b.Rating,
+                    postcount = blogUtil.GetPostCount(b),
+                    Author = b.Author,
+                    BlogVisit = visitCounter.GetBlogVisit(b.BlogID)
+                });
+            }
+
+            <input type="hidden" id="blogs" value="@Json.Encode(json)">
+
+            <script type="text/template" id="accordion-template">
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordionview" href="#collapse{{BlogID}}">
+                        {{BlogTitle}}
+                        </a>
+                    </div>
+                    <div id="collapse{{BlogID}}" class="accordion-body collapse">
+                        <div class="accordion-inner" style="border: 1px solid #ccc;border-radius: 1em">
+                            <div class="post">
+                                <a href="{{imgpath}}" style="text-decoration:none;" rel="lightbox[g]">
+                                <img src="{{imgpath}}" alt="{{BlogTitle}}" style="max-height:300px;max-width:400px;" /></a>
+                            </div>
+                        <br />
+                        <p> {{{firstLine}}}</p>
+                        <a target="_blank" href="{{href}}" class="btn btn-primary">详细</a>
+                        </div>
+                    </div>
+                </div>
+            </script>
+            <script type="text/template" id="list-template">
+                <li>
+                    <div class="badge">
+                        评分：{{rating}}
+                    </div>
+                    <a class="listlink" target="_blank" href="{{href}}">
+                        <div class="icon">
+                            <div class="imgcenter" data-src="{{imgpath}}">
+                                <img src="{{imgpath}}" />
+                            </div>
+                        </div>
+                        <div class="data">
+                            <h4>
+                                {{BlogTitle}}
+                            </h4>
+                            <p> {{{firstLine}}}</p>
+                            <strong>投稿：{{Author}}</strong>
+                            <br />
+                            &nbsp;<span class="lfoot"><i class="icon-eye-open ico"></i> {{BlogVisit}}</span><span class="lfoot"><i class="icon-comment ico"></i> {{postcount}}</span>
+                        </div>
+                    </a>
+                </li>
+            </script>
+            <div class="btn-group float-right">
+                <button id="accordionviewbtn" class="btn btn-small"><i class="icon-align-justify"></i>折叠列表</button>
+                <button id="listviewbtn" class="btn btn-small"><i class="icon-th-list"></i>栅格列表</button>
+            </div>
+            <p class="clear-fix"></p>
+            <div id="accordionview">
+            </div>
+            <ul class="listview one image fluid" id="listview">
+            </ul>
+    <div>
+        <i class="icon-tag"></i><span> 专题标签：</span>
+            <a class="label label-info" href="@Url.Action("Tags", "Search", new { id = topic.tag.TagID })">@(topic.tag.TagName)</a>
+    </div>
+</div>
+}
+<hr />
+
+<div class="lazy-content" data-url="@Url.Action("Carousel", "Advertisement")"></div>
+<div id="replydiv" class="lazy-content" data-url="@Url.Action("ShowReply", "Reply", new { itemid = topic.TopicID, idtype = "2" })"></div>
+
+<div class="replyeditor">
+@if (User.Identity.IsAuthenticated)
+{
+    <table>
+        <colgroup>
+            <col span="1" style="width: 100px;" />
+            <col span="1" />
+        </colgroup>
+        <tr>
+            <td rowspan="2" style="vertical-align:top;text-align:center;"><img src="@Url.Action("Show", "Avatar", new { name = User.Identity.Name })" style="max-height:100px;max-width:100px;" /></td>
+            <td style="text-align:left">添加评论：</td>
+        </tr>
+        <tr>
+            <td id="addreply_container">
+            @{
+                ViewBag.itemid = topic.TopicID;
+                ViewBag.itemtype = ItemType.Topic;
+                await Html.RenderPartialAsync("AddReply");
+             }
+            </td>
+        </tr>
+    </table>
+}
+else
+{
+    <b>请登录后发表评论</b>
+    @Html.ActionLink("注册", "Register", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+    @Html.ActionLink("登录", "Login", "Account", routeValues: new { returnUrl = ViewContext.HttpContext.Request.Path }, htmlAttributes: new { @class = "btn" })
+
+}
+</div>
+@section end_scripts{
+    <script cdn src="@JsConstant.CKEditor"></script>
+    <script data-cfasync="true" async cdn src="~/Scripts/lib/lightbox.min.js"></script>
+    <link href="~/Content/lightbox.css" rel="stylesheet" />
+    <script cdn src="~/Scripts/lib/mustache.min.js"></script>
+    <script>
+        var gm = new gmDetail({
+            topicid: '@topic.TopicID',
+            deleteposturl: '@Url.Action("DeletePost", "Reply")',
+            deletereplyurl: '@Url.Action("DeleteReply", "Reply")',
+            listblogurl: '@Url.Action("List", "Topic", new { id = "" })',
+            replyposturl: "@Url.Action("AddPostReply", "Reply")",
+            findreplyurl: "@Html.Raw(Url.Action("FindReply", "Reply", new { itemtype = ItemType.Topic, itemid = topic.TopicID }))",
+            findposturl: "@Html.Raw(Url.Action("FindPost", "Reply", new { itemtype = ItemType.Topic, itemid = topic.TopicID }))",
+            showreplyurl: "@Html.Raw(Url.Action("ShowReply", "Reply", new { idtype = ItemType.Topic, itemid = topic.TopicID }))",
+            rateposturl: "@Url.Action("RatePost", "Reply")",
+            editreplyurl: "@Url.Action("EditReply", "Reply")"
+        });
+    </script>
+    <script>
+        function delclick(id) {
+            if (confirm("确认删除？")) {
+                $.post('@Url.Action("Delete")', { id: id }, gm.redir);
+            }
+        }
+        (function () {
+            var aTemplate = $('#accordion-template').html();
+            var lTemplate = $('#list-template').html();
+            var json = JSON.parse($('#blogs').val());
+            var parser = document.createElement('a');
+            var view = localStorage['gmTopicView'] || 'accordion',
+                curHost = extractHost($('#Logo').attr('src'));
+            $('#listviewbtn').one('click', function () {
+                Mustache.parse(lTemplate);
+                var $listview = $('#listview');
+                $.each(json, function (i, e) {
+                    $listview.append(Mustache.render(lTemplate, overrideHost(e)));
+                });
+                $.getScript('/Scripts/lib/jquery.imgpreview.min.js', function () {
+                    $listview.find('.imgcenter').imgPreview({
+                        imgCSS: {
+                            'max-width': 500,
+                            'max-height': 500,
+                            border: "2px solid"
+                        },
+                        srcAttr: "data-src",
+                        containerLoadingClass: 'imgloading'
+                    });
+                });
+                $(this).click(function () {
+                    $listview.show();
+                    $('#accordionview').hide();
+                    $('#accordionviewbtn').removeClass('active');
+                    $(this).addClass('active');
+                    localStorage['gmTopicView'] = 'list';
+                }).trigger('click');
+            });
+            $('#accordionviewbtn').one('click', function () {
+                Mustache.parse(aTemplate);
+                var $accordion = $('#accordionview').addClass('accordion');
+                $.each(json, function (i, e) {
+                    $accordion.append(Mustache.render(aTemplate, overrideHost(e)));
+                });
+                $accordion.collapse().css('height', 'auto');
+                $(this).click(function () {
+                    $('#listview').hide();
+                    $('#listviewbtn').removeClass('active');
+                    $(this).addClass('active');
+                    $accordion.show();
+                    localStorage['gmTopicView'] = 'accordion';
+                }).trigger('click');
+            });
+            if (view == 'list') {
+                $('#listviewbtn').trigger('click');
+            } else {
+                $('#accordionviewbtn').trigger('click');
+            }
+
+            function extractHost(url) {
+                parser.href = url;
+                return parser.host;
+            }
+            function overrideHost(e) {
+                parser.href = e.imgpath;
+                if (parser.host == window.location.host && parser.host.indexOf('gmgard.us') > 0) {
+                    return e;
+                }
+                parser.host = curHost;
+                e.imgpath = parser.href;
+                return e;
+            }
+        })();
+    </script>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div id="rptModal" class="modal hide fade" tabindex="-1" role="dialog" style="background-color:white;">
+            <form asp-action="Report" asp-controller="Message" id="report-form" method="post" style="margin:0;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <div class="alert alert-danger" style="margin-bottom:0"><strong>注意：</strong>链接失效等补档问题请点击汇报给投稿者。</div>
+                    <h3>汇报问题</h3>
+                </div>
+                <div class="modal-body">
+                    <h3>原因：</h3>
+                    <textarea name="MsgContent" id="MsgContent" style="width:95%;height:160px;resize:none;"></textarea>
+                </div><div class="modal-footer">
+                    <button class="btn" data-dismiss="modal">关闭</button>
+                    <button type="submit" name="type" value="rpt-admin" class="btn btn-inverse">汇报给管理员</button>
+                    <button type="submit" name="type" value="rpt-author" class="btn btn-primary">汇报给投稿者</button>
+                    <input type="hidden" name="id" id="rpttopicid" value="@Model.topic.TopicID" />
+                    <input type="hidden" name="itemType" value="@ItemType.Topic" />
+                    <input type="hidden" name="postid" id="rptpostid" />
+                </div>
+            </form>
+            <script>
+                $('#report-form').submit(function (e) {
+                    var $t = $(this);
+                    e.preventDefault();
+                    if (!$('#MsgContent').val().trim()) {
+                        return;
+                    }
+                    var type = document.activeElement.value,
+                        params = $t.serializeArray();
+                    params.push({ name: "type", value: type });
+                    $.post($t.attr('action'), $.param(params), function (r) {
+                        if (r.msg) {
+                            $.globalMessenger().post(r.msg);
+                            $t[0].reset();
+                        }
+                        $('#rptModal').modal('hide');
+                    })
+                })
+            </script>
+        </div>
+    }
+}

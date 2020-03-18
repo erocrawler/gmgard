@@ -1,0 +1,124 @@
+﻿@{
+    ViewBag.Title = "消息中心";
+    string context = ViewBag.DisplayTab;
+}
+
+<div class="navbar">
+    <div class="navbar-inner">
+    <a class="brand" style="text-decoration: none;cursor:default;">消息中心</a>
+    <ul class="nav" id="msgmenu">
+    <li @if(context == null || context == "inbox"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Inbox")');"><img src="//static.gmgard.com/Images/inbox.png" /> 收件箱<b id="UnreadCount"></b></a></li>
+    <li @if(context == "outbox"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Outbox")');"><img src="//static.gmgard.com/Images/outbox.png" /> 发件箱</a></li>
+    <li @if(context == "write"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Write")');"><img src="//static.gmgard.com/Images/write.png" /> 写消息</a></li>
+    </ul>
+    </div>
+</div>
+
+<div class="tabcontent">
+    <div id="multiview">
+        @await Component.InvokeAsync(nameof(MessageView), new { context = context })
+    </div>
+    <img id="loading" src="//static.gmgard.com/Images/loading.gif" style="display:none;margin:0 auto 100px auto;" />
+</div>
+
+@section scripts{
+    <script>
+        function unread(obj) {
+            var $t = $(obj), isReadOnly = $t.hasClass('active');
+            $.ajax({
+                url: $t.toggleClass('active').attr('href'),
+                cache: false,
+                success: displayview
+            });
+            $("#multiview").hide();
+            $("#loading").css('display', 'block');
+        }
+        function selected(obj, posturl) {
+            if (obj.parentElement.className == "active")
+                return;
+            var ullist = document.getElementById('msgmenu');
+            var lilist = ullist.getElementsByTagName('li');
+            for (i = 0; i < lilist.length; i++) {
+                lilist[i].className = "";
+            }
+            obj.parentElement.className = "active";
+            $.ajax({
+                url: posturl,
+                cache: false,
+                success: displayview
+            });
+            $("#multiview").hide();
+            $("#loading").css('display', 'block');
+        }
+        function displayview(response) {
+            data = response;
+            $("#multiview").html(response);
+            $('form').removeData('validator');
+            $('form').removeData('unobtrusiveValidation');
+            if ($.validator) {
+                $.validator.unobtrusive.parse('form');
+            }
+            $("#multiview").show();
+            $("#loading").hide();
+        }
+        function updateval(value) {
+            if (value) {
+                $('#UnreadCount').text("（" + value + "条未读）");
+            }
+        }
+
+        function readmsg(id) {
+            var msgtitle = document.getElementById('msg' + id);
+            if (msgtitle.style.fontWeight != 'inherit') {
+                msgtitle.style.fontWeight = 'inherit';
+            }
+            $.post('@Url.Action("ReadMsg")', { id: id }, onSuccess);
+        }
+        function getmsg(id) {
+            $.post('@Url.Action("GetMsg")', { id: id }, showMsg);
+        }
+        function onSuccess(message) {
+            var label = document.getElementById('UnreadCount');
+            if (message.unreadcount > 0)
+                label.innerText = "（" + message.unreadcount + "条未读）";
+            else
+                label.innerText = "";
+            showMsg(message);
+        }
+        function showMsg(message) {
+            $("#popuptitle").text((message.MsgTitle && message.MsgTitle.length > 0) ? message.MsgTitle : "无标题");
+            var senderLink = document.createElement('a'), recipientLink = document.createElement('a');
+            senderLink.href = "/User/" + message.Sender;
+            $(senderLink).text(message.SenderNick);
+            recipientLink.href = "/User/" + message.Recipient;
+            $(recipientLink).text(message.RecipientNick);
+            $("#popupsubtitle").empty().append("发件人：", senderLink, " 收件人：", recipientLink);
+            var date = new Date(message.MsgDate);
+            $("#popuptime").text(date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日" + ("00" + date.getHours()).slice(-2) + ':' + ("00" + date.getMinutes()).slice(-2) + ':' + ("00" + date.getSeconds()).slice(-2));
+            $("#popupcontent").html(message.MsgContent.replace(/\n/g, "<br />").toString());
+            $("#msgid").val(message.MsgId);
+            $('#popupdiv').modal("show");
+        }
+        function checkall(ele) {
+            $('input[name=op]').prop('checked', ele.checked);
+        }
+    </script>
+}
+@section end_scripts{
+    <div id="popupdiv" class="popupdiv pseudos modal hide fade" role="dialog" style="display:none;">
+        <div class="modal-header">
+            <a data-dismiss="modal" class="close icon-remove-sign"></a>
+            <h3 id="popuptitle"></h3>
+            <h4 id="popuptime" style="float:right;white-space:nowrap;"></h4>
+            <h4 id="popupsubtitle"></h4>
+            <form asp-action="MsgAction" asp-controller="Message" method="post" style="margin:0;text-align:right;">
+                <input type="hidden" id="msgid" name="msgid" />
+                <button class="btn btn-small" type="submit" id="DelButton" name="act" value="delete">删除</button>
+                <button class="btn btn-small" type="submit" id="ReplyButton" name="act" value="reply">回复</button>
+                <button class="btn btn-small" type="submit" id="ForwardButton" name="act" value="forward">转发</button>
+            </form>
+        </div>
+
+        <div id="popupcontent" class="modal-body"></div>
+    </div>
+}

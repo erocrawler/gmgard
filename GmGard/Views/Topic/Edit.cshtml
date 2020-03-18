@@ -1,0 +1,263 @@
+﻿@model GmGard.Models.TopicEdit
+
+@{
+    ViewBag.Title = "编辑专题";
+}
+
+<h2>编辑专题</h2>
+
+<form asp-action="Edit" asp-antiforgery="true" method="post" id="editform" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <table style="width:100%">
+        <colgroup>
+            <col style="width:40px;" />
+            <col style="width:91%" />
+        </colgroup>
+        <tbody>
+            <tr>
+                <td><label for="CategoryID">分类</label></td>
+                <td>
+                    <select asp-for="CategoryID" asp-items="ViewBag.CategoryID as IEnumerable<SelectListItem>"></select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label asp-for="TopicTitle"></label>
+                </td>
+                <td>
+                    <input asp-for="TopicTitle" maxlength=80 class="input-block-level" />
+                    <span asp-validation-for="TopicTitle"></span>
+                </td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top;padding-top: 1em;">
+                    <label for="Blogid">内容<span id="bloghelp" class="icon-question-sign"></span></label>
+                </td>
+                <td>
+                    <div class="hbtags hide"></div>
+                    <div class="input-prepend" style="margin-bottom:4px">
+                        <span class="add-on">gm</span>
+                        <input type="text" id="bloglist" name="bloglist" value="" placeholder="输入资源gm号" class="span2" />
+                    </div>
+                    <input id="addblog" type="button" class="btn butnfix" value="添加" />
+                    <span id="blogerr" class="text-error hide">资源ID不存在！</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="well blogwell" style="padding:0">
+                        <p class="text-warning hide" style="margin:1em">请添加资源</p>
+                        <img src="//static.gmgard.com/Images/loading2.gif" id="loadinggif" style="display:none;" />
+
+                        <ul id="idlist" class="hbcontainer listview image fluid three" style="max-height:1000px;overflow:auto;padding:5px">
+                            @foreach (var blog in Model.Blogs)
+                            {
+                                await Html.RenderPartialAsync("_ListBriefPartial", blog);
+                            }
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    @if (Model.IsLocalImg)
+                    {
+                        <div>
+                            <img id="heroimg" src="@BlogHelper.firstImgPath(Model.ImagePath)" alt="@Model.TopicTitle " style="max-height:300px;max-width:400px;" />
+                        </div><br />
+                        <label>
+                            <input type="checkbox" name="isLocalImg" value="false" onchange="$('#heroimg').toggle();" />
+                            删除当前预览图
+                        </label>
+                    }
+                    <input type="hidden" name="isLocalImg" value="true" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <label asp-for="TopicImage">更改封面（最大4MB，或在文中外链):</label>
+                    <input type="file" asp-for="TopicImage" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="hidden" asp-for="BannerPath" />
+                    @if (!string.IsNullOrWhiteSpace(Model.BannerPath))
+                    {
+                        <label>
+                            <input type="checkbox" value="false" id="delete-banner" />
+                            删除当前横幅
+                        </label>
+                    }
+                    <label for="TopicBanner">编辑横幅（推荐760&times;160像素。设定后，将参与主页轮播显示):</label>
+                    <input type="file" asp-for="TopicBanner" />
+                    <a class="hide" title="移除" id="banner-remove" href="#" onclick="$('#TopicBanner').val('').trigger('change');this.style.display='none'; return false;"><i class="icon-remove-sign"></i></a>
+                    <span id="banner-error" class="field-validation-error"></span>
+                    <br />
+                    <section id="banner-preview" class="featured well hide" style="padding:0">
+                        <div class="content-wrapper hp-slideshow">
+                            <div class="cycle-slide">
+                            </div>
+                        </div>
+                    </section>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <textarea asp-for="Content"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label asp-for="TagName">标签<span id="taghelp" class="icon-question-sign"></span></label>
+                </td>
+                <td>
+                    <input asp-for="TagName" />
+                    <span asp-validation-for="TagName"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        <input type="submit" autocomplete="off" class="btn btn-primary" data-loading-text="提交中" id="submitbtn" value="提交" />
+        @Html.ActionLink("取消", "Details", null, new { @class = "btn", style = "margin-top: 5px;" })
+        <strong id="filemsg" class="text-error hide">上传文件不得超过4MB</strong>
+    </p>
+</form>
+
+@section end_scripts {
+    <script src="~/Scripts/tagmanager.min.js" cdn></script>
+    <script data-cfasync="true" async src="@JsConstant.CKEditor" onload="CKEDITOR.replace('Content')"></script>
+    <script>
+        (function () {
+            var isvalid = true;
+            var nonexsist = {};
+            var $blogid = $('#bloglist');
+            var $warn = $('.blogwell .text-warning');
+            $blogid.tagsManager({
+                prefilled: '@string.Join(",", Model.BlogIDs)',
+                hiddenTagListName: "blogIDs",
+                tagsContainer: ".hbtags",
+                deleteTagsOnBackspace: false,
+                pushedListener: function (event, tag, removeId) {
+                    var tagdiv = document.createElement('ul');
+                    $(tagdiv).load('@Url.Action("FetchBlog", "Blog")', { id: tag }, function (data, status, xhr) {
+                        if (data == "") {
+                            $('#blogerr').show();
+                            nonexsist[tag] = true;
+                        } else {
+                            $('#blogerr').hide();
+                            var child = $(tagdiv).children().click(function () {
+                                $('#' + removeId).trigger('click');
+                                $(this).remove();
+                                checkEmpty();
+                            });
+                            $('.hbcontainer').append(child);
+                            $warn.hide();
+                            removeLinks();
+                        }
+                    });
+                }
+            });
+            $('#addblog').click(function () {
+                if (!$blogid.val())
+                    return;
+                var id = parseInt($blogid.val());
+                $('#bloglist').tagsManager('pushTag', id);
+                $blogid.val('');
+            });
+            $('.hbcontainer li').click(function () {
+                var id = Number($(this).data('id'));
+                var tags = $('.hbtags .tm-tag');
+                for (var i = 0; i < tags.length; i++)
+                    if (Number(tags.eq(i).children('span').text()) === id) {
+                        tags.eq(i).children('a').trigger('click');
+                        break;
+                    }
+                $(this).remove();
+            });
+            $('#editform').submit(function (e) {
+                if ($(this).valid() && isvalid) {
+                    var tags = $('input[name="blogIDs"]').val();
+                    var taglist = tags.split(',');
+                    taglist = $.map(taglist, function (tag) {
+                        if (nonexsist[tag] != true) {
+                            return tag;
+                        }
+                    });
+                    $('input[name="blogIDs"]').val(taglist.join(','));
+                    $('#submitbtn').button('loading');
+                } else {
+                    e.preventDefault();
+                }
+            });
+            function checkEmpty() {
+                if ($('#idlist li').length == 0) {
+                    $warn.show();
+                } else {
+                    $warn.hide();
+                }
+            }
+            checkEmpty();
+            function removeLinks() {
+                $('#idlist').find('a[href]').removeAttr('href');
+            }
+            removeLinks();
+            $('input[type="file"]').change(function (event) {
+                if (event.target.files.length > 0 && (event.target.files[0].size >= 4096 * 1024 || !event.target.files[0].type.match("image.*"))) { // 4MB
+                    $('#filemsg').show();
+                    isvalid = false;
+                }
+                else {
+                    $('#filemsg').hide();
+                    isvalid = true;
+                }
+            });
+            function displayDefaultBanner() {
+                var banner = $('#BannerPath').val();
+                if (banner && !$('#delete-banner').is(':checked')) {
+                    $("#banner-preview").show().find('.cycle-slide').css('background-image', 'url(' + banner + ')');
+                } else {
+                    $("#banner-preview").hide();
+                }
+            }
+            displayDefaultBanner();
+            $('#delete-banner').change(function () {
+                $('#BannerPath').prop('disabled', this.checked);
+                if (!$('#TopicBanner').val()) {
+                    if (this.checked) {
+                        $('#banner-remove, #banner-preview').hide();
+                    } else {
+                        displayDefaultBanner();
+                    }
+                }
+            });
+            $('#TopicBanner').change(function (event) {
+                $('#banner-error').text('');
+                if (isvalid && event.target.files.length > 0) {
+                    $('#banner-remove').show();
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var img = new Image();
+                        img.onload = function () {
+                            if (img.width < 650 || img.height < 150) {
+                                $('#banner-error').text('图片太小了');
+                                isvalid = false;
+                            } else if (img.width / img.height < 3) {
+                                $('#banner-error').text('图片过高，请适当剪裁调整。');
+                                isvalid = false;
+                            }
+                        }
+                        img.src = e.target.result;
+                        $("#banner-preview").show().find('.cycle-slide').css('background-image', 'url(' + e.target.result + ')');
+                    };
+                    reader.readAsDataURL(event.target.files[0]);
+                } else {
+                    $('#banner-remove').hide();
+                    displayDefaultBanner();
+                }
+            });
+        })();
+    </script>
+}

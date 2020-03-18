@@ -1,0 +1,51 @@
+﻿@model BackgroundSetting
+@{
+    Layout = null;
+    string host = "//" + ViewBag.HostName + "/";
+    string ClassName = ViewBag.ClassName == "" ? "" : "." + ViewBag.ClassName;
+    var AllBg = Model.Backgrounds;
+    var FixedBg = Model.Backgrounds.Where(b => b.Type == BackgroundCss.BackgroundType.Fixed);
+    var NormalBg = Model.Backgrounds.Where(b => b.Type == BackgroundCss.BackgroundType.Normal);
+}
+
+@foreach (var bg in AllBg)
+{
+    <text>html.@bg.Name@ClassName{ background-image: url(@host@bg.BackgroundUrl); background-position: @bg.Position }</text>
+}
+@@media screen and (max-width: 1440px)
+{
+@foreach (var bg in AllBg)
+{
+    <text>html.@bg.Name@ClassName{ background-image: url(@host@bg.BackgroundUrl1440); background-position: @bg.Position1440 }</text>
+}
+}
+@@media screen and (max-width: 1000px)
+{
+    @string.Join(",", NormalBg.Select(b => "html." + b.Name)){ background-image: none !important }
+@foreach (var bg in FixedBg)
+{
+    <text>html.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl1024) }</text>
+}
+}
+
+@string.Join(",", FixedBg.Select(b => "body." + b.Name)){ background-image: none; }
+@string.Join(",", FixedBg.Select(b => "html." + b.Name)){ background-repeat: no-repeat; background-attachment:fixed }
+
+@foreach (var bg in NormalBg)
+{
+    <text>body.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl) }</text>
+}
+@@media screen and (max-width: 1440px)
+{
+@foreach (var bg in NormalBg)
+{
+    <text>body.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl1440) }</text>
+}
+}
+@@media screen and (max-width: 1000px)
+{
+@foreach (var bg in NormalBg)
+{
+    <text>body.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl1024) }</text>
+}
+}

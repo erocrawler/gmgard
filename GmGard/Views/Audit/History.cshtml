@@ -1,0 +1,137 @@
+﻿@model PagedList.IPagedList<VoteResult>
+@inject CategoryUtil catUtil
+@inject BlogUtil blogUtil
+@{
+    var auditor = ViewBag.Auditor as Auditor;
+    ViewBag.Title = "审核历史";
+}
+<h1>审核历史</h1>
+@if (auditor != null)
+{
+    <div class="alert alert-info">
+        我的审核数：@auditor.AuditCount 正确率：@string.Format("{0:P2}", auditor.Accuracy)
+        <strong>@Html.ActionLink("返回审核", "Index")</strong>
+    </div>
+}
+<div id="auditdiv">
+    @if (Model == null || Model.Count == 0)
+    {
+        <strong>无记录。</strong>
+    }
+    else
+    {
+        <ul class="listview image fluid">
+            @foreach (var vote in Model)
+            {
+                var blog = vote.Audit.blog;
+                var categories = catUtil.GetParentCategories(blog.CategoryID);
+                categories.Add(blog.CategoryID);
+                string iconClass = "";
+                string actionName = "";
+                switch (vote.Audit.AuditAction)
+                {
+                    case BlogAudit.Action.VoteApprove:
+                        iconClass = "icon-thumbs-up";
+                        actionName = "通过票";
+                        break;
+                    case BlogAudit.Action.VoteDeny:
+                        iconClass = "icon-thumbs-down";
+                        actionName = "反对票";
+                        break;
+                    default:
+                        break;
+                }
+                <li>
+                    <div class="badge">
+                        @string.Join(" > ", categories.Select(c => catUtil.categoryInfo(c)))
+                    </div>
+                    <div class="listlink">
+                        <div class="icon">
+                            <div class="imgcenter" data-src="@BlogHelper.firstImgPath(blog)">
+                                <a class="nohover" target="_blank" href="@Url.Action("Details", "Blog", new { id = blog.BlogID })">
+                                    <img src='@(BlogHelper.firstImgPath(blog, true))' />
+                                </a>
+                            </div>
+                        </div>
+                        <div class="data">
+                            <h4>@Html.ActionLink(blog.BlogTitle, "Details", "Blog", new { id = blog.BlogID }, new { target = "_blank" }) </h4>
+                            <p>@blogUtil.GetFirstLine(blog, true)</p>
+                            <strong>投稿：@Html.ActionLink(blog.Author, "UserInfo", "Home", new { name = blog.Author }, null)</strong>
+                            <br />
+                            &nbsp;<span class="lfoot">投票：<i class="@iconClass"></i>@actionName</span> @if (!string.IsNullOrEmpty(vote.Audit.Reason))
+                            {<i class="icon-info-sign" title="@vote.Audit.Reason"></i>}
+                            @if (vote.Correct != null)
+                            {
+                                <span class="lfoot">
+                                    <i class="@(vote.Correct.Value ? "icon-ok" : "icon-remove")"></i>@(vote.Correct.Value ? "正确" : "不正确")
+                                </span>
+                                <div class="audit-action" style="display:inline-block;">
+                                    <button class="btn audit-stats" data-version="@vote.Audit.BlogVersion" data-id="@vote.Audit.BlogID" title="投票记录"><i class="icon-question-sign"></i></button>
+                                    <div class="popover stats-menu hide">
+                                        <div class="popover-title">
+                                            <span class="close stats-close">×</span>投票记录
+                                        </div>
+                                        <div class="popover-content">
+                                            <div class="stats-content"><img src="~/Images/loading2.gif" alt="loading" /></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="posttime">
+                                投票日期： @vote.Audit.AuditDate &nbsp;&nbsp;
+                            </div>
+                        </div>
+                        <br />
+                    </div>
+                </li>
+            }
+        </ul>
+        if (Model.HasNextPage || Model.HasPreviousPage)
+        {
+            await Html.RenderPartialAsync("_PagerPartial", Model);
+        }
+    }
+</div>
+
+@section end_scripts {
+    <script src="~/Scripts/lib/jquery.imgpreview.min.js" cdn></script>
+    <script>
+        (function () {
+            new Pager({
+                pager_init: function () {
+                    $('.icon-info-sign').tooltip({ container: 'html' });
+                    try {
+                        $('.imgcenter').imgPreview({
+                            imgCSS: {
+                                // Limit preview size:
+                                'max-width': 600,
+                                border: "2px solid"
+                            },
+                            containerLoadingClass: 'imgloading',
+                            srcAttr: 'data-src',
+                        });
+                    } catch (e) { console.log(e, e.stack) }
+                    $('.audit-stats').click(function () {
+                        var $t = $(this), id = $t.data('id');
+                        $t.siblings('.stats-menu').css({ top: $t.position().top + $t.outerHeight(), left: $t.position().left }).hide();
+                        if ($t.hasClass('active')) {
+                            $t.removeClass('active');
+                            return;
+                        }
+                        $t.addClass('active');
+                        var $s = $t.siblings('.stats-menu').show();
+                        $.post('@Url.Action("Stats")', { id: id, version: $t.data('version') }, function (ret) {
+                            $s.find('.stats-content').html(ret);
+                        })
+                    });
+                    $('.stats-close').click(function () {
+                        $(this).closest('.audit-action').find('.audit-stats').trigger('click');
+                    });
+                },
+                destination: '#auditdiv',
+                source: '#auditdiv'
+            })
+        })()
+    </script>
+}

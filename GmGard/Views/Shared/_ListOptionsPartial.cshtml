@@ -1,0 +1,49 @@
+﻿@model SearchModel
+@{
+    SearchModel search = Model ?? new SearchModel();
+    var options = search.SortOptions();
+    var dict = search.ToRouteDictionary();
+    var action = ViewContext.RouteData.Values["action"] as string;
+    var controller = ViewContext.RouteData.Values["controller"] as string;
+    bool isTopic = controller.Equals("Topic", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="btn-toolbar listoption">
+    <div class="btn-group">
+        <a role="button" class="btn btn-small hide" id="advanced-search"><i class="icon-search"></i> 高级搜索</a>
+    </div>
+    <span class="label">排序</span>
+    <div class="btn-group">
+    <a class="btn btn-small" href="@Url.Action(null, dict.Set("sort", options.NextSort))">@options.SortName <i class="@if(options.IsDescending){<text>icon-arrow-down</text>}else{<text>icon-arrow-up</text>}"></i></a>
+
+    <a class="btn btn-small dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+    <ul class="dropdown-menu">
+        @if (options.HasScore)
+        {
+            <li><a href="@Url.Action(null, dict.Set("sort", options.ScoreSortParm))">相 关 度</a></li>
+        }
+        @if (action.Equals("Favorite", StringComparison.OrdinalIgnoreCase))
+        {
+            <li><a href="@Url.Action(null, dict.Set("sort", options.AddDateSortParm ))">添加日期</a></li>
+        }
+        else if (isTopic)
+        {
+            <li><a href="@Url.Action(null, new {sort = options.UpdateSortParm })">更新日期</a></li>
+        }
+        <li><a href="@Url.Action(null, dict.Set("sort", options.DateSortParm))">发布日期</a></li>
+        <li><a href="@Url.Action(null, dict.Set("sort", options.PostSortParm))">评 论 数</a></li>
+        <li><a href="@Url.Action(null, dict.Set("sort", options.VisitSortParm))">浏 览 数</a></li>
+        @if (!isTopic)
+        {
+            <li><a href="@Url.Action(null, dict.Set("sort", options.RateSortParm))">评&nbsp;&nbsp;&nbsp;&nbsp;分</a></li>
+        }
+    </ul>
+    </div>
+    <span class="label">查看</span>
+    <div class="btn-group" data-toggle="buttons-radio">
+        <button onclick="changeclass('one')" class="btn btn-small"><i class="icon-th-list"></i></button>
+        <button onclick="changeclass('two')" class="btn btn-small"><i class="icon-th-large"></i></button>
+        <button onclick="changeclass('three')" class="btn btn-small"><i class="icon-th"></i></button>
+        <button onclick="changeclass('img')" class="btn btn-small"><i class="icon-picture"></i></button>
+    </div>
+</div>

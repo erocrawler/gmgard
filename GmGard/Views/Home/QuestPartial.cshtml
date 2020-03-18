@@ -1,0 +1,133 @@
+﻿@inject ExpUtil expUtil
+<table border="1" class="qtable table-bordered table">
+    <tr>
+        <td style="font-size: inherit;font-weight: normal">任务名称</td>
+        <td>任务内容</td>
+        <td>任务奖励</td>
+        <td>完成情况</td>
+    </tr>
+
+    <tr>
+        <td>签到<br /><span class="label label-important ldaily">日常</span></td>
+        <td class="lalign">点击页面右方的签到按钮进行签到</td>
+        <td class="lalign"><i title="绅士度" class="ico-shinshi"></i>×1~5，<i title="棒棒糖" class="ico-lolly"></i>×1~5（具体数值根据连续签到天数决定）</td>
+        <td>
+            @{
+                if (expUtil.HasSigned(out int s))
+                {
+                    <span class="label label-success">已完成</span>
+                }
+                else{
+                    <span class="label">未完成</span>
+                }
+            }
+        </td>
+    </tr>
+
+    <tr>
+        <td>评论<br /><span class="label label-important ldaily">日常</span></td>
+        <td class="lalign">在任意资源页中做出评论（请勿进行毫无意义的评论，如ddddd或纯表情等）</td>
+        <td><i title="绅士度" class="ico-shinshi"></i>×3，<i title="棒棒糖" class="ico-lolly"></i>×3</td>
+        <td>@{
+            if (expUtil.HasPosted())
+            {
+                    <span class="label label-success">已完成</span>
+                }
+                else{
+                    <span class="label">未完成</span>
+                }
+            }</td>
+    </tr>
+
+    @if (PostConstant.PostRatingEventActive)
+    {
+    <tr>
+        <td>
+            点赞<br />
+            <span class="label label-warning ldaily">活动日常</span>
+        </td>
+        
+            <td class="lalign">为<a href="@Url.Action("Details", "Blog", new { id = 98704 })">三行小黄文参赛作品</a>点 <i class="icon-thumbs-up"></i>赞</td>
+        
+        <td><i title="绅士度" class="ico-shinshi"></i>×2，<i title="棒棒糖" class="ico-lolly"></i>×2</td>
+        <td>
+            @{
+                if (expUtil.HasRatedPost())
+                {
+                    <span class="label label-success">已完成</span>
+                }
+                else
+                {
+                    <span class="label">未完成</span>
+                }
+            }
+        </td>
+    </tr>
+    }
+
+    <tr>
+        <td>评分<br /><span class="label label-important ldaily">日常</span></td>
+        <td class="lalign">对任意资源做出评分（请下载并浏览后给予资源其应得的评分）</td>
+        <td><i title="绅士度" class="ico-shinshi"></i>×2，<i title="棒棒糖" class="ico-lolly"></i>×2</td>
+        <td>@{
+            if (expUtil.HasRated())
+            {
+                    <span class="label label-success">已完成</span>
+                }
+                else{
+                    <span class="label">未完成</span>
+                }
+            }</td>
+    </tr>
+
+    <tr>
+        <td><span class="newq">First<br />Sperm</span><br /><span class="label label-important ldaily">日常</span></td>
+        <td class="lalign">投稿并通过审核</td>
+        <td><i title="绅士度" class="ico-shinshi"></i>×5，<i title="棒棒糖" class="ico-lolly"></i>×5</td>
+        <td>@{
+            int blogcount = expUtil.HasBlogged();
+            int weekblogcount = expUtil.WeekBlogged();
+            if (blogcount > 0)
+            {
+                    <span class="label label-success">已完成</span>
+                }
+                else{
+                    <span class="label">未完成</span>
+                }
+            }</td>
+    </tr>
+    @if (blogcount > 0)
+    {
+        <tr>
+            <td><span class="newq">Mega<br />Post</span><br /><span class="label label-important ldaily">日常</span></td>
+            <td class="lalign">投5稿并通过审核</td>
+            <td><i title="绅士度" class="ico-shinshi"></i>×15，<i title="棒棒糖" class="ico-lolly"></i>×15</td>
+            <td>@{
+                    if (blogcount >= 5)
+                    {
+                        <span class="label label-success">已完成</span>
+                    }
+                    else{
+                        <span class="label">@blogcount / 5</span>
+                    }
+                }</td>
+        </tr>
+    }
+    @if (weekblogcount > 0)
+    {
+        <tr>
+            <td><span class="newq">エ号<br />作戦</span><br /><span class="label label-important lweekly">周常</span></td>
+            <td class="lalign">1周内投15稿并通过审核</td>
+            <td><i title="绅士度" class="ico-shinshi"></i>×60，<i title="棒棒糖" class="ico-lolly"></i>×60</td>
+            <td>@{
+                    if (weekblogcount >= 15)
+                    {
+                        <span class="label label-success">已完成</span>
+                    }
+                    else{
+                        <span class="label">@weekblogcount / 15</span>
+                    }
+                }</td>
+        </tr>
+    }
+</table>    

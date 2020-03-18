@@ -1,0 +1,56 @@
+﻿<mat-card *ngIf="loading; else examBlock" fxLayout="row" fxLayoutAlign="center">
+  <mat-spinner></mat-spinner>
+</mat-card>
+<ng-template #examBlock>
+  <mat-card *ngIf="currentResult">
+    <p>
+      <span *ngIf="currentResult.hasPassed; else failedNote">
+        恭喜！您通过了审核组测试。总得分：{{totalPoints}}。请返回<a href="http://gmgard.com/Audit/Join">主站</a>加入审核组参与审核投票！
+      </span>
+      <ng-template #failedNote>
+        <span>
+          很遗憾！您未通过审核组测试。总得分：{{totalPoints}}。
+          请返回<a [routerLink]="['/audit-exam']">题目列表</a>，欢迎在测试题目更新后重新参与。
+          如对测试结果有任何疑问，请通过意见建议与管理员联系。
+        </span>
+      </ng-template>
+      试卷提交于：{{ currentResult.submitTime | date:'medium' }}
+    </p>
+  </mat-card>
+  <mat-card *ngFor="let question of exam.questions">
+    <mat-card-content [ngSwitch]="questionType[question.type]">
+      <p *ngSwitchCase="questionType.Information">
+        <mat-icon>info</mat-icon> {{ question.description }}
+      </p>
+      <blank-question *ngSwitchCase="questionType.FillInBlank" 
+                      [active]="examActive" 
+                      [question]="question" 
+                      [result]="resultMap[question.id]"
+                      [(answer)]="answerMap[question.id].answer" 
+                      (answerChange)="setDirty()">
+      </blank-question>
+      <choice-question *ngSwitchCase="questionType.MultipleChoices" 
+                       [active]="examActive" 
+                       [question]="question" 
+                       [result]="resultMap[question.id]"
+                       [(answer)]="answerMap[question.id].answer" 
+                       (answerChange)="setDirty()">
+      </choice-question>
+      <title-question *ngSwitchCase="questionType.TitleCombination" 
+                      [active]="examActive" 
+                      [question]="question" 
+                      [result]="resultMap[question.id]"
+                      [(answer)]="answerMap[question.id].answer" 
+                      (answerChange)="setDirty()">
+      </title-question>
+      <p *ngSwitchDefault>default??? {{questionType.FillInBlank == question.type}}</p>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="examActive" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="10px">
+    <span *ngIf="lastSave">
+      <mat-icon>save</mat-icon>
+      草稿保存于 {{lastSave | date:'medium'}}
+    </span>
+    <span><button mat-raised-button color="primary" (click)="confirmSubmit()">提交</button></span>
+  </mat-card>
+</ng-template>

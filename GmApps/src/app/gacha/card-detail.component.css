@@ -1,0 +1,7 @@
+.description {
+  white-space: pre-wrap;
+}
+.max-height {
+    max-height: 900px;
+    overflow: auto;
+}

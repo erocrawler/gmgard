@@ -1,0 +1,207 @@
+﻿@model HanEdit
+
+@{
+    ViewBag.Title = "汉化组管理";
+    string[] admins = Model.Admins.ToLower().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+    bool isadmin = User.IsInRole("Administrator") || admins.Contains(User.Identity.Name.ToLower());
+}
+
+<h2>汉化组管理</h2>
+
+<h3>汉化组ID：<span class="badge badge-inverse">@Model.ID</span></h3>
+<h3>汉化组识别码：@Model.Uri</h3>
+<form asp-action="Edit" asp-route-id="@Model.ID" data-ajax="true" method="post" data-ajax-success="formSuccess" enctype="multipart/form-data" id="editform">
+    <div class="alert alert-error hide"></div>
+    <h3>汉化组名称：<input asp-for="Title" /> </h3>
+    <h3>汉化组简介：</h3>
+
+    <textarea asp-for="Intro"></textarea>
+    <br />
+    <img id="logoimg" src="@(Model.Logo != null ? "//static.gmgard.com/" + Model.Logo : "//:0")" alt="@Model.Title" />
+    <input type="hidden" asp-for="Logo" />
+    <h3>上传汉化组logo：</h3>
+    <input type="file" id="logofile" /> <span id="imgerror" class="text-error"></span>
+    <input type="hidden" id="HanImage" name="HanImage" />
+    @if (isadmin){
+    <h3>汉化组代表</h3>
+    <div id="memberdiv">
+        @foreach (var admin in admins)
+        {
+            <span class="tm-tag tm-tag-inverse hanpresent" title="汉化组组长">@admin</span>
+        }
+        <br />
+        <input type="text" id="memberlist" value="" placeholder="输入用户名" class="span2" /> <span id="membererr" class="text-error hide">用户不存在！</span>
+    </div>
+    }
+    <style>
+        .hbcontainer.listview.image.three li {
+            width: 200px;
+        }
+    </style>
+    <h3>汉化组作品</h3>
+    <ul class="hbcontainer listview image fluid three" style="max-height:1000px;overflow:auto;padding:5px">
+        @foreach (var blog in Model.blogs)
+        {
+            await Html.RenderPartialAsync("_ListBriefPartial", blog);
+        }
+    </ul>
+    <div class="hbtags hide"></div>
+    <div class="input-prepend input-append" style="margin-bottom:4px">
+        <span class="add-on">gm</span>
+        <input type="text" id="hanbloglist" name="hanbloglist" value="" placeholder="输入资源gm号" class="span2" />
+        <input type="button" class="btn btn-primary" id="add-blog" value="添加" />
+    </div>
+    <span id="blogerr" class="text-error hide">资源ID不存在！</span>
+    <br />
+    <br />
+    <input type="submit" class="btn btn-primary" style="margin-bottom: 4px" value="提交" data-loading-text="提交中" id="submitbtn" /> <a href="@Url.Action("Index", new { name = Model.Uri })" class="btn">取消</a>
+</form>
+@section end_scripts {
+    <link href="/Content/tagmanager.css" rel="stylesheet" />
+    <script data-cfasync="true" async src="@JsConstant.CKEditor" onload="CKEDITOR.replace('Intro')"></script>
+    <script src="~/Scripts/tagmanager.min.js" cdn></script>
+    <script>
+        $(function () {
+            var nonexsist = {};
+            var members = {};
+            var mlist = '@Model.Members'.split(',');
+            var isvalid = true;
+            $.map(mlist, function (m) {
+                members[m] = true;
+            });
+            $('#memberlist').tagsManager({
+                prefilled: '@Model.Members',
+                validator: function (tag) {
+                    var ret;
+                    if (members[tag] === true) {
+                        $('#membererr').hide();
+                        return true;
+                    }
+                    else if (members[tag] === false) {
+                        $('#membererr').show();
+                        return false;
+                    }
+                    jQuery.ajax({
+                        url: '@Url.Action("CheckUsername", "Account")',
+                        data: {username:tag},
+                        success: function (result) {
+                            ret = result;
+                        },
+                        async: false,
+                        type: 'post'
+                    });
+                    if (ret == true) {
+                        $('#membererr').show();
+                        members[tag] = false;
+                    }
+                    else {
+                        $('#membererr').hide();
+                        members[tag] = true;
+                    }
+                    return ret != true;
+                },
+                hiddenTagListName: "Members"
+            });
+            $('#hanbloglist').tagsManager({
+                prefilled: '@Model.blogIDs',
+                hiddenTagListName: "blogIDs",
+                tagsContainer: ".hbtags",
+                deleteTagsOnBackspace: false,
+                pushedListener: function (event, tag, removeId) {
+                    var tagdiv = document.createElement('ul');
+                    $(tagdiv).load('@Url.Action("FetchBlog", "Blog")', { id: tag }, function (data, status, xhr) {
+                        if (data == "") {
+                            $('#blogerr').show();
+                            nonexsist[tag] = true;
+                        } else {
+                            $('#blogerr').hide();
+                            var child = $(tagdiv).children().click(function (e) {
+                                e.preventDefault();
+                                $('#' + removeId).trigger('click');
+                                $(this).remove();
+                            });
+                            $('.hbcontainer').append(child);
+                        }
+                    });
+                }
+            });
+            $('.hbcontainer li').click(function (e) {
+                e.preventDefault();
+                var id = this.getAttribute('data-id');
+                var tags = $('.hbtags .tm-tag');
+                for(var i = 0; i < tags.length; i++)
+                    if (tags.eq(i).children('span').text() === id) {
+                        tags.eq(i).children('a').trigger('click');
+                        break;
+                    }
+                $(this).remove();
+            });
+
+            $('#add-blog').click(function () {
+                $('#blogerr').hide();
+                $('#hanbloglist').tagsManager('pushTag', $('#hanbloglist').val());
+            });
+
+            $('#editform').submit(function (e) {
+                if (isvalid) {
+                    var tags = $('input[name="blogIDs"]').val();
+                    var taglist = tags.split(',');
+                    taglist = $.map(taglist, function (tag) {
+                        if (nonexsist[tag] != true) {
+                            return tag;
+                        }
+                    });
+                    $('input[name="blogIDs"]').val(taglist.join(','));
+                    $('#logofile').val('');
+                    $('#submitbtn').button('loading');
+                }
+                else
+                    e.preventDefault();
+            });
+            $('#logofile').change(function (evt) {
+                var file = evt.target.files[0];
+                if (!file.type.match("image.*")) {
+                    $('#imgerror').html("必须是图像！");
+                    isvalid=false;
+                }
+                else if (file.size > 4194304) {
+                    $('#imgerror').html("图像不得超过4MB");
+                    isvalid = false;
+                }
+                else {
+                    isvalid = true;
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#logoimg").attr("src", e.target.result);
+                        var data = e.target.result.split(',')[1];
+                        $('#HanImage').val(data);
+                    };
+                    reader.readAsDataURL(file);
+                    $('#imgerror').html("");
+                }
+            });
+            var tags = $('#memberdiv .tm-tag');
+            for (var i = 0; i < tags.length; i++)
+                if (tags.eq(i).children('span').text().toLowerCase() === '@User.Identity.Name.ToLower()') {
+                    tags.eq(i).addClass('tm-tag-inverse').tooltip({ title: "这是你自己！" }).children('a').remove();
+                    break;
+                }
+
+        });
+        $('.hanpresent').tooltip({ placement: 'top' });
+        $('#memberlist').tooltip({ placement: 'right', title:'按空格或回车添加' });
+        function formSuccess(result) {
+            if (result.success == true) {
+                window.location.href = '@Url.Action("Index", new { name = Model.Uri})';
+            }
+            else {
+                $e = $('.alert-error');
+                $e.html(result.err).show();
+                $('html, body').animate({
+                    scrollTop: ($e.offset().top - 200) + 'px'
+                }, 'fast');
+                $('#submitbtn').button('reset');
+            }
+        }
+    </script>
+}

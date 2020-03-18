@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/2b0c5947316095d0f7979d171743eadce33afb92/ckeditor/index.d.ts",
+    "raw": "registry:dt/ckeditor#0.0.0+20170119210922",
+    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/2b0c5947316095d0f7979d171743eadce33afb92/ckeditor/index.d.ts"
+  }
+}

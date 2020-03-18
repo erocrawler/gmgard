@@ -1,0 +1,48 @@
+﻿#categorytable input[type='text']
+{
+    width:200px;
+}
+#hantable input[type='text']
+{
+    width:150px;
+}
+#hantable textarea
+{
+    width:150px;
+    height:20px;
+}
+
+.accordion-group {
+    border-color: black
+}
+
+.manage-table
+{
+	background-color: #FFFFFF;
+	border-collapse: collapse;
+	border-color: #999999;
+	border-style: solid;
+	border-width: 1px;
+	width: 100%;
+	margin-left: 5px;
+	color: #333333;
+}
+	.manage-table tr:nth-child(4n+1),.manage-table tr:nth-child(4n)
+	{
+		background-color: #E0FFFF;
+	}
+.manage-ads {
+    word-break:break-all;
+}
+    .manage-ads img {
+        max-width:100px;
+        max-height:100px;
+    }
+    .manage-ads .img220 {
+        max-width:220px;
+        max-height:220px;
+    }
+    .manage-ads input[type='text'], .manage-ads input[type='number']
+    {
+        width:90%;
+    }

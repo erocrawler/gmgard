@@ -1,0 +1,40 @@
+﻿@model PagedList.IPagedList<UserReply>
+@inject BlogUtil blogUtil
+<div id="listdiv">
+<ul class="urul">
+    @if (Model == null || Model.Count == 0)
+    {
+        <li>此人木有评论。</li>
+    }
+    else{
+    foreach (UserReply ur in Model)
+    {
+    <li class="feed-item">
+        <a target="_blank" href="@blogUtil.GetReplyLink(ur)">
+            <div>
+                <div class="feed-header">
+                    <strong>
+                        @(ur.IsPost ? "评论投稿" : "回复评论")：@ur.ItemTitle
+                    </strong>
+                </div>
+                <div class="feed-body">
+                    <p style="word-break:break-all">&nbsp;&nbsp;&nbsp;&nbsp;@BlogHelper.getFirstLine(ur.Content, 100, true)</p>
+                </div>
+                <div class="feed-footer">
+                    <div class="posttime">
+                        &nbsp;评论于： @ur.ReplyDate &nbsp;&nbsp;
+                    </div>
+                </div>
+            </div>
+        </a>
+    </li>
+    }
+    }
+</ul>
+@if (Model != null && (Model.HasNextPage || Model.HasPreviousPage))
+{
+    ViewBag.PageActionName = "UserInfo";
+    ViewBag.PagerRouteValues = new { view = "UserReply", name = ViewBag.UserName };
+    @await Html.PartialAsync("_PagerPartial", Model)
+}
+</div>

@@ -1,0 +1,9 @@
+﻿:host {
+  width:100%
+}
+.chip-manager-list  {
+  width:100%
+}
+.chip-manager-list .mat-chip {
+  padding: 0px 12px 0px 12px;
+}

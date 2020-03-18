@@ -1,0 +1,72 @@
+﻿@inject ExpUtil expUtil
+@inject ConstantUtil constUtil
+@{
+    expUtil.HasSigned(out int hasSigned);
+}
+
+<div class="signdiv">
+    <form asp-area="App" asp-action="Do" asp-controller="PunchIn" id="punch-form" class="hide" asp-antiforgery="true"></form>
+    <div class="btn-group">
+        <a class="btn btn-danger" id="phistory" href="#punchin-modal" role="button" data-toggle="modal" title="签到日历"><i class="icon-calendar"></i></a>
+        @if (hasSigned > 0)
+        {
+            <a class="btn btn-danger disabled"><span id="checkw">连续签到@(hasSigned)天</span></a>
+        }
+        else
+        {
+            <button class="btn btn-danger" id="checkin" onclick="签到(this)"><i class="icon-calendar"></i>&nbsp;&nbsp;<span id="checkw">点此签到</span></button>
+        }
+    </div>
+</div>
+<div id="punchin-modal" class="modal hide fade" style="background:white" data-base-href="@constUtil.AppHost">
+    <div class="modal-footer">
+        <span>如果无法显示，请尝试<a href="@(constUtil.AppHost)/punch-in" target="_blank">在新窗口中打开</a></span>
+        <button class="btn" data-dismiss="modal">关闭</button>
+    </div>
+</div>
+<script>
+    var phist = $('#phistory');
+    $(function () {
+        $("#punchin-modal").one('show', function () {
+            var iframe = document.createElement('iframe'), $t = $(this);
+            $t.appendTo('body')
+            iframe.src = $t.data('base-href') + '/punch-in';
+            $t.prepend(iframe);
+        });
+        if ($('#checkin').length > 0) {
+            phist.remove();
+        }
+    });
+    $('#punch-form').submit(function (e) {
+        e.preventDefault();
+        var e = document.getElementById("checkin"),
+            w = document.getElementById("checkw");
+        $.post($(this).attr('action'), $(this).serialize(), function (resp) {
+            if (resp.success) {
+                w.textContent = "连续签到" + resp.consecutiveDays + "天";
+                $.globalMessenger().post("签到成功" + (resp.expBonus > 0 ? ("，绅士度+" + resp.expBonus + "，棒棒糖+" + resp.expBonus) : ""));
+                $(e).attr('class', 'btn btn-danger disabled');
+            }
+            $(e).html(w);
+            phist.insertBefore(e);
+            chuncai.chuncaiSay('好好撸管，天天签到！');
+        }).fail(function (f) {
+            if (f.responseJSON) {
+                if (f.responseJSON.consecutiveDays) {
+                    w.textContent = "连续签到" + resp.consecutiveDays + "天";
+                    $(e).attr('class', 'btn btn-danger disabled');
+                    $(e).html(w);
+                    phist.insertBefore(e);
+                } else if (f.responseJSON.errorMessage) {
+                    $.globalMessenger().post(f.responseJSON.errorMessage);
+                }
+            } else {
+                $.globalMessenger().post("签到失败，请重试");
+            }
+        });
+    });
+    function 签到(按) {
+        按.removeAttribute('onclick');
+        $('#punch-form').trigger('submit');
+    }
+</script>

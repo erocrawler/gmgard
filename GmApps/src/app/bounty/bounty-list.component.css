@@ -1,0 +1,10 @@
+﻿.mat-card + .mat-card {
+  border-radius: 0;
+}
+.mat-card:first-of-type {
+  border-radius: 2px 2px 0 0;
+  padding: 0;
+}
+.mat-card:last-of-type {
+  border-radius: 0 0 2px 2px;
+}

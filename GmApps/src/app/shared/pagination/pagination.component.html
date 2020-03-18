@@ -1,0 +1,23 @@
+﻿<div fxLayout="row" fxLayoutAlign="center"
+    role="navigation"
+    *ngIf="paged && paged.pageCount > 1">
+  <span>
+    <button mat-button [disabled]="!paged.hasPreviousPage" (click)="jump(1)">
+      第1页
+    </button>
+    <button mat-button [disabled]="!paged.hasPreviousPage" (click)="jump(paged.pageNumber - 1)">
+      上一页
+    </button>
+    <button mat-button [disabled]="!paged.hasNextPage" (click)="jump(paged.pageNumber + 1)">
+      下一页
+    </button>
+    <button mat-button [disabled]="!paged.hasNextPage" (click)="jump(paged.pageCount)">
+      第{{paged.pageCount}}页
+    </button>
+    第
+    <mat-form-field>
+      <input matInput #pageInput type="number" min="1" [max]="paged.pageCount" [value]="paged.pageNumber" (change)="jump(pageInput.value)" />
+    </mat-form-field>
+    页
+  </span>
+</div>

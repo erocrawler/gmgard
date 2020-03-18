@@ -1,0 +1,36 @@
+﻿@model IEnumerable<Tag>
+
+@if (Model != null && Model.Count() > 0 && User.Identity.IsAuthenticated)
+{
+    <div class="alert alert-info">
+        <i class="icon-tags"></i><strong>相关标签：</strong>
+        <span id="tag-list">
+            @foreach (Tag t in Model)
+            {
+                <a href="@Url.Action("Tags", "Search", new { id = t.TagID })" style="padding-left:5px">@t.TagName</a>
+            }
+        </span>
+    </div>
+}
+
+<script>
+    (function () {
+        var $tagList = $('#tag-list'), $tagLinks = $tagList.find('a');
+        if ($tagLinks.length > 20) {
+            $tagLinks.slice(0, 20).insertBefore($tagList);
+            var $close = $('<a class="btn" style="margin-left: 5px"><i class="icon-chevron-up"></i></a>'),
+                $open = $('<a class="btn" style="margin-left: 5px"><i class="icon-chevron-down"></i></a>').click(function (e) {
+                    e.preventDefault();
+                    $tagList.show();
+                    $open.hide();
+                    $close.show();
+                }).insertAfter($tagList.hide());
+            $close.click(function (e) {
+                e.preventDefault();
+                $tagList.hide();
+                $open.show();
+                $close.hide();
+            }).insertAfter($tagList).hide();
+        }
+    })()
+</script>

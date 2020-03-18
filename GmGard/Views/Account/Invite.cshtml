@@ -1,0 +1,107 @@
+﻿@model IEnumerable<UserCode>
+@{
+    ViewBag.Title = "邀请码";
+    UserProfile user = ViewBag.User;
+    bool Enabled = ViewBag.Enabled;
+    DateTime? coolDown = ViewBag.CoolDown;
+    bool isCoolDown = coolDown.HasValue && coolDown.Value > DateTime.Now;
+}
+
+<div style="margin-top:10px" class="alert alert-info">
+    <p>这里可以购买邀请码。文字码与棒棒糖码的功能相同，但由于转码问题棒棒糖码可能显示不全。</p>
+    <p>请只给你信任的人发送邀请码。邀请码的使用情况将被记录。公开发布或售卖邀请码将导致封号。</p>
+    <p><strong>注意：</strong>邀请码价格会随邀请码购买数量而增加。每次购买需间隔@(RegisterSettingsModel.CodeCoolDownDays)天。</p>
+</div>
+
+<table id="code-table" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>文字码</th>
+            <th>棒棒糖码</th>
+            <th>使用者</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var code in Model)
+        {
+            <tr class="code-row">
+                <td class="code">@code.Code</td>
+                <td class="tadpole"><input type="text" readonly class="span2" value="点击获取" style="cursor:pointer" /></td>
+                <td class="usedby">
+                    @if (code.UsedBy.HasValue)
+                    {
+                        <a asp-action="UserInfo" asp-controller="Home" asp-route-name="@code.UsedByUser.UserName">@code.UsedByUser.UserName</a>
+                        <text>(@code.UsedByUser.Email)</text>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (Enabled)
+{
+    <span style="padding: 5px;" class="label label-success"><i class="icon-white icon-ok-sign"></i>当前已开放验证码注册</span>
+}
+else
+{
+    <span style="padding: 5px;" class="label label-danger"><i class="icon-white icon-exclamation-sign"></i>当前暂未开放验证码注册</span>
+}
+<span class="label label-warning">持有棒棒糖： <i class="ico-lolly"></i> × <span id="user-points">@user.Points</span></span>
+<span class="label label-info">邀请码价格： <i class="ico-lolly"></i> × <span id="code-cost">@ViewBag.Cost</span></span>
+
+@if (isCoolDown)
+{
+    <a class="btn btn-primary disabled"><i class="icon-time icon-white"></i> @coolDown 后可购买</a>
+}
+else
+{
+    <a class="btn btn-primary" id="buycode" data-href="@Url.Action("BuyCode")"><i class="icon-shopping-cart icon-white"></i> 购买邀请码</a>
+}
+<span id="buymsg"></span>
+<br />
+<br />
+
+@section Scripts {
+    <style>
+        .tadpole input[readonly] {
+            cursor: auto;
+        }
+    </style>
+}
+@section end_scripts{
+    <script src="~/Scripts/lib/hashdown.min.js" cdn></script>
+    <script>
+        (function () {
+            $('.code-row').each(function () {
+                var raw = $(this).find('.code').text();
+                $(this).find('.tadpole input').one('click', function () { $(this).val($hashdown.encode(raw, { "codec": $hashdown.TADPOLE })).removeAttr('style'); this.select(); })
+            });
+            $('#code-table').on('mouseenter', '.code', function () { selectText(this); })
+                .on('mouseenter', '.tadpole input', function () { this.select() });
+            $('#buycode').click(function () {
+                var $t = $(this).prop('disabled', true);
+                $.post($t.data('href'), null, function (r) {
+                    if (r && r.success) {
+                        $('<tr class="code-row"><td class="code"></td><td class="tadpole"><input type="text" readonly="true" class="span2" /></td><td></td></tr>')
+                            .find('.code').append(r.code).end()
+                            .find('.tadpole input').val($hashdown.encode(r.code, { "codec": $hashdown.TADPOLE })).end()
+                            .appendTo($('#code-table tbody'));
+                        $('#buymsg').text('购买成功').attr('class', 'ratesuccess');
+                    } else if (r) {
+                        $('#buymsg').text(r.remain < parseInt($('#code-cost').text()) ? '棒棒糖不足' : '购买失败').attr('class', 'ratefail');
+                    }
+                    if (r) {
+                        $('#user-points').text(r.remain);
+                        $('#code-cost').text(r.newcost);
+                        if (r.cooldown) {
+                            $t.off('click');
+                            $t.replaceWith('<a class="btn btn-primary disabled"><i class="icon-time icon-white"></i>' + r.cooldown + ' 后可购买</a>');
+                        }
+                    }
+                }).always(function () {
+                    $t.prop('disabled', false);
+                });
+            });
+        })()
+    </script>
+}

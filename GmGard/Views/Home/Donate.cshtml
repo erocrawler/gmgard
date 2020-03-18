@@ -1,0 +1,66 @@
+﻿@inject BlogUtil blogUtil
+@{
+    ViewBag.Title = "关于捐助";
+}
+
+<hgroup class="title">
+    <h1>@ViewBag.Title.</h1>
+    <h2>@ViewBag.Message</h2>
+</hgroup>
+
+<div>
+    <br />
+    <p>
+        @if (User.Identity.IsAuthenticated)
+        {
+            @blogUtil.GetNickName(User.Identity.Name)
+        }
+        else
+        {<span>路过的绅士，</span>} 您好，
+    </p>
+    <p>绅士之庭是一个由ACG爱好者自主建立的，以给各位绅士提供一个各类ACG资源的分享平台为目的的非盈利性网站。</p>
+    <p>如果您喜欢我们的网站，您可以对我们的网站进行捐助。您捐助的资金将被用于帮助我们：</p>
+    <ul>
+        <li>支付高昂的服务器租赁费用</li>
+        <li>支付域名租赁费用</li>
+        <li>租赁储存容量更大、速度更快、稳定性更强的服务器</li>
+        <li>雇用人员对网站进行更好的建设与维护</li>
+        <li>实现ACG资源的自购、自扫、自传计划</li>
+    </ul>
+    <p>如果您能将您每周或每月盈余下的零钱捐助给我们，无论是10元、5元甚至是1元，对我们来说都会是莫大的帮助。</p>
+    <p>感谢各位绅士对我们的支持！</p>
+
+    <div>
+    <b>捐助方式：</b>
+    <br />
+        Paypal捐助：
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" title="Paypal" style="display:inline">
+<input type="hidden" name="cmd" value="_s-xclick">
+<input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
+">
+<input type="image" style="background: initial;color: initial;margin: 0;padding: 5px;border: initial;display:inline" src="https://www.paypalobjects.com/zh_XC/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal——最安全便捷的在线支付方式！">
+<img alt="" border="0" src="https://www.paypalobjects.com/zh_XC/i/scr/pixel.gif" width="1" height="1" />
+</form>
+        <br />
+        手机扫描支付宝二维码：<br />
+        <img src="//tfsimg.alipay.com/images/mobilecodec/T1GOBdXjxlXXXXXXXX" alt="绅士二维码" style="max-width:400px" />
+        <br />
+        或直接向支付宝账户转账：<span class="label" id="alipay"></span>
+    </div>
+</div>
+<br />
+<div class="alert alert-info">
+    <h3 style="color: #3a87ad">目前公开可能的情报：</h3>
+    <ul>
+        <li>软妹币捐款已经过两千元</li>
+        <li>捐款有效地缓解了服务器的开支压力,感谢各位绅士的慷慨解囊</li>
+        <li>服务器已升级，以应对服务器压力的增加，未来可能会根据情况再次升级服务器</li>
+        <li>捐款均由副站管理</li>
+    </ul>
+</div>
+
+@section end_scripts{
+<script>
+    $('#alipay').text(43185375 * 2 + '@@qq.com');
+</script>
+}
