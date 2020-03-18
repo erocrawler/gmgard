@@ -32,7 +32,7 @@ var wwwroot = "./wwwroot/",
     ],
     messengerJs: [
         wwwroot + 'bower_components/messenger/build/js/messenger.js',
-        wwwroot + 'bower_components/messenger/build/js/messenger.theme-future.js'
+        wwwroot + 'bower_components/messenger/build/js/messenger-theme-future.js'
     ],
     messengerCss: [
         wwwroot + 'bower_components/messenger/build/css/messenger.css',
@@ -60,57 +60,65 @@ paths.messengerCssDest = paths.webroot + "Content/messenger.min.css";
 
 paths.tagManager = paths.webroot + "Scripts/tagmanager.js";
 
-gulp.task("clean:js", function (cb) {
-    async.parallel([
-        (c) => { rimraf(paths.combineJsDest, c); },
-        (c) => { rimraf(paths.combineCanvasJsDest, c); },
-        (c) => { rimraf(paths.jqueryDest, c); },
-        (c) => { rimraf(paths.jqueryValDest, c); },
-        (c) => { rimraf(paths.datepickerDest, c); },
-        (c) => { rimraf(paths.messengerJsDest, c); }
-    ], cb);
-});
+function cleanJs(cb) {
+  async.parallel([
+    (c) => { rimraf(paths.combineJsDest, c); },
+    (c) => { rimraf(paths.combineCanvasJsDest, c); },
+    (c) => { rimraf(paths.jqueryDest, c); },
+    (c) => { rimraf(paths.jqueryValDest, c); },
+    (c) => { rimraf(paths.datepickerDest, c); },
+    (c) => { rimraf(paths.messengerJsDest, c); }
+  ], cb);
+}
 
-gulp.task("clean:css", function (cb) {
-    rimraf(paths.minCss, cb);
-});
+function cleanCss(cb) {
+  rimraf(paths.minCss, cb);
+}
 
-gulp.task("clean", ["clean:js", "clean:css"]);
+gulp.task("clean:js", cleanJs);
 
-gulp.task("min:js", function () {
-    var combineJs = gulp.src([paths.combineJs, "!" + paths.minJs, "!" + paths.tagManager], { base: "." })
-        .pipe(concat(paths.combineJsDest))
-        .pipe(uglify())
-        .pipe(gulp.dest("."));
-    var minTagJs = gulp.src([paths.tagManager], { base: "." })
-        .pipe(uglify())
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(gulp.dest("."));
-    var combineCanvasJs = gulp.src([paths.combineCanvasJs, "!" + paths.combineCanvasJsDest], { base: "." })
-        .pipe(concat(paths.combineCanvasJsDest))
-        .pipe(uglify())
-        .pipe(gulp.dest("."));
-    var jquery = gulp.src([paths.jquerysrc]).pipe(gulp.dest(paths.jsPath));
-    var jqueryVal = gulp.src(paths.jqueryvalidation).pipe(concat(paths.jqueryValDest)).pipe(gulp.dest('.'));
-    var datepicker = gulp.src(paths.datepicker).pipe(concat(paths.datepickerDest)).pipe(gulp.dest('.'));
-    var messenger = gulp.src(paths.messengerJs).pipe(concat(paths.messengerJsDest)).pipe(gulp.dest('.'));
-    return merge(combineJs, combineCanvasJs, minTagJs, jquery, jqueryVal, datepicker, messenger);
-});
+gulp.task("clean:css", cleanCss);
 
-gulp.task("min:css", function () {
-    return merge(
-      gulp.src([paths.css, "!" + paths.minCss])
-        .pipe(cssmin())
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(gulp.dest(paths.webroot + "Content/")),
-      gulp.src(paths.datepickerCss)
-        .pipe(concat(paths.datepickerCssDest))
-        .pipe(cssmin())
-        .pipe(gulp.dest('.')),
-      gulp.src(paths.messengerCss)
-        .pipe(concat(paths.messengerCssDest))
-        .pipe(cssmin())
-        .pipe(gulp.dest('.')));
-});
+gulp.task("clean", gulp.parallel(cleanJs, cleanCss));
 
-gulp.task("min", ["min:js", "min:css"]);
+function minJs() {
+  var combineJs = gulp.src([paths.combineJs, "!" + paths.minJs, "!" + paths.tagManager], { base: "." })
+    .pipe(concat(paths.combineJsDest))
+    .pipe(uglify())
+    .pipe(gulp.dest("."));
+  var minTagJs = gulp.src([paths.tagManager], { base: "." })
+    .pipe(uglify())
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(gulp.dest("."));
+  var combineCanvasJs = gulp.src([paths.combineCanvasJs, "!" + paths.combineCanvasJsDest], { base: "." })
+    .pipe(concat(paths.combineCanvasJsDest))
+    .pipe(uglify())
+    .pipe(gulp.dest("."));
+  var jquery = gulp.src([paths.jquerysrc]).pipe(gulp.dest(paths.jsPath));
+  var jqueryVal = gulp.src(paths.jqueryvalidation).pipe(concat(paths.jqueryValDest)).pipe(gulp.dest('.'));
+  var datepicker = gulp.src(paths.datepicker).pipe(concat(paths.datepickerDest)).pipe(gulp.dest('.'));
+  var messenger = gulp.src(paths.messengerJs).pipe(concat(paths.messengerJsDest)).pipe(uglify()).pipe(gulp.dest('.'));
+  return merge(combineJs, combineCanvasJs, minTagJs, jquery, jqueryVal, datepicker, messenger);
+}
+
+function minCss() {
+  return merge(
+    gulp.src([paths.css, "!" + paths.minCss])
+      .pipe(cssmin())
+      .pipe(rename({ suffix: '.min' }))
+      .pipe(gulp.dest(paths.webroot + "Content/")),
+    gulp.src(paths.datepickerCss)
+      .pipe(concat(paths.datepickerCssDest))
+      .pipe(cssmin())
+      .pipe(gulp.dest('.')),
+    gulp.src(paths.messengerCss)
+      .pipe(concat(paths.messengerCssDest))
+      .pipe(cssmin())
+      .pipe(gulp.dest('.')));
+}
+
+gulp.task("min:js", minJs);
+
+gulp.task("min:css", minCss);
+
+gulp.task("min", gulp.parallel(minJs, minCss));
