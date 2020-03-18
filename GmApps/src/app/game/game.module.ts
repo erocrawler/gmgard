@@ -4,7 +4,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { AppMaterialModule } from 'app/app-material.module';
 import { TreasureHuntComponent } from './treasure-hunt/treasure-hunt.component';
 import { PuzzleDetailComponent } from './treasure-hunt/puzzle-detail.component';
-import { MatDialogModule } from '@angular/material';
+import { MatDialogModule } from '@angular/material/dialog';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule } from '@angular/forms';
 import { HintDialogComponent } from './treasure-hunt/hint-dialog.component';

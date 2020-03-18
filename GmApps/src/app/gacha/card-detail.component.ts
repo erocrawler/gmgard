@@ -1,5 +1,6 @@
 import { Component, OnInit, Inject } from "@angular/core";
-import { MatDialog, MAT_DIALOG_DATA, MatSnackBar } from "@angular/material";
+import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
 import { GachaService } from "./gacha.service";
 import { GachaItemDetails } from "../models/GachaResult";
 

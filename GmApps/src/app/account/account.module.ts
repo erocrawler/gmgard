@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { TwoFactorAuthDataResolverService } from './two-factor-auth/two-factor-auth-data-resolver.service';
 import { RecoveryCodeComponent } from './two-factor-auth/recovery-code.component';
 import { Enable2faComponent } from './two-factor-auth/enable2fa.component';
-import { MatDialogModule } from '@angular/material';
+import { MatDialogModule } from '@angular/material/dialog';
 import { AlertModule } from '../shared/alert-dialog';
 
 const routes: Routes = [

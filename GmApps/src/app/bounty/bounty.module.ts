@@ -4,7 +4,7 @@ import { FlexLayoutModule } from "@angular/flex-layout";
 import { FormsModule } from "@angular/forms";
 
 import { CKEditorModule } from "ng2-ckeditor";
-import { Ng2PageScrollModule, PageScrollService } from "ng2-page-scroll";
+import { NgxPageScrollCoreModule, PageScrollService } from "ngx-page-scroll-core";
 import { CkeditorResolverService } from "./ckeditor-resolver.service";
 
 import { AppMaterialModule } from "../app-material.module";
@@ -30,7 +30,7 @@ import { AskComponent } from "./ask/ask.component";
         FlexLayoutModule,
         FormsModule,
         CKEditorModule,
-        Ng2PageScrollModule.forRoot(),
+        NgxPageScrollCoreModule.forRoot(),
     ],
     declarations: [
         BountyComponent,

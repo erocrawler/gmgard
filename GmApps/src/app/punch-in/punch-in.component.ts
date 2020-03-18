@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, Inject } from '@angular/core';
-import { MatCalendar, MatDialog, MatSnackBar } from '@angular/material';
+import { MatCalendar } from '@angular/material/datepicker';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { PunchInDetailComponent } from './punch-in-detail.component';
 import { PunchInService, PunchInHistory } from './punch-in.service';
 import { User } from 'app/models/User';

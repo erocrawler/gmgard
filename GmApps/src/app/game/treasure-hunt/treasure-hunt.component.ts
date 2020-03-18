@@ -4,7 +4,9 @@ import { TreasureHuntStatus, TreasureHuntPuzzle, TreasureHuntAttemptResult } fro
 import { Gallery } from './gallery';
 import { combineLatest, map, switchMap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatDialog, MatSnackBar, MatButtonToggleChange } from '@angular/material';
+import { MatButtonToggleChange } from '@angular/material/button-toggle';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { PuzzleDetailComponent, DetailArgs } from './puzzle-detail.component';
 import { Subject, interval } from 'rxjs';
 import { HintDialogComponent } from './hint-dialog.component';

@@ -3,9 +3,9 @@ import "rxjs/add/operator/share";
 
 import { Component, OnInit, Inject } from "@angular/core";
 import { Router, ActivatedRoute, Params } from "@angular/router";
-import { MatSnackBar } from "@angular/material";
-import { DOCUMENT } from "@angular/platform-browser";
-import { PageScrollService, PageScrollInstance } from "ng2-page-scroll";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { DOCUMENT } from "@angular/common";
+import { PageScrollService, PageScrollInstance } from "ngx-page-scroll-core";
 
 import { BountyService } from "./bounty.service";
 import { Paged } from "../models/Paged";
@@ -56,7 +56,7 @@ export class BountyListComponent implements OnInit {
                 if (success) {
                     this.navSource.pipe(first()).subscribe(() =>
                         this.pageScrollService.start(
-                            PageScrollInstance.newInstance({ document: this.document, scrollTarget: "#bounty-list", pageScrollDuration: 500 })));
+                          this.pageScrollService.create({ document: this.document, scrollTarget: "#bounty-list", duration: 500 })));
                 }
             });
     }

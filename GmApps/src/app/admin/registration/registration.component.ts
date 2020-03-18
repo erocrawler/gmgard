@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../admin.service';
 import { InvitationCodeResponse, GetInvitationCodeRequest } from '../../models/Invitations';
-import { MatSnackBar, MatDialog, MatDialogConfig } from '@angular/material';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { DeleteConfirmationComponent, ConfirmationArgs } from './delete-confirmation.component';
 
 @Component({

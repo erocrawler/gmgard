@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { GameService } from '../game.service';
 import { EternalCircleStatus, EternalCircleProgress } from 'app/models/EternalCircleStatus';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { AlertComponent, AlertArg } from 'app/shared/alert-dialog';
 import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';

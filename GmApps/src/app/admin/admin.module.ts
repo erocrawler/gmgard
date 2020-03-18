@@ -6,7 +6,7 @@ import { RegistrationComponent } from './registration/registration.component';
 import { AppMaterialModule } from '../app-material.module';
 import { FormsModule } from '@angular/forms';
 import { DeleteConfirmationComponent } from './registration/delete-confirmation.component';
-import { MatDialogModule } from '@angular/material';
+import { MatDialogModule } from '@angular/material/dialog';
 import { FlexLayoutModule } from '@angular/flex-layout';
 
 const routes: Routes = [

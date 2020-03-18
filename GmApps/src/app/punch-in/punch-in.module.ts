@@ -3,10 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Routes, RouterModule } from '@angular/router';
 import { FlexLayoutModule } from "@angular/flex-layout";
 import { PunchInComponent } from './punch-in.component';
-import {
-  MatDatepickerModule, MatProgressBarModule, MatCardModule, MatDialogModule,
-  MatSnackBarModule, DateAdapter, MatButtonModule, MatProgressSpinnerModule
-} from '@angular/material';
+import { MatProgressBarModule } from "@angular/material/progress-bar";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatButtonModule } from "@angular/material/button";
+import { MatCardModule } from "@angular/material/card";
+import { MatDialogModule } from "@angular/material/dialog";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { MatDatepickerModule } from "@angular/material/datepicker";
+import { DateAdapter } from "@angular/material/core";
 import { MatMomentDateModule, MomentDateAdapter } from '@angular/material-moment-adapter';
 import { PunchInDetailComponent } from './punch-in-detail.component';
 import { PunchInService } from './punch-in.service';

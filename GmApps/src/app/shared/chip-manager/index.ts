@@ -1,7 +1,9 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { MatChipsModule, MatIconModule, MatInputModule, MatButtonModule } from "@angular/material";
-import { FlexLayoutModule } from "@angular/flex-layout";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatIconModule } from "@angular/material/icon";
+import { MatInputModule } from "@angular/material/input";
+import { MatButtonModule } from "@angular/material/button";
 import { ChipManagerComponent } from "./chip-manager.component";
 
 @NgModule({

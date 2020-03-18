@@ -1,6 +1,6 @@
 import { Inject, Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { MatSnackBar } from "@angular/material";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { AuthService, LoginResult } from "app/auth/auth.service";

@@ -5,7 +5,7 @@ import { Observable, of } from "rxjs";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
 import { Component, OnInit, OnChanges, Input } from "@angular/core";
-import { MatSnackBar } from "@angular/material";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { DLsite } from "../models/DLsite";
 import { DlsiteSearchService } from "./dlsite-search.service";

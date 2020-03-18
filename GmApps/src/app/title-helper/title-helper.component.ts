@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from "@angular/core";
 import { Router, ActivatedRoute, Params } from "@angular/router";
-import { MatButtonToggleChange } from "@angular/material";
+import { MatButtonToggleChange } from "@angular/material/button-toggle";
 
 import { Category } from "./category";
 import { CategoryService } from "./category.service";

@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { TwoFactorAuthenticationModel } from '../../models/TwoFactorAuth';
-import { MatDialog, MatSnackBar } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AlertComponent, AlertArg } from '../../shared/alert-dialog';
 import { RecoveryCodeComponent } from './recovery-code.component';
 

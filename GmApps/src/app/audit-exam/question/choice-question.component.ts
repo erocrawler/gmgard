@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChildren, QueryList } from "@angular/core";
-import { MatCheckbox } from "@angular/material";
+import { MatCheckbox } from "@angular/material/checkbox";
 
 import { Question } from "../exam";
 import { QuestionSubmission } from "../../models/ExamSubmission";

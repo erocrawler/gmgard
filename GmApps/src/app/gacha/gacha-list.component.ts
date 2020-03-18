@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { CardDetailComponent } from "./card-detail.component";
 import { GachaService } from "./gacha.service";
 import { GachaStats, GachaItemDetails } from "app/models/GachaResult";

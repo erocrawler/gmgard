@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from "@angular/core";
 import { GachaService } from "./gacha.service";
 import { Router, ActivatedRoute } from "@angular/router";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { GachaResult, GachaItem } from "../models/GachaResult";
 import { IGachaAnimation } from "./gacha-animation";
 import { CardDetailComponent } from "./card-detail.component";

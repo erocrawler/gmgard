@@ -4,7 +4,7 @@ import {
     ActivatedRouteSnapshot
 } from "@angular/router";
 
-import { DOCUMENT } from "@angular/platform-browser";
+import { DOCUMENT } from "@angular/common";
 
 import { ENVIRONMENT } from "../../environments/environment_token";
 

@@ -5,7 +5,7 @@ import "rxjs/add/operator/switchMap";
 import { Observable, Subject, of } from "rxjs";
 import { Subscription } from "rxjs/Subscription";
 import { Component, OnInit, OnChanges, Input } from "@angular/core";
-import { MatSnackBar } from "@angular/material";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { BlogPreview } from "../models/Blog";
 import { BlogSearchService } from "./blog-search.service";
