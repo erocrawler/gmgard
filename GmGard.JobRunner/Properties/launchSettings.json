@@ -2,7 +2,7 @@
   "profiles": {
     "GmGard.JobRunner": {
       "commandName": "Project",
-      "commandLineArgs": "Server=(localdb)\\\\mssqllocaldb;AttachDbFilename=|DataDirectory|\\\\MyMVCWebUser.mdf;Trusted_Connection=True;MultipleActiveResultSets=true Server=(localdb)\\\\mssqllocaldb;AttachDbFilename=|DataDirectory|\\\\MyMVCWebData.mdf;Trusted_Connection=True;MultipleActiveResultSets=true"
+      "commandLineArgs": "Server=(localdb)\\\\mssqllocaldb;AttachDbFilename=|DataDirectory|\\\\MyMVCWebUser.mdf;Trusted_Connection=True;MultipleActiveResultSets=true Server=(localdb)\\\\mssqllocaldb;AttachDbFilename=|DataDirectory|\\\\MyMVCWebData.mdf;Trusted_Connection=True;MultipleActiveResultSets=true Development"
     }
   }
 }

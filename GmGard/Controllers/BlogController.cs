@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
-using PagedList;
+using X.PagedList;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

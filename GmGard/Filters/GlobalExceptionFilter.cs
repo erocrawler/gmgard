@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,9 +17,9 @@ namespace GmGard.Filters
     {
         private readonly ILogger _logger;
         private readonly IModelMetadataProvider _modelMetadataProvider;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
-        public GlobalExceptionFilter(ILoggerFactory logger, IHostingEnvironment env, IModelMetadataProvider modelMetadataProvider)
+        public GlobalExceptionFilter(ILoggerFactory logger, IWebHostEnvironment env, IModelMetadataProvider modelMetadataProvider)
         {
             _logger = logger.CreateLogger("Global Exception Filter");
             _modelMetadataProvider = modelMetadataProvider;

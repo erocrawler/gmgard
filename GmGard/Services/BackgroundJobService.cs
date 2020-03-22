@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.IO.Pipes;
+using Microsoft.Extensions.Hosting;
 
 namespace GmGard.Services
 {
@@ -20,11 +21,12 @@ namespace GmGard.Services
         private bool _connected = false;
         private NamedPipeClientStream _client;
         private StreamWriter _streamWriter;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private string PipeName => _env.IsStaging() ? "GmJobRunnerStaging" : "GmJobRunner";
 
-        public BackgroundJobService(IHostingEnvironment env, ILoggerFactory loggerFactory, string blogConnectionString, string userConnectionString)
+        public BackgroundJobService(IWebHostEnvironment env, ILoggerFactory loggerFactory, string blogConnectionString, string userConnectionString)
         {
+            _logger = loggerFactory.CreateLogger<BackgroundJobService>();
             _env = env;
             Process p = new Process();
             p.StartInfo.Arguments = $"\"{blogConnectionString}\" \"{userConnectionString}\" \"{env.EnvironmentName}\"";
@@ -32,13 +34,16 @@ namespace GmGard.Services
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.WorkingDirectory = env.ContentRootPath;
             p.StartInfo.UseShellExecute = false;
-            var curPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            var curPath = env.ContentRootPath;
+            if (env.IsDevelopment())
+            {
+                curPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            }
             p.StartInfo.FileName = Path.Combine(curPath, "GmGard.JobRunner.exe");
             p.EnableRaisingEvents = true;
             p.Exited += ProgramExited;
             p.Start();
             _backgroundService = p;
-            _logger = loggerFactory.CreateLogger<BackgroundJobService>();
             _logger.LogInformation("Creating pipe {0}", PipeName);
             _client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
         }

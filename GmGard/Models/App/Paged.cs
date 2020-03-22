@@ -7,7 +7,7 @@ namespace GmGard.Models.App
 {
     public class Paged<T>
     {
-        public Paged(PagedList.IPagedList<T> pagedList)
+        public Paged(X.PagedList.IPagedList<T> pagedList)
         {
             Items = pagedList;
             PageCount = pagedList.PageCount;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AspNet.Identity.EntityFramework6
+namespace AspNetCore.Identity.EntityFramework6
 {
     public class IdentityUserToken : IdentityUserToken<int>
     {

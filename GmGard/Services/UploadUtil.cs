@@ -1,5 +1,4 @@
-﻿using ImageProcessor;
-using ImageProcessor.Imaging.Formats;
+﻿using SixLabors.ImageSharp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using System;
@@ -7,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp.Processing;
 
 namespace GmGard.Services
 {
@@ -52,23 +52,19 @@ namespace GmGard.Services
                     imgname = GenerateImageName(filename);
                     using (var stream = file.OpenReadStream())
                     {
-                        using (var img = new ImageFactory())
+                        using var img = Image.Load(stream);
+                        img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
+                        var ms = new MemoryStream();
+                        img.SaveAsJpeg(ms);
+                        tasks.Add(_client.PutObjectAsync(imgname, ms).ContinueWith(t => { ms.Dispose(); return t.Result; }));
+                        imglist.Add("//" + _client.BucketName + "/" + imgname);
+                        if (tmplist.Count == 0 && savethumb)
                         {
-                            img.Load(stream);
-                            img.Format(new JpegFormat { Quality = 70 });
-                            _imageUtil.GetThumb(img, 1200);
-                            var ms = new MemoryStream();
-                            img.Save(ms);
-                            tasks.Add(_client.PutObjectAsync(imgname, ms).ContinueWith(t => { ms.Dispose(); return t.Result; }));
-                            imglist.Add("//" + _client.BucketName + "/" + imgname);
-                            if (tmplist.Count == 0 && savethumb)
-                            {
-                                _imageUtil.GetThumb(img, 100);
-                                var nms = new MemoryStream();
-                                img.Save(nms);
-                                tasks.Add(_client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), nms)
-                                    .ContinueWith(t => { nms.Dispose(); return t.Result; }));
-                            }
+                            img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
+                            var nms = new MemoryStream();
+                            img.SaveAsJpeg(nms);
+                            tasks.Add(_client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), nms)
+                                .ContinueWith(t => { nms.Dispose(); return t.Result; }));
                         }
                     }
                     tmplist.Add(imgname);
@@ -103,13 +99,12 @@ namespace GmGard.Services
 
         public async Task<bool> saveImageAsync(byte[] image, string imgname)
         {
-            using (var img = new ImageFactory())
+            using (var img = Image.Load(image))
             {
-                img.Load(image);
-                _imageUtil.GetThumb(img, 1200);
+                img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
                 using (var ms = new MemoryStream())
                 {
-                    _imageUtil.SaveJpeg(ms, img);
+                    img.SaveAsJpeg(ms);
                     return await _client.PutObjectAsync(imgname, ms);
                 }
             }
@@ -152,13 +147,12 @@ namespace GmGard.Services
                 var response = await _client.GetObjectAsync(imgname);
                 if (response != null)
                 {
-                    using (var img = new ImageFactory())
+                    using (var img = Image.Load(response))
                     {
-                        img.Load(response);
-                        _imageUtil.GetThumb(img, 100);
+                        img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
                         using (var nms = new MemoryStream())
                         {
-                            _imageUtil.SaveJpeg(nms, img);
+                            img.SaveAsJpeg(nms);
                             await _client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), nms);
                         }
                     }

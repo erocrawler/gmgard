@@ -11,5 +11,5 @@
     <li>和谐条目数：@Model.harmonyblogcount</li>
 </ul>
 <div id="adminlog">
-    @await Html.PartialAsync("Log", ViewBag.AdminLogs as PagedList.IPagedList<AdminLog>)
+    @await Html.PartialAsync("Log", ViewBag.AdminLogs as X.PagedList.IPagedList<AdminLog>)
 </div>

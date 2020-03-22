@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
-using AspNet.Identity.EntityFramework6;
+using AspNetCore.Identity.EntityFramework6;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Caching.Memory;
@@ -30,7 +30,7 @@ namespace GmGard.Controllers
             UsersContext udb,
             UserManager<UserProfile> userManager,
             SignInManager<UserProfile> signInManager,
-            RoleManager<AspNet.Identity.EntityFramework6.IdentityRole> roleManager,
+            RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> roleManager,
             IMemoryCache cache,
             ExpUtil expUtil,
             ImageUtil imgUtil,
@@ -54,7 +54,7 @@ namespace GmGard.Controllers
 
         private readonly UserManager<UserProfile> _userManager;
         private readonly SignInManager<UserProfile> _signInManager;
-        private readonly RoleManager<AspNet.Identity.EntityFramework6.IdentityRole> _roleManager;
+        private readonly RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> _roleManager;
         private readonly IMemoryCache _cache;
         private RegisterSettingsModel _registerSettings;
         private BlogContext _bdb;

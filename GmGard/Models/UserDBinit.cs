@@ -1,4 +1,4 @@
-﻿using AspNet.Identity.EntityFramework6;
+﻿using AspNetCore.Identity.EntityFramework6;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -19,14 +19,12 @@ namespace GmGard.Models
 
         protected override void Seed(UsersContext context)
         {
-            //WebSecurity.InitializeDatabaseConnection("MyMvcWebUser", "UserProfile", "UserId", "UserName", autoCreateTables: true);
-
             InitRoles(context);
             if (!context.Users.Any(u => u.UserName == "admin"))
             {
                 var admin = new UserProfile {
                     UserName = "admin",
-                    Email = "yiduo208@gmail.com",
+                    Email = "admin@gmgard.com",
                     Points = 100,
                     LastLoginDate = DateTime.Now,
                     Level = 99,
@@ -60,7 +58,7 @@ namespace GmGard.Models
             {
                 if (!roles.Any(r => r.Name.Equals(role, StringComparison.OrdinalIgnoreCase)))
                 {
-                    store.CreateAsync(new AspNet.Identity.EntityFramework6.IdentityRole { Name = role, NormalizedName = role.ToUpper() }).Wait();
+                    store.CreateAsync(new AspNetCore.Identity.EntityFramework6.IdentityRole { Name = role, NormalizedName = role.ToUpper() }).Wait();
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿@model PagedList.IPagedList<Message>
+﻿@model X.PagedList.IPagedList<Message>
 @inject BlogUtil blogUtil
 @{
     var nicknames = blogUtil.GetNickNames(Model.Select(m => m.Sender));

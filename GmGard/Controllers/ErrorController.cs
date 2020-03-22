@@ -12,7 +12,7 @@ namespace GmGard.Controllers
     {
         public IActionResult Index(int id = 404, string prev = "")
         {
-            var env = HttpContext.RequestServices.GetService<IHostingEnvironment>();
+            var env = HttpContext.RequestServices.GetService<IWebHostEnvironment>();
             var exceptionHandler = HttpContext.Features.Get<IExceptionHandlerFeature>();
             if (exceptionHandler != null)
             {

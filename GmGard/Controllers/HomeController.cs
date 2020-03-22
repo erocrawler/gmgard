@@ -36,7 +36,7 @@ namespace GmGard.Controllers
         private UploadUtil _uploadUtil;
         private RatingUtil _ratingUtil;
         private CacheService _cacheService;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private ISearchProvider _searchProvider;
 
         public HomeController(
@@ -55,7 +55,7 @@ namespace GmGard.Controllers
             RatingUtil ratingUtil,
             CacheService cacheService,
             IMemoryCache cache,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             ISearchProvider searchProvider)
         {
             _db = db;
@@ -133,12 +133,12 @@ namespace GmGard.Controllers
             }
 
             int itemCount = -1, pageCount = -1, pageNumber = 1;
-            ConcurrentDictionary<string, PagedList.IPagedList<BlogDisplay>> cache = null;
+            ConcurrentDictionary<string, X.PagedList.IPagedList<BlogDisplay>> cache = null;
             if (cachable)
             {
                 var firstPageKey = CacheService.GetHomePageListKey(1, isHarmony, hideHarmony, categoryIds);
-                cache = _cache.Get<ConcurrentDictionary<string, PagedList.IPagedList<BlogDisplay>>>(CacheService.HomePageCacheKey)
-                    ?? new ConcurrentDictionary<string, PagedList.IPagedList<BlogDisplay>>();
+                cache = _cache.Get<ConcurrentDictionary<string, X.PagedList.IPagedList<BlogDisplay>>>(CacheService.HomePageCacheKey)
+                    ?? new ConcurrentDictionary<string, X.PagedList.IPagedList<BlogDisplay>>();
                 if (cache.Count > 0 && cache.ContainsKey(firstPageKey))
                 {
                     itemCount = cache[firstPageKey].TotalItemCount;
@@ -156,7 +156,7 @@ namespace GmGard.Controllers
             }
 
             var cachekey = CacheService.GetHomePageListKey(pageNumber, isHarmony, hideHarmony, categoryIds);
-            PagedList.IPagedList<BlogDisplay> model;
+            X.PagedList.IPagedList<BlogDisplay> model;
             if (cache == null || !cache.TryGetValue(cachekey, out model))
             {
                 if (cache != null)
@@ -242,7 +242,7 @@ namespace GmGard.Controllers
                 name = User.Identity.Name;
             }
             SearchBlogResult result = null;
-            PagedList.IPagedList model;
+            X.PagedList.IPagedList model;
             switch (view)
             {
                 case "UserReply":
@@ -306,7 +306,7 @@ namespace GmGard.Controllers
             return result;
         }
 
-        private async Task<PagedList.IPagedList<UserReply>> UserReplyAsync(string name, int page = 1)
+        private async Task<X.PagedList.IPagedList<UserReply>> UserReplyAsync(string name, int page = 1)
         {
             IQueryable<Post> PostQuery = _db.Posts.Where(p => p.Author == name && p.ItemId > 0);
             IQueryable<Reply> ReplyQuery = _db.Replies.Include(r => r.post).Where(r => r.Author == name && r.post.ItemId > 0);
@@ -338,7 +338,7 @@ namespace GmGard.Controllers
             return await query.ToPagedListAsync(page, pagesize);
         }
 
-        private async Task<PagedList.IPagedList<Blog>> UnApproveAsync(string name, int page = 1)
+        private async Task<X.PagedList.IPagedList<Blog>> UnApproveAsync(string name, int page = 1)
         {
             int pagesize = userpagesize;
             if (string.IsNullOrWhiteSpace(name))

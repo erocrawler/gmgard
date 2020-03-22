@@ -3,8 +3,8 @@
   <PropertyGroup>
     <Description>Implementation if EntityFramework6 support for Asp.Net Core Identity 1.0 RC2</Description>
     <Authors>Gena Hrapan;Duo</Authors>
-    <TargetFramework>net461</TargetFramework>
-    <AssemblyName>AspNet.Identity.EntityFramework6</AssemblyName>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>AspNetCore.Identity.EntityFramework6</AssemblyName>
     <PackageId>AspNet.Identity.EntityFramework6</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
@@ -13,14 +13,12 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
     <Configurations>Debug;Release;Staging</Configurations>
+    <RootNamespace>AspNetCore.Identity.EntityFramework6</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
-    <PackageReference Include="EntityFramework" Version="6.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="2.2.0" />
-    <Reference Include="System.Data" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.2" />
   </ItemGroup>
 
 </Project>

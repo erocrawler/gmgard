@@ -16,7 +16,7 @@ namespace GmGard.Services
 {
     public class SchedulerService : Registry
     {
-        public SchedulerService(IServiceScopeFactory scopeFactory, IHostingEnvironment env, IMemoryCache cache, IOptions<AppSettingsModel> appsetting, ILoggerFactory logger)
+        public SchedulerService(IServiceScopeFactory scopeFactory, IWebHostEnvironment env, IMemoryCache cache, IOptions<AppSettingsModel> appsetting, ILoggerFactory logger)
         {
             _scopeFactory = scopeFactory;
             _env = env;
@@ -48,7 +48,7 @@ namespace GmGard.Services
         private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private AppSettingsModel _appSettings;
 
         private int UpdateInterval => _appSettings.UpdateInterval;

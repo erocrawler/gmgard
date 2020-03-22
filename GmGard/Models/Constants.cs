@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using System;
 
 namespace GmGard.Models
@@ -27,7 +28,7 @@ namespace GmGard.Models
         private IHttpContextAccessor _contextAccessor;
         private bool isDev;
 
-        public ConstantUtil(IHttpContextAccessor contextAccessor, IHostingEnvironment env)
+        public ConstantUtil(IHttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
             _contextAccessor = contextAccessor;
             isDev = env.IsDevelopment();

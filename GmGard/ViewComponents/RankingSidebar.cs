@@ -54,7 +54,7 @@ namespace GmGard.ViewComponents
                     Rating = h.HistoryRanking.Rating,
                     RankType = h.HistoryRanking.RankType,
                     PostCount = h.HistoryRanking.PostCount
-                });
+                }).ToList();
             });
             var ids = latestRanking.Select(c => c.BlogID);
             _visitCounter.PrepareBlogVisits(ids);

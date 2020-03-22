@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using GmGard.Models;
-using AspNet.Identity.EntityFramework6;
+using AspNetCore.Identity.EntityFramework6;
 using GmGard.Filters;
 using GmGard.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,14 +21,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.WebEncoders;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore;
 using System;
+using Microsoft.Extensions.Hosting;
 
 namespace GmGard
 {
@@ -54,7 +50,7 @@ namespace GmGard
                 }
             })
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddJsonOptions(options =>
+                .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
                 })
@@ -84,7 +80,7 @@ namespace GmGard
             services.AddScoped(p => new BlogContext(_dataDbConnectionString, p.GetRequiredService<ILoggerFactory>()));
             services.AddScoped(p => new UsersContext(_userDbConnectionString, p.GetRequiredService<ILoggerFactory>()));
 
-            services.AddIdentity<UserProfile, AspNet.Identity.EntityFramework6.IdentityRole>(options =>
+            services.AddIdentity<UserProfile, AspNetCore.Identity.EntityFramework6.IdentityRole>(options =>
             {
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
@@ -143,7 +139,7 @@ namespace GmGard
                 {
                     var scheduler = new SchedulerService(
                         provider.GetRequiredService<IServiceScopeFactory>(),
-                        provider.GetRequiredService<IHostingEnvironment>(),
+                        provider.GetRequiredService<IWebHostEnvironment>(),
                         provider.GetRequiredService<IMemoryCache>(),
                         provider.GetRequiredService<IOptions<AppSettingsModel>>(),
                         provider.GetRequiredService<ILoggerFactory>());
@@ -152,7 +148,7 @@ namespace GmGard
                 });
             }
             services.AddSingleton(p => new BackgroundJobService(
-                p.GetRequiredService<IHostingEnvironment>(),
+                p.GetRequiredService<IWebHostEnvironment>(),
                 p.GetRequiredService<ILoggerFactory>(),
                 _dataDbConnectionString,
                 _userDbConnectionString));
@@ -215,7 +211,7 @@ namespace GmGard
             });
 
             services.AddLogging(builder => {
-                if (builder.Services.BuildServiceProvider().GetService<IHostingEnvironment>().IsDevelopment())
+                if (IsDev)
                 {
                     builder.AddConsole();
                     builder.AddDebug();
@@ -226,7 +222,7 @@ namespace GmGard
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, QuestService questService, BackgroundJobService backgroundJobService, IServiceProvider services)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, QuestService questService, BackgroundJobService backgroundJobService, IServiceProvider services)
         {
             backgroundJobService.Connect();
             if (env.IsProduction())
@@ -341,7 +337,7 @@ namespace GmGard
                     template: "{controller=Home}/{action=Index}/{id?}");
         }
 
-        public Startup(IHostingEnvironment env)
+        public Startup(IWebHostEnvironment env)
         {
             _basePath = env.ContentRootPath;
             _env = env;
@@ -368,7 +364,7 @@ namespace GmGard
         private readonly string _basePath;
         private readonly string _userDbConnectionString;
         private readonly string _dataDbConnectionString;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private bool IsDev => _env.IsDevelopment();
 
         public IConfigurationRoot Configuration { get; set; }

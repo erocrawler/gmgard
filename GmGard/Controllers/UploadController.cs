@@ -11,9 +11,9 @@ namespace GmGard.Controllers
     public class UploadController : Controller
     {
         private const string UploadFolder = @"Images\upload\";
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
 
-        public UploadController(IHostingEnvironment env)
+        public UploadController(IWebHostEnvironment env)
         {
             _env = env;
         }

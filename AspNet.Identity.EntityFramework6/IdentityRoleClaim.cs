@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AspNet.Identity.EntityFramework6
+namespace AspNetCore.Identity.EntityFramework6
 {
     /// <summary>
     /// Represents a claim that is granted to all users within a role.

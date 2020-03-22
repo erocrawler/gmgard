@@ -1,25 +1,19 @@
 ﻿using GmGard.Models;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.PlatformAbstractions;
-using ImageProcessor;
-using ImageProcessor.Imaging;
-using ImageProcessor.Imaging.Formats;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
+using SixLabors.ImageSharp;
 using Microsoft.AspNetCore.Hosting;
+using SixLabors.ImageSharp.Processing;
 
 namespace GmGard.Services
 {
     public class ImageUtil : UtilityService
     {
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
 
-        public ImageUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IHostingEnvironment env) : base(db, udb, cache)
+        public ImageUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IWebHostEnvironment env) : base(db, udb, cache)
         {
             _env = env;
         }
@@ -27,7 +21,7 @@ namespace GmGard.Services
         public bool AddPic(string name, string type, MemoryStream data)
         {
             Pictures p = new Pictures();
-            p.PicName = SaveAvatar(name, type, data, Path.Combine(_env.WebRootPath, "Images/Avatar/"));
+            p.PicName = SaveAvatar(name, data, Path.Combine(_env.WebRootPath, "Images/Avatar/"));
             p.PicType = type;
             p.PicUserName = name;
             p.PicDate = DateTime.Now;
@@ -51,12 +45,11 @@ namespace GmGard.Services
             return _udb.Avatars.Any(pp => pp.PicName == name);
         }
 
-        public string SaveAvatar(string name, string type, MemoryStream data, string path)
+        public string SaveAvatar(string name, MemoryStream data, string path)
         {
-            using (ImageFactory img = new ImageFactory())
+            using (var img = Image.Load(data, out var format))
             {
-                img.Load(data);
-                name += "." + img.CurrentImageFormat.DefaultExtension;
+                name += "." + format.FileExtensions.First();
                 img.Save(path + name);
             }
             return name;
@@ -73,19 +66,18 @@ namespace GmGard.Services
             p.PicType = type;
             using (MemoryStream ms = new MemoryStream(data))
             {
-                p.PicName = SaveAvatar(name, type, ms, Path.Combine(_env.WebRootPath, "Images/Avatar/"));
+                p.PicName = SaveAvatar(name, ms, Path.Combine(_env.WebRootPath, "Images/Avatar/"));
             }
             p.PicDate = DateTime.Now;
             _udb.SaveChanges();
             return true;
         }
-
-        public ImageFactory GetThumb(ImageFactory img, int max)
+        public static SixLabors.Primitives.Size GetMaxSize(Image img, int max)
         {
-            int w = img.Image.Width;
-            int h = img.Image.Height;
+            int w = img.Width;
+            int h = img.Height;
             if (w <= max && h <= max)
-                return img;
+                return new SixLabors.Primitives.Size(w, h);
             double ratio = 1;
             if (h > w)
             {
@@ -93,7 +85,7 @@ namespace GmGard.Services
             }
             else
                 ratio = (double)max / w;
-            return img.Resize(new Size((int)(w * ratio), (int)(h * ratio)));
+            return new SixLabors.Primitives.Size((int)(w * ratio), (int)(h * ratio));
         }
 
         public byte[] Crop(byte[] Img, int Width, int Height, int X, int Y)
@@ -118,25 +110,22 @@ namespace GmGard.Services
                 Width = 500 - X;
             if (Y + Height >= 500)
                 Height = 500 - Y;
-            using (var img = new ImageFactory())
+            using (var img = Image.Load(stream, out var format))
             {
-                img.Load(stream);
-                if (img.Image.Height > 500 || img.Image.Width > 500)
+                img.Mutate(ctx =>
                 {
-                    GetThumb(img, 500);
-                }
-                img.Crop(new CropLayer(X, Y, Width, Height, CropMode.Pixels));
+                    if (img.Height > 500 || img.Width > 500)
+                    {
+                        ctx.Resize(GetMaxSize(img, 500));
+                    }
+                    ctx.Crop(new SixLabors.Primitives.Rectangle(X, Y, Width, Height));
+                });
                 using (var outStream = new MemoryStream())
                 {
-                    img.Save(outStream);
+                    img.Save(outStream, format);
                     return outStream.ToArray();
                 }
             }
-        }
-
-        public void SaveJpeg(Stream s, ImageFactory source)
-        {
-            source.Format(new JpegFormat { Quality = 70 }).Save(s);
         }
     }
 }

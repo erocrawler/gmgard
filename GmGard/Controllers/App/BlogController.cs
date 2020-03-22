@@ -168,7 +168,7 @@ namespace GmGard.Controllers.App
             return detailQuery;
         }
 
-        private Paged<BlogDetails> ToPaged(PagedList.IPagedList<BlogDetailDisplay> blogs)
+        private Paged<BlogDetails> ToPaged(X.PagedList.IPagedList<BlogDetailDisplay> blogs)
         {
             var names = blogs.Select(b => b.blog.Author).Distinct();
             var authors = udb_.Users.Where(u => names.Contains(u.UserName)).ToDictionary(u => u.UserName);
@@ -202,7 +202,7 @@ namespace GmGard.Controllers.App
                 })
                 .ToDictionary(p => p.Key, p => p.Posts);
             var userRatings = ratingUtil_.GetUsersRatingValues(ids);
-            var items = new PagedList.StaticPagedList<BlogDetails>(blogs.Select(bd =>
+            var items = new X.PagedList.StaticPagedList<BlogDetails>(blogs.Select(bd =>
             {
                 blogUtil_.ProcessBlogDetails(bd);
                 return GetBlogDetails(bd, 
@@ -445,7 +445,7 @@ namespace GmGard.Controllers.App
                             Option = b.option
                         });
             }
-            return Json(ToPaged(new PagedList.StaticPagedList<BlogDetailDisplay>(
+            return Json(ToPaged(new X.PagedList.StaticPagedList<BlogDetailDisplay>(
                 (await details.ToListAsync()).OrderBy(b => blogids.IndexOf(b.blog.BlogID)),
                 blogs.Blogs.GetMetaData())));
         }

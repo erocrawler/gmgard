@@ -4,7 +4,7 @@ using LinqKit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
-using PagedList;
+using X.PagedList;
 using System;
 using System.Collections;
 using System.Collections.Generic;

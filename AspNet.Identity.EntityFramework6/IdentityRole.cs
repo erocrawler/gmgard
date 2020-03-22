@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AspNet.Identity.EntityFramework6
+namespace AspNetCore.Identity.EntityFramework6
 {
     /// <summary>
     /// The default implementation of <see cref="IdentityRole{TKey}"/> which uses a string as the primary key.

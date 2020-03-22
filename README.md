@@ -15,7 +15,7 @@
 
 * 运行平台
 
-网站目前运行于Windows IIS（需要.Net Framework 4.6+)，以及Sql Server 2012+。网站使用ASP.NET CORE编写。Dotnet Core使网站在Linux平台运行成为可能。未来可以考虑进一步迁移至Linux。
+网站目前运行于Windows IIS（需要.Net Core 3.1+)，以及Sql Server 2012+。网站使用ASP.NET CORE编写。Dotnet Core使网站在Linux平台运行成为可能。未来可以考虑进一步迁移至Linux。
 
 ### How do I get set up? ###
 

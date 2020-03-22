@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors;
 using System.IO;
 using Microsoft.AspNetCore.Http;
+using SixLabors.Shapes;
 
 namespace GmGard.Controllers
 {
@@ -31,37 +33,38 @@ namespace GmGard.Controllers
 
             //image stream
             FileContentResult img = null;
-
             using (var mem = new MemoryStream())
-            using (var bmp = new Bitmap(130, 30))
-            using (var gfx = Graphics.FromImage(bmp))
+            using (var image = new Image<Rgba32>(130, 30))
             {
-                gfx.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-                gfx.SmoothingMode = SmoothingMode.AntiAlias;
-                gfx.FillRectangle(Brushes.White, new Rectangle(0, 0, bmp.Width, bmp.Height));
-                
-                //add noise
-                int i, r, x, y;
-                var pen = new Pen(Color.Yellow);
-                for (i = 1; i < 10; i++)
-                {
-                    pen.Color = Color.FromArgb(
-                    (rand.Next(0, 255)),
-                    (rand.Next(0, 255)),
-                    (rand.Next(0, 255)));
+                image.Mutate(ctx => {
+                    ctx.Fill(Color.White);
+                    int i, r, x, y;
+                    float t;
+                    for (i = 1; i < 20; i++)
+                    {
+                        var color = Color.FromRgba(
+                        (byte)rand.Next(0, 255),
+                        (byte)rand.Next(0, 255),
+                        (byte)rand.Next(0, 255),
+                        127);
 
-                    r = rand.Next(0, (130 / 3));
-                    x = rand.Next(0, 130);
-                    y = rand.Next(0, 30);
+                        r = rand.Next(1, (130 / 3));
+                        x = rand.Next(0, 130);
+                        y = rand.Next(0, 30);
+                        t = (float)(rand.NextDouble() + 0.1) * 2;
 
-                    gfx.DrawEllipse(pen, x - r, y - r, r, r);
-                }
+                        var shape = new EllipsePolygon(x, y, r);
+                        ctx.Draw(color, t, shape);
+                    }
 
-                //add question
-                gfx.DrawString(captcha, new Font("Tahoma", 15), Brushes.Gray, 2, 3);
+                    //add question
+                    var font = SixLabors.Fonts.SystemFonts.CreateFont("Tahoma", 20);
+                    ctx.DrawText(captcha, font, Color.Gray, new SixLabors.Primitives.PointF(rand.Next(4, 35), rand.Next(5, 8)));
+                });
+
 
                 //render as Jpeg
-                bmp.Save(mem, System.Drawing.Imaging.ImageFormat.Jpeg);
+                image.SaveAsJpeg(mem);
                 img = File(mem.GetBuffer(), "image/Jpeg");
             }
 

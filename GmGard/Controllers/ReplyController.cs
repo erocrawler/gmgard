@@ -31,7 +31,7 @@ namespace GmGard.Controllers
         private ExpUtil _expUtil;
         private MessageUtil _msgUtil;
         private RatingUtil _ratingUtil;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private AppSettingsModel _appSettings;
         private ICompositeViewEngine _viewEngine;
         private IActionContextAccessor _actionAccessor;
@@ -46,7 +46,7 @@ namespace GmGard.Controllers
             ExpUtil expUtil,
             MessageUtil msgUtil,
             RatingUtil ratingUtil,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             IMemoryCache cache,
             ICompositeViewEngine viewEngine,
             IActionContextAccessor actionAccessor,

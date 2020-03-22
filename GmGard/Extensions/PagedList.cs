@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System;
 using System.Linq;
-using PagedList;
+using X.PagedList;
 
 namespace GmGard.Extensions
 {

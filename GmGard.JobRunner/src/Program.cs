@@ -20,12 +20,12 @@ namespace GmGard.JobRunner
                 .WriteTo.RollingFile(@"Log\job-{Date}.log")
                 .MinimumLevel.ControlledBy(loglevel)
                 .CreateLogger();
-            if (args.Length < 2)
+            if (args.Length < 3)
             {
                 Log.Fatal("Invalid usage. args must provide connection string to db.");
                 return;
             }
-            if (args.Length > 2 && args[2] == "Production")
+            if (args[2] == "Production")
             {
                 loglevel.MinimumLevel = Serilog.Events.LogEventLevel.Error;
             }

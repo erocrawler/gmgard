@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data.Entity;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace GmGard.Services
 {
@@ -86,7 +87,7 @@ namespace GmGard.Services
         public static ElasticClient CreateClient(IServiceProvider serviceProvider)
         {
             var settings = serviceProvider.GetService<IOptions<ElasticSearchSettings>>();
-            var env = serviceProvider.GetRequiredService<IHostingEnvironment>();
+            var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
             ElasticClient elasticClient = null;
             if (!string.IsNullOrEmpty(settings.Value.EndPoint))
             {
@@ -316,7 +317,7 @@ namespace GmGard.Services
             }, _httpContext.RequestAborted);
             if (result.IsValid)
             {
-                searchBlogResult.Blogs = new PagedList.StaticPagedList<Blog>(result.Documents.Select(d => d.ToBlog()), pageNumber, pageSize, (int)result.Total);
+                searchBlogResult.Blogs = new X.PagedList.StaticPagedList<Blog>(result.Documents.Select(d => d.ToBlog()), pageNumber, pageSize, (int)result.Total);
                 if (result.Aggregations.ContainsKey("distinct_tags"))
                 {
                     var tags = result.Aggregations.Terms("distinct_tags").Buckets.Select(b => b.Key);
@@ -354,7 +355,7 @@ namespace GmGard.Services
             else
             {
                 _logger.LogError(result.DebugInformation);
-                searchBlogResult.Blogs = new PagedList.PagedList<Blog>(Enumerable.Empty<Blog>(), pageNumber, pageSize);
+                searchBlogResult.Blogs = new X.PagedList.PagedList<Blog>(Enumerable.Empty<Blog>(), pageNumber, pageSize);
             }
             return searchBlogResult;
         }

@@ -9,12 +9,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.Infrastructure.Annotations;
 using System.Data.Entity.Validation;
 
-namespace AspNet.Identity.EntityFramework6
+namespace AspNetCore.Identity.EntityFramework6
 {
     /// <summary>
     /// Base class for the Entity Framework database context used for identity.
     /// </summary>
-    public class IdentityDbContext : IdentityDbContext<IdentityUser> {
+    public class IdentityDbContext : IdentityDbContext<IdentityUser>
+    {
         /// <summary>
         /// Initializes a new instance of the <see cref="IdentityDbContext" /> class using the connection string for the database to which a connection will be made.
         /// </summary>
@@ -270,7 +271,7 @@ namespace AspNet.Identity.EntityFramework6
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
             // Needed to ensure subclasses share the same table
             var user = modelBuilder.Entity<TUser>()
                 .ToTable("AspNetUsers");
@@ -326,25 +327,25 @@ namespace AspNet.Identity.EntityFramework6
                 //check for uniqueness of user name and email
                 if (user != null)
                 {
-                    if (Users.Any(u => String.Equals(u.UserName, user.UserName)))
+                    if (Users.Any(u => string.Equals(u.UserName, user.UserName)))
                     {
                         errors.Add(new DbValidationError("User",
-                            String.Format(CultureInfo.CurrentCulture, "DuplicateUserName", user.UserName)));
+                            string.Format(CultureInfo.CurrentCulture, "DuplicateUserName", user.UserName)));
                     }
-                    if (RequireUniqueEmail && Users.Any(u => String.Equals(u.Email, user.Email)))
+                    if (RequireUniqueEmail && Users.Any(u => string.Equals(u.Email, user.Email)))
                     {
                         errors.Add(new DbValidationError("User",
-                            String.Format(CultureInfo.CurrentCulture, "DuplicateEmail", user.Email)));
+                            string.Format(CultureInfo.CurrentCulture, "DuplicateEmail", user.Email)));
                     }
                 }
                 else
                 {
                     var role = entityEntry.Entity as TRole;
                     //check for uniqueness of role name
-                    if (role != null && Roles.Any(r => String.Equals(r.Name, role.Name)))
+                    if (role != null && Roles.Any(r => string.Equals(r.Name, role.Name)))
                     {
                         errors.Add(new DbValidationError("Role",
-                            String.Format(CultureInfo.CurrentCulture, "RoleAlreadyExists", role.Name)));
+                            string.Format(CultureInfo.CurrentCulture, "RoleAlreadyExists", role.Name)));
                     }
                 }
                 if (errors.Any())

@@ -50,6 +50,6 @@ namespace GmGard.Models
     {
         public HanGroup hangroup { get; set; }
         public List<BlogLink> grouplist { get; set; }
-        public PagedList.IPagedList<Blog> blogs { get; set; }
+        public X.PagedList.IPagedList<Blog> blogs { get; set; }
     }
 }

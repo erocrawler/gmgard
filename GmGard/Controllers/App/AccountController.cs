@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using GmGard.Models;
-using AspNet.Identity.EntityFramework6;
+using AspNetCore.Identity.EntityFramework6;
 using GmGard.Filters;
 using Microsoft.AspNetCore.Antiforgery;
 using GmGard.Services;
@@ -24,7 +24,7 @@ namespace GmGard.Controllers.App
     {
         private readonly UserManager<UserProfile> _userManager;
         private readonly SignInManager<UserProfile> _signInManager;
-        private readonly RoleManager<AspNet.Identity.EntityFramework6.IdentityRole> _roleManager;
+        private readonly RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> _roleManager;
         private readonly IAntiforgery _antiforgery;
         private readonly INickNameProvider _nickNameProvider;
         private readonly UrlEncoder _urlEncoder;
@@ -32,7 +32,7 @@ namespace GmGard.Controllers.App
         public AccountController(
             UserManager<UserProfile> userManager,
             SignInManager<UserProfile> signInManager,
-            RoleManager<AspNet.Identity.EntityFramework6.IdentityRole> roleManager,
+            RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> roleManager,
             INickNameProvider nickNameProvider,
             IAntiforgery antiforgery,
             UrlEncoder urlEncoder)

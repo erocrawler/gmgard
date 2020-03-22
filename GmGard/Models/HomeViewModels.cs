@@ -93,7 +93,7 @@ namespace GmGard.Models
         public int UserFollows { get; set; }
         public SearchBlogResult SearchResult { get; set; }
         public string UserView { get; set; }
-        public PagedList.IPagedList SubModel { get; set; }
+        public X.PagedList.IPagedList SubModel { get; set; }
         public IList<string> UserRoles { get; set; }
         public UserQuest.UserProfession UserTitle { get; set; }
         public string UserBackground { get; set; }

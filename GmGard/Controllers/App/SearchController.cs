@@ -46,7 +46,7 @@ namespace GmGard.Controllers.App
                 model.Harmony = true;
             }
             var blogs = await searchProvider_.SearchBlogAsync(model, page, limit);
-            var items = new PagedList.StaticPagedList<BlogPreview>(blogs.Blogs.Select(b => 
+            var items = new X.PagedList.StaticPagedList<BlogPreview>(blogs.Blogs.Select(b => 
                 new BlogPreview {
                     Brief = blogUtil_.GetFirstLine(b, true).ToString(),
                     Id = b.BlogID,

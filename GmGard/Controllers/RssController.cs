@@ -9,9 +9,9 @@ namespace GmGard.Controllers
     [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any)]
     public class RssController : Controller
     {
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
 
-        public RssController(IHostingEnvironment env)
+        public RssController(IWebHostEnvironment env)
         {
             _env = env;
         }

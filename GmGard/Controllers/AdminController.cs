@@ -35,7 +35,7 @@ namespace GmGard.Controllers
         private DataSettingsModel _dataSettings;
         private UserManager<UserProfile> _userManager;
         private IMemoryCache _cache;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private IServiceProvider _serviceProvider;
 
         public AdminController(
@@ -51,7 +51,7 @@ namespace GmGard.Controllers
             MessageUtil msgUtil,
             UserManager<UserProfile> userManager,
             IMemoryCache cache,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             IServiceProvider serviceProvider)
         {
             _db = db;
@@ -133,7 +133,7 @@ namespace GmGard.Controllers
             return result.Succeeded;
         }
 
-        private PagedList.IPagedList<AdminLog> GetLog(int pagenum)
+        private X.PagedList.IPagedList<AdminLog> GetLog(int pagenum)
         {
             var query = _udb.AdminLogs.OrderByDescending(l => l.LogTime);
             return query.ToPagedList(pagenum, 40);

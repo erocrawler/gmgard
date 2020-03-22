@@ -35,7 +35,7 @@ namespace GmGard.ViewComponents
                 posts = posts.Where(p => p.Author == name);
                 ViewBag.relplyusername = name;
             }
-            PagedList.IPagedList<Post> model;
+            X.PagedList.IPagedList<Post> model;
             if (idtype == ItemType.Blog)
             {
                 var query = posts.GroupJoin(_db.BlogRatings, p => p.PostId, r => r.PostId, (p, r) => new { post = p, ratings = r })
@@ -49,7 +49,7 @@ namespace GmGard.ViewComponents
                     query = query.OrderByDescending(p => p.post.PostDate);
                 }
                 var paged = query.ToPagedList(pagenum, ReplyPageSize);
-                model = new PagedList.StaticPagedList<Post>(paged.Select(a => a.post), paged.GetMetaData());
+                model = new X.PagedList.StaticPagedList<Post>(paged.Select(a => a.post), paged.GetMetaData());
                 IDictionary<int, BlogRating> ratings = query.Where(q => q.blograting != null).ToDictionary(q => q.post.PostId, q => q.blograting);
                 ViewBag.ratings = ratings;
             }

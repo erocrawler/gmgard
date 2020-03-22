@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
-using AspNet.Identity.EntityFramework6;
+using AspNetCore.Identity.EntityFramework6;
 using System.Data.Entity.Infrastructure.Annotations;
 
 namespace GmGard.Models

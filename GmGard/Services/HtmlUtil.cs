@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using GmGard.Models;
+using Microsoft.Extensions.Hosting;
 
 namespace GmGard.Services
 {
@@ -20,12 +21,12 @@ namespace GmGard.Services
         private const string ProxyUrl = "https://gmgard.com/Proxy/";
         private const string DevProxyUrl = "https://localhost:44316/Proxy/";
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly HttpContext _httpContext;
         private readonly IHtmlHelper _htmlHelper;
         private readonly AppSettingsModel _appSettings;
 
-        public HtmlUtil(IHttpContextAccessor httpContextAccessor, IHtmlHelper htmlHelper, IHostingEnvironment env, IOptions<AppSettingsModel> settings)
+        public HtmlUtil(IHttpContextAccessor httpContextAccessor, IHtmlHelper htmlHelper, IWebHostEnvironment env, IOptions<AppSettingsModel> settings)
         {
             _httpContext = httpContextAccessor.HttpContext;
             _htmlHelper = htmlHelper;
