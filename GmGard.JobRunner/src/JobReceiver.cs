@@ -29,6 +29,7 @@ namespace GmGard.JobRunner
 
         public void Start()
         {
+            
             IFormatter formatter = new BinaryFormatter();
             Log.Information("starting NamedPipeServerStream: {0}", PipeName);
             using (var server = new NamedPipeServerStream(PipeName, PipeDirection.In))

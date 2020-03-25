@@ -25,8 +25,6 @@
 
   <ItemGroup>
     <Content Remove="appsettings.override.json" />
-    <Content Remove="GmGard.JobRunner.runtimeconfig.dev.json" />
-    <Content Remove="GmGard.JobRunner.runtimeconfig.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,7 +38,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AspNet.Identity.EntityFramework6\AspNetCore.Identity.EntityFramework6.csproj" />
-    <ProjectReference Include="..\GmGard.JobRunner\GmGard.JobRunner.csproj" />
     <ProjectReference Include="..\GmGard.Models\GmGard.Models.csproj" />
   </ItemGroup>
 
@@ -177,14 +174,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Advertisement\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="GmGard.JobRunner.runtimeconfig.dev.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="GmGard.JobRunner.runtimeconfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptTarget>ES6</TypeScriptTarget>

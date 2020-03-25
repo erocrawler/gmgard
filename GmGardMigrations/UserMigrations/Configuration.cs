@@ -1,12 +1,8 @@
+using GmGardMigrations;
+using System.Data.Entity.Migrations;
+
 namespace MyMVCWeb.UserMigrations
 {
-    using GmGardMigrations;
-    using System;
-    using System.Configuration;
-    using System.Data.Entity.Infrastructure;
-    using System.Data.Entity.Migrations;
-    using System.IO;
-
     internal sealed class Configuration : DbMigrationsConfiguration<UsersContext>
     {
         public Configuration()

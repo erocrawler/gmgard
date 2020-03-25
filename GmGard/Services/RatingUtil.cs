@@ -82,19 +82,20 @@ namespace GmGard.Services
             return rating;
         }
 
-        public void PrepareRatings(IEnumerable<int> blogs)
+        public static void PrepareRatings(IMemoryCache cache, BlogContext db, IEnumerable<int> blogs)
         {
             var ids = new HashSet<int>(blogs);
             var result = new Dictionary<int, int>(ids.Count());
-            var ratingCache = _cache.Get<ConcurrentDictionary<int, BlogRatingDisplay>>("Rating~") ?? new ConcurrentDictionary<int, BlogRatingDisplay>();
+            var ratingCache = cache.Get<ConcurrentDictionary<int, BlogRatingDisplay>>("Rating~") ?? new ConcurrentDictionary<int, BlogRatingDisplay>();
             var uncached = ids.Where(i => !ratingCache.ContainsKey(i));
             if (uncached.Count() > 0)
             {
-                var rates = _db.BlogRatings.Where(r => uncached.Contains(r.BlogID))
+                var rates = db.BlogRatings.Where(r => uncached.Contains(r.BlogID))
                     .Select(r => new { r.BlogID, r.value })
                     .GroupBy(r => r.BlogID)
                     .ToList()
-                    .Select(r => new BlogRatingDisplay {
+                    .Select(r => new BlogRatingDisplay
+                    {
                         BlogId = r.Key,
                         CountByRating = r.GroupBy(br => br.value).ToDictionary(v => v.Key, v => v.Count())
                     })
@@ -109,7 +110,13 @@ namespace GmGard.Services
                     ratingCache.TryAdd(id, br);
                 }
             }
-            _cache.Set("Rating~", ratingCache, new MemoryCacheEntryOptions { Priority = CacheItemPriority.High });
+            cache.Set("Rating~", ratingCache, new MemoryCacheEntryOptions { Priority = CacheItemPriority.High });
+
+        }
+
+        public void PrepareRatings(IEnumerable<int> blogs)
+        {
+            PrepareRatings(_cache, _db, blogs);
         }
 
         public UsersRating GetUsersRating(int blogid)

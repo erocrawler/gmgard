@@ -4,17 +4,17 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
-using static GmGard.JobRunner.SendNoticeArgs;
+using static GmGard.Services.SendNoticeArgs;
 
 namespace GmGard.Services
 {
     public class MessageUtil : UtilityService
     {
-        BackgroundJobService _jobService;
+        BackgroundTaskQueue _taskQueue;
 
-        public MessageUtil(BlogContext db, UsersContext udb, IMemoryCache cache, BackgroundJobService jobService) : base(db, udb, cache)
+        public MessageUtil(BlogContext db, UsersContext udb, IMemoryCache cache, BackgroundTaskQueue taskQueue) : base(db, udb, cache)
         {
-            _jobService = jobService;
+            _taskQueue = taskQueue;
         }
 
         public void AddMsg(string author, string recipient, string title, string content, bool senderdel = false)
@@ -45,7 +45,7 @@ namespace GmGard.Services
             {
                 return;
             }
-            _jobService.RunJob(JobRunner.Job.CreateJob(new JobRunner.SendNoticeArgs { Actor = actor, Content = content, NoticeUser = noticeuser, Type = type, Url = url }));
+            _taskQueue.QueueBackgroundWorkItem(Job.CreateJob(new SendNoticeArgs { Actor = actor, Content = content, NoticeUser = noticeuser, Type = type, Url = url }));
             _cache.Remove("unreadmsg" + noticeuser.ToLower());
         }
 

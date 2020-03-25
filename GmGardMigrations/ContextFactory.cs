@@ -14,7 +14,7 @@ namespace GmGardMigrations
     {
         public static string GetLocalDB(string connectionString)
         {
-            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../GmGard/App_Data");
+            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../GmGard/App_Data");
             return connectionString.Replace("|DataDirectory|", dbPath);
         }
     }
@@ -23,7 +23,7 @@ namespace GmGardMigrations
     {
         public UsersContext Create()
         {
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../App.config");
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../App.config");
             var config = ConfigurationManager.OpenMappedMachineConfiguration(new ConfigurationFileMap(configPath));
             var user = config.ConnectionStrings.ConnectionStrings["GmGardUser"].ConnectionString;
             return new UsersContext(ContextHelper.GetLocalDB(user));
@@ -41,7 +41,7 @@ namespace GmGardMigrations
     {
         public BlogContext Create()
         {
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../App.config");
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../App.config");
             var config = ConfigurationManager.OpenMappedMachineConfiguration(new ConfigurationFileMap(configPath));
             var conn = config.ConnectionStrings.ConnectionStrings["GmGardData"].ConnectionString;
             return new BlogContext(ContextHelper.GetLocalDB(conn));

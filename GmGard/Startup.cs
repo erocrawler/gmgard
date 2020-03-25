@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using Microsoft.Extensions.Hosting;
+using Serilog.Filters;
 
 namespace GmGard
 {
@@ -147,11 +148,9 @@ namespace GmGard
                     return scheduler;
                 });
             }
-            services.AddSingleton(p => new BackgroundJobService(
-                p.GetRequiredService<IWebHostEnvironment>(),
-                p.GetRequiredService<ILoggerFactory>(),
-                _dataDbConnectionString,
-                _userDbConnectionString));
+            services.AddScoped<JobTaskRunner>();
+            services.AddSingleton<BackgroundTaskQueue>();
+            services.AddHostedService<BackgroundJobService>();
             services.AddSingleton<QuestService>();
             services.AddSingleton<IVisitCounter>(s => 
             {
@@ -164,6 +163,7 @@ namespace GmGard
             });
             services.AddSingleton<CacheService>();
             services.AddSingleton(_ => HtmlSanitizerService.CreateInstance());
+            services.AddScoped<ContextlessBlogUtil>();
             services.AddScoped<BlogUtil>();
             services.AddScoped<AdminUtil>();
             services.AddScoped<CategoryUtil>();
@@ -178,7 +178,8 @@ namespace GmGard
             services.AddScoped<UploadUtil>();
             services.AddScoped<WidgetUtil>();
             services.AddScoped<IRecommendationProvider, ElasticSearchProvider>();
-            if (Configuration.GetSection("ApplicationSettings").GetValue<string>("SearchBackendType") == "ElasticSearch")
+            bool enabelES = Configuration.GetSection("ApplicationSettings").GetValue<string>("SearchBackendType") == "ElasticSearch";
+            if (enabelES)
             {
                 services.AddScoped<ISearchProvider, ElasticSearchProvider>();
             }
@@ -192,7 +193,7 @@ namespace GmGard
             services.AddTransient<INickNameProvider, TitleNickNameProvider>();
 
             services.AddSingleton(ElasticSearchProvider.CreateClient);
-            if (!Configuration.GetSection("ElasticSearchSettings").GetValue<bool>("Readonly"))
+            if (enabelES && !Configuration.GetSection("ElasticSearchSettings").GetValue<bool>("Readonly"))
             {
                 services.AddSingleton<ElasticSearchUpdateService>();
             }
@@ -219,12 +220,13 @@ namespace GmGard
                 }
                 builder.AddSerilog();
             });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, QuestService questService, BackgroundJobService backgroundJobService, IServiceProvider services)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, QuestService questService, IServiceProvider services)
         {
-            backgroundJobService.Connect();
+            services.GetService<ElasticSearchUpdateService>();
             if (env.IsProduction())
             {
                 services.GetRequiredService<SchedulerService>();
@@ -352,6 +354,8 @@ namespace GmGard
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Is(env.IsProduction() ? Serilog.Events.LogEventLevel.Error : Serilog.Events.LogEventLevel.Debug)
                 .WriteTo.RollingFile(Path.Combine(_basePath, "Log/log-{Date}.txt"))
+                .WriteTo.Logger(lc => lc.Filter.ByIncludingOnly(le => Matching.FromSource<BackgroundJobService>()(le) || Matching.FromSource<JobTaskRunner>()(le) || Matching.FromSource<ElasticSearchUpdateService>()(le))
+                    .WriteTo.RollingFile(Path.Combine(_basePath, "Log/job-{Date}.txt")))
                 .CreateLogger();
             if (!env.IsProduction())
             {

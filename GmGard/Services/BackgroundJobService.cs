@@ -1,110 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using Microsoft.AspNetCore.Hosting;
-using System.IO;
 using Microsoft.Extensions.Logging;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.IO.Pipes;
 using Microsoft.Extensions.Hosting;
+using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GmGard.Services
 {
-    public class BackgroundJobService : IDisposable
+    public class BackgroundJobService : BackgroundService
     {
-        private Process _backgroundService;
         private ILogger _logger;
-        private bool _disposed = false;
-        private bool _connected = false;
-        private NamedPipeClientStream _client;
-        private StreamWriter _streamWriter;
-        private IWebHostEnvironment _env;
-        private string PipeName => _env.IsStaging() ? "GmJobRunnerStaging" : "GmJobRunner";
+        private BackgroundTaskQueue _queue;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public BackgroundJobService(IWebHostEnvironment env, ILoggerFactory loggerFactory, string blogConnectionString, string userConnectionString)
+        public BackgroundJobService(BackgroundTaskQueue taskQueue, ILoggerFactory loggerFactory, IServiceScopeFactory scopeFactory)
         {
             _logger = loggerFactory.CreateLogger<BackgroundJobService>();
-            _env = env;
-            Process p = new Process();
-            p.StartInfo.Arguments = $"\"{blogConnectionString}\" \"{userConnectionString}\" \"{env.EnvironmentName}\"";
-            p.StartInfo.RedirectStandardInput = true;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.WorkingDirectory = env.ContentRootPath;
-            p.StartInfo.UseShellExecute = false;
-            var curPath = env.ContentRootPath;
-            if (env.IsDevelopment())
-            {
-                curPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            }
-            p.StartInfo.FileName = Path.Combine(curPath, "GmGard.JobRunner.exe");
-            p.EnableRaisingEvents = true;
-            p.Exited += ProgramExited;
-            p.Start();
-            _backgroundService = p;
-            _logger.LogInformation("Creating pipe {0}", PipeName);
-            _client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+            _queue = taskQueue;
+            _scopeFactory = scopeFactory;
         }
 
-        public void Connect()
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _client.Connect(6000);
-            _connected = true;
-            _logger.LogInformation("Pipe Connected");
-            _streamWriter = new StreamWriter(_client);
+            _logger.LogInformation("Starting BackgroundJobService");
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var workItem =
+                    await _queue.DequeueAsync(stoppingToken);
+
+                try
+                {
+                    await RunJobAsync(workItem);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Error occurred executing {WorkItem}.", nameof(workItem));
+                }
+            }
+            _logger.LogInformation("Stopping BackgroundJobService");
         }
 
-        private void ProgramExited(object sender, EventArgs e)
+        private async Task RunJobAsync(Job job)
         {
-            if (!_disposed)
+            using (var scope = _scopeFactory.CreateScope())
             {
-                _logger.LogError("Background Job Runner exited unexpectedly. Attempting to restart...");
-                _backgroundService.Start();
-                _client.Dispose();
-                _client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
-                _client.Connect();
-                _streamWriter = new StreamWriter(_client);
-            }
-        }
-
-        public void Dispose()
-        {
-            _disposed = true;
-            if (_connected)
-            {
-                _streamWriter.Dispose();
-            }
-            if (!_backgroundService.HasExited)
-            {
-                _backgroundService.Kill();
-            }
-        }
-
-        public void RunJob(JobRunner.Job job)
-        {
-            if (!_connected)
-            {
-                throw new InvalidOperationException("Pipe not connected.");
-            }
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("sending job to background: {0}", job.ToString());
-            }
-            IFormatter formatter = new BinaryFormatter();
-
-            try
-            {
-                var input = TextWriter.Synchronized(_streamWriter);
-                var memstream = new MemoryStream();
-                formatter.Serialize(memstream, job);
-                input.WriteLine(Convert.ToBase64String(memstream.GetBuffer()));
-                input.Flush();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error sending job: {0}", job.ToString());
+                var runner = scope.ServiceProvider.GetRequiredService<JobTaskRunner>();
+                await runner.RunJob(job);
             }
         }
     }

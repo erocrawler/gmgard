@@ -16,13 +16,15 @@ namespace GmGard.Services
     {
         private readonly ElasticClient _client;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger _logger;
+        private readonly BackgroundTaskQueue _taskQueue;
+        private readonly ILogger<ElasticSearchUpdateService> _logger;
 
-        public ElasticSearchUpdateService(IServiceScopeFactory scopeFactory, ElasticClient elasticClient, ILoggerFactory loggerFactory)
+        public ElasticSearchUpdateService(IServiceScopeFactory scopeFactory, ElasticClient elasticClient, ILoggerFactory loggerFactory, BackgroundTaskQueue taskQueue)
         {
             _client = elasticClient;
             _scopeFactory = scopeFactory;
             _logger = loggerFactory.CreateLogger<ElasticSearchUpdateService>();
+            _taskQueue = taskQueue;
             if (_client != null)
             {
                 RegisterUpdateEvents();
@@ -31,35 +33,38 @@ namespace GmGard.Services
 
         public void RegisterUpdateEvents()
         {
-            ReplyController.OnAddPost += async (s, e) => await UpdatePostCountAsync(s, e);
-            Controllers.App.ReplyController.OnAddPost += async (s, e) => await UpdatePostCountAsync(s, e);
-            ReplyController.OnDeletePost += async (s, e) => await UpdatePostCountAsync(s, e);
-            Controllers.App.ReplyController.OnDeletePost += async (s, e) => await UpdatePostCountAsync(s, e);
-            AuditController.OnApproveBlog += async (s, e) => await AddOrUpdateBlogAsync(s, e);
-            AuditController.OnDenyBlog += async (s, e) => await AddOrUpdateBlogAsync(s, e);
-            BlogController.OnNewBlog += async (s, e) => await AddOrUpdateBlogAsync(s, e);
-            BlogController.OnDeleteBlog += async (s, e) => 
+            EventHandler<BlogEventArgs> addOrUpdate = (s, e) => 
+                _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBlog(e));
+            ReplyController.OnAddPost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
+            Controllers.App.ReplyController.OnAddPost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
+            ReplyController.OnDeletePost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
+            Controllers.App.ReplyController.OnDeletePost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
+            AuditController.OnApproveBlog += addOrUpdate;
+            AuditController.OnDenyBlog += addOrUpdate;
+            BlogController.OnNewBlog += addOrUpdate;
+            BlogController.OnDeleteBlog += (s, e) => 
             {
                 if (e.Deleted)
                 {
-                    await RemoveBlogAsync(s, e);
+                    _taskQueue.QueueBackgroundWorkItem(Job.RemoveBlog(e));
                 }
                 else
                 {
-                    await AddOrUpdateBlogAsync(s, e);
+                    _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBlog(e));
                 }
             };
-            BlogController.OnEditBlog += async (s, e) => await AddOrUpdateBlogAsync(s, e);
-            RatingUtil.OnRateBlog += async (s, e) => await UpdateBlogRateAsync(s, e);
+            BlogController.OnEditBlog += addOrUpdate;
+            BlogController.OnEditTags += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdateBlogTag(e));
+            RatingUtil.OnRateBlog += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdateBlogRate(e));
         }
 
-        private async Task UpdateBlogRateAsync(object s, RateEventArgs e)
+        public async Task UpdateBlogRateAsync(RateEventArgs e)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
                 var util = scope.ServiceProvider.GetService<RatingUtil>();
                 var rating = util.GetRating(e.Model.BlogID).Total;
-                var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Model.BlogID), ud => ud.Doc(new { rating }));
+                var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Model.BlogID), ud => ud.Doc(new { rating }).Refresh(Elasticsearch.Net.Refresh.True));
                 if (!result.IsValid)
                 {
                     _logger.LogError(result.DebugInformation);
@@ -67,30 +72,30 @@ namespace GmGard.Services
                     var blog = await db.Blogs.FindAsync(e.Model.BlogID);
                     if (blog != null)
                     {
-                        await AddOrUpdateBlogAsync(s, new BlogEventArgs(blog));
+                        await AddOrUpdateBlogAsync(new BlogEventArgs(blog));
                     }
                 }
             }
         }
 
-        private async Task UpdateBlogTagAsync(object s, TagEventArgs e)
+        public async Task UpdateBlogTagAsync(TagEventArgs e)
         {
-            var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Blog.BlogID), ud => ud.Doc(new { tags = e.Model, e.Blog.isHarmony }));
+            var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Blog.BlogID), ud => ud.Doc(new { tags = e.Model, e.Blog.isHarmony }).Refresh(Elasticsearch.Net.Refresh.True));
             if (!result.IsValid)
             {
                 _logger.LogError(result.DebugInformation);
-                await AddOrUpdateBlogAsync(s, new BlogEventArgs(e.Blog, e.Model));
+                await AddOrUpdateBlogAsync(new BlogEventArgs(e.Blog, e.Model));
             }
         }
 
-        public async Task UpdatePostCountAsync(object sender, PostEventArgs p)
+        public async Task UpdatePostCountAsync(PostEventArgs p)
         {
             if (p.Model.IdType == ItemType.Blog)
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    var util = scope.ServiceProvider.GetService<BlogUtil>();
-                    var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(p.Model.ItemId), ud => ud.Doc(new { PostCount = util.GetBlogPostCount(p.Model.ItemId) }));
+                    var util = scope.ServiceProvider.GetService<ContextlessBlogUtil>();
+                    var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(p.Model.ItemId), ud => ud.Doc(new { PostCount = util.GetBlogPostCount(p.Model.ItemId) }).Refresh(Elasticsearch.Net.Refresh.True));
                     if (!result.IsValid)
                     {
                         _logger.LogError(result.DebugInformation);
@@ -98,7 +103,7 @@ namespace GmGard.Services
                         var blog = await db.Blogs.FindAsync(p.Model.ItemId);
                         if (blog != null)
                         {
-                            await AddOrUpdateBlogAsync(sender, new BlogEventArgs(blog));
+                            await AddOrUpdateBlogAsync(new BlogEventArgs(blog));
                         }
                     }
                 }
@@ -107,25 +112,25 @@ namespace GmGard.Services
 
         public void UpdateViewCount(IDictionary<int, long> visits)
         {
-            var result = _client.Bulk(bd => visits.Aggregate(bd, (b, kvp) => b.Update<BlogIndexed, object>(bud => bud.Id(kvp.Key).Doc(new { BlogVisit = kvp.Value }))));
+            var result = _client.Bulk(bd => visits.Aggregate(bd, (b, kvp) => b.Update<BlogIndexed, object>(bud => bud.Id(kvp.Key).Doc(new { BlogVisit = kvp.Value })), i => i.Refresh(Elasticsearch.Net.Refresh.True)));
             if (!result.IsValid)
             {
                 _logger.LogError(result.DebugInformation);
             }
         }
 
-        public async Task AddOrUpdateBlogAsync(object sender, BlogEventArgs b)
+        public async Task AddOrUpdateBlogAsync(BlogEventArgs b)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
-                var util = scope.ServiceProvider.GetService<BlogUtil>();
+                var util = scope.ServiceProvider.GetService<ContextlessBlogUtil>();
                 var tags = b.Tags;
                 if (tags == null)
                 {
                     var tagUtil = scope.ServiceProvider.GetService<TagUtil>();
                     tags = await tagUtil.GetTagsInBlogAsync(b.Model.BlogID);
                 }
-                var result = await _client.IndexAsync(BlogIndexed.FromBlogTag(b.Model, tags.Select(t => t.TagName), util.GetPostCount(b.Model)), i => i);
+                var result = await _client.IndexAsync(BlogIndexed.FromBlogTag(b.Model, tags.Select(t => t.TagName), util.GetPostCount(b.Model)), i => i.Refresh(Elasticsearch.Net.Refresh.True));
                 if (!result.IsValid)
                 {
                     _logger.LogError(result.DebugInformation);
@@ -133,9 +138,9 @@ namespace GmGard.Services
             }
         }
 
-        public Task RemoveBlogAsync(object sender, BlogEventArgs b)
+        public Task RemoveBlogAsync(BlogEventArgs b)
         {
-            return _client.DeleteAsync(new DocumentPath<BlogIndexed>(b.Model.BlogID)).ContinueWith(r =>
+            return _client.DeleteAsync(new DocumentPath<BlogIndexed>(b.Model.BlogID), i => i.Refresh(Elasticsearch.Net.Refresh.True)).ContinueWith(r =>
             {
                 if (!r.Result.IsValid)
                 {

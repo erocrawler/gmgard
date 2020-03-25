@@ -59,7 +59,6 @@ ElasticSearch需要单独搭建ES服务器。可通过GmGardMigrations > FillEla
 -  AspNet.Identity.EntityFramework6：由同名库Fork出，ASP.NET Identity provider for Entity Framework 6。用于连接EF6与.Net Core。
 -  GmApps：app.gmgard.com的源码。由Angular编写并与主站通过JSON通讯。通讯API参见API.md。
 -  GmGard：gmgard.com的源码。由.Net Core编写。
--  Gmgard.JobRunner：主站的附属程序，用于运行时后台任务处理。
 -  Gmgard.Models：数据库模型对象。
 -  GmgardMigrations：用于执行Entity Framework数据迁移工具，以及临时数据填充或修复任务。
 

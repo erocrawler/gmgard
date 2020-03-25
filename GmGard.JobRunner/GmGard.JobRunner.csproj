@@ -11,6 +11,7 @@
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <Configurations>Debug;Release;Staging</Configurations>
     <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
     <StartupObject>GmGard.JobRunner.Program</StartupObject>
   </PropertyGroup>
 
@@ -25,9 +26,12 @@
   <ItemGroup>
     <PackageReference Include="EntityFramework" Version="6.4.0" />
     <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">

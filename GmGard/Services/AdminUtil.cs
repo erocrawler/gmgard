@@ -8,11 +8,11 @@ namespace GmGard.Services
 {
     public class AdminUtil
     {
-        private BackgroundJobService _jobService;
+        private BackgroundTaskQueue _taskQueue;
 
-        public AdminUtil(BackgroundJobService jobService)
+        public AdminUtil(BackgroundTaskQueue taskQueue)
         {
-            _jobService = jobService;
+            _taskQueue = taskQueue;
         }
 
         public void log(string actor, string action, string target, string reason = null)
@@ -34,12 +34,12 @@ namespace GmGard.Services
                 target = target.Substring(0, 100);
             }
             var log = new AdminLog { Action = action, Actor = actor, Target = target, Reason = reason, LogTime = DateTime.Now };
-            _jobService.RunJob(JobRunner.Job.CreateJob(log));
+            _taskQueue.QueueBackgroundWorkItem(Job.CreateJob(log));
         }
 
         public void ArchiveAudit(Blog b, string auditor, BlogAudit.Action action, bool amend, string reason = "")
         {
-            _jobService.RunJob(JobRunner.Job.CreateJob(new JobRunner.ArchiveAuditArgs { Action = action, Auditor = auditor, BlogId = b.BlogID, IsAmend = amend, Reason = reason }));
+            _taskQueue.QueueBackgroundWorkItem(Job.CreateJob(new ArchiveAuditArgs { Action = action, Auditor = auditor, BlogId = b.BlogID, IsAmend = amend, Reason = reason }));
         }
     }
 }

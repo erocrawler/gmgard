@@ -13,7 +13,6 @@ namespace GmGard.Services
     public class ExpUtil : UtilityService
     {
         private IHttpContextAccessor _contextAccessor;
-        private BackgroundJobService _jobService;
         private MessageUtil _msgUtil;
         private AdminUtil _adminUtil;
         private UserProfile _currentUser;
@@ -57,10 +56,9 @@ namespace GmGard.Services
 
         public const string WeekBloggedCacheKey = "~wbg";
 
-        public ExpUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IHttpContextAccessor contextAccessor, BackgroundJobService jobService, MessageUtil msgUtil, AdminUtil adminUtil) : base(db, udb, cache)
+        public ExpUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IHttpContextAccessor contextAccessor, MessageUtil msgUtil, AdminUtil adminUtil) : base(db, udb, cache)
         {
             _contextAccessor = contextAccessor;
-            _jobService = jobService;
             _adminUtil = adminUtil;
             _msgUtil = msgUtil;
         }
