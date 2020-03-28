@@ -30,7 +30,7 @@
         <label asp-for="Title"></label>
         <input asp-for="Title" maxlength="120" />
         <label class="radio inline small">
-            <input asp-for="TitleMatchAny" type="radio" value="false" />
+            <input id="TitleMatchAll" asp-for="TitleMatchAny" type="radio" value="false" />
             精确
         </label>
         <label class="radio inline small">
@@ -42,7 +42,7 @@
         <label asp-for="Tags"></label>
         <input asp-for="Tags" maxlength="120" />
         <label class="radio inline small">
-            <input asp-for="TagsMatchAny" type="radio" value="false" />
+            <input id="TagsMatchAll" asp-for="TagsMatchAny" type="radio" value="false" />
             精确
         </label>
         <label class="radio inline small">

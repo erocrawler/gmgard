@@ -306,7 +306,12 @@ namespace GmGard.Services
             }
             
             var result = await _client.SearchAsync<BlogIndexed>(s => {
-                s = s.Query(query).MinScore(minScore).Size(pageSize).Skip((pageNumber - 1) * pageSize).Sort(selector);
+                s = s.Query(query)
+                    .TrackTotalHits(true)
+                    .MinScore(minScore)
+                    .Size(pageSize)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Sort(selector);
                 if (new[] { m.Tags, m.Title, m.Query }.Any(v => !string.IsNullOrWhiteSpace(v)))
                 {
                     s = s.Aggregations(agg => agg

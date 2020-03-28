@@ -110,13 +110,15 @@
             $('input[name="searchmethod"][value="'+a+'"]').prop('checked',true).trigger('change');
         }
         var $adhook = $('#adhook'), admark = document.getElementById('admark'), $body = $('#body');
-        $(window).scroll(function () {
-            var bodyheight = $body.height() + $body.offset().top - 20, curpos = $adhook.css('position');
-            if (curpos == 'static' && $adhook.height() + $adhook.offset().top == bodyheight) return;
-            var atbottom = $(window).scrollTop() + $adhook.height() > bodyheight,
-                pos = atbottom ? 'absolute' : (admark.getBoundingClientRect().top < 21 ? "fixed" : "static");
-            curpos != pos && $adhook.css({ 'position': pos, 'bottom': atbottom ? '20px' : '', 'top': atbottom ? '' : '20px' });
-        });
+        if ($('.main-content').height() > $('#sidebar').height()) {
+            $(window).scroll(function () {
+                var bodyheight = $body.height() + $body.offset().top - 20, curpos = $adhook.css('position');
+                if (curpos == 'static' && $adhook.height() + $adhook.offset().top == bodyheight) return;
+                var atbottom = $(window).scrollTop() + $adhook.height() > bodyheight,
+                    pos = atbottom ? 'absolute' : (admark.getBoundingClientRect().top < 21 ? "fixed" : "static");
+                curpos != pos && $adhook.css({ 'position': pos, 'bottom': atbottom ? '20px' : '', 'top': atbottom ? '' : '20px' });
+            });
+        }
 
         @if (TempData["QuestMsg"] != null)
         {

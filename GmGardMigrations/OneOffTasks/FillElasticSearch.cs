@@ -34,7 +34,7 @@ namespace GmGardMigrations.OneOffTasks
             public bool IsLocalImg { get; set; }
         }
         
-        const int LAST_BLOG_ID = 100000;
+        const int LAST_BLOG_ID = 0;
         const int BATCH_SIZE = 10000;
 
         public static void Run(string endpoint, string username, string password, bool create = false)
@@ -48,10 +48,16 @@ namespace GmGardMigrations.OneOffTasks
                         .Properties(p => p.Keyword(kp => kp.Name(b => b.Author).Normalizer("lowercase")))
                         .Properties(p => p.Text(tp => tp.Name(b => b.Title).Fields(f => f.Text(tf => tf.Analyzer("ngram_lc").Name("ngram_lc")))))
                         .Properties(p => p.Keyword(tp => tp.Name(b => b.Tags).Fields(f => f.Text(tf => tf.Analyzer("ngram_lc").Name("ngram_lc"))))))
-                    .Settings(i => i.Setting("max_ngram_diff", 30).Setting("max_result_window", 100000).Analysis(a => 
-                        a.Analyzers(ana => ana.Custom("ngram_lc", c => c.Filters("lowercase").Tokenizer("ngram_tokenizer")))
-                        .Tokenizers(t => t.NGram("ngram_tokenizer", n => n.MaxGram(30).MinGram(1).TokenChars(TokenChar.Letter, TokenChar.Digit)))
-                        .Normalizers(n => n.Custom("lowercase", cn => cn.Filters("lowercase") )))));
+                    .Settings(i =>
+                        i.Setting("max_ngram_diff", 30)
+                        .Setting("max_result_window", 100000)
+                        .Setting("max_rescore_window", 100000)
+                        .Analysis(a =>
+                            a.Analyzers(ana =>
+                                ana.Custom("ngram_lc", c => c.Filters("lowercase").Tokenizer("ngram_tokenizer")))
+                            .Tokenizers(t => 
+                                t.NGram("ngram_tokenizer", n => n.MaxGram(30).MinGram(1).TokenChars(TokenChar.Letter, TokenChar.Digit)))
+                            .Normalizers(n => n.Custom("lowercase", cn => cn.Filters("lowercase") )))));
                 if (!resp.IsValid)
                 {
                     Console.WriteLine("error creating index");
