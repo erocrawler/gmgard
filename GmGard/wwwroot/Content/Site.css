@@ -2489,7 +2489,6 @@ input.searchbtn {
 
 .icon-scheck {
     display: inline-block;
-    background: url('/Images/rcheckico.png') no-repeat;
     overflow: hidden;
     float: right;
     margin-top: 2px;

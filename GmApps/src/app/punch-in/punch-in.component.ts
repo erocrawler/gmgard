@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Inject } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { MatCalendar } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -14,23 +14,29 @@ import { delay } from 'rxjs/operators';
   templateUrl: './punch-in.component.html',
   styleUrls: ['./punch-in.component.css']
 })
-export class PunchInComponent implements OnInit {
+export class PunchInComponent implements AfterViewInit, OnInit {
 
   constructor(public dialog: MatDialog, public snackBar: MatSnackBar, private service: PunchInService, private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.activeDate = moment();
     this.getMonthData();
-    this.calendar.stateChanges.subscribe(() => {
-      if (this.calendar.activeDate && !this.calendar.activeDate.isSame(this.activeDate, 'month')) {
-        this.activeDate = this.calendar.activeDate;
-        this.getMonthData();
-      }
-    });
     this.route.data.subscribe((d: { user: User }) => {
       this.user = d.user;
       this.points = d.user.points;
       this.consecutiveSign = d.user.consecutiveSign;
+    });
+  }
+
+  ngAfterViewInit() {
+    this.calendar.stateChanges.subscribe(() => {
+      if (this.calendar.currentView != 'month') {
+        return;
+      }
+      if (this.calendar.activeDate && !this.calendar.activeDate.isSame(this.activeDate, 'month')) {
+        this.activeDate = this.calendar.activeDate;
+        this.getMonthData();
+      }
     });
   }
 
