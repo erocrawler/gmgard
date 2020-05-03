@@ -1,0 +1,21 @@
+<h1 mat-dialog-title *ngIf="!isEmpty">
+    恭喜获得{{data.prize.prizeName}}！
+</h1>
+<h1 mat-dialog-title *ngIf="isEmpty">
+    再接再厉！
+</h1>
+<p style="text-align:center">
+    <img [src]="data.prize.prizePic" [alt]="data.prize.prizeName">
+</p>
+<div *ngIf="data.prize.isRealItem">
+    <p>
+        奖券代码：<span>{{data.voucher.voucherID}}</span>
+        <button (click)="copyVoucher()" mat-icon-button title="复制"><mat-icon>content_copy</mat-icon></button>
+    </p>
+    <p>前往店铺兑换奖品，或稍后在奖券一览中兑换{{data.prize.prizeLPValue}}幸运积分！</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-button mat-dialog-close="">返回</button>
+    <button mat-raised-button color="primary" mat-dialog-close="" *ngIf="!isEmpty"
+            routerLink="/wheel/vouchers">奖券一览</button>
+</div>

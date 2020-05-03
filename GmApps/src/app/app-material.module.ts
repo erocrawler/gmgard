@@ -17,33 +17,37 @@ import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatRadioModule } from "@angular/material/radio";
 
 const modules: any[] = [
-    MatSnackBarModule,
-    MatButtonModule,
-    MatListModule,
-    MatCardModule,
-    MatInputModule,
-    MatMenuModule,
-    MatIconModule,
-    MatTooltipModule,
-    MatCheckboxModule,
-    MatToolbarModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatButtonToggleModule,
-    MatTabsModule,
-    MatSelectModule,
-    MatSlideToggleModule,
-    MatExpansionModule,
-    MatPaginatorModule,
+  MatSnackBarModule,
+  MatButtonModule,
+  MatListModule,
+  MatCardModule,
+  MatInputModule,
+  MatMenuModule,
+  MatIconModule,
+  MatTooltipModule,
+  MatCheckboxModule,
+  MatToolbarModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatButtonToggleModule,
+  MatTabsModule,
+  MatSelectModule,
+  MatSlideToggleModule,
+  MatExpansionModule,
+  MatPaginatorModule,
+  MatRadioModule,
 ]
 
 @Injectable()
 export class ZhCnPaginatorIntl extends MatPaginatorIntl {
-    itemsPerPageLabel = '每页个数';
-    nextPageLabel = '下一页';
-    previousPageLabel = '上一页';
+  itemsPerPageLabel = '每页个数';
+  nextPageLabel = '下一页';
+  previousPageLabel = '上一页';
+  firstPageLabel = '最前页';
+  lastPageLabel = '最后页';
 
     getRangeLabel = function (page, pageSize, length) {
         if (length === 0 || pageSize === 0) {

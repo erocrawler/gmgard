@@ -1,0 +1,20 @@
+<h1 mat-dialog-title>
+    恭喜获得陈师傅特别交换券！
+</h1>
+<p style="text-align:center">
+    <img src="/assets/wheel-prizes/special.png" alt="陈师傅特别交换券">
+</p>
+<div>
+    <p>
+        奖券代码：<span>{{data.voucherID}}</span>
+        <button (click)="copyVoucher()" mat-icon-button title="复制"><mat-icon>content_copy</mat-icon></button>
+    </p>
+    <p>请前往店铺联系店小二兑换奖品！</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-button mat-dialog-close="">返回</button>
+    <button mat-raised-button color="primary" mat-dialog-close=""
+            routerLink="/wheel/vouchers">
+        奖券一览
+    </button>
+</div>

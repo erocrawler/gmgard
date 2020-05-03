@@ -103,9 +103,21 @@
       <Generator>DtsGenerator</Generator>
       <LastGenOutput>PunchInHistoryResponse.cs.d.ts</LastGenOutput>
     </Compile>
+    <Compile Update="Models\App\SpinWheelResult.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>SpinWheelResult.cs.d.ts</LastGenOutput>
+    </Compile>
+    <Compile Update="Models\App\SpinWheelStatus.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>SpinWheelStatus.cs.d.ts</LastGenOutput>
+    </Compile>
     <Compile Update="Models\App\TwoFactorAuth.cs">
       <Generator>DtsGenerator</Generator>
       <LastGenOutput>TwoFactorAuth.cs.d.ts</LastGenOutput>
+    </Compile>
+    <Compile Update="Models\App\Vouchers.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>Vouchers.cs.d.ts</LastGenOutput>
     </Compile>
   </ItemGroup>
 
@@ -160,6 +172,16 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>PunchInHistoryResponse.cs</DependentUpon>
     </None>
+    <None Update="Models\App\SpinWheelResult.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SpinWheelResult.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\SpinWheelStatus.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SpinWheelStatus.cs</DependentUpon>
+    </None>
     <None Update="Models\App\TreasureHuntStatus.cs.d.ts">
       <DependentUpon>TreasureHuntStatus.cs</DependentUpon>
     </None>
@@ -170,6 +192,11 @@
     </None>
     <None Update="Models\App\User.cs.d.ts">
       <DependentUpon>User.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\Vouchers.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Vouchers.cs</DependentUpon>
     </None>
   </ItemGroup>
   <ItemGroup>

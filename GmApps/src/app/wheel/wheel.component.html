@@ -1,0 +1,26 @@
+<mat-card class="wheel-nav">
+    <nav mat-tab-nav-bar fxLayoutAlign="end">
+        <a mat-tab-link
+           [routerLink]="['/wheel', {type: 'a'}]" routerLinkActive
+           [active]="url === 'a'">
+            棒棒糖轮盘
+        </a>
+        <a mat-tab-link
+           [routerLink]="['/wheel', {type: 'b'}]" routerLinkActive
+           [active]="url === 'b'">
+            积分轮盘
+        </a>
+        <a mat-tab-link
+           [routerLink]="['/wheel', 'vouchers']" routerLinkActive
+           [active]="url === 'vouchers'">
+            奖券一览
+        </a>
+        <a mat-tab-link style="margin-left: auto"
+           [routerLink]="['/wheel', 'admin']" routerLinkActive
+           [active]="url === 'admin'"
+           *ngIf="isAdmin">
+            管理员
+        </a>
+    </nav>
+</mat-card>
+<router-outlet></router-outlet>

@@ -40,4 +40,8 @@ export class User implements IUser {
   isAdmin() {
     return this.isInRole("Administrator") || this.isInRole("Moderator");
   }
+
+  isAdmanager() {
+    return this.isInRole("AdManager") || this.isInRole("Administrator")
+  }
 }

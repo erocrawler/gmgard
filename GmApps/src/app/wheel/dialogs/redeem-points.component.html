@@ -1,0 +1,22 @@
+<h1 mat-dialog-title>
+    积分兑换
+</h1>
+<p>
+    通过在<a href="https://shop486356090.taobao.com/shop/view_shop.htm" target="_blank">楼上陈师傅消费</a>获得的积分兑换券兑换积分。
+    <br />也可通过棒棒糖抽奖和折换奖品券获得。
+</p>
+<p>
+    <mat-form-field style="width:350px">
+        <mat-label>兑换码</mat-label>
+        <input matInput type="text" [errorStateMatcher]="errMatcher" [(ngModel)]="voucherInput" (input)="clearErr()">
+        <mat-error *ngIf="errMatcher.err">{{errMatcher.err}}</mat-error>
+    </mat-form-field>
+    <button mat-flat-button [disabled]="!voucherInput" color="primary" (click)="redeem()">兑换</button>
+</p>
+<p style="text-align:center" *ngIf="prize">
+    成功兑换{{prize.prizeName}}！<br />
+    <img [src]="prize.prizePic" [alt]="prize.prizeName">
+</p>
+<div mat-dialog-actions>
+    <button mat-button [mat-dialog-close]="hasRedeemed">关闭</button>
+</div>

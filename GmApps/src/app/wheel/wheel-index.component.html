@@ -1,0 +1,28 @@
+<mat-card>
+    <ng-container *ngIf="title">
+        <mat-card-title>{{title}}</mat-card-title>
+        <p *ngIf="!isActive">活动已结束！</p>
+    </ng-container>
+    <div class="wheel-center">
+        <button mat-fab color="warn" [disabled]="!canSpin" (click)="confirmSpin()"> 抽奖 </button>
+    </div>
+    <div class="wheel-wrapper">
+        <canvas id="spinwheel" #spinwheel height="400" width="350"></canvas>
+    </div>
+    <ng-container *ngIf="isActive">
+        <p>
+            棒棒糖：{{userPoints}} 幸运积分：{{luckyPoints}}
+            <button mat-stroked-button color="primary" aria-label="兑换积分" (click)="confirmRedeemPoints()">
+                <mat-icon>add</mat-icon>兑换积分
+            </button>
+        </p>
+        <div *ngIf="wheelType==='b'">
+            <p>幸运积分消耗满{{status?.ceilingCost}}点可以任选幸运商店中的任意一款产品！</p>
+            <div class="progress-wrapper">
+                <mat-progress-spinner color="warn" mode="determinate" [value]="ceilingProgress"></mat-progress-spinner>
+                <button mat-fab color="accent" [disabled]="!canRedeemCeiling" (click)="confirmRedeemCeiling()">兑换</button>
+            </div>
+        </div>
+    </ng-container>
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+</mat-card>

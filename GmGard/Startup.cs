@@ -74,6 +74,8 @@ namespace GmGard
             services.Configure<DataSettingsModel>(ConfigFromDataFile("App_Data/DataSettings.json"));
             services.Configure<BackgroundSetting>(ConfigFromDataFile("App_Data/BackgroundSetting.json"));
             services.Configure<Models.App.AuditExamConfig>(ConfigFromDataFile("App_Data/AuditExam.json"));
+            services.Configure<Models.App.RaffleConfig>(ConfigFromDataFile("App_Data/RaffleConfig.json"));
+            services.Configure<Models.App.WheelConfig>(ConfigFromDataFile("App_Data/WheelConfig.json"));
 
             services.AddMemoryCache();
             services.AddSession();

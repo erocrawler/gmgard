@@ -1,0 +1,9 @@
+:host {
+  width: 100%;
+  max-width:1000px
+}
+.wheel-nav {
+  padding: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}

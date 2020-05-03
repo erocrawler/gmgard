@@ -45,6 +45,8 @@ namespace GmGard.Models
         public DbSet<PunchInHistory> PunchInHistories { get; set; }
         public DbSet<UserRaffle> UserRaffles { get; set; }
 
+        public DbSet<UserVoucher> UserVouchers { get; set; }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             // Needed to ensure subclasses share the same table
@@ -551,5 +553,31 @@ namespace GmGard.Models
         public DateTime TimeStamp { get; set; }
 
         public virtual UserProfile User { get; set; }
+    }
+
+    public class UserVoucher
+    {
+        [Key]
+        public Guid VoucherID { get; set; }
+        [ForeignKey("User")]
+        public int? UserID { get; set; }
+        public virtual UserProfile User { get; set; }
+        public DateTime IssueTime { get; set; }
+        public DateTime? UseTime { get; set; }
+        public string RedeemItem { get; set; }
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
+
+        public Kind VoucherKind { get; set; }
+
+        public enum Kind
+        {
+            Default = 0,
+            WheelA,
+            WheelB,
+            LuckyPoint,
+            Prize,
+            CeilingPrize,
+        }
     }
 }

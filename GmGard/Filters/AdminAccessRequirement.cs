@@ -14,7 +14,6 @@ namespace GmGard.Filters
     {
         private readonly IActionContextAccessor _actionAccessor;
         private ActionContext ActionContext => _actionAccessor.ActionContext;
-        private HttpContext HttpContext => _actionAccessor.ActionContext.HttpContext;
 
         public AdminAccessHandler(IActionContextAccessor actionAccessor)
         {
@@ -42,16 +41,8 @@ namespace GmGard.Filters
                     {
                         succeed = true;
                     }
-                    else if (context.User.IsInRole("AdManager") && (new string[] { "Data", "AdManage" }).Contains(manageContext)) 
-                    {
-                        succeed = true;
-                    }
                 }
                 else if (context.User.IsInRole("Moderator") && (new string[] { "Log", "ManageRole", "ManageBan", "ManageExp" }).Contains(action))
-                {
-                    succeed = true;
-                }
-                else if (context.User.IsInRole("AdManager") && (new string[] { "Log", "AdManage" }).Contains(action))
                 {
                     succeed = true;
                 }

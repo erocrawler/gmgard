@@ -23,34 +23,22 @@ namespace GmGard.Controllers.App
     public class ReplyController : AppControllerBase
     {
         private BlogContext _db;
-        private UsersContext _udb;
         private AdminUtil _adminUtil;
         private BlogUtil _blogUtil;
-        private ExpUtil _expUtil;
-        private MessageUtil _msgUtil;
         private RatingUtil _ratingUtil;
-        private AppSettingsModel _appSettings;
         private readonly HtmlSanitizerService _sanitizerService;
 
         public ReplyController(
-            IOptions<AppSettingsModel> appSettings,
             BlogContext db,
-            UsersContext udb,
             AdminUtil adminUtil,
             BlogUtil blogUtil,
-            ExpUtil expUtil,
-            MessageUtil msgUtil,
             RatingUtil ratingUtil,
             HtmlSanitizerService sanitizerService)
         {
-            _appSettings = appSettings.Value;
             _db = db;
-            _udb = udb;
             _adminUtil = adminUtil;
             _blogUtil = blogUtil;
-            _expUtil = expUtil;
             _ratingUtil = ratingUtil;
-            _msgUtil = msgUtil;
             _sanitizerService = sanitizerService;
         }
 

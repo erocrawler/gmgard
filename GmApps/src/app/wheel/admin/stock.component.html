@@ -1,0 +1,33 @@
+<mat-card>
+    <p>
+        <mat-button-toggle-group [(ngModel)]="displayMode" (change)="updateUrl()">
+            <mat-button-toggle value="stock">查看库存</mat-button-toggle>
+            <mat-button-toggle value="user">查询用户</mat-button-toggle>
+        </mat-button-toggle-group>
+    </p>
+    <div *ngIf="displayMode === 'user'; else stockBlock">
+        <mat-form-field>
+            <mat-label>查询用户</mat-label>
+            <input matInput type="text" [(ngModel)]="userLookupName">
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="getForUser()">查询</button>
+    </div>
+    <ng-template #stockBlock>
+        <mat-form-field>
+            <mat-label>奖品名称</mat-label>
+            <mat-select [(value)]="addPrizeName">
+                <mat-option *ngFor="let s of stocks" [value]="s.prizeName">
+                    {{s.prizeName}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>添加个数</mat-label>
+            <input matInput type="number" min="0" max="100" [(ngModel)]="addCount">
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="addStock(addPrizeName, addCount)">添加</button>
+    </ng-template>
+</mat-card>
+<voucher-list [vouchers]="vouchers" [displayedColumns]="displayedColumns" (change)="updateList()"></voucher-list>
+
+<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>

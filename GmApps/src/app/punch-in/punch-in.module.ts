@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Routes, RouterModule } from '@angular/router';
 import { FlexLayoutModule } from "@angular/flex-layout";
@@ -26,6 +26,7 @@ const routes: Routes = [
   },
 ];
 
+@Injectable()
 export class CustomDateAdapter extends MomentDateAdapter {
   getDateNames(): string[] {
     let names : string[] = [];

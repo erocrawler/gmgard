@@ -9,6 +9,7 @@ import { AuthGuard } from "./auth/auth-guard.service";
 import { AuthService } from "./auth/auth.service";
 import { AdminGuard } from "./auth/admin-guard.service";
 import { RaffleIndexComponent } from "./raffle/raffle-index.component";
+import { AdManagerGuard } from "./auth/admanager-guard.service";
 
 const routes: Routes = [
   { path: "", redirectTo: "/title-helper", pathMatch: "full" },
@@ -22,9 +23,10 @@ const routes: Routes = [
   { path: "bounty", loadChildren: "app/bounty/bounty.module#BountyModule", data: { title: "绅士求物板" }, canActivate: [AuthGuard] },
   { path: "gacha", loadChildren: "app/gacha/gacha.module#GachaModule", data: { title: "绅士抽奖" }, canActivate: [AuthGuard] },
   { path: "game", loadChildren: "app/game/game.module#GameModule", data: { title: "绅士冒险" }, canActivate: [AuthGuard] },
-  { path: "admin", loadChildren: "app/admin/admin.module#AdminModule", data: { title: "绅士管理" }, canActivate: [AdminGuard] },
+  { path: "admin", loadChildren: "app/admin/admin.module#AdminModule", data: { title: "绅士管理" }, canLoad: [AdminGuard] },
   { path: "account", loadChildren: "app/account/account.module#AccountModule", data: { title: "账户管理" }, canActivate: [AuthGuard] },
   { path: "punch-in", loadChildren: "app/punch-in/punch-in.module#PunchInModule", data: { title: "绅士签到" }, canActivate: [AuthGuard] },
+  { path: "wheel", loadChildren: "app/wheel/wheel.module#WheelModule", data: { title: "绅士转盘" }, canActivate: [AuthGuard] },
   { path: "raffle", component: RaffleIndexComponent, data: { title: "绅士彩券" }, canActivate: [AuthGuard] },
   { path: "login", component: LoginComponent },
   { path: "**", component: PageNotFoundComponent },
@@ -36,6 +38,7 @@ const routes: Routes = [
   ],
   exports: [RouterModule],
   providers: [
+    AdManagerGuard,
     AdminGuard,
     AuthGuard,
     AuthService,

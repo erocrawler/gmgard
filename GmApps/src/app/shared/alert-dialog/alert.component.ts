@@ -1,5 +1,10 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
+
+export function alertDialog(dialog: MatDialog, data: AlertArg): Observable<boolean> {
+  return dialog.open<AlertComponent, AlertArg, boolean>(AlertComponent, { data: data }).afterClosed();
+}
 
 export interface AlertArg {
   title: string

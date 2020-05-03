@@ -1,0 +1,31 @@
+<ng-container *ngIf="wheelType === 'a'; then aBlock else bBlock"></ng-container>
+<ng-template #aBlock>
+    <h1 mat-dialog-title>
+        棒棒糖转盘抽奖
+    </h1>
+    <div mat-dialog-content>
+        <p>抽奖需要花费 {{cost}} 棒棒糖</p>
+        <p *ngIf="cost > 0" style="text-align:center">{{points}} → <span style="color:red">{{points - cost}}</span></p>
+        <p *ngIf="isLimit">抽奖次数已达本日上限。</p>
+        <p *ngIf="points < cost">棒棒糖不足！</p>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-button [mat-dialog-close]="false">取消</button>
+        <button mat-raised-button color="primary" [mat-dialog-close]="true" [disabled]="points < cost || isLimit">抽奖</button>
+    </div>
+</ng-template>
+<ng-template #bBlock>
+    <h1 mat-dialog-title>幸运积分转盘抽奖</h1>
+    <div mat-dialog-content>
+        <p>抽奖需要花费 {{cost}} 幸运积分</p>
+        <p *ngIf="cost > 0" style="text-align:center">{{points}} → <span style="color:red">{{points - cost}}</span></p>
+        <p *ngIf="points < cost">
+            幸运积分不足，前往<a href="https://shop486356090.taobao.com/shop/view_shop.htm" target="_blank">楼上陈师傅消费</a>
+            即可获得更多幸运积分！
+        </p>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-button [mat-dialog-close]="false">取消</button>
+        <button mat-raised-button color="primary" [mat-dialog-close]="true" [disabled]="points < cost">抽奖</button>
+    </div>
+</ng-template>

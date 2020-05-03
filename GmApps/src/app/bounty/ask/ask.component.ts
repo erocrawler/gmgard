@@ -1,6 +1,5 @@
 import { Observable, Observer } from "rxjs";
 import { Component, OnInit } from "@angular/core";
-
 import { CkeditorResolverService } from "../ckeditor-resolver.service";
 import { AuthService } from "app/auth/auth.service";
 

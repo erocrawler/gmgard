@@ -30,10 +30,6 @@ export interface PunchInHistoryResponse {
   minSignDate: Date;
 }
 
-function toDateString(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`
-}
-
 @Injectable({
   providedIn: 'root'
 })

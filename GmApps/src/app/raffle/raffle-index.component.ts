@@ -4,10 +4,14 @@ import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface RaffleConfig {
+  title: string
+  startTime: Date
+  endTime: Date
   isActive: boolean
   hasRaffle: boolean
   points: number
   cost: number
+  image: string
 };
 
 @Component({
@@ -19,19 +23,27 @@ export class RaffleIndexComponent implements OnInit {
 
   constructor(public snackBar: MatSnackBar, private http: HttpClient, @Inject(ENVIRONMENT) private env: Environment) { }
 
+  startTime: Date
+  endTime: Date
   loading = true
   isActive = false
   hasRaffle = false
   points = 0
   cost = 0
+  img = ""
+  title = ""
 
   ngOnInit() {
     this.http.get<RaffleConfig>(this.env.apiHost + "/api/raffle", { withCredentials: true }).subscribe(r => {
       this.loading = false;
+      this.title = r.title
+      this.startTime = r.startTime;
+      this.endTime = r.endTime;
       this.isActive = r.isActive;
       this.hasRaffle = r.hasRaffle;
       this.points = r.points;
       this.cost = r.cost;
+      this.img = r.image;
     });
   }
 

@@ -1,0 +1,57 @@
+<div class="mat-elevation-z2">
+    <table mat-table matSort matSortActive="issueTime" matSortDirection="desc" [dataSource]="dataSource" style="width: 100%">
+
+        <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef> 奖券ID </th>
+            <td mat-cell *matCellDef="let element"> {{element.voucherID}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="kind">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 奖券类型 </th>
+            <td mat-cell *matCellDef="let element"> {{voucherKind(element)}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="redeemItem">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 奖品名称 </th>
+            <td mat-cell *matCellDef="let element"> {{element.redeemItem}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="issueTime">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 发放时间 </th>
+            <td mat-cell *matCellDef="let element"> {{element.issueTime | date:'medium'}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="useTime">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 使用时间 </th>
+            <td mat-cell *matCellDef="let element"> {{element.useTime | date:'medium'}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="userName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> 获得者 </th>
+            <td mat-cell *matCellDef="let element"> {{element.userName}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="markUsed">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let element">
+                <button mat-icon-button color="warn" [disabled]="element.kind == VoucherKindType.LuckyPoint || element.useTime || !element.userName" (click)="markUsed(element)">
+                    <mat-icon>how_to_reg</mat-icon>
+                </button>
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="exchange">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let element">
+                <button mat-icon-button color="primary" *ngIf="element.kind == VoucherKindType.Prize" [disabled]="!!element.useTime" (click)="exchange(element)">
+                    <mat-icon>local_activity</mat-icon>
+                </button>
+            </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+</div>
