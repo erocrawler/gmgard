@@ -49,6 +49,8 @@ export class VoucherListComponent implements OnInit {
         return "奖品兑换券"
       case VoucherKind.CeilingPrize:
         return "特别兑换券"
+      case VoucherKind.Coupon:
+        return "优惠券"
     }
     return "";
   }

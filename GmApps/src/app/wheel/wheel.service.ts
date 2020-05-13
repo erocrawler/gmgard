@@ -25,6 +25,10 @@ export class WheelService {
           wheelACost: s.wheelACost,
           wheelBCost: s.wheelBCost,
           ceilingCost: s.ceilingCost,
+          displayPrizes: s.displayPrizes,
+          couponPrizes: s.couponPrizes,
+          showRedeem: s.showRedeem,
+          wheelADailyLimit: s.wheelADailyLimit,
         };
       }));
   }
@@ -51,6 +55,10 @@ export class WheelService {
 
   redeemPoints(id: string): Observable<PrizeInfo> {
     return this.http.post<PrizeInfo>(this.host + "/api/Wheel/RedeemPoints", null, { params: { voucherId: id }, withCredentials: true });
+  }
+
+  redeemCoupon(val: number): Observable<SpinWheelResult> {
+    return this.http.post<SpinWheelResult>(this.host + "/api/Wheel/RedeemCoupon", null, { params: { "spentPoints": val.toString() }, withCredentials: true });
   }
 
   exchange(id: string): Observable<IVoucher> {

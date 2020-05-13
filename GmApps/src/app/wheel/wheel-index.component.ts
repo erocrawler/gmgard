@@ -11,7 +11,9 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { PrizeConfirmComponent } from "./dialogs/prize-confirm.component";
 import { RedeemCeilingComponent } from "./dialogs/redeem-ceiling.component";
 import { RedeemPointsComponent } from "./dialogs/redeem-points.component";
-import { of, concat  } from "rxjs";
+import { of, concat, Subject  } from "rxjs";
+import { User } from "../models/User";
+import { RedeemCouponComponent } from "./dialogs/redeem-coupon.component";
 
 var Winwheel: WinWheel = require("winwheel");
 
@@ -27,18 +29,26 @@ export class WheelIndexComponent implements OnInit {
   wheelType = "a";
   wheel: WinWheel;
   status: SpinWheelStatus;
+  user: User;
   userPoints: number;
   luckyPoints: number;
-  spentPoints: number;
+  totalPoints: number;
   ceilingCost: number;
   ceilingCount: number;
   ceilingProgress: number;
+  spinLimit: number;
+  display1: PrizeInfo[];
+  display2: PrizeInfo[];
 
   constructor(private wheelService: WheelService, private route: ActivatedRoute,
     public dialog: MatDialog, public snackBar: MatSnackBar) {
   }
 
   ngOnInit() {
+    this.route.data.subscribe((d: { user: User }) => {
+      this.user = d.user;
+      this.userPoints = d.user.points;
+    });
     this.wheelService.getStatus().subscribe(status => {
       this.updateStatus(status)
       this.route.params.pipe(
@@ -62,24 +72,27 @@ export class WheelIndexComponent implements OnInit {
     this.isActive = status.isActive;
     this.status = status;
     this.userPoints = status.userPoints;
+    this.spinLimit = status.wheelADailyLimit;
     let luckyVouchers = status.vouchers.filter(v => v instanceof LuckyPointVoucher);
     this.luckyPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
-    this.spentPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.usedValue, 0);
+    this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
     this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
-    let val = (this.spentPoints - this.ceilingCount * this.status.ceilingCost) / this.status.ceilingCost;
-    this.ceilingProgress = (val > 1 ? 1 : val) * 100;
+    this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
+    if (status.displayPrizes) {
+      this.display1 = status.displayPrizes.slice(0, status.displayPrizes.length / 2);
+      this.display2 = status.displayPrizes.slice(status.displayPrizes.length / 2);
+    }
   }
 
   private newWheel(prizes: PrizeInfo[]) {
-    let getStyle = (p: PrizeInfo) => {
+    let getStyle = (p: PrizeInfo, idx: number) => {
       if (p.isRealItem) {
-        return p.drawPercentage < 10 ? '#ff0000' : '#fe7676';
+        return this.wheelType == 'b' && (idx % 2 == 0) ? '#ff0000' : '#fe7676';
       } else if (p.isVoucher) {
         return '#f69562';
       }
       return '#fff7e2';
     }
-    let totalPercent = prizes.reduce((total, p) => p.drawPercentage + total, 0);
     let config = {
       'canvasId': 'spinwheel',
       'outerRadius': 150,
@@ -88,11 +101,11 @@ export class WheelIndexComponent implements OnInit {
       'textOrientation': 'vertical',
       'textAlignment': 'outer',
       'numSegments': 12,
-      'segments': prizes.map(p => {
+      'segments': prizes.map((p, idx) => {
         return {
-          'fillStyle': getStyle(p),
+          'fillStyle': getStyle(p, idx),
           'text': p.prizeName,
-          'size': (p.drawPercentage / totalPercent)*360
+          'size': (1 / prizes.length)*360
         }
       }),
       'rotationAngle': 0,
@@ -103,7 +116,7 @@ export class WheelIndexComponent implements OnInit {
 
   confirmRedeemPoints() {
     this.dialog.open<RedeemPointsComponent, void, boolean>(RedeemPointsComponent)
-      .beforeClosed().subscribe(refresh => {
+      .afterClosed().subscribe(refresh => {
       if (!refresh) {
         return
       }
@@ -112,17 +125,28 @@ export class WheelIndexComponent implements OnInit {
   }
 
   get canRedeemCeiling(): boolean {
-    return (this.ceilingCount + 1) * this.status.ceilingCost <= this.spentPoints;
+    return (this.ceilingCount + 1) * this.status.ceilingCost <= this.totalPoints;
   }
 
   confirmRedeemCeiling() {
     this.loading = true
-    this.wheelService.redeemCeiling().subscribe(voucher => {
+    this.wheelService.redeemCeiling().pipe(
+      zip(this.wheelService.getStatus())
+    ).subscribe(([voucher, status]) => {
       this.loading = false
       this.dialog.open<RedeemCeilingComponent, IVoucher>(RedeemCeilingComponent, { data: voucher });
+      this.updateStatus(status);
     }, err => {
       this.loading = false;
       this.snackBar.open("兑换失败，请刷新重试。", null, { duration: 3000 });
+    })
+  }
+
+  confirmRedeemCoupon() {
+    let subject = new Subject<SpinWheelStatus>();
+    subject.subscribe(r => this.updateStatus(r));
+    this.dialog.open<RedeemCouponComponent, Subject<SpinWheelStatus>>(RedeemCouponComponent, { data: subject }).afterClosed().subscribe(_ => {
+      subject.unsubscribe();
     })
   }
 
@@ -144,7 +168,7 @@ export class WheelIndexComponent implements OnInit {
       let todaySpin = this.status.vouchers.filter(v => v.kind == VoucherKind.WheelA
         && moment(v.useTime).isSame(this.bjTimeNow, 'day'));
       arg = {
-        isLimit: todaySpin.length >= 3,
+        remainSpin: this.user.isAdmanager() ? null : (this.spinLimit - todaySpin.length),
         points: concat(of(this.userPoints), this.wheelService.getStatus().pipe(map(s => {
           this.updateStatus(s);
           return this.userPoints;
@@ -155,7 +179,6 @@ export class WheelIndexComponent implements OnInit {
       prizes = this.status.wheelAPrizes
     } else {
       arg = {
-        isLimit: false,
         points: concat(of(this.luckyPoints), this.wheelService.getStatus().pipe(map(s => {
           this.updateStatus(s);
           return this.luckyPoints;
@@ -179,7 +202,7 @@ export class WheelIndexComponent implements OnInit {
           prizeName = prizeName.substring(0, prizeName.length - 4)
         }
         for (let i = 0; i < prizes.length; i++) {
-          if (prizes[i].prizeName === r.prize.prizeName) {
+          if (prizes[i].prizeName === prizeName) {
             indexes.push(i)
           }
         }

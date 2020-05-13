@@ -578,6 +578,7 @@ namespace GmGard.Models
             LuckyPoint,
             Prize,
             CeilingPrize,
+            Coupon,
         }
     }
 }

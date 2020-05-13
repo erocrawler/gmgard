@@ -6,6 +6,7 @@ export enum VoucherKind {
   LuckyPoint,
   Prize,
   CeilingPrize,
+  Coupon,
 }
 
 export interface IVoucher {
@@ -23,7 +24,7 @@ export interface PrizeInfo {
   isRealItem: boolean;
   isVoucher: boolean;
   prizeLPValue: number;
-  drawPercentage: number;
+  itemLink?: string;
 }
 
 export interface SpinWheelStatus {
@@ -33,9 +34,13 @@ export interface SpinWheelStatus {
   vouchers: IVoucher[];
   wheelAPrizes: PrizeInfo[];
   wheelBPrizes: PrizeInfo[];
+  displayPrizes: PrizeInfo[];
+  couponPrizes: PrizeInfo[];
   wheelACost: number;
   wheelBCost: number;
   ceilingCost: number;
+  showRedeem: boolean;
+  wheelADailyLimit: number;
 }
 
 export interface SpinWheelResult {
@@ -55,6 +60,7 @@ export function newVoucher(v: IVoucher): Voucher {
       return new SpinWheelVoucher(v);
     case VoucherKind.CeilingPrize:
     case VoucherKind.Prize:
+    case VoucherKind.Coupon:
       return new PrizeVoucher(v);
     case VoucherKind.LuckyPoint:
       return new LuckyPointVoucher(v);
@@ -84,7 +90,7 @@ export class SpinWheelVoucher extends Voucher {
 }
 
 export class PrizeVoucher extends Voucher {
-  kind: VoucherKind.Prize | VoucherKind.CeilingPrize;
+  kind: VoucherKind.Prize | VoucherKind.CeilingPrize | VoucherKind.Coupon;
   get isUsed(): boolean {
     return !!this.useTime;
   }

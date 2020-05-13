@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Options;
 
 namespace GmGard.Controllers.App
@@ -56,11 +57,15 @@ namespace GmGard.Controllers.App
                 IsActive = IsActive, 
                 UserPoints = user.Points, 
                 Vouchers = vouchers.Select(v => Vouchers.FromUserVoucher(v, user.UserName)),
-                WheelAPrizes = _wheelConfig.Value.WheelAPrizes,
-                WheelBPrizes = _wheelConfig.Value.WheelBPrizes,
-                WheelACost = _wheelConfig.Value.WheelACost,
-                WheelBCost = _wheelConfig.Value.WheelBLPCost,
-                CeilingCost = _wheelConfig.Value.CeilingCost,
+                WheelAPrizes = _wheelConfig.Value?.WheelAPrizes,
+                WheelBPrizes = _wheelConfig.Value?.WheelBPrizes,
+                WheelACost = (_wheelConfig.Value?.WheelACost).GetValueOrDefault(0),
+                WheelBCost = (_wheelConfig.Value?.WheelBLPCost).GetValueOrDefault(0),
+                CeilingCost = (_wheelConfig.Value?.CeilingCost).GetValueOrDefault(0),
+                WheelADailyLimit = (_wheelConfig.Value?.WheelADailyLimit).GetValueOrDefault(0),
+                ShowRedeem = (_wheelConfig.Value?.ShowRedeem).GetValueOrDefault(false),
+                DisplayPrizes = _wheelConfig.Value?.DisplayPrizes,
+                CouponPrizes = _wheelConfig.Value?.CouponPrizes,
             });
         }
 
@@ -99,6 +104,37 @@ namespace GmGard.Controllers.App
             v.IssueTime = DateTime.Now;
             await _udb.SaveChangesAsync();
             return Json(AllPrizes.First(p => p.IsVoucher && p.RedeemItemName == v.RedeemItem));
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> RedeemCoupon(int spentPoints)
+        {
+            var coupon = _wheelConfig.Value.CouponPrizes.FirstOrDefault(v => v.PrizeLPValue == spentPoints);
+            if (coupon == null)
+            {
+                return BadRequest();
+            }
+            var user = await _userManager.GetUserAsync(User);
+            var success = await TrySpendLPAsync(user, coupon.PrizeLPValue);
+            if (!success)
+            {
+                return BadRequest(new { err = "not enough lp" });
+            }
+            var v = new UserVoucher
+            {
+                IssueTime = DateTime.Now,
+                UserID = user.Id,
+                VoucherID = Guid.NewGuid(),
+                RedeemItem = coupon.PrizeName,
+                VoucherKind = UserVoucher.Kind.Coupon,
+            };
+            _udb.UserVouchers.Add(v);
+            await _udb.SaveChangesAsync();
+            return Json(new SpinWheelResult
+            {
+                Prize = coupon,
+                Voucher = Vouchers.FromUserVoucher(v, User.Identity.Name),
+            });
         }
 
         [HttpPost]
@@ -145,14 +181,13 @@ namespace GmGard.Controllers.App
               .CountAsync(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.CeilingPrize);
             var lps = await _udb.UserVouchers
               .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.LuckyPoint).ToListAsync();
-            var spentLp = lps.Aggregate(0, (sum, v) =>
+            var totalLP = lps.Aggregate(0, (sum, v) =>
             {
                 var tokens = v.RedeemItem.Split('/');
-                int curValue = int.Parse(tokens[0]);
                 int totalValue = int.Parse(tokens[1]);
-                return sum + totalValue - curValue;
+                return sum + totalValue;
             });
-            if ((ceilCount+1)* _wheelConfig.Value.CeilingCost > spentLp)
+            if ((ceilCount+1)* _wheelConfig.Value.CeilingCost > totalLP)
             {
                 return BadRequest();
             }
@@ -251,6 +286,10 @@ namespace GmGard.Controllers.App
             int val = rnd.Next(sum);
             foreach(var p in wheelPrizes)
             {
+                if (p.DrawPercentage == 0)
+                {
+                    continue;
+                }
                 val -= p.DrawPercentage;
                 if (val <= 0)
                 {
@@ -266,7 +305,7 @@ namespace GmGard.Controllers.App
             var todayDrawCount = await _udb.UserVouchers
                 .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && DbFunctions.DiffDays(v.IssueTime, DateTime.Today) == 0)
                 .CountAsync();
-            if (todayDrawCount >= 3)
+            if (todayDrawCount >= 3 && !User.IsInRole("AdManager") && !User.IsInRole("Administrator"))
             {
                 return BadRequest(new { drawCount = todayDrawCount });
             }
@@ -301,6 +340,7 @@ namespace GmGard.Controllers.App
                     PrizeLPValue = prize.PrizeLPValue,
                     IsVoucher = prize.IsVoucher,
                     IsRealItem = prize.IsRealItem,
+                    ItemLink = prize.ItemLink,
                 },
             };
             if (prize.IsRealItem)

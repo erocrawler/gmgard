@@ -1,7 +1,7 @@
 .wheel-center {
     position: absolute;
     left: calc(50% - 28px);
-    top: 224px;
+    top: 172px;
 }
     .wheel-center::before {
         content: "";
@@ -25,17 +25,17 @@
     background-size: 430px;
     background-repeat: no-repeat;
     background-position: calc(50% - 11px) 11px;
+    position: relative;
+    min-width: 372px;
 }
 
-.progress-wrapper {
-    position:relative;
-    margin:auto;
-    width: 100px;
-    border: 1px solid red;
-    border-radius: 50%;
+.prize-img {
+    max-width: 200px;
+    border: 5px white solid;
+    border-radius: 5px;
+    width: 100%;
 }
-.progress-wrapper>button {
-    position: absolute;
-    top: 22px;
-    left: 22px;
+
+.add-gap a+a {
+    margin-left: 10px;
 }

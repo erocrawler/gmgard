@@ -18,6 +18,8 @@ import { RedeemCeilingComponent } from './dialogs/redeem-ceiling.component';
 import { PrizeConfirmComponent } from './dialogs/prize-confirm.component';
 import { VoucherListComponent } from './vouchers/voucher-list.component';
 import { MatSortModule } from '@angular/material/sort';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { RedeemCouponComponent } from './dialogs/redeem-coupon.component';
 
 const routes: Routes = [
   {
@@ -46,6 +48,7 @@ const routes: Routes = [
     RedeemCeilingComponent,
     PrizeConfirmComponent,
     VoucherListComponent,
+    RedeemCouponComponent,
   ],
   imports: [
     CommonModule,
@@ -55,6 +58,7 @@ const routes: Routes = [
     MatTableModule,
     MatDialogModule,
     MatSortModule,
+    FlexLayoutModule,
   ],
   providers: [
     WheelService,

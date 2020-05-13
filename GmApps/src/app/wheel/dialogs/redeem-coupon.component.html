@@ -1,0 +1,29 @@
+<h1 mat-dialog-title>
+    兑换优惠券
+</h1>
+<div>
+    <p>当前幸运积分：{{points}} <span *ngIf="selectedOption">所需积分：{{selectedOption}}</span></p>
+    <p>
+        <mat-radio-group [(ngModel)]="selectedOption">
+            <mat-radio-button *ngFor="let co of couponOptions" [value]="co.prizeLPValue">{{co.prizeName}}</mat-radio-button>
+        </mat-radio-group>
+    </p>
+    <p>
+        <button mat-flat-button [disabled]="!canRedeem" color="primary" (click)="redeem()">兑换</button>
+    </p>
+</div>
+<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+<div style="text-align:center" *ngIf="result">
+    <p>
+        成功兑换{{result.prize.prizeName}}！<br />
+        <img [src]="result.prize.prizePic" [alt]="result.prize.prizeName">
+    </p>
+    <p>
+        优惠券代码：<span>{{result.voucher.voucherID}}</span>
+        <button (click)="copyVoucher()" mat-icon-button title="复制"><mat-icon>content_copy</mat-icon></button>
+    </p>
+    <p>已获得优惠券可在奖券一览中查看。<a [href]="result.prize.itemLink" rel="noopener" target="_blank">前往店铺</a>使用优惠券！</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-button mat-dialog-close="">关闭</button>
+</div>

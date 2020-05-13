@@ -23,4 +23,8 @@ export class PrizeConfirmComponent implements OnInit {
     return !this.data.prize.isRealItem && !this.data.prize.isVoucher
   }
 
+  get isSoldOut(): boolean {
+    return this.data.prize.isRealItem && this.data.prize.prizeName.endsWith("（售罄）")
+  }
+
 }

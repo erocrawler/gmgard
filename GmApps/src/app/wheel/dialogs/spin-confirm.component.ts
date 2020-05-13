@@ -6,7 +6,7 @@ export interface SpinConfirmArg {
   wheelType: 'a' | 'b';
   wheelCost: number;
   points: Observable<number>;
-  isLimit: boolean
+  remainSpin?: number;
 }
 
 @Component({
@@ -20,13 +20,15 @@ export class SpinConfirmComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: SpinConfirmArg) {
     this.wheelType = data.wheelType;
     this.cost = data.wheelCost;
-    this.isLimit = data.isLimit;
+    this.isLimit = data.remainSpin === 0;
+    this.remainSpin = data.remainSpin;
     data.points.subscribe(p => this.points = p);
   }
 
   ngOnInit() {
   }
 
+  remainSpin: number;
   isLimit = false;
   wheelType: string
   cost = 0

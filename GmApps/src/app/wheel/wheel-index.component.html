@@ -3,24 +3,48 @@
         <mat-card-title>{{title}}</mat-card-title>
         <p *ngIf="!isActive">活动已结束！</p>
     </ng-container>
-    <div class="wheel-center">
-        <button mat-fab color="warn" [disabled]="!canSpin" (click)="confirmSpin()"> 抽奖 </button>
-    </div>
-    <div class="wheel-wrapper">
-        <canvas id="spinwheel" #spinwheel height="400" width="350"></canvas>
-    </div>
+    <mat-card-content fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="space-evenly center" style="background-color: #ffc40a">
+        <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
+            <a *ngFor="let d of display1" [href]="d.itemLink" target="_blank" rel="noopener">
+                <img class="prize-img mat-elevation-z4" [src]="d.prizePic" [alt]="d.prizeName" />
+            </a>
+        </div>
+        <div fxFlex="380px" class="wheel-wrapper">
+            <div class="wheel-center">
+                <button mat-fab color="warn" [disabled]="!canSpin" (click)="confirmSpin()"> 抽奖 </button>
+            </div>
+            <canvas id="spinwheel" #spinwheel height="400" width="350"></canvas>
+        </div>
+        <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
+            <a *ngFor="let d of display2" [href]="d.itemLink" target="_blank" rel="noopener">
+                <img class="prize-img mat-elevation-z4" [src]="d.prizePic" [alt]="d.prizeName" />
+            </a>
+        </div>
+    </mat-card-content>
     <ng-container *ngIf="isActive">
         <p>
             棒棒糖：{{userPoints}} 幸运积分：{{luckyPoints}}
-            <button mat-stroked-button color="primary" aria-label="兑换积分" (click)="confirmRedeemPoints()">
+            <button *ngIf="status?.showRedeem" mat-stroked-button color="primary" aria-label="兑换积分" (click)="confirmRedeemPoints()">
                 <mat-icon>add</mat-icon>兑换积分
             </button>
         </p>
-        <div *ngIf="wheelType==='b'">
-            <p>幸运积分消耗满{{status?.ceilingCost}}点可以任选幸运商店中的任意一款产品！</p>
-            <div class="progress-wrapper">
-                <mat-progress-spinner color="warn" mode="determinate" [value]="ceilingProgress"></mat-progress-spinner>
-                <button mat-fab color="accent" [disabled]="!canRedeemCeiling" (click)="confirmRedeemCeiling()">兑换</button>
+        <div fxLayout="row" fxLayoutGap="10px">
+            <div fxFlex="50%" style="border-right: 1px solid lightgray;">
+                <p>幸运积分累计每获得满{{status?.ceilingCost}}点可以任选幸运商店中的一款产品！ </p>
+                <p>
+                    {{ceilingProgress}}/{{status?.ceilingCost}}
+                    <button mat-stroked-button color="accent" [disabled]="!canRedeemCeiling" (click)="confirmRedeemCeiling()">
+                        <mat-icon>credit_card</mat-icon>兑换特别交换券
+                    </button>
+                </p>
+            </div>
+            <div fxFlex="50%">
+                <p>消耗幸运积分兑换店铺优惠券！</p>
+                <p>
+                    <button mat-stroked-button color="accent" (click)="confirmRedeemCoupon()">
+                        <mat-icon>redeem</mat-icon>兑换店铺优惠券
+                    </button>
+                </p>
             </div>
         </div>
     </ng-container>

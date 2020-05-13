@@ -3,6 +3,7 @@ import { WheelService } from '../wheel.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PrizeInfo } from '../../models/Vouchers';
 import { ShowOnDirtyErrorStateMatcher, ErrorStateMatcher } from '@angular/material/core';
+import { MatDialogRef } from '@angular/material/dialog';
 
 class RedeemErrMatcher implements ErrorStateMatcher {
 
@@ -20,9 +21,10 @@ class RedeemErrMatcher implements ErrorStateMatcher {
 })
 export class RedeemPointsComponent implements OnInit {
 
-  constructor(private service: WheelService) { }
+  constructor(private service: WheelService, public matDialogRef: MatDialogRef<RedeemPointsComponent>) { }
 
   ngOnInit(): void {
+    this.matDialogRef.beforeClosed().subscribe(() => this.matDialogRef.close(this.hasRedeemed));
   }
 
   errMatcher = new RedeemErrMatcher();
