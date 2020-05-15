@@ -2320,7 +2320,7 @@ input.searchbtn {
 
 .icon-rcheck, .icon-runcheck {
     display: inline-block;
-    background: url('/Images/rcheckico.png') no-repeat;
+    background-repeat: no-repeat;
     overflow: hidden;
     text-indent: -9999px;
     text-align: left;

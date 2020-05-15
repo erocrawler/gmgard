@@ -469,5 +469,11 @@ namespace GmGard.Controllers
         {
             return PartialView("BackgroundPartial", settings.Value);
         }
+
+        public RedirectResult App([FromServices]ConstantUtil constantUtil, string path)
+        {
+            var uri = new Uri(constantUtil.AppHost + path);
+            return Redirect(uri.ToString());
+        }
     }
 }
