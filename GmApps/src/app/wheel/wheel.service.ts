@@ -41,6 +41,10 @@ export class WheelService {
     return this.http.get<StockInfo[]>(this.host + "/api/Wheel/Stock", { withCredentials: true });
   }
 
+  getVoucher(id: string): Observable<IVoucher[]> {
+    return this.http.get<IVoucher[]>(this.host + "/api/Wheel/Voucher", { params: { id }, withCredentials: true });
+  }
+
   getForUser(name: string): Observable<IVoucher[]> {
     return this.http.get<IVoucher[]>(this.host + "/api/Wheel/GetForUser", { params: { name }, withCredentials: true });
   }

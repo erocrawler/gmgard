@@ -3,16 +3,24 @@
         <mat-button-toggle-group [(ngModel)]="displayMode" (change)="updateUrl()">
             <mat-button-toggle value="stock">查看库存</mat-button-toggle>
             <mat-button-toggle value="user">查询用户</mat-button-toggle>
+            <mat-button-toggle value="voucher">查询奖券</mat-button-toggle>
         </mat-button-toggle-group>
     </p>
-    <div *ngIf="displayMode === 'user'; else stockBlock">
+    <div *ngIf="displayMode === 'user'">
         <mat-form-field>
             <mat-label>查询用户</mat-label>
             <input matInput type="text" [(ngModel)]="userLookupName">
         </mat-form-field>
         <button mat-flat-button color="primary" (click)="getForUser()">查询</button>
     </div>
-    <ng-template #stockBlock>
+    <div *ngIf="displayMode === 'voucher'">
+        <mat-form-field>
+            <mat-label>查询奖券</mat-label>
+            <input matInput type="text" [(ngModel)]="voucherLookup">
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="getVoucher()">查询</button>
+    </div>
+    <div *ngIf="displayMode === 'stock'">
         <mat-form-field>
             <mat-label>奖品名称</mat-label>
             <mat-select [(value)]="addPrizeName">
@@ -26,8 +34,38 @@
             <input matInput type="number" min="0" max="100" [(ngModel)]="addCount">
         </mat-form-field>
         <button mat-flat-button color="primary" (click)="addStock(addPrizeName, addCount)">添加</button>
-    </ng-template>
+    </div>
 </mat-card>
 <voucher-list [vouchers]="vouchers" [displayedColumns]="displayedColumns" (change)="updateList()"></voucher-list>
-
 <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+<mat-card *ngIf="statistics">
+    <mat-card-title>库存统计</mat-card-title>
+    <mat-card-content>
+        <p>奖品总数：{{statistics.total}}</p>
+        <table class="mat-table" style="width:90%">
+            <thead>
+                <tr class="mat-header-row">
+                    <th class="mat-header-cell">名称</th>
+                    <th class="mat-header-cell">总数</th>
+                    <th class="mat-header-cell">已发放</th>
+                    <th class="mat-header-cell">已使用</th>
+                    <th class="mat-header-cell">未发放</th>
+                    <th class="mat-header-cell">抽中次数</th>
+                    <th class="mat-header-cell">用户折换</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="mat-row" *ngFor="let s of statistics.stocks">
+                    <td class="mat-cell">{{s.prizeName}}</td>
+                    <td class="mat-cell">{{s.total}}</td>
+                    <td class="mat-cell">{{s.assigned}}</td>
+                    <td class="mat-cell">{{s.used}}</td>
+                    <td class="mat-cell">{{s.unassigned}}</td>
+                    <td class="mat-cell">{{s.totalDrawCount}}</td>
+                    <td class="mat-cell">{{s.manualExchanged}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </mat-card-content>
+</mat-card>

@@ -27,14 +27,14 @@ namespace GmGard.Controllers.App
         private readonly ExpUtil _expUtil;
         private readonly UsersContext _udb;
         private readonly UserManager<UserProfile> _userManager;
-        private readonly IOptions<WheelConfig> _wheelConfig; 
+        private readonly IOptionsSnapshot<WheelConfig> _wheelConfig;
         private static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
         public WheelController(
             UsersContext udb,
             UserManager<UserProfile> userManager,
             ExpUtil expUtil,
-            IOptions<WheelConfig> options)
+            IOptionsSnapshot<WheelConfig> options)
         {
             _udb = udb;
             _expUtil = expUtil;
@@ -43,7 +43,22 @@ namespace GmGard.Controllers.App
         }
 
         bool IsActive => _wheelConfig.Value != null && _wheelConfig.Value.EventStart < DateTime.Now && DateTime.Now < _wheelConfig.Value.EventEnd;
-        IEnumerable<WheelPrize> AllPrizes => _wheelConfig.Value.WheelAPrizes.Concat(_wheelConfig.Value.WheelBPrizes).Concat(_wheelConfig.Value.RedeemPrizes);
+        IEnumerable<WheelPrize> AllPrizes
+        {
+            get
+            {
+                IEnumerable<WheelPrize> p = _wheelConfig.Value.WheelAPrizes;
+                if (_wheelConfig.Value.WheelBPrizes != null)
+                {
+                    p = p.Concat(_wheelConfig.Value.WheelBPrizes);
+                }
+                if (_wheelConfig.Value.RedeemPrizes!= null)
+                {
+                    p = p.Concat(_wheelConfig.Value.RedeemPrizes);
+                }
+                return p;
+            }
+        }
 
         // GET: api/wheel/get
         [HttpGet]
@@ -176,20 +191,15 @@ namespace GmGard.Controllers.App
         [HttpPost]
         public async Task<ActionResult> RedeemCeiling()
         {
-            var user = await _userManager.GetUserAsync(User);
-            var ceilCount = await _udb.UserVouchers
-              .CountAsync(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.CeilingPrize);
-            var lps = await _udb.UserVouchers
-              .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.LuckyPoint).ToListAsync();
-            var totalLP = lps.Aggregate(0, (sum, v) =>
-            {
-                var tokens = v.RedeemItem.Split('/');
-                int totalValue = int.Parse(tokens[1]);
-                return sum + totalValue;
-            });
-            if ((ceilCount+1)* _wheelConfig.Value.CeilingCost > totalLP)
+            if (_wheelConfig.Value.CeilingCost <= 0)
             {
                 return BadRequest();
+            }
+            var user = await _userManager.GetUserAsync(User);
+            var success = await TrySpendLPAsync(user, _wheelConfig.Value.CeilingCost);
+            if (!success)
+            {
+                return BadRequest(new { err = "not enough lp" });
             }
             var v = new UserVoucher
             {
@@ -262,19 +272,41 @@ namespace GmGard.Controllers.App
         }
 
         [HttpGet, Authorize(Roles = "Administrator,AdManager")]
+        public async Task<ActionResult> Voucher(string id)
+        {
+            if (!Guid.TryParse(id, out Guid guid))
+            {
+                return BadRequest();
+            }
+            var vouchers = await _udb.UserVouchers.Include(v => v.User).Where(v => v.VoucherID == guid).ToListAsync();
+            if (vouchers.Count == 0)
+            {
+                return NotFound();
+            }
+            return Json(vouchers.Select(v => Vouchers.FromUserVoucher(v, v.User.UserName)));
+        }
+
+        [HttpGet, Authorize(Roles = "Administrator,AdManager")]
         public async Task<ActionResult> Stock()
         {
             var stocks = await _udb.UserVouchers.Where(v => v.VoucherKind == UserVoucher.Kind.LuckyPoint || v.VoucherKind == UserVoucher.Kind.Prize)
                 .Select(v => new { voucher = v, name = v.User.UserName }).GroupBy(v => v.voucher.RedeemItem)
                 .ToDictionaryAsync(g => g.Key, g => g.Select(v => Vouchers.FromUserVoucher(v.voucher, v.name)));
+            var drawCount = await _udb.UserVouchers.Where(v => v.VoucherKind == UserVoucher.Kind.WheelA || v.VoucherKind == UserVoucher.Kind.WheelB)
+                .GroupBy(v => v.RedeemItem)
+                .ToDictionaryAsync(g => g.Key, g => g.AsEnumerable());
             var prizeStock = _wheelConfig.Value.WheelAPrizes
-                .Concat(_wheelConfig.Value.WheelBPrizes).Where(p => p.IsRealItem)
-                .Concat(_wheelConfig.Value.RedeemPrizes)
+                .Concat(_wheelConfig.Value.WheelBPrizes ?? Enumerable.Empty<WheelPrize>()).Where(p => p.IsRealItem)
+                .Concat(_wheelConfig.Value.RedeemPrizes ?? Enumerable.Empty<WheelPrize>())
                 .GroupBy(w => w.PrizeName)
                 .Select(p => new
                 {
                     prizeName = p.First().PrizeName,
-                    stock = stocks.GetValueOrDefault(p.First().RedeemItemName),
+                    stock = p.First().IsVoucher ? 
+                        stocks.SelectMany(m => m.Value).Where(v => v.Kind == UserVoucher.Kind.LuckyPoint && v.RedeemItem.Split('/')[1] == p.First().PrizeLPValue.ToString()) : 
+                        stocks.GetValueOrDefault(p.First().RedeemItemName),
+                    totalDrawCount = drawCount.GetValueOrDefault(p.First().PrizeName, Enumerable.Empty<UserVoucher>()).Count(),
+                    manualExchangedCount = stocks.GetValueOrDefault(string.Format("{0}（已折换）", p.First().PrizeName), Enumerable.Empty<Vouchers>()).Count(),
                 });
             return Json(prizeStock);
         }
@@ -340,6 +372,7 @@ namespace GmGard.Controllers.App
                     PrizeLPValue = prize.PrizeLPValue,
                     IsVoucher = prize.IsVoucher,
                     IsRealItem = prize.IsRealItem,
+                    IsCoupon = prize.IsCoupon,
                     ItemLink = prize.ItemLink,
                 },
             };
@@ -348,18 +381,9 @@ namespace GmGard.Controllers.App
                 await _semaphoreSlim.WaitAsync();
                 try
                 {
-                    var stock = await _udb.UserVouchers
-                            .Where(v => v.RedeemItem == prize.PrizeName && v.VoucherKind == UserVoucher.Kind.Prize && v.UserID == null)
-                            .FirstOrDefaultAsync();
-                    if (stock != null)
+                    if (await _udb.UserVouchers.AnyAsync(v => v.RedeemItem == prize.PrizeName && v.VoucherKind == UserVoucher.Kind.Prize && v.UserID == user.Id))
                     {
-                        stock.UserID = user.Id;
-                        stock.IssueTime = DateTime.Now;
-                        result.Voucher = Vouchers.FromUserVoucher(stock, user.UserName);
-                    }
-                    else
-                    {
-                        result.Prize.PrizeName = string.Format("{0}（售罄）", prize.PrizeName);
+                        result.Prize.PrizeName = string.Format("{0}（已折换）", prize.PrizeName);
                         var subVoucher = new UserVoucher
                         {
                             VoucherID = Guid.NewGuid(),
@@ -371,12 +395,51 @@ namespace GmGard.Controllers.App
                         _udb.UserVouchers.Add(subVoucher);
                         result.Voucher = Vouchers.FromUserVoucher(subVoucher, user.UserName);
                     }
+                    else
+                    {
+                        var stock = await _udb.UserVouchers
+                                .Where(v => v.RedeemItem == prize.PrizeName && v.VoucherKind == UserVoucher.Kind.Prize && v.UserID == null)
+                                .FirstOrDefaultAsync();
+                        if (stock != null)
+                        {
+                            stock.UserID = user.Id;
+                            stock.IssueTime = DateTime.Now;
+                            result.Voucher = Vouchers.FromUserVoucher(stock, user.UserName);
+                        }
+                        else
+                        {
+                            result.Prize.PrizeName = string.Format("{0}（售罄）", prize.PrizeName);
+                            var subVoucher = new UserVoucher
+                            {
+                                VoucherID = Guid.NewGuid(),
+                                UserID = user.Id,
+                                IssueTime = DateTime.Now,
+                                VoucherKind = UserVoucher.Kind.LuckyPoint,
+                                RedeemItem = string.Format("{0}/{0}", prize.PrizeLPValue),
+                            };
+                            _udb.UserVouchers.Add(subVoucher);
+                            result.Voucher = Vouchers.FromUserVoucher(subVoucher, user.UserName);
+                        }
+                    }
                     await _udb.SaveChangesAsync();
                 }
                 finally
                 {
                     _semaphoreSlim.Release();
                 }
+            }
+            else if (prize.IsCoupon)
+            {
+                var subVoucher = new UserVoucher
+                {
+                    VoucherID = Guid.NewGuid(),
+                    UserID = user.Id,
+                    IssueTime = DateTime.Now,
+                    VoucherKind = UserVoucher.Kind.Coupon,
+                    RedeemItem = prize.PrizeName,
+                };
+                _udb.UserVouchers.Add(subVoucher);
+                result.Voucher = Vouchers.FromUserVoucher(subVoucher, user.UserName);
             }
             else if (prize.IsVoucher)
             {
@@ -396,6 +459,10 @@ namespace GmGard.Controllers.App
 
         private async Task<ActionResult> SpinBAsync()
         {
+            if (_wheelConfig.Value.WheelBPrizes.Count == 0)
+            {
+                return BadRequest();
+            }
             var user = await _userManager.GetUserAsync(User);
             var success = await TrySpendLPAsync(user, _wheelConfig.Value.WheelBLPCost);
             if (!success)
@@ -406,7 +473,7 @@ namespace GmGard.Controllers.App
             var v = new UserVoucher
             {
                 VoucherID = Guid.NewGuid(),
-                VoucherKind = UserVoucher.Kind.WheelA,
+                VoucherKind = UserVoucher.Kind.WheelB,
                 IssueTime = DateTime.Now,
                 UserID = user.Id,
                 UseTime = DateTime.Now,

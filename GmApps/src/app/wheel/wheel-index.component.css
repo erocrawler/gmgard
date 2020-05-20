@@ -27,6 +27,7 @@
     background-position: calc(50% - 11px) 11px;
     position: relative;
     min-width: 372px;
+    height: 400px;
 }
 
 .prize-img {

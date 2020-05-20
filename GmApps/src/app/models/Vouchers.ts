@@ -23,6 +23,7 @@ export interface PrizeInfo {
   prizePic: string;
   isRealItem: boolean;
   isVoucher: boolean;
+  isCoupon: boolean;
   prizeLPValue: number;
   itemLink?: string;
 }
@@ -51,6 +52,8 @@ export interface SpinWheelResult {
 export interface StockInfo {
   prizeName: string;
   stock?: IVoucher[];
+  manualExchangedCount: number;
+  totalDrawCount: number;
 }
 
 export function newVoucher(v: IVoucher): Voucher {

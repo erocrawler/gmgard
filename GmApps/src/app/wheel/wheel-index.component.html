@@ -2,6 +2,7 @@
     <ng-container *ngIf="title">
         <mat-card-title>{{title}}</mat-card-title>
         <p *ngIf="!isActive">活动已结束！</p>
+        <p *ngIf="!hasWheelB && wheelType == 'b'">积分轮盘暂未开放，敬请期待！</p>
     </ng-container>
     <mat-card-content fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="space-evenly center" style="background-color: #ffc40a">
         <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
@@ -13,7 +14,7 @@
             <div class="wheel-center">
                 <button mat-fab color="warn" [disabled]="!canSpin" (click)="confirmSpin()"> 抽奖 </button>
             </div>
-            <canvas id="spinwheel" #spinwheel height="400" width="350"></canvas>
+            <canvas id="spinwheel" #spinwheel height="400" width="350" [hidden]="hideWheel"></canvas>
         </div>
         <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
             <a *ngFor="let d of display2" [href]="d.itemLink" target="_blank" rel="noopener">
@@ -29,17 +30,16 @@
             </button>
         </p>
         <div fxLayout="row" fxLayoutGap="10px">
-            <div fxFlex="50%" style="border-right: 1px solid lightgray;">
-                <p>幸运积分累计每获得满{{status?.ceilingCost}}点可以任选幸运商店中的一款产品！ </p>
+            <div fxFlex="50%" style="border-right: 1px solid lightgray;" *ngIf="status?.ceilingCost > 0">
+                <p>收集幸运积分{{status?.ceilingCost}}点可以任选幸运商店中的一款产品！ </p>
                 <p>
-                    {{ceilingProgress}}/{{status?.ceilingCost}}
                     <button mat-stroked-button color="accent" [disabled]="!canRedeemCeiling" (click)="confirmRedeemCeiling()">
                         <mat-icon>credit_card</mat-icon>兑换特别交换券
                     </button>
                 </p>
             </div>
-            <div fxFlex="50%">
-                <p>消耗幸运积分兑换店铺优惠券！</p>
+            <div fxFlex="50%" *ngIf="status?.couponPrizes">
+                <p>收集幸运积分兑换店铺优惠券！</p>
                 <p>
                     <button mat-stroked-button color="accent" (click)="confirmRedeemCoupon()">
                         <mat-icon>redeem</mat-icon>兑换店铺优惠券

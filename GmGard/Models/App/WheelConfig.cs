@@ -29,6 +29,7 @@ namespace GmGard.Models.App
         public string PrizePic { get; set; }
         public bool IsRealItem { get; set; }
         public bool IsVoucher { get; set; }
+        public bool IsCoupon { get; set; }
         public int PrizeLPValue { get; set; }
         public string ItemLink { get; set; }
         [JsonIgnore]

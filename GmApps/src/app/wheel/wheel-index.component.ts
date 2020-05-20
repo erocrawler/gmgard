@@ -11,7 +11,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { PrizeConfirmComponent } from "./dialogs/prize-confirm.component";
 import { RedeemCeilingComponent } from "./dialogs/redeem-ceiling.component";
 import { RedeemPointsComponent } from "./dialogs/redeem-points.component";
-import { of, concat, Subject  } from "rxjs";
+import { of, concat, Subject, Observable  } from "rxjs";
 import { User } from "../models/User";
 import { RedeemCouponComponent } from "./dialogs/redeem-coupon.component";
 
@@ -32,10 +32,10 @@ export class WheelIndexComponent implements OnInit {
   user: User;
   userPoints: number;
   luckyPoints: number;
-  totalPoints: number;
+  //totalPoints: number;
   ceilingCost: number;
-  ceilingCount: number;
-  ceilingProgress: number;
+  //ceilingCount: number;
+  //ceilingProgress: number;
   spinLimit: number;
   display1: PrizeInfo[];
   display2: PrizeInfo[];
@@ -57,7 +57,7 @@ export class WheelIndexComponent implements OnInit {
         this.wheelType = wheelType
         if (wheelType == 'a') {
           this.newWheel(this.status.wheelAPrizes)
-        } else {
+        } else if (wheelType == 'b' && this.status.wheelBCost > 0) {
           this.newWheel(this.status.wheelBPrizes)
         }
       })
@@ -75,9 +75,9 @@ export class WheelIndexComponent implements OnInit {
     this.spinLimit = status.wheelADailyLimit;
     let luckyVouchers = status.vouchers.filter(v => v instanceof LuckyPointVoucher);
     this.luckyPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
-    this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
-    this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
-    this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
+    //this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
+    //this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
+    //this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
     if (status.displayPrizes) {
       this.display1 = status.displayPrizes.slice(0, status.displayPrizes.length / 2);
       this.display2 = status.displayPrizes.slice(status.displayPrizes.length / 2);
@@ -90,6 +90,8 @@ export class WheelIndexComponent implements OnInit {
         return this.wheelType == 'b' && (idx % 2 == 0) ? '#ff0000' : '#fe7676';
       } else if (p.isVoucher) {
         return '#f69562';
+      } else if (p.isCoupon) {
+        return (idx % 2 == 0) ? '#fe7676' : '#f69562';
       }
       return '#fff7e2';
     }
@@ -114,6 +116,10 @@ export class WheelIndexComponent implements OnInit {
     this.wheel.draw(true);
   }
 
+  get hideWheel(): boolean {
+    return this.wheelType == 'b' && this.status.wheelBCost <= 0;
+  }
+
   confirmRedeemPoints() {
     this.dialog.open<RedeemPointsComponent, void, boolean>(RedeemPointsComponent)
       .afterClosed().subscribe(refresh => {
@@ -125,17 +131,17 @@ export class WheelIndexComponent implements OnInit {
   }
 
   get canRedeemCeiling(): boolean {
-    return (this.ceilingCount + 1) * this.status.ceilingCost <= this.totalPoints;
+    return this.status.ceilingCost <= this.luckyPoints;
   }
 
   confirmRedeemCeiling() {
     this.loading = true
-    this.wheelService.redeemCeiling().pipe(
-      zip(this.wheelService.getStatus())
-    ).subscribe(([voucher, status]) => {
-      this.loading = false
-      this.dialog.open<RedeemCeilingComponent, IVoucher>(RedeemCeilingComponent, { data: voucher });
-      this.updateStatus(status);
+    this.wheelService.redeemCeiling().subscribe(voucher => {
+      this.wheelService.getStatus().subscribe(status => {
+        this.loading = false
+        this.dialog.open<RedeemCeilingComponent, IVoucher>(RedeemCeilingComponent, { data: voucher });
+        this.updateStatus(status);
+      })
     }, err => {
       this.loading = false;
       this.snackBar.open("兑换失败，请刷新重试。", null, { duration: 3000 });
@@ -155,7 +161,7 @@ export class WheelIndexComponent implements OnInit {
   }
 
   get canSpin(): boolean {
-    if (!this.isActive || this.loading || this.spinning) {
+    if (!this.isActive || this.loading || this.spinning || this.hideWheel) {
       return false;
     }
     return true;
@@ -200,6 +206,8 @@ export class WheelIndexComponent implements OnInit {
         let prizeName = r.prize.prizeName;
         if (prizeName.endsWith("（售罄）")) {
           prizeName = prizeName.substring(0, prizeName.length - 4)
+        } else if (prizeName.endsWith("（已折换）")) {
+          prizeName = prizeName.substring(0, prizeName.length - 5)
         }
         for (let i = 0; i < prizes.length; i++) {
           if (prizes[i].prizeName === prizeName) {
@@ -207,7 +215,6 @@ export class WheelIndexComponent implements OnInit {
           }
         }
         this.spin(indexes[Math.floor(Math.random() * indexes.length)] + 1, r);
-        this.wheelService.getStatus().subscribe(s => this.updateStatus(s));
       }, err => {
           this.loading = false;
           this.snackBar.open("转盘失败，请刷新重试。", null, { duration: 3000 });
@@ -220,6 +227,7 @@ export class WheelIndexComponent implements OnInit {
     let onComplete = () => {
       this.spinning = false;
       this.dialog.open<PrizeConfirmComponent, SpinWheelResult>(PrizeConfirmComponent, { data: prize });
+      this.wheelService.getStatus().subscribe(s => this.updateStatus(s));
     };
 
     let winwheelAnimationLoop = () => {
