@@ -1,5 +1,5 @@
 <h1 mat-dialog-title>
-    兑换优惠券
+    兑换奖券
 </h1>
 <div>
     <p>当前幸运积分：{{points}} <span *ngIf="selectedOption">所需积分：{{selectedOption}}</span></p>
@@ -19,10 +19,10 @@
         <img [src]="result.prize.prizePic" [alt]="result.prize.prizeName">
     </p>
     <p>
-        优惠券代码：<span>{{result.voucher.voucherID}}</span>
+        奖券代码：<span>{{result.voucher.voucherID}}</span>
         <button (click)="copyVoucher()" mat-icon-button title="复制"><mat-icon>content_copy</mat-icon></button>
     </p>
-    <p>已获得优惠券可在奖券一览中查看。<a [href]="result.prize.itemLink" rel="noopener" target="_blank">前往店铺</a>使用优惠券！</p>
+    <p>已获得奖券可在奖券一览中查看。<a [href]="result.prize.itemLink" rel="noopener" target="_blank">前往店铺</a>使用奖券！</p>
 </div>
 <div mat-dialog-actions>
     <button mat-button mat-dialog-close="">关闭</button>

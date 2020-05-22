@@ -32,10 +32,10 @@ export class WheelIndexComponent implements OnInit {
   user: User;
   userPoints: number;
   luckyPoints: number;
-  //totalPoints: number;
+  totalPoints: number;
   ceilingCost: number;
-  //ceilingCount: number;
-  //ceilingProgress: number;
+  ceilingCount: number;
+  ceilingProgress: number;
   spinLimit: number;
   display1: PrizeInfo[];
   display2: PrizeInfo[];
@@ -75,9 +75,9 @@ export class WheelIndexComponent implements OnInit {
     this.spinLimit = status.wheelADailyLimit;
     let luckyVouchers = status.vouchers.filter(v => v instanceof LuckyPointVoucher);
     this.luckyPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
-    //this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
-    //this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
-    //this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
+    this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
+    this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
+    this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
     if (status.displayPrizes) {
       this.display1 = status.displayPrizes.slice(0, status.displayPrizes.length / 2);
       this.display2 = status.displayPrizes.slice(status.displayPrizes.length / 2);

@@ -111,11 +111,11 @@ namespace GmGard.Extensions
             {
                 return self;
             }
-            if (util.CheckAdmin(true))
+            if (util.CheckAdmin(true, true))
             {
                 self.LockTags = modified.LockTags;
             }
-            if (util.CheckAdmin())
+            if (util.CheckAdmin(includeAdManager: true))
             {
                 self.NoRate = modified.NoRate;
                 self.NoApprove = modified.NoApprove;

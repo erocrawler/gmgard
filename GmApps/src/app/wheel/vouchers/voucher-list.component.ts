@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChild, Output, EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IVoucher, VoucherKind } from '../../models/Vouchers';
+import { IVoucher, VoucherKind, PrizeInfo } from '../../models/Vouchers';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -21,6 +21,7 @@ export class VoucherListComponent implements OnInit {
 
   @Input() displayedColumns: string[];
   @Input() vouchers: Observable<IVoucher[]>;
+  @Input() prizeInfo: PrizeInfo[];
   @Output() change = new EventEmitter<IVoucher>(true);
 
   VoucherKindType = VoucherKind;
@@ -55,8 +56,27 @@ export class VoucherListComponent implements OnInit {
     return "";
   }
 
+  canExchange(v: IVoucher): boolean {
+    if (v.kind != VoucherKind.Prize && v.kind != VoucherKind.Coupon) {
+      return false;
+    }
+    return this.exchangeValue(v) > 0;
+  }
+
+  exchangeValue(v: IVoucher): number {
+    if (this.prizeInfo != null) {
+      const parenRe = /（.+）/;
+      const prizeName = v.redeemItem.replace(parenRe, "");
+      let p = this.prizeInfo.find(p => p.prizeName == prizeName);
+      if (p) {
+        return p.prizeLPValue;
+      }
+    }
+    return 0;
+  }
+
   exchange(v: IVoucher) {
-    alertDialog(this.dialog, { title: "奖品折换", message: `确认将${v.redeemItem}折换为幸运积分？折换后不可撤销。` }).subscribe(r => {
+    alertDialog(this.dialog, { title: "奖品折换", message: `确认将${v.redeemItem}折换为${this.exchangeValue(v)}幸运积分？折换后不可撤销。` }).subscribe(r => {
       if (!r) {
         return;
       }

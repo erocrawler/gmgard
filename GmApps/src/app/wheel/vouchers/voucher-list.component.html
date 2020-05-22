@@ -43,7 +43,7 @@
         <ng-container matColumnDef="exchange">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let element">
-                <button mat-icon-button color="primary" *ngIf="element.kind == VoucherKindType.Prize" [disabled]="!!element.useTime" (click)="exchange(element)">
+                <button mat-icon-button color="primary" *ngIf="canExchange(element)" [disabled]="!!element.useTime" (click)="exchange(element)">
                     <mat-icon>local_activity</mat-icon>
                 </button>
             </td>

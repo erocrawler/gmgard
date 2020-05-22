@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using GmGard.Models;
@@ -160,12 +161,17 @@ namespace GmGard.Controllers.App
                 return BadRequest();
             }
             var v = await _udb.UserVouchers.Where(v => v.User.UserName == User.Identity.Name && v.VoucherID == guid).FirstOrDefaultAsync();
-            if (v == null || v.VoucherKind != UserVoucher.Kind.Prize)
+            if (v == null || (v.VoucherKind != UserVoucher.Kind.Prize && v.VoucherKind != UserVoucher.Kind.Coupon))
             {
                 return BadRequest();
             }
-            var item = AllPrizes.First(p => p.IsRealItem && p.RedeemItemName == v.RedeemItem);
-            v.RedeemItem = string.Format("{0}（已折换）", v.RedeemItem);
+            var prizeName = new Regex("（.+）").Replace(v.RedeemItem, "");
+            var item = AllPrizes.FirstOrDefault(p => p.RedeemItemName == prizeName);
+            if (item == null || item.PrizeLPValue == 0)
+            {
+                return BadRequest();
+            }
+            v.RedeemItem = string.Format("{0}（已折换）", prizeName);
             v.UseTime = DateTime.Now;
             var subVoucher = new UserVoucher
             {
@@ -175,15 +181,18 @@ namespace GmGard.Controllers.App
                 VoucherKind = UserVoucher.Kind.LuckyPoint,
                 RedeemItem = string.Format("{0}/{0}", item.PrizeLPValue),
             };
-            var returnedVoucher = new UserVoucher
+            if (v.VoucherKind == UserVoucher.Kind.Prize)
             {
-                VoucherID = Guid.NewGuid(),
-                IssueTime = DateTime.Now,
-                RedeemItem = item.PrizeName,
-                VoucherKind = UserVoucher.Kind.Prize,
-            };
+                var returnedVoucher = new UserVoucher
+                {
+                    VoucherID = Guid.NewGuid(),
+                    IssueTime = DateTime.Now,
+                    RedeemItem = item.PrizeName,
+                    VoucherKind = UserVoucher.Kind.Prize,
+                };
+                _udb.UserVouchers.Add(returnedVoucher);
+            }
             _udb.UserVouchers.Add(subVoucher);
-            _udb.UserVouchers.Add(returnedVoucher);
             await _udb.SaveChangesAsync();
             return Json(Vouchers.FromUserVoucher(subVoucher, User.Identity.Name));
         }
@@ -196,10 +205,20 @@ namespace GmGard.Controllers.App
                 return BadRequest();
             }
             var user = await _userManager.GetUserAsync(User);
-            var success = await TrySpendLPAsync(user, _wheelConfig.Value.CeilingCost);
-            if (!success)
+            var ceilCount = await _udb.UserVouchers
+              .CountAsync(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.CeilingPrize);
+            var lps = await _udb.UserVouchers
+              .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.LuckyPoint).ToListAsync();
+            var spentLp = lps.Aggregate(0, (sum, v) =>
             {
-                return BadRequest(new { err = "not enough lp" });
+                var tokens = v.RedeemItem.Split('/');
+                int curValue = int.Parse(tokens[0]);
+                int totalValue = int.Parse(tokens[1]);
+                return sum + totalValue - curValue;
+            });
+            if ((ceilCount + 1) * _wheelConfig.Value.CeilingCost > spentLp)
+            {
+                return BadRequest();
             }
             var v = new UserVoucher
             {

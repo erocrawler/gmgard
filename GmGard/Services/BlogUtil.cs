@@ -225,12 +225,13 @@ namespace GmGard.Services
             _adminUtil.log(HttpContext.User.Identity.Name, "deleteblog", b.BlogID + ": " + b.BlogTitle, reason);
         }
 
-        public bool CheckAdmin(bool includeWriter = false)
+        public bool CheckAdmin(bool includeWriter = false, bool includeAdManager = false)
         {
             return HttpContext.User.Identity.IsAuthenticated
                 && ((HttpContext.User.IsInRole("Administrator")
                 || HttpContext.User.IsInRole("Moderator"))
-                || (includeWriter && HttpContext.User.IsInRole("Writers")));
+                || (includeWriter && HttpContext.User.IsInRole("Writers"))
+                || (includeAdManager && HttpContext.User.IsInRole("AdManager")));
         }
 
         public int getCaptchaId()

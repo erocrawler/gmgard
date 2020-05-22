@@ -475,7 +475,7 @@ namespace GmGard.Controllers
                 ModelState.AddModelError("", "内容不能为空或纯图片");
                 return View(blog);
             }
-            if (!_blogUtil.CheckAdmin())
+            if (!_blogUtil.CheckAdmin(includeAdManager: true))
             {
                 blog.Content = sanitizerService.Sanitize(blog.Content);
             }
