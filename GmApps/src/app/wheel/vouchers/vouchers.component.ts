@@ -23,10 +23,10 @@ export class VouchersComponent implements OnInit {
 
   updateStatus() {
     this.loading = true;
-    this.wheelService.getStatus().subscribe(s => {
+    this.wheelService.getStatusAndVoucher().subscribe(({status, vouchers}) => {
       this.loading = false;
-      this.prizeInfo = [].concat(s.wheelAPrizes || [], s.wheelBPrizes || []);
-      this.vouchers.next(s.vouchers.filter(v => v.kind != VoucherKind.WheelA && v.kind != VoucherKind.WheelB));
+      this.prizeInfo = [].concat(status.wheelAPrizes || [], status.wheelBPrizes || [], status.wheelCPrizes || []);
+      this.vouchers.next(vouchers.filter(v => v.kind != VoucherKind.WheelA && v.kind != VoucherKind.WheelB && v.kind != VoucherKind.WheelC));
     })
   }
 

@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 
 export interface SpinConfirmArg {
-  wheelType: 'a' | 'b';
+  wheelType: 'a' | 'b' | 'c';
   wheelCost: number;
   points: Observable<number>;
   remainSpin?: number;

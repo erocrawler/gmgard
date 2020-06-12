@@ -2,7 +2,6 @@
     <ng-container *ngIf="title">
         <mat-card-title>{{title}}</mat-card-title>
         <p *ngIf="!isActive">活动已结束！</p>
-        <p *ngIf="hideWheel">积分轮盘暂未开放，敬请期待！</p>
     </ng-container>
     <mat-card-content fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="space-evenly center" style="background-color: #ffc40a">
         <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
@@ -14,7 +13,7 @@
             <div class="wheel-center">
                 <button mat-fab color="warn" [disabled]="!canSpin" (click)="confirmSpin()"> 抽奖 </button>
             </div>
-            <canvas id="spinwheel" #spinwheel height="400" width="350" [hidden]="hideWheel"></canvas>
+            <canvas id="spinwheel" #spinwheel height="400" width="350"></canvas>
         </div>
         <div fxLayout="column" fxLayout.xs="row" ngClass.xs="add-gap">
             <a *ngFor="let d of display2" [href]="d.itemLink" target="_blank" rel="noopener">

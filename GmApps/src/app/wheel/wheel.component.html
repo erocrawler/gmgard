@@ -1,14 +1,19 @@
 <mat-card class="wheel-nav">
     <nav mat-tab-nav-bar fxLayoutAlign="end">
-        <a mat-tab-link
+        <a *ngIf="showA" mat-tab-link
            [routerLink]="['/wheel', {type: 'a'}]" routerLinkActive
            [active]="url === 'a'">
             棒棒糖轮盘
         </a>
-        <a mat-tab-link
+        <a *ngIf="showB" mat-tab-link
            [routerLink]="['/wheel', {type: 'b'}]" routerLinkActive
            [active]="url === 'b'">
             积分轮盘
+        </a>
+        <a *ngIf="showC" mat-tab-link
+           [routerLink]="['/wheel', {type: 'c'}]" routerLinkActive
+           [active]="url === 'c'">
+            特别轮盘
         </a>
         <a mat-tab-link
            [routerLink]="['/wheel', 'vouchers']" routerLinkActive

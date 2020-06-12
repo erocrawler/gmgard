@@ -13,12 +13,14 @@ namespace GmGard.Models.App
         public int WheelACost { get; set; }
         public int WheelADailyLimit { get; set; }
         public int WheelBCost { get; set; }
+        public int WheelCCost { get; set; }
+        public int WheelCTotalLimit { get; set; }
         public int CeilingCost { get; set; }
         public bool ShowRedeem { get; set; }
-        public IEnumerable<Vouchers> Vouchers { get; set; }
 
         public IEnumerable<WheelPrize> WheelAPrizes { get; set; }
         public IEnumerable<WheelPrize> WheelBPrizes { get; set; }
+        public IEnumerable<WheelPrize> WheelCPrizes { get; set; }
         public IEnumerable<WheelPrize> DisplayPrizes { get; set; }
         public IEnumerable<WheelPrize> CouponPrizes { get; set; }
 

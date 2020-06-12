@@ -579,6 +579,7 @@ namespace GmGard.Models
             Prize,
             CeilingPrize,
             Coupon,
+            WheelC,
         }
     }
 }

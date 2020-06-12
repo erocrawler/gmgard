@@ -11,12 +11,15 @@ namespace GmGard.Models.App
         public string Title { get; set; }
         public List<WheelPrize> WheelAPrizes { get; set; }
         public List<WheelPrize> WheelBPrizes { get; set; }
+        public List<WheelPrize> WheelCPrizes { get; set; }
         public List<WheelPrize> RedeemPrizes { get; set; }
         public DateTime EventStart { get; set; }
         public DateTime EventEnd { get; set; }
         public int WheelACost { get; set; }
         public int WheelADailyLimit { get; set; }
         public int WheelBLPCost { get; set; }
+        public int WheelCLPCost { get; set; }
+        public int WheelCTotalLimit { get; set; }
         public int CeilingCost { get; set; }
         public bool ShowRedeem { get; set; }
         public List<WheelPrize> DisplayPrizes { get; set; }

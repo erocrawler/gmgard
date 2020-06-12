@@ -2,8 +2,10 @@ import { Injectable, Inject } from "@angular/core";
 import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { HttpClient, HttpResponse } from "@angular/common/http";
 import { IVoucher, Voucher, newVoucher, SpinWheelStatus, SpinWheelResult, StockInfo, PrizeInfo } from "../models/Vouchers";
-import { Observable } from "rxjs";
+import { Observable, forkJoin } from "rxjs";
 import { map } from "rxjs/operators";
+
+export declare type StatusAndVouchers = { status: SpinWheelStatus, vouchers: IVoucher[]};
 
 @Injectable()
 export class WheelService {
@@ -12,25 +14,20 @@ export class WheelService {
       this.host = env.apiHost
   }
 
+  getVouchers(): Observable<IVoucher[]> {
+    return this.http.get<IVoucher[]>(this.host + "/api/Wheel/Get", { withCredentials: true })
+      .pipe(map(s => s.map(newVoucher)));
+  }
+
   getStatus(): Observable<SpinWheelStatus> {
-    return this.http.get<SpinWheelStatus>(this.host + "/api/Wheel/Get", { withCredentials: true })
-      .pipe(map(s => {
-        return {
-          title: s.title,
-          isActive: s.isActive,
-          userPoints: s.userPoints,
-          vouchers: s.vouchers.map(newVoucher),
-          wheelAPrizes: s.wheelAPrizes,
-          wheelBPrizes: s.wheelBPrizes,
-          wheelACost: s.wheelACost,
-          wheelBCost: s.wheelBCost,
-          ceilingCost: s.ceilingCost,
-          displayPrizes: s.displayPrizes,
-          couponPrizes: s.couponPrizes,
-          showRedeem: s.showRedeem,
-          wheelADailyLimit: s.wheelADailyLimit,
-        };
-      }));
+    return this.http.get<SpinWheelStatus>(this.host + "/api/Wheel/Status", { withCredentials: true });
+  }
+
+  getStatusAndVoucher(): Observable<StatusAndVouchers> {
+    return forkJoin({
+      status: this.getStatus(),
+      vouchers: this.getVouchers()
+    });
   }
 
   spin(type: string): Observable<SpinWheelResult> {

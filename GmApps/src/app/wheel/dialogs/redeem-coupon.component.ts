@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { WheelService } from '../wheel.service';
+import { WheelService, StatusAndVouchers } from '../wheel.service';
 import { PrizeInfo, SpinWheelResult, LuckyPointVoucher, SpinWheelStatus } from '../../models/Vouchers';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ClipboardService } from 'ngx-clipboard';
@@ -20,13 +20,13 @@ export class RedeemCouponComponent implements OnInit {
   points: number;
   loading = false;
 
-  constructor(@Inject(MAT_DIALOG_DATA) public listener: Subject<SpinWheelStatus>, private service: WheelService, private clipboard: ClipboardService, private snackBar: MatSnackBar) { }
+  constructor(@Inject(MAT_DIALOG_DATA) public listener: Subject<StatusAndVouchers>, private service: WheelService, private clipboard: ClipboardService, private snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
     this.loading = true;
-    this.service.getStatus().subscribe(r => {
+    this.service.getStatusAndVoucher().subscribe(r => {
       this.loading = false;
-      this.couponOptions = r.couponPrizes;
+      this.couponOptions = r.status.couponPrizes;
       this.points = r.vouchers.filter(v => v instanceof LuckyPointVoucher).reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
       this.listener.next(r);
     })
@@ -37,11 +37,11 @@ export class RedeemCouponComponent implements OnInit {
     this.loading = true;
     this.service.redeemCoupon(this.selectedOption)
       .pipe(
-        zip(this.service.getStatus())
+        zip(this.service.getStatusAndVoucher())
       ).subscribe(([r, status]) => {
         this.loading = false;
         this.result = r;
-        this.couponOptions = status.couponPrizes;
+        this.couponOptions = status.status.couponPrizes;
         this.points = status.vouchers.filter(v => v instanceof LuckyPointVoucher).reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
         this.listener.next(status);
       }, err => {

@@ -7,6 +7,7 @@ export enum VoucherKind {
   Prize,
   CeilingPrize,
   Coupon,
+  WheelC
 }
 
 export interface IVoucher {
@@ -32,16 +33,18 @@ export interface SpinWheelStatus {
   title: string;
   isActive: boolean;
   userPoints: number;
-  vouchers: IVoucher[];
   wheelAPrizes: PrizeInfo[];
   wheelBPrizes: PrizeInfo[];
+  wheelCPrizes: PrizeInfo[];
   displayPrizes: PrizeInfo[];
   couponPrizes: PrizeInfo[];
   wheelACost: number;
   wheelBCost: number;
+  wheelCCost: number;
   ceilingCost: number;
   showRedeem: boolean;
   wheelADailyLimit: number;
+  wheelCTotalLimit: number;
 }
 
 export interface SpinWheelResult {

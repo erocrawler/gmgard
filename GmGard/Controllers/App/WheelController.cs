@@ -63,27 +63,36 @@ namespace GmGard.Controllers.App
 
         // GET: api/wheel/get
         [HttpGet]
-        public async Task<JsonResult> Get()
+        public JsonResult Status()
         {
-            var user = await _userManager.GetUserAsync(User);
-            var vouchers = await _udb.UserVouchers.Where(v => v.UserID == user.Id).ToListAsync();
             return Json(new SpinWheelStatus
             {
                 Title = _wheelConfig.Value.Title,
-                IsActive = IsActive, 
-                UserPoints = user.Points, 
-                Vouchers = vouchers.Select(v => Vouchers.FromUserVoucher(v, user.UserName)),
+                IsActive = IsActive,
+                UserPoints = _expUtil.getUserPoints(User.Identity.Name),
                 WheelAPrizes = _wheelConfig.Value?.WheelAPrizes,
                 WheelBPrizes = _wheelConfig.Value?.WheelBPrizes,
+                WheelCPrizes = _wheelConfig.Value?.WheelCPrizes,
                 WheelACost = (_wheelConfig.Value?.WheelACost).GetValueOrDefault(0),
                 WheelBCost = (_wheelConfig.Value?.WheelBLPCost).GetValueOrDefault(0),
+                WheelCCost = (_wheelConfig.Value?.WheelCLPCost).GetValueOrDefault(0),
                 CeilingCost = (_wheelConfig.Value?.CeilingCost).GetValueOrDefault(0),
                 WheelADailyLimit = (_wheelConfig.Value?.WheelADailyLimit).GetValueOrDefault(0),
+                WheelCTotalLimit = (_wheelConfig.Value?.WheelCTotalLimit).GetValueOrDefault(0),
                 ShowRedeem = (_wheelConfig.Value?.ShowRedeem).GetValueOrDefault(false),
                 DisplayPrizes = _wheelConfig.Value?.DisplayPrizes,
                 CouponPrizes = _wheelConfig.Value?.CouponPrizes,
             });
         }
+
+        [HttpGet]
+        public async Task<JsonResult> Get()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var vouchers = await _udb.UserVouchers.Where(v => v.UserID == user.Id).ToListAsync();
+            return Json(vouchers.Select(v => Vouchers.FromUserVoucher(v, user.UserName)));
+        }
+
 
         // POST api/wheel/spin
         [HttpPost]
@@ -100,6 +109,10 @@ namespace GmGard.Controllers.App
             else if (wheelType == "b")
             {
                 return await SpinBAsync();
+            }
+            else if (wheelType == "c")
+            {
+                return await SpinCAsync();
             }
             return BadRequest();
         }
@@ -161,7 +174,7 @@ namespace GmGard.Controllers.App
                 return BadRequest();
             }
             var v = await _udb.UserVouchers.Where(v => v.User.UserName == User.Identity.Name && v.VoucherID == guid).FirstOrDefaultAsync();
-            if (v == null || (v.VoucherKind != UserVoucher.Kind.Prize && v.VoucherKind != UserVoucher.Kind.Coupon))
+            if (v == null || v.UseTime != null || (v.VoucherKind != UserVoucher.Kind.Prize && v.VoucherKind != UserVoucher.Kind.Coupon))
             {
                 return BadRequest();
             }
@@ -352,6 +365,10 @@ namespace GmGard.Controllers.App
 
         private async Task<ActionResult> SpinAAsync()
         {
+            if (_wheelConfig.Value.WheelACost <= 0 || _wheelConfig.Value.WheelAPrizes.Count == 0)
+            {
+                return BadRequest();
+            }
             var user = await _userManager.GetUserAsync(User);
             var todayDrawCount = await _udb.UserVouchers
                 .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && DbFunctions.DiffDays(v.IssueTime, DateTime.Today) == 0)
@@ -478,7 +495,7 @@ namespace GmGard.Controllers.App
 
         private async Task<ActionResult> SpinBAsync()
         {
-            if (_wheelConfig.Value.WheelBPrizes.Count == 0)
+            if (_wheelConfig.Value.WheelBLPCost <= 0 || _wheelConfig.Value.WheelBPrizes.Count == 0)
             {
                 return BadRequest();
             }
@@ -493,6 +510,34 @@ namespace GmGard.Controllers.App
             {
                 VoucherID = Guid.NewGuid(),
                 VoucherKind = UserVoucher.Kind.WheelB,
+                IssueTime = DateTime.Now,
+                UserID = user.Id,
+                UseTime = DateTime.Now,
+                RedeemItem = prize.PrizeName,
+            };
+            _udb.UserVouchers.Add(v);
+            SpinWheelResult result = await ProcessPrizeAsync(user, prize);
+            await _udb.SaveChangesAsync();
+            return Json(result);
+        }
+
+        private async Task<ActionResult> SpinCAsync()
+        {
+            if (_wheelConfig.Value.WheelCLPCost <= 0 || _wheelConfig.Value.WheelCPrizes.Count == 0)
+            {
+                return BadRequest();
+            }
+            var user = await _userManager.GetUserAsync(User);
+            var success = await TrySpendLPAsync(user, _wheelConfig.Value.WheelCLPCost);
+            if (!success)
+            {
+                return BadRequest(new { err = "not enough lp" });
+            }
+            var prize = DrawPrize(_wheelConfig.Value.WheelCPrizes);
+            var v = new UserVoucher
+            {
+                VoucherID = Guid.NewGuid(),
+                VoucherKind = UserVoucher.Kind.WheelC,
                 IssueTime = DateTime.Now,
                 UserID = user.Id,
                 UseTime = DateTime.Now,

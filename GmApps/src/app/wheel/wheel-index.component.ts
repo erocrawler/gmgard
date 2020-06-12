@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild, ElementRef } from "@angular/core";
 import gsap from "gsap";
-import { WheelService } from "./wheel.service";
+import { WheelService, StatusAndVouchers } from "./wheel.service";
 import { ActivatedRoute } from "@angular/router";
-import { map, zip, combineLatest } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { PrizeInfo, SpinWheelStatus, VoucherKind, LuckyPointVoucher, SpinWheelResult, IVoucher } from "../models/Vouchers";
 import * as moment from "moment";
 import { MatDialog } from "@angular/material/dialog";
@@ -11,7 +11,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { PrizeConfirmComponent } from "./dialogs/prize-confirm.component";
 import { RedeemCeilingComponent } from "./dialogs/redeem-ceiling.component";
 import { RedeemPointsComponent } from "./dialogs/redeem-points.component";
-import { of, concat, Subject, Observable  } from "rxjs";
+import { of, concat, Subject } from "rxjs";
 import { User } from "../models/User";
 import { RedeemCouponComponent } from "./dialogs/redeem-coupon.component";
 
@@ -29,6 +29,7 @@ export class WheelIndexComponent implements OnInit {
   wheelType = "a";
   wheel: WinWheel;
   status: SpinWheelStatus;
+  vouchers: IVoucher[];
   user: User;
   userPoints: number;
   luckyPoints: number;
@@ -36,7 +37,10 @@ export class WheelIndexComponent implements OnInit {
   ceilingCost: number;
   ceilingCount: number;
   ceilingProgress: number;
-  spinLimit: number;
+  spinALimit: number;
+  spinCLimit: number;
+  specialCost: number;
+  specialLimit: number;
   display1: PrizeInfo[];
   display2: PrizeInfo[];
 
@@ -49,16 +53,18 @@ export class WheelIndexComponent implements OnInit {
       this.user = d.user;
       this.userPoints = d.user.points;
     });
-    this.wheelService.getStatus().subscribe(status => {
-      this.updateStatus(status)
+    this.wheelService.getStatusAndVoucher().subscribe(sv => {
+      this.updateStatus(sv)
       this.route.params.pipe(
-        map(p => p["type"] == "b" ? "b" : "a"),
+        map(p => p["type"] || (this.status.wheelACost > 0 ? 'a' : 'b')),
       ).subscribe((wheelType) => {
         this.wheelType = wheelType
-        if (wheelType == 'a') {
+        if (wheelType == 'a' && this.status.wheelACost > 0) {
           this.newWheel(this.status.wheelAPrizes)
         } else if (wheelType == 'b' && this.status.wheelBCost > 0) {
           this.newWheel(this.status.wheelBPrizes)
+        } else if (wheelType == 'c' && this.status.wheelCCost > 0) {
+          this.newWheel(this.status.wheelCPrizes)
         }
       })
 
@@ -66,17 +72,19 @@ export class WheelIndexComponent implements OnInit {
     this.loading = true;
   }
 
-  private updateStatus(status: SpinWheelStatus) {
+  private updateStatus({status, vouchers}: StatusAndVouchers) {
     this.loading = false;
     this.title = status.title;
     this.isActive = status.isActive;
     this.status = status;
+    this.vouchers = vouchers;
     this.userPoints = status.userPoints;
-    this.spinLimit = status.wheelADailyLimit;
-    let luckyVouchers = status.vouchers.filter(v => v instanceof LuckyPointVoucher);
+    this.spinALimit = status.wheelADailyLimit;
+    this.spinCLimit = status.wheelCTotalLimit;
+    let luckyVouchers = vouchers.filter(v => v instanceof LuckyPointVoucher);
     this.luckyPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.currentValue, 0);
     this.totalPoints = luckyVouchers.reduce((total, l: LuckyPointVoucher) => total + l.totalValue, 0);
-    this.ceilingCount = status.vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
+    this.ceilingCount = vouchers.filter(v => v.kind == VoucherKind.CeilingPrize).length;
     this.ceilingProgress = this.totalPoints - this.ceilingCount * this.status.ceilingCost;
     if (status.displayPrizes) {
       this.display1 = status.displayPrizes.slice(0, status.displayPrizes.length / 2);
@@ -91,6 +99,9 @@ export class WheelIndexComponent implements OnInit {
       } else if (p.isVoucher) {
         return '#f69562';
       } else if (p.isCoupon) {
+        if (this.wheelType == 'c' && (idx == 2)) {
+          return '#ff0000';
+        }
         return (idx % 2 == 0) ? '#fe7676' : '#f69562';
       }
       return '#fff7e2';
@@ -116,17 +127,13 @@ export class WheelIndexComponent implements OnInit {
     this.wheel.draw(true);
   }
 
-  get hideWheel(): boolean {
-    return this.wheelType == 'b' && this.status.wheelBCost <= 0;
-  }
-
   confirmRedeemPoints() {
     this.dialog.open<RedeemPointsComponent, void, boolean>(RedeemPointsComponent)
       .afterClosed().subscribe(refresh => {
       if (!refresh) {
         return
       }
-      this.wheelService.getStatus().subscribe(s => this.updateStatus(s));
+      this.wheelService.getStatusAndVoucher().subscribe((sv) => this.updateStatus(sv));
     })
   }
 
@@ -137,10 +144,10 @@ export class WheelIndexComponent implements OnInit {
   confirmRedeemCeiling() {
     this.loading = true
     this.wheelService.redeemCeiling().subscribe(voucher => {
-      this.wheelService.getStatus().subscribe(status => {
+      this.wheelService.getStatusAndVoucher().subscribe((sv) => {
         this.loading = false
         this.dialog.open<RedeemCeilingComponent, IVoucher>(RedeemCeilingComponent, { data: voucher });
-        this.updateStatus(status);
+        this.updateStatus(sv);
       })
     }, err => {
       this.loading = false;
@@ -149,9 +156,9 @@ export class WheelIndexComponent implements OnInit {
   }
 
   confirmRedeemCoupon() {
-    let subject = new Subject<SpinWheelStatus>();
+    let subject = new Subject<StatusAndVouchers>();
     subject.subscribe(r => this.updateStatus(r));
-    this.dialog.open<RedeemCouponComponent, Subject<SpinWheelStatus>>(RedeemCouponComponent, { data: subject }).afterClosed().subscribe(_ => {
+    this.dialog.open<RedeemCouponComponent, Subject<StatusAndVouchers>>(RedeemCouponComponent, { data: subject }).afterClosed().subscribe(_ => {
       subject.unsubscribe();
     })
   }
@@ -161,7 +168,7 @@ export class WheelIndexComponent implements OnInit {
   }
 
   get canSpin(): boolean {
-    if (!this.isActive || this.loading || this.spinning || this.hideWheel) {
+    if (!this.isActive || this.loading || this.spinning) {
       return false;
     }
     return true;
@@ -171,11 +178,11 @@ export class WheelIndexComponent implements OnInit {
     let arg: SpinConfirmArg;
     let prizes: PrizeInfo[] = [];
     if (this.wheelType === 'a') {
-      let todaySpin = this.status.vouchers.filter(v => v.kind == VoucherKind.WheelA
+      let todaySpin = this.vouchers.filter(v => v.kind == VoucherKind.WheelA
         && moment(v.useTime).isSame(this.bjTimeNow, 'day'));
       arg = {
-        remainSpin: this.user.isAdmanager() ? null : (this.spinLimit - todaySpin.length),
-        points: concat(of(this.userPoints), this.wheelService.getStatus().pipe(map(s => {
+        remainSpin: this.user.isAdmanager() ? null : (this.spinALimit - todaySpin.length),
+        points: concat(of(this.userPoints), this.wheelService.getStatusAndVoucher().pipe(map(s => {
           this.updateStatus(s);
           return this.userPoints;
         }))),
@@ -183,14 +190,26 @@ export class WheelIndexComponent implements OnInit {
         wheelType: 'a'
       }
       prizes = this.status.wheelAPrizes
-    } else {
+    } else if (this.wheelType === 'b') {
       arg = {
-        points: concat(of(this.luckyPoints), this.wheelService.getStatus().pipe(map(s => {
+        points: concat(of(this.luckyPoints), this.wheelService.getStatusAndVoucher().pipe(map(s => {
           this.updateStatus(s);
           return this.luckyPoints;
         }))),
         wheelCost: this.status.wheelBCost,
         wheelType: 'b'
+      }
+      prizes = this.status.wheelBPrizes
+    } else {
+      let cSpin = this.vouchers.filter(v => v.kind == VoucherKind.WheelC)
+      arg = {
+        remainSpin: this.spinCLimit - cSpin.length,
+        points: concat(of(this.luckyPoints), this.wheelService.getStatusAndVoucher().pipe(map(s => {
+          this.updateStatus(s);
+          return this.luckyPoints;
+        }))),
+        wheelCost: this.status.wheelCCost,
+        wheelType: 'c'
       }
       prizes = this.status.wheelBPrizes
     }
@@ -227,7 +246,7 @@ export class WheelIndexComponent implements OnInit {
     let onComplete = () => {
       this.spinning = false;
       this.dialog.open<PrizeConfirmComponent, SpinWheelResult>(PrizeConfirmComponent, { data: prize });
-      this.wheelService.getStatus().subscribe(s => this.updateStatus(s));
+      this.wheelService.getStatusAndVoucher().subscribe(s => this.updateStatus(s));
     };
 
     let winwheelAnimationLoop = () => {
