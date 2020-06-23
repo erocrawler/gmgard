@@ -63,6 +63,7 @@ export function newVoucher(v: IVoucher): Voucher {
   switch (v.kind) {
     case VoucherKind.WheelA:
     case VoucherKind.WheelB:
+    case VoucherKind.WheelC:
       return new SpinWheelVoucher(v);
     case VoucherKind.CeilingPrize:
     case VoucherKind.Prize:

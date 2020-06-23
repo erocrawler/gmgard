@@ -25,10 +25,10 @@ namespace GmGard.Controllers.App
         private readonly ExpUtil _expUtil;
         private readonly UsersContext _udb;
         private readonly UserManager<UserProfile> _userManager;
-        private readonly IOptions<RaffleConfig> _config;
+        private readonly IOptionsSnapshot<RaffleConfig> _config;
 
         public RaffleController(
-            IOptions<RaffleConfig> config,
+            IOptionsSnapshot<RaffleConfig> config,
             UsersContext udb,
             UserManager<UserProfile> userManager,
             ExpUtil expUtil)

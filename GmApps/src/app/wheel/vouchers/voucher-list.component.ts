@@ -44,6 +44,8 @@ export class VoucherListComponent implements OnInit {
         return "棒棒糖抽奖"
       case VoucherKind.WheelB:
         return "幸运积分抽奖"
+      case VoucherKind.WheelC:
+        return "特别轮盘抽奖"
       case VoucherKind.LuckyPoint:
         return "幸运积分券"
       case VoucherKind.Prize:
