@@ -12,9 +12,7 @@ namespace GmGard.Services
 {
     public interface IUpload : IDisposable
     {
-        Task<bool> PutObjectAsync(string filepath, Stream data);
-
-//        bool PutObject(string filepath, Stream data);
+        Task<bool> PutObjectAsync(string filepath, string contentType, Stream data);
 
         Task DeleteObjectsAsync(List<string> filepath);
 
@@ -26,13 +24,10 @@ namespace GmGard.Services
     public class UploadUtil : IDisposable
     {
         private IUpload _client;
-        private ImageUtil _imageUtil;
-        public const string BucketName = LinodeUtil.BucketName;
 
-        public UploadUtil(IUpload client, ImageUtil imageUtil)
+        public UploadUtil(IUpload client)
         {
             _client = client;
-            _imageUtil = imageUtil;
         }
 
         // Save Images and Thumbs!
@@ -56,14 +51,14 @@ namespace GmGard.Services
                         img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
                         var ms = new MemoryStream();
                         img.SaveAsJpeg(ms);
-                        tasks.Add(_client.PutObjectAsync(imgname, ms).ContinueWith(t => { ms.Dispose(); return t.Result; }));
+                        tasks.Add(_client.PutObjectAsync(imgname, "image/jpeg", ms).ContinueWith(t => { ms.Dispose(); return t.Result; }));
                         imglist.Add("//" + _client.BucketName + "/" + imgname);
                         if (tmplist.Count == 0 && savethumb)
                         {
                             img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
                             var nms = new MemoryStream();
                             img.SaveAsJpeg(nms);
-                            tasks.Add(_client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), nms)
+                            tasks.Add(_client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), "image/jpeg", nms)
                                 .ContinueWith(t => { nms.Dispose(); return t.Result; }));
                         }
                     }
@@ -97,7 +92,7 @@ namespace GmGard.Services
             return "Images/upload/" + Math.Abs(code).ToString().Substring(0, 3) + (new Random().Next(100)) + DateTime.Now.ToString("ddHHmmssffff") + ".jpg";
         }
 
-        public async Task<bool> saveImageAsync(byte[] image, string imgname)
+        public async Task<bool> SaveImageAsync(byte[] image, string imgname)
         {
             using (var img = Image.Load(image))
             {
@@ -105,7 +100,7 @@ namespace GmGard.Services
                 using (var ms = new MemoryStream())
                 {
                     img.SaveAsJpeg(ms);
-                    return await _client.PutObjectAsync(imgname, ms);
+                    return await _client.PutObjectAsync(imgname, "image/jpeg", ms);
                 }
             }
         }
@@ -115,12 +110,11 @@ namespace GmGard.Services
             List<string> filenames = new List<string>(files.Count());
             foreach (var file in files)
             {
-                var filename = file;
                 var pos = file.IndexOf(_client.BucketName);
                 if (pos > 0)
                 {
                     // remove //static.gmgard.us/
-                    filename = file.Substring(pos + _client.BucketName.Length + 1);
+                    string filename = file.Substring(pos + _client.BucketName.Length + 1);
                     filenames.Add(filename);
                 }
             }
@@ -153,7 +147,7 @@ namespace GmGard.Services
                         using (var nms = new MemoryStream())
                         {
                             img.SaveAsJpeg(nms);
-                            await _client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), nms);
+                            await _client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), "image/jpeg", nms);
                         }
                     }
                 }

@@ -28,7 +28,7 @@ namespace GmGard.Services
             appSettings = setting.Value;
         }
 
-        public async Task<bool> PutObjectAsync(string filepath, Stream data)
+        public async Task<bool> PutObjectAsync(string filepath, string contentType, Stream data)
         {
             var filename = System.IO.Path.GetFileName(filepath);
             filepath = System.IO.Path.GetDirectoryName(filepath);
@@ -55,13 +55,6 @@ namespace GmGard.Services
             formData.Dispose();
             return response.IsSuccessStatusCode;
         }
-
-        //public bool PutObject(string filepath, Stream data)
-        //{
-        //    var response = PutObjectAsync(filepath, data);
-        //    response.Wait();
-        //    return response.Result;
-        //}
 
         public Task DeleteObjectsAsync(List<string> files)
         {

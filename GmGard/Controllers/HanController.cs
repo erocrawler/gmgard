@@ -144,7 +144,7 @@ namespace GmGard.Controllers
                         await _uploadUtil.DeleteFileAsync(hg.Logo);
                     }
                     hg.Logo = _uploadUtil.GenerateImageName(hg.GroupUri);
-                    await _uploadUtil.saveImageAsync(imgbtye, hg.Logo);
+                    await _uploadUtil.SaveImageAsync(imgbtye, hg.Logo);
                 }
                 hg.Intro = model.Intro;
                 hg.Title = model.Title;

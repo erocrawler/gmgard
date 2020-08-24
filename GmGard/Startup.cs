@@ -70,6 +70,7 @@ namespace GmGard
             services.Configure<AppSettingsModel>(Configuration.GetSection("ApplicationSettings"));
             services.Configure<EmailSender.EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.Configure<ElasticSearchProvider.ElasticSearchSettings>(Configuration.GetSection("ElasticSearchSettings"));
+            services.Configure<LinodeS3Config>(Configuration.GetSection("LinodeS3Config"));
             services.Configure<RegisterSettingsModel>(ConfigFromDataFile("App_Data/RegisterSettings.json"));
             services.Configure<DataSettingsModel>(ConfigFromDataFile("App_Data/DataSettings.json"));
             services.Configure<BackgroundSetting>(ConfigFromDataFile("App_Data/BackgroundSetting.json"));
@@ -172,7 +173,6 @@ namespace GmGard
             services.AddScoped<ConstantUtil>();
             services.AddScoped<ExpUtil>();
             services.AddScoped<ImageUtil>();
-            services.AddScoped<IUpload, LinodeUtil>();
             services.AddScoped<MessageUtil>();
             services.AddScoped<RatingUtil>();
             services.AddScoped<TagUtil>();
@@ -180,6 +180,15 @@ namespace GmGard
             services.AddScoped<UploadUtil>();
             services.AddScoped<WidgetUtil>();
             services.AddScoped<IRecommendationProvider, ElasticSearchProvider>();
+            bool enabelS3 = Configuration.GetSection("ApplicationSettings").GetValue<string>("UploadBackendType") == "LinodeS3";
+            if (enabelS3)
+            {
+                services.AddScoped<IUpload, LinodeS3>();
+            }
+            else
+            {
+                services.AddScoped<IUpload, LinodeUtil>();
+            }
             bool enabelES = Configuration.GetSection("ApplicationSettings").GetValue<string>("SearchBackendType") == "ElasticSearch";
             if (enabelES)
             {

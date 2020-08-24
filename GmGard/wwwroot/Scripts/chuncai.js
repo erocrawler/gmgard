@@ -109,8 +109,10 @@
             jumpPage( '/Account/Manage',"马上就跳转到个人设置页面去啦～～～");
         });
         $("#randomgmchuncai").click(function () {
-            chuncaiSay('打开一个随机资源的传送门喽~');
-            window.open('/Blog/Random');
+          jumpPage('/Blog/Random', '打开一个随机资源的传送门喽~');
+        });
+        $('#gachachuncai').click(function () {
+          jumpPage('/Home/App?path=/gacha', '课金~抽卡~');
         });
         $("#foods").click(function () {
             closeChuncaiMenu();

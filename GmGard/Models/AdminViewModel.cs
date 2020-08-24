@@ -47,6 +47,7 @@ namespace GmGard.Models
         public string UploadSecret { get; set; }
         [ReadOnlySetting, JsonIgnore]
         public string SearchBackendType  { get; set; }
+        public string UploadBackendType { get; set; }
     }
 
     public class DataSettingsModel

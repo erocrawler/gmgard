@@ -42,10 +42,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="3.3.111.30" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.2.0" />
     <PackageReference Include="HtmlSanitizer" Version="5.0.331" />
-    <PackageReference Include="HybridModelBinding" Version="0.17.0" />
+    <PackageReference Include="HybridModelBinding" Version="0.18.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.6">
       <PrivateAssets>all</PrivateAssets>
@@ -80,7 +81,7 @@
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="Terradue.ServiceModel.Syndication" Version="1.1.1" />
-    <PackageReference Include="FluentScheduler" Version="5.3.0" />
+    <PackageReference Include="FluentScheduler" Version="5.4.0" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="X.PagedList" Version="8.0.7" />
   </ItemGroup>
