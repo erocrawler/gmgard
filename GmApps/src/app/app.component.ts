@@ -1,8 +1,8 @@
-import { Component, OnInit, Type, NgModuleFactory, Compiler } from "@angular/core";
+import { Component, OnInit, Type } from "@angular/core";
 import { Router, ActivatedRoute, NavigationEnd } from "@angular/router";
-import "rxjs/add/operator/filter";
 
 import { Toolbar } from "./toolbar/toolbar";
+import { filter } from "rxjs/operators";
 
 @Component({
   selector: "app-root",
@@ -10,18 +10,18 @@ import { Toolbar } from "./toolbar/toolbar";
   styleUrls: ["./app.component.css"]
 })
 export class AppComponent implements OnInit {
-    title = "绅士应用";
-    toolbar: Type<Toolbar>;
+  title = "绅士应用";
+  toolbar: Type<Toolbar>;
 
-    constructor(private router: Router, private route: ActivatedRoute) { }
+  constructor(private router: Router, private route: ActivatedRoute) { }
 
-    ngOnInit() {
-        this.router.events
-            .filter(e => e instanceof NavigationEnd)
-            .subscribe(_e => {
-                const data = this.route.root.firstChild.snapshot.data;
-                this.title = data["title"] || this.title;
-                this.toolbar = data["toolbar"];
-            });
-    }
+  ngOnInit() {
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(_e => {
+        const data = this.route.root.firstChild.snapshot.data;
+        this.title = data["title"] || this.title;
+        this.toolbar = data["toolbar"];
+      });
+  }
 }

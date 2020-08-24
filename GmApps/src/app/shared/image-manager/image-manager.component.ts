@@ -1,5 +1,4 @@
-import { Observable, Observer } from "rxjs";
-import 'rxjs/add/observable/from';
+import { Observable, Observer, from } from "rxjs";
 import { Component, OnInit, EventEmitter, Output, Input } from "@angular/core";
 import { concatMap, toArray, tap } from "rxjs/operators";
 
@@ -24,7 +23,6 @@ export class ImageManagerComponent implements OnInit {
     update = new EventEmitter<File[]>();
 
     private loadFile(f: File): Observable<FileWithContent> {
-        const self = this;
         return Observable.create((observer: Observer<FileWithContent>) => {
             const reader = new FileReader();
             reader.onload = function (e) {
@@ -43,8 +41,7 @@ export class ImageManagerComponent implements OnInit {
 
     addFiles(fileElement: HTMLInputElement) {
         console.log("addFiles!")
-        const observables: Observable<FileWithContent>[] = [];
-        Observable.from(fileElement.files)
+        from(fileElement.files)
             .pipe(
                 concatMap(this.loadFile),
                 toArray(),

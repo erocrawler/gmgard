@@ -6,7 +6,7 @@ import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { Router, ActivatedRoute, Params } from "@angular/router";
 import { GachaPool } from "app/gacha/gacha-pools";
-import { combineLatest, race, first } from "rxjs/operators";
+import { combineLatest, race, first, switchMap } from "rxjs/operators";
 import { fromEvent, forkJoin } from "rxjs";
 
 @Component({
@@ -100,7 +100,7 @@ export class GachaIndexComponent implements OnInit {
                 const doGacha = () => {
                     this.progressMode = "query";
                     this.gachaService.gacha(this.pool.poolName, count)
-                        .switchMap(r => {
+                        .pipe(switchMap(r => {
                             if (!r.success) {
                                 throw new Error(r.errorMessage);
                             }
@@ -111,7 +111,7 @@ export class GachaIndexComponent implements OnInit {
                                 return o;
                             });
                             return forkJoin(...obs)
-                        })
+                        }))
                         .subscribe(_ => {
                             this.router.navigate(["/gacha", "result", { count, showType: this.pool.poolName }])
                         },

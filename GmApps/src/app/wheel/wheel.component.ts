@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute, UrlSegment, NavigationEnd } from '@angular/router';
-import { first } from 'rxjs/operators';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { first, filter } from 'rxjs/operators';
 import { User } from '../models/User';
 import { WheelService } from './wheel.service';
 
@@ -38,7 +38,7 @@ export class WheelComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.router.events.filter(f => f instanceof NavigationEnd)
+    this.router.events.pipe(filter(f => f instanceof NavigationEnd))
       .subscribe(_ => this.updateUrl());
     this.route.data.subscribe((d: { user: User }) => {
       this.isAdmin = d.user.isAdmanager()

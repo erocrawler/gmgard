@@ -2,7 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute, NavigationEnd } from "@angular/router";
 import { GachaService } from "./gacha.service";
 import { GachaPool } from "app/gacha/gacha-pools";
-import { first } from "rxjs/operators"
+import { first, filter } from "rxjs/operators"
 
 @Component({
   templateUrl: "./gacha.component.html",
@@ -32,7 +32,7 @@ export class GachaComponent implements OnInit {
 
     ngOnInit() {
         this.updateUrl();
-        this.router.events.filter(f => f instanceof NavigationEnd)
+        this.router.events.pipe(filter(f => f instanceof NavigationEnd))
           .subscribe((s: NavigationEnd) => this.updateUrl())
         this.gachaService.getPools().subscribe(pools => {
             this.loading = false;

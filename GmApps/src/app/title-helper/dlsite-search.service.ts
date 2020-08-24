@@ -5,6 +5,7 @@ import { HttpClient } from "@angular/common/http";
 
 import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { DLsite } from "../models/DLsite";
+import { map } from "rxjs/operators";
 
 @Injectable()
 export class DlsiteSearchService {
@@ -20,11 +21,11 @@ export class DlsiteSearchService {
             this.host + "/api/Search/Dlsite",
             JSON.stringify(title),
             { withCredentials: true, headers: { "Content-Type": "application/json" } })
-            .map(resp => {
+            .pipe(map(resp => {
                 if (resp.success) {
                     return (resp.entries || []) as DLsite[];
                 }
                 throw new Error();
-            });
+            }));
     }
 }

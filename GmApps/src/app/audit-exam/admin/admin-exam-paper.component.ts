@@ -1,4 +1,5 @@
-import { Observable, of } from "rxjs";
+import { of, zip } from "rxjs";
+import { catchError, switchMap } from "rxjs/operators";
 import { Component, OnInit } from "@angular/core";
 import { Router, ActivatedRoute, Params } from "@angular/router";
 
@@ -24,19 +25,19 @@ export class AdminExamPaperComponent extends ExamPaperComponent implements OnIni
     ngOnInit() {
         this.allVersions = this.service.currentExamVersions();
         this.examActive = false;
-        this.route.params.switchMap((r: Params) => {
+        this.route.params.pipe(switchMap((r: Params) => {
             this.username = r["user"] || "";
             this.version = r["version"] || "";
             if (this.username && this.version) {
                 this.requestActive = true;
-                return this.service.getExam(this.version).zip(this.service.getExamResultForUser(this.username, this.version))
-                    .catch(err => {
+              return zip(this.service.getExam(this.version), this.service.getExamResultForUser(this.username, this.version))
+                    .pipe(catchError(err => {
                         console.log(err);
                         return of(null);
-                    });
+                    }));
             }
             return of(null);
-        }).subscribe(result => {
+        })).subscribe(result => {
             this.requestActive = false;
             if (!result || !result[1]) {
                 this.currentResult = null;

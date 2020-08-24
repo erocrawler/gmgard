@@ -1,7 +1,4 @@
-import { Observable, of } from "rxjs";
-import "rxjs/add/observable/of";
-import "rxjs/add/operator/concat";
-import "rxjs/add/operator/map";
+import { Observable, of, concat } from "rxjs";
 import { map, switchMap, tap } from "rxjs/operators";
 
 import { Injectable, Inject } from "@angular/core";
@@ -35,7 +32,7 @@ export class AuthService {
   isAuthenticated(): Observable<boolean> {
     if (this.isLoggedIn === null) {
       return this.http.get<{ isAuthenticated: boolean }>(this.host + "/api/Account/IsAuthenticated", { withCredentials: true })
-        .map(resp => this.isLoggedIn = resp.isAuthenticated as boolean);
+        .pipe(map(resp => this.isLoggedIn = resp.isAuthenticated as boolean));
     }
     return of(this.isLoggedIn);
   }
@@ -61,7 +58,7 @@ export class AuthService {
         return of(null);
       }), tap(u => this.user = u));
     if (this.user) {
-      ret = of(this.user).concat(ret);
+      ret = concat(of(this.user), ret);
     }
     return ret;
   }
@@ -77,14 +74,15 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.getAntiforgeryToken().switchMap(token => {
-      const req = {};
-      req[token.fieldName] = token.value;
-      return this.http.post(this.host + "/api/Account/LogOut", req, { withCredentials: true });
-    }).map(_ => {
-      this.isLoggedIn = false;
-      this.user = null;
-    });
+    return this.getAntiforgeryToken().pipe(
+      switchMap(token => {
+        const req = {};
+        req[token.fieldName] = token.value;
+        return this.http.post(this.host + "/api/Account/LogOut", req, { withCredentials: true });
+      }), map(_ => {
+        this.isLoggedIn = false;
+        this.user = null;
+      }));
   }
 
   twoFactorAuthLogin(rememberMe: boolean, rememberMachine: boolean, twoFactorCode: string): Observable<LoginResult> {
@@ -119,7 +117,7 @@ export class AuthService {
   }
 
   disable2Fa(reset: boolean): Observable<boolean> {
-    return this.http.post(this.host + "/api/Account/Disable2Fa", null, { params: { "reset": reset.toString() },  observe: "response", withCredentials: true })
+    return this.http.post(this.host + "/api/Account/Disable2Fa", null, { params: { "reset": reset.toString() }, observe: "response", withCredentials: true })
       .pipe(map(resp => {
         return resp.ok;
       }));

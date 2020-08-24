@@ -11,6 +11,7 @@ import { HintDialogComponent } from './treasure-hunt/hint-dialog.component';
 import { IndexComponent } from './eternal-circle/index.component';
 import { PlayComponent } from './eternal-circle/play.component';
 import { AlertModule } from 'app/shared/alert-dialog';
+import { AdvGameModule } from '../shared/adv-game/adv-game.module';
 
 const routes: Routes = [
   {
@@ -43,6 +44,7 @@ const routes: Routes = [
     FlexLayoutModule,
     FormsModule,
     AlertModule,
+    AdvGameModule,
     RouterModule.forChild(routes),
   ],
   entryComponents: [PuzzleDetailComponent, HintDialogComponent],

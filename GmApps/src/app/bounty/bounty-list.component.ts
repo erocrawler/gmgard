@@ -1,5 +1,4 @@
 import { Observable, of } from "rxjs";
-import "rxjs/add/operator/share";
 
 import { Component, OnInit, Inject } from "@angular/core";
 import { Router, ActivatedRoute, Params } from "@angular/router";
@@ -10,7 +9,7 @@ import { PageScrollService, PageScrollInstance } from "ngx-page-scroll-core";
 import { BountyService } from "./bounty.service";
 import { Paged } from "../models/Paged";
 import { BountyPreview, BountyShowType } from "../models/Bounty";
-import { first } from "rxjs/operators";
+import { first, switchMap, share, catchError } from "rxjs/operators";
 
 @Component({
   selector: "bounty-list",
@@ -34,16 +33,18 @@ export class BountyListComponent implements OnInit {
     private navSource = new Observable<Paged<BountyPreview>>();
 
     ngOnInit() {
-        this.navSource = this.route.queryParams
-            .switchMap((query: Params) => {
+      this.navSource = this.route.queryParams
+          .pipe(
+            switchMap((query: Params) => {
                 const page = +query["page"] || 1;
                 this.showType = query["show"] || "All";
                 this.loading = true;
-                return this.service.list(this.showType, page).catch(err => {
+                return this.service.list(this.showType, page).pipe(catchError(err => {
                     this.snackBar.open("列表加载失败，请刷新重试。", null, { duration: 3000 });
                     return of<Paged<BountyPreview>>();
-                });
-            }).share();
+                }));
+            }),
+            share());
         this.navSource.subscribe((bounties: Paged<BountyPreview>) => {
                 this.bounties = bounties;
                 this.loading = false;

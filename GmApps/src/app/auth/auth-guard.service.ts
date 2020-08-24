@@ -9,7 +9,6 @@ import {
 import { AuthService } from "./auth.service";
 
 import { Observable } from "rxjs/Observable";
-import "rxjs/add/operator/do";
 import { of, combineLatest } from "rxjs";
 import { map, catchError } from "rxjs/operators";
 import { User } from "../models/User";

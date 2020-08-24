@@ -5,6 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
 interface Statistics {
   total: number;
@@ -39,12 +40,12 @@ export class StockComponent implements OnInit {
   statistics: Statistics;
 
   ngOnInit(): void {
-    this.route.params.map(p => {
+    this.route.params.pipe(map(p => {
       return {
         mode: String(p['mode'] || ''),
         userName: String(p['name'] || ''),
       };
-    }).subscribe(params => {
+    })).subscribe(params => {
       if (params.mode == "user") {
         this.displayMode = 'user'
         this.userLookupName = params.userName;

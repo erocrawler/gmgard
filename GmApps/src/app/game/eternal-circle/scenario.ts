@@ -1,37 +1,7 @@
 import { EternalCircleProgress } from "app/models/EternalCircleStatus";
+import { Scenario as S, Effects } from "../../shared/adv-game/scenario";
 
-export interface Narrator {
-  avatar: string
-  name: string
-  display?: string
-}
-
-export interface Dialog {
-  bgImg: string
-  texts: [string, string][]
-  effect?: { pos: number, kind: Effects }[]
-}
-
-export interface Scenario {
-  title: EternalCircleProgress
-  dialogs: Dialog[]
-  narrators: Narrator[]
-  next?: Choice[]
-  prev?: EternalCircleProgress
-}
-
-export interface Choice {
-  text: string
-  result: EternalCircleProgress
-}
-
-export enum Effects {
-  SPARK,
-  SHAKE,
-  FLASH,
-  TITLE,
-  CENTER_BG,
-}
+type Scenario = S<EternalCircleProgress>;
 
 const Prologue: Scenario = {
   title: EternalCircleProgress.Prologue,

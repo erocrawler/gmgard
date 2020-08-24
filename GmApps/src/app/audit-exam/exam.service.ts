@@ -7,6 +7,7 @@ import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { Exam } from "./exam";
 import { ExamSubmission } from "../models/ExamSubmission";
 import { ExamResult } from "../models/ExamResult";
+import { map } from "rxjs/operators";
 
 @Injectable()
 export class ExamService {
@@ -27,7 +28,7 @@ export class ExamService {
 
     saveExamDraft(draft: ExamSubmission): Observable<boolean> {
         return this.http.put(this.host + "/api/AuditExam/Draft", draft, { withCredentials: true, observe: "response" })
-            .map(resp => resp.ok);
+            .pipe(map(resp => resp.ok));
     }
 
     getExamDraft(version: string): Observable<ExamSubmission> {

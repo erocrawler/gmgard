@@ -1,6 +1,4 @@
-import { Observable, of } from "rxjs";
-import "rxjs/add/observable/merge";
-import "rxjs/add/operator/scan";
+import { Observable, of, merge } from "rxjs";
 
 import { Injectable, Inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
@@ -13,7 +11,7 @@ import { GachaResult, GachaStats, GachaItemDetails } from "../models/GachaResult
 import { GachaImageAnimation } from "./gacha-image-animation";
 import { GachaVideoAnimation } from "./gacha-video-animation";
 import { IGachaAnimation } from "./gacha-animation";
-import { tap, map } from "rxjs/operators";
+import { tap, map, scan } from "rxjs/operators";
 import { GachaSetting } from "app/models/GachaSetting";
 import { GachaPool, GACHA_POOLS } from "app/gacha/gacha-pools";
 
@@ -187,9 +185,11 @@ export class GachaService {
                 });
             }));
         }
-        return Observable.merge(...progress).scan((acc: Accumulator, val: [number, number]) => {
+      return merge(...progress).pipe(
+        scan((acc: Accumulator, val: [number, number]) => {
             acc.accumulate(val[0], val[1]);
             return acc;
-        }, new Accumulator()).map(v => v.total);
+        }, new Accumulator()),
+        map(v => v.total));
     }
 }
