@@ -11,24 +11,26 @@ import { GachaItemDetails } from "../models/GachaResult";
 })
 export class CardDetailComponent implements OnInit {
 
-    constructor(@Inject(MAT_DIALOG_DATA) public data: string, private gachaService: GachaService) { }
+  constructor(@Inject(MAT_DIALOG_DATA) public data: string, private gachaService: GachaService) { }
 
-    loading = true;
-    item: GachaItemDetails;
+  loading = true;
+  item: GachaItemDetails;
+  url: string;
 
-    private unknownItem: GachaItemDetails = {
-        name: "unknown",
-        title: "???",
-        description: "??????",
-        itemCount: 0,
-        rarity: 0,
-    }
+  private unknownItem: GachaItemDetails = {
+    name: "unknown",
+    title: "???",
+    description: "??????",
+    itemCount: 0,
+    rarity: 0,
+  }
 
-    ngOnInit() {
-        this.gachaService.getDetails(this.data).subscribe(i => {
-            this.loading = false;
-            this.item = i || this.unknownItem;
-        });
-    }
+  ngOnInit() {
+    this.url = this.gachaService.cardUrl(this.data)
+    this.gachaService.getDetails(this.data).subscribe(i => {
+      this.loading = false;
+      this.item = i || this.unknownItem;
+    });
+  }
 
 }

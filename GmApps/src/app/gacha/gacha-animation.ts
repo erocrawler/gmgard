@@ -1,5 +1,9 @@
 export interface IGachaAnimation {
-    playStart(): Promise<boolean>
-    playGacha(card: HTMLElement): Promise<boolean>
-    stop(): void
+  play(cards: IGachaCard[]): Promise<boolean>
+  stop(): void
+}
+
+export interface IGachaCard {
+  setState(state: string): void
+  getState(): string
 }

@@ -76,6 +76,12 @@ namespace GmGard.Models
             真相的探求者,
             资本的力量,
             轮回独断,
+            永恒的恋人,
+            好朋友,
+            高级搜集者,
+            克苏鲁机械,
+            至暗の交易,
+            迷影重重
         }
 
         private static readonly Dictionary<UserProfession, string> professionName = new Dictionary<UserProfession, string>
@@ -147,6 +153,12 @@ namespace GmGard.Models
             { UserProfession.资本的力量, "资本的力量" },
             { UserProfession.绅士之魂, "绅士之魂" },
             { UserProfession.轮回独断, "轮回独断" },
+            { UserProfession.永恒的恋人, "永恒的恋人" },
+            { UserProfession.好朋友, "好朋友" },
+            { UserProfession.高级搜集者, "高级搜集者" },
+            { UserProfession.克苏鲁机械, "克苏鲁机械" },
+            { UserProfession.至暗の交易, "至暗の交♂易" },
+            { UserProfession.迷影重重, "迷影重重" }
         };
 
         public static Dictionary<UserProfession, string> AllTitleBackground { get; } = new Dictionary<UserProfession, string>

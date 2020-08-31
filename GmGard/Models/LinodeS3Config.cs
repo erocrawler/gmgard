@@ -11,5 +11,6 @@ namespace GmGard.Models
         public string AccessKey { get; set; }
         public string ServiceUrl { get; set; }
         public string BucketName { get; set; }
+        public string HostName { get; set; }
     }
 }

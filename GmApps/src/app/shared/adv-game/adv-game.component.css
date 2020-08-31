@@ -1,11 +1,6 @@
 .main-scene {
-    max-width: 800px;
     user-select: none;
 }
-
-    .main-scene .mat-card-footer {
-        max-width: 800px;
-    }
 
 .bgimg {
     position: relative;

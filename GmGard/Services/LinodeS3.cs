@@ -13,11 +13,11 @@ namespace GmGard.Services
 {
     public class LinodeS3 : IUpload
     {
-        public string BucketName => $"{bucketName}.{serviceUrl}";
+        public string BucketName => hostName;
 
         private AmazonS3Client client { get; set; }
         private string bucketName { get; set; }
-        private string serviceUrl { get; set; }
+        private string hostName { get; set; }
 
         public LinodeS3(IOptions<LinodeS3Config> config)
         {
@@ -26,7 +26,7 @@ namespace GmGard.Services
                 ServiceURL = "https://" + config.Value.ServiceUrl,
             };
             client = new AmazonS3Client(config.Value.AccessKey, config.Value.SecretKey, c);
-            serviceUrl = config.Value.ServiceUrl;
+            hostName = config.Value.HostName;
             bucketName = config.Value.BucketName;
         }
 

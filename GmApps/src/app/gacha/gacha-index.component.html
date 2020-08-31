@@ -3,6 +3,7 @@
   <p>
     <button [disabled]="loadActive" color="primary" mat-raised-button (click)="confirm(1)">召唤1次</button> &nbsp;
     <button [disabled]="loadActive" color="primary" mat-raised-button (click)="confirm(10)">召唤10次</button>
+    <button *ngIf="pool && pool.hasIntro" color="accent" style="float:right" mat-raised-button [routerLink]="['/gacha', 'intro', {showType: pool.poolName}]">观看剧情</button>
   </p>
   <mat-progress-bar *ngIf="loadActive; else settingsBlock" [mode]="progressMode" [value]="progressValue" ></mat-progress-bar>
   <ng-template #settingsBlock>

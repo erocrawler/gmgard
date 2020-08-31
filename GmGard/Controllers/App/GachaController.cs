@@ -160,6 +160,13 @@ namespace GmGard.Controllers.App
             public override DateTime? EndTime => new DateTime(2019, 4, 30, 23, 59, 59);
         }
 
+        private class August2020Pool : GachaSetting
+        {
+            public override GachaPool.PoolName PoolName => GachaPool.PoolName.August2020;
+            public override DateTime? StartTime => new DateTime(2020, 8, 29, 0, 0, 0);
+            public override DateTime? EndTime => new DateTime(2020, 9, 30, 23, 59, 59);
+        }
+
         private readonly Dictionary<GachaPool.PoolName, GachaSetting> AllPools = new Dictionary<GachaPool.PoolName, GachaSetting>
         {
             { GachaPool.PoolName.Common, new CommonPool() },
@@ -167,7 +174,8 @@ namespace GmGard.Controllers.App
             { GachaPool.PoolName.Touhou1st, new Touhou1stPool() },
             { GachaPool.PoolName.April2018, new April2018Pool() },
             { GachaPool.PoolName.June2018, new June2018Pool() },
-            { GachaPool.PoolName.April2019, new April2019Pool() }
+            { GachaPool.PoolName.April2019, new April2019Pool() },
+            { GachaPool.PoolName.August2020, new August2020Pool() }
         };
 
         private bool ValidatePool(GachaPool.PoolName name)

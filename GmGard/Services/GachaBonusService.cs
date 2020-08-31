@@ -239,7 +239,7 @@ namespace GmGard.Services
                 {
                     progress = Count;
                 }
-                return ($"称号【{UserQuest.ProfessionName(Title)}】: {progress}/{Count}");
+                return $"称号【{UserQuest.ProfessionName(Title)}】： {Name} {progress}/{Count}";
             }
         }
 
@@ -284,7 +284,7 @@ namespace GmGard.Services
                 {
                     progress = Count;
                 }
-                return ($"称号【{UserQuest.ProfessionName(Title)}】: {progress}/{Count}");
+                return ($"称号【{UserQuest.ProfessionName(Title)}】： {progress}/{Count}");
             }
         }
 
@@ -488,6 +488,12 @@ namespace GmGard.Services
                 { "echo", 1 }, { "IS", 1 }, { "lzone", 1 }, { "小豆梓", 1 }, { "悠久", 1 }, { "杉崎key", 1 },
                 { "人间入间", 1 }, { "傲沉", 1 }
             }, UserQuest.UserProfession.愚人节快乐, true),
+            new PoolCountTitleCondition(GachaPool.PoolName.August2020, 1, UserQuest.UserProfession.迷影重重),
+            new CombinedGachaTitleCondition(new Dictionary<string, int> {{ "人间入间2", 1 }, { "L娘", 1 }}, UserQuest.UserProfession.永恒的恋人),
+            new CombinedGachaTitleCondition(new Dictionary<string, int> {{ "前站长", 3 }, { "响学研究协会长", 3 }, { "L娘", 3 }}, UserQuest.UserProfession.好朋友),
+            new CombinedGachaTitleCondition(new Dictionary<string, int> {{ "Duo", 1 }, { "F酱", 1 }, { "人间入间2", 1 }, { "杉崎key2", 1 }, { "林檎", 1 }, { "漫游火焰", 1 }, { "真诗君", 1 }, { "里奥", 1 }  }, UserQuest.UserProfession.高级搜集者),
+            new SingleGachaTitleCondition("抽卡姬", 1, UserQuest.UserProfession.克苏鲁机械),
+            new SingleGachaTitleCondition("黑市商人无末", 1, UserQuest.UserProfession.至暗の交易),
         };
     }
 }

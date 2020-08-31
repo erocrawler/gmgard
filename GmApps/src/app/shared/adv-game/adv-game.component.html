@@ -1,5 +1,5 @@
-<mat-card class="main-scene" (click)="handleClick()">
-    <div class="mat-card-image bgimg" [ngClass]="currentEffect" [attr.data-title]="title" [ngStyle]="{'width.px': imgWidth, 'height.px': imgHeight}">
+<mat-card class="main-scene" (click)="handleClick()" fxLayout="column">
+    <div fxFlexAlign="center" class="mat-card-image bgimg" [ngClass]="currentEffect" [attr.data-title]="title" [ngStyle]="{'width.px': imgWidth, 'height.px': imgHeight}">
         <img *ngIf="bgimg1" [src]="bgimg1" alt="" [ngClass]="{'show': show1}">
         <img *ngIf="bgimg2" [src]="bgimg2" alt="" [ngClass]="{'show': !show1}">
     </div>
@@ -12,8 +12,8 @@
         <span *ngIf="waitClick"><img style="height:15px" src="/assets/eternal-circle/nextpage.gif" alt="nextpage" /></span>
     </p>
     <mat-progress-bar *ngIf="loading" [mode]="loadingMode" [value]="loadingProgress"></mat-progress-bar>
-    <mat-card-footer *ngIf="choices">
-        <button class="choice-btn" mat-button color="primary" *ngFor="let ch of choices" (click)="handleChoice($event, ch.result)">{{ch.text}}</button>
+    <mat-card-footer  fxLayout="column" *ngIf="choices">
+        <button class="choice-btn" mat-button color="primary" fxFlex *ngFor="let ch of choices" (click)="handleChoice($event, ch.result)">{{ch.text}}</button>
     </mat-card-footer>
     <mat-card-actions *ngIf="isEnded">
         <button *ngIf="currentScene.prev" mat-raised-button color="primary" (click)="handlePrev($event)">返回上一节</button>

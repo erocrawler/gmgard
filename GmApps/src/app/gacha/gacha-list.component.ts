@@ -29,7 +29,7 @@ export class GachaListComponent implements OnInit {
     }
 
     cardUrl(name: string) {
-        return this.gachaService.cardUrl(name);
+        return this.gachaService.cardCssUrl(name);
     }
 
     updatePage(ev: PageEvent) {

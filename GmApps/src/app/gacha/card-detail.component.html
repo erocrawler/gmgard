@@ -3,7 +3,7 @@
   <ng-template #showBlock>
     <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="10px">
       <div fxFlex="512px" fxFlex.lt-md="none">
-        <img style="width:100% " src="//static.gmgard.com/Images/gacha/{{item.name}}.png" />
+        <img style="width:100% " [src]="url" />
       </div>
       <div ngClass.gt-sm="max-height">
         <h1>{{item.title}}</h1>

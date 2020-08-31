@@ -12,38 +12,43 @@ import { GachaService } from "./gacha.service";
 import { AppMaterialModule } from "../app-material.module";
 import { CardDetailComponent } from "./card-detail.component";
 import { GachaListComponent } from "./gacha-list.component";
+import { GachaIntroComponent } from './gacha-intro.component';
+import { AdvGameModule } from "../shared/adv-game/adv-game.module";
 
 const routes: Routes = [
-    {
-        path: "",
-        component: GachaComponent,
-        children: [
-            { path: "", component: GachaIndexComponent, pathMatch: "full" },
-            { path: "result", component: GachaResultComponent },
-            { path: "list", component: GachaListComponent },
-        ]
-    },
+  {
+    path: "",
+    component: GachaComponent,
+    children: [
+      { path: "", component: GachaIndexComponent, pathMatch: "full" },
+      { path: "result", component: GachaResultComponent },
+      { path: "list", component: GachaListComponent },
+      { path: "intro", component: GachaIntroComponent },
+    ]
+  },
 ];
 
 @NgModule({
-    imports: [
-        CommonModule,
-        FormsModule,
-        AppMaterialModule,
-        MatDialogModule,
-        MatGridListModule,
-        FlexLayoutModule,
-        RouterModule.forChild(routes),
-    ],
-    declarations: [
-        GachaComponent,
-        GachaIndexComponent,
-        GachaResultComponent,
-        GachaConfirmComponent,
-        CardDetailComponent,
-        GachaListComponent
-    ],
-    entryComponents: [GachaConfirmComponent, CardDetailComponent],
-    providers: [GachaService],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AppMaterialModule,
+    MatDialogModule,
+    MatGridListModule,
+    FlexLayoutModule,
+    RouterModule.forChild(routes),
+    AdvGameModule,
+  ],
+  declarations: [
+    GachaComponent,
+    GachaIndexComponent,
+    GachaResultComponent,
+    GachaConfirmComponent,
+    CardDetailComponent,
+    GachaListComponent,
+    GachaIntroComponent
+  ],
+  entryComponents: [GachaConfirmComponent, CardDetailComponent],
+  providers: [GachaService],
 })
 export class GachaModule { }

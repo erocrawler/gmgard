@@ -1,13 +1,42 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, Renderer2 } from "@angular/core";
 import { GachaService } from "./gacha.service";
 import { Router, ActivatedRoute } from "@angular/router";
 import { MatDialog } from "@angular/material/dialog";
 import { GachaResult, GachaItem } from "../models/GachaResult";
-import { IGachaAnimation } from "./gacha-animation";
+import { IGachaAnimation, IGachaCard } from "./gacha-animation";
 import { CardDetailComponent } from "./card-detail.component";
 import { Subscription } from "rxjs/Subscription";
 import { defer, from, concat } from "rxjs";
 import { finalize } from "rxjs/operators";
+
+class GachaCard implements IGachaCard {
+  constructor(private self: HTMLElement, private container: HTMLElement, private renderer: Renderer2) { }
+
+  private state: string
+  setState(state: string): void {
+    if (this.state == state) {
+      return;
+    }
+    this.state = state;
+    switch (this.state) {
+      case "start":
+        this.renderer.appendChild(this.container, this.self);
+        this.renderer.addClass(this.self, "start");
+        break;
+      case "away":
+        this.renderer.removeChild(this.self, "start");
+        this.renderer.addClass(this.self, "away");
+        break;
+      case "end":
+        this.renderer.removeChild(this.container, this.self);
+        break;
+    }
+  }
+  getState(): string {
+    return this.state;
+  }
+
+}
 
 @Component({
   selector: "app-gacha-result",
@@ -19,7 +48,9 @@ export class GachaResultComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(private router: Router,
     private route: ActivatedRoute,
     private gachaService: GachaService,
-    private dialog: MatDialog) { }
+    private dialog: MatDialog,
+    private renderer: Renderer2
+  ) { }
 
   showType: string;
   count: number;
@@ -27,7 +58,7 @@ export class GachaResultComponent implements OnInit, AfterViewInit, OnDestroy {
   animation: IGachaAnimation;
   @ViewChild("Canvas") canvasRef: ElementRef<HTMLCanvasElement>;
   @ViewChild("container") containerRef: ElementRef<HTMLDivElement>;
-  cards: HTMLElement[];
+  cards: IGachaCard[];
   animationSub: Subscription;
   animationFinished = false;
 
@@ -39,57 +70,53 @@ export class GachaResultComponent implements OnInit, AfterViewInit, OnDestroy {
     this.result = this.gachaService.getResult();
     if (!this.result || !this.result.items) {
       this.router.navigate(["/gacha"]);
-    } else {
-      this.cards = this.result.items.map(this.createCard);
-      this.animation = this.gachaService.getAnimation(this.canvasRef.nativeElement as HTMLCanvasElement);
-      if (!this.animation) {
-        this.animationFinished = true;
-        return;
-      }
     }
-    if (!this.cards) {
-      return;
-    }
-    const container = this.containerRef.nativeElement as HTMLDivElement;
-    const playlist = this.cards.reduce((obs, card) => concat(obs, (defer(() => {
-      container.appendChild(card);
-      return this.animation.playGacha(card).then(_ => {
-        container.removeChild(card);
-        return true;
-      });
-    }))), from(this.animation.playStart()));
-    this.animationSub = playlist.pipe(finalize(() => {
-      this.animationFinished = true;
-    })).subscribe();
   }
 
   ngAfterViewInit() {
-
+    if (!this.result) {
+      return;
+    }
+    this.cards = this.result.items.map((i) => this.createCard(i));
+    this.animation = this.gachaService.getAnimation(this.canvasRef.nativeElement as HTMLCanvasElement);
+    if (!this.animation || !this.cards) {
+      setTimeout(() => {
+        this.animationFinished = true;
+      }, 4)
+      return;
+    }
+    setTimeout(() => {
+      this.animationSub = from(this.animation.play(this.cards)).pipe(finalize(() => {
+        this.animationFinished = true;
+      })).subscribe();
+    }, 4)
   }
 
   ngOnDestroy() {
     this.skipAnimation();
   }
 
-  createCard(item: GachaItem): HTMLElement {
+  createCard(item: GachaItem): IGachaCard {
+    const container = this.containerRef.nativeElement as HTMLDivElement;
     const rarityMap = ["bronze", "bronze", "silver", "gold", "gold"];
-    const frontside = document.createElement("div"), backside = document.createElement("div");
-    frontside.className = "side";
-    backside.className = "side back";
+    const frontside = this.renderer.createElement("div"), backside = this.renderer.createElement("div");
+    this.renderer.addClass(frontside, "side");
+    this.renderer.addClass(backside, "side");
+    this.renderer.addClass(backside, "back");
     if (navigator.userAgent.toLowerCase().indexOf("firefox") > -1) { //Firefox hack :(
-      backside.style.zIndex = "100";
+      this.renderer.setStyle(backside, "zIndex", "100");
     }
-    const cardFront = new Image();
-    cardFront.src = "//static.gmgard.com/Images/gacha/" + item.name + ".png";
-    const cardBack = new Image();
-    cardBack.src = "//static.gmgard.com/Images/gacha/" + rarityMap[item.rarity - 1] + ".png";
-    frontside.appendChild(cardFront);
-    backside.appendChild(cardBack);
-    const card = document.createElement("div");
-    card.className = "card";
-    card.appendChild(frontside);
-    card.appendChild(backside);
-    return card;
+    const cardFront = this.renderer.createElement('img');
+    this.renderer.setProperty(cardFront, "src", "/assets/cards/" + item.name + ".png");
+    const cardBack = this.renderer.createElement('img');
+    this.renderer.setProperty(cardBack, "src",  "/assets/cards/" + rarityMap[item.rarity - 1] + ".png");
+    this.renderer.appendChild(frontside, cardFront);
+    this.renderer.appendChild(backside, cardBack);
+    const card = this.renderer.createElement("div");
+    this.renderer.addClass(card, "card");
+    this.renderer.appendChild(card, frontside);
+    this.renderer.appendChild(card, backside);
+    return new GachaCard(card, container, this.renderer);
   }
 
   skipAnimation() {
@@ -105,6 +132,6 @@ export class GachaResultComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   cardUrl(name: string) {
-    return this.gachaService.cardUrl(name);
+    return this.gachaService.cardCssUrl(name);
   }
 }

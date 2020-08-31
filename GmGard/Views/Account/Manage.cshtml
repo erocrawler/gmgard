@@ -16,6 +16,7 @@
 { GachaPool.PoolName.April2018, new SelectListGroup { Name = "路人女主的养成方法" } },
 { GachaPool.PoolName.June2018, new SelectListGroup { Name = "少女の辉" } },
 { GachaPool.PoolName.April2019, new SelectListGroup { Name = "绅士之魂诞生" } },
+{ GachaPool.PoolName.August2020, new SelectListGroup { Name = "七周年特异点" } },
 };
     SelectListGroup TitleGroup(UserQuest.UserProfession title)
     {
@@ -43,6 +44,10 @@
         else if (title == UserQuest.UserProfession.轮回独断)
         {
             return new SelectListGroup { Name = "六周年冒险活动" };
+        }
+        else if (t >= 68 && t < 74)
+        {
+            return groups[GachaPool.PoolName.August2020];
         }
         return null;
     }

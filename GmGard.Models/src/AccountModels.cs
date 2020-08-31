@@ -482,6 +482,7 @@ namespace GmGard.Models
             April2018 = 3,
             June2018 = 4,
             April2019 = 5,
+            August2020 = 6,
         }
 
         [Key, Column(Order = 1)]
