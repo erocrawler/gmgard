@@ -3,10 +3,10 @@ using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Processing.Processors;
 using System.IO;
 using Microsoft.AspNetCore.Http;
-using SixLabors.Shapes;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Drawing;
 
 namespace GmGard.Controllers
 {
@@ -59,7 +59,7 @@ namespace GmGard.Controllers
 
                     //add question
                     var font = SixLabors.Fonts.SystemFonts.CreateFont("Tahoma", 20);
-                    ctx.DrawText(captcha, font, Color.Gray, new SixLabors.Primitives.PointF(rand.Next(4, 35), rand.Next(5, 8)));
+                    ctx.DrawText(captcha, font, Color.Gray, new PointF(rand.Next(4, 35), rand.Next(5, 8)));
                 });
 
 

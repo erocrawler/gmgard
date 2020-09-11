@@ -72,20 +72,22 @@ namespace GmGard.Services
             _udb.SaveChanges();
             return true;
         }
-        public static SixLabors.Primitives.Size GetMaxSize(Image img, int max)
+        public static Size GetMaxSize(Image img, int max)
         {
             int w = img.Width;
             int h = img.Height;
             if (w <= max && h <= max)
-                return new SixLabors.Primitives.Size(w, h);
-            double ratio = 1;
+                return new Size(w, h);
+            double ratio;
             if (h > w)
             {
                 ratio = (double)max / h;
             }
             else
+            {
                 ratio = (double)max / w;
-            return new SixLabors.Primitives.Size((int)(w * ratio), (int)(h * ratio));
+            }
+            return new Size((int)(w * ratio), (int)(h * ratio));
         }
 
         public byte[] Crop(byte[] Img, int Width, int Height, int X, int Y)
@@ -118,7 +120,7 @@ namespace GmGard.Services
                     {
                         ctx.Resize(GetMaxSize(img, 500));
                     }
-                    ctx.Crop(new SixLabors.Primitives.Rectangle(X, Y, Width, Height));
+                    ctx.Crop(new Rectangle(X, Y, Width, Height));
                 });
                 using (var outStream = new MemoryStream())
                 {
