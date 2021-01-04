@@ -45,7 +45,7 @@
     <PackageReference Include="AWSSDK.S3" Version="3.3.111.30" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.2.0" />
-    <PackageReference Include="HtmlSanitizer" Version="5.0.331" />
+    <PackageReference Include="HtmlSanitizer" Version="5.0.372" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.6">
