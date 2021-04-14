@@ -32,11 +32,11 @@ namespace GmGard.ViewComponents
             _msgPageSize = appSettings.Value.MsgPageSize;
         }
 
-        public IViewComponentResult Invoke(string context, int pagenum = 1, bool unreadOnly = false)
+        public async Task<IViewComponentResult> InvokeAsync(string context, int pagenum = 1, bool unreadOnly = false)
         {
             if (context == "outbox")
             {
-                return Outbox(pagenum);
+                return await OutboxAsync(pagenum);
             }
             else if (context == "write")
             {
@@ -44,15 +44,15 @@ namespace GmGard.ViewComponents
             }
             else if (context == "ReportInbox")
             {
-                return ReportInbox(pagenum);
+                return await ReportInboxAsync(pagenum);
             }
             else if (context == "AdminInbox")
             {
-                return AdminInbox(pagenum);
+                return await AdminInboxAsync(pagenum);
             }
             else
             {
-                return Inbox(pagenum, unreadOnly);
+                return await InboxAsync(pagenum, unreadOnly);
             }
         }
 
@@ -61,37 +61,37 @@ namespace GmGard.ViewComponents
             ViewBag.UnreadCount = _udb.Messages.Count(m => m.Recipient == User.Identity.Name && !m.IsRead && !m.IsRecipientDelete);
         }
 
-        public IViewComponentResult Inbox(int pagenum = 1, bool unreadOnly = false)
+        public async Task<IViewComponentResult> InboxAsync(int pagenum = 1, bool unreadOnly = false)
         {
             string username = User.Identity.Name;
             IQueryable<Message> messages = _udb.Messages.Where(m => m.Recipient == username && !m.IsRecipientDelete && (m.IsRead == false || !unreadOnly)).OrderByDescending(m => m.MsgDate);
             SetUnreadCount();
             ViewBag.UnreadOnly = unreadOnly;
-            return View("Inbox", messages.ToPagedList(pagenum, _msgPageSize));
+            return View("Inbox", await messages.ToPagedListAsync(pagenum, _msgPageSize));
         }
 
-        public IViewComponentResult ReportInbox(int pagenum = 1)
+        public async Task<IViewComponentResult> ReportInboxAsync(int pagenum = 1)
         {
             string username = User.Identity.Name;
             IQueryable<Message> messages = _udb.Messages.Where(m => m.Recipient == username && !m.IsRecipientDelete && m.MsgTitle == "汇报投稿问题")
                 .OrderByDescending(m => m.MsgDate);
             SetUnreadCount();
-            return View("ReportInbox", messages.ToPagedList(pagenum, _msgPageSize));
+            return View("ReportInbox", await messages.ToPagedListAsync(pagenum, _msgPageSize));
         }
 
-        public IViewComponentResult Outbox(int pagenum = 1)
+        public async Task<IViewComponentResult> OutboxAsync(int pagenum = 1)
         {
             string username = User.Identity.Name;
             IQueryable<Message> messages = _udb.Messages.Where(m => m.Sender == username && !m.IsSenderDelete).OrderByDescending(m => m.MsgDate);
             SetUnreadCount();
-            return View("Outbox", messages.ToPagedList(pagenum, _msgPageSize));
+            return View("Outbox", await messages.ToPagedListAsync(pagenum, _msgPageSize));
         }
 
-        public IViewComponentResult AdminInbox(int pagenum = 1)
+        public async Task<IViewComponentResult> AdminInboxAsync(int pagenum = 1)
         {
             string username = "admin";
             IQueryable<Message> messages = _udb.Messages.Where(m => m.Recipient == username && !m.IsRecipientDelete).OrderByDescending(m => m.MsgDate);
-            return View("ReadOnlyInbox", messages.ToPagedList(pagenum, _msgPageSize));
+            return View("ReadOnlyInbox", await messages.ToPagedListAsync(pagenum, _msgPageSize));
         }
 
         public IViewComponentResult Write()

@@ -421,27 +421,6 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> ChangeEmail(string email, string password)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var result = await _userManager.CheckPasswordAsync(user, password);
-            if (string.IsNullOrEmpty(password) || !result)
-            {
-                return Json(new { success = false, err = "pass" });
-            }
-            if (!string.IsNullOrWhiteSpace(email) && user.Email != email)
-            {
-                if (_db.Users.Any(u => u.Email == email))
-                {
-                    return Json(new { success = false, err = "email" });
-                }
-                user.Email = email;
-                await _userManager.UpdateAsync(user);
-            }
-            return Json(new { success = true });
-        }
-
-        [HttpPost]
         public ActionResult ChangeComment(string comment = "")
         {
             UserProfile user = _db.Users.SingleOrDefault(u => u.UserName == User.Identity.Name);

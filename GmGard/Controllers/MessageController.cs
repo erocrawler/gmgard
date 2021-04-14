@@ -46,14 +46,10 @@ namespace GmGard.Controllers
         }
         
         private int pagesize => _appSettings.MsgPageSize;
-        //
-        // GET: /Message/
 
         public ActionResult Index()
         {
-            object context = null;
-            TempData.TryGetValue("DisplayTab", out context);
-            if (context != null)
+            if (TempData.TryGetValue("DisplayTab", out object context))
             {
                 ViewBag.DisplayTab = context;
             }

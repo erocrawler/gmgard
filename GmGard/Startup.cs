@@ -364,9 +364,9 @@ namespace GmGard
             Configuration = builder.Build();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Is(env.IsProduction() ? Serilog.Events.LogEventLevel.Error : Serilog.Events.LogEventLevel.Debug)
-                .WriteTo.RollingFile(Path.Combine(_basePath, "Log/log-{Date}.txt"))
+                .WriteTo.File(Path.Combine(_basePath, "Log/log-.txt"), rollingInterval: RollingInterval.Day)
                 .WriteTo.Logger(lc => lc.Filter.ByIncludingOnly(le => Matching.FromSource<BackgroundJobService>()(le) || Matching.FromSource<JobTaskRunner>()(le) || Matching.FromSource<ElasticSearchUpdateService>()(le))
-                    .WriteTo.RollingFile(Path.Combine(_basePath, "Log/job-{Date}.txt")))
+                    .WriteTo.File(Path.Combine(_basePath, "Log/job-.txt"), rollingInterval: RollingInterval.Day))
                 .CreateLogger();
             if (!env.IsProduction())
             {

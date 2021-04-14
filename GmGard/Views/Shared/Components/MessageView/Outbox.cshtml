@@ -56,6 +56,3 @@
     ViewBag.PostUrl = Url.Action("Outbox");
     await Html.RenderPartialAsync("_AjaxPager");
 }
-<script>
-    updateval( @ViewBag.UnreadCount );
-</script>
