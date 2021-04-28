@@ -38,13 +38,17 @@ body {
         background-position: center -8px;
     }
 
-    body.bg19, body.new {
+    body.bg19 {
         background-position: center -60px;
     }
 
 @media screen and (max-width: 1000px) {
     body.bg2 {
         background-position: left top;
+    }
+
+    html.bg25, html.new {
+        background-position: right -100px;
     }
 }
 
@@ -54,6 +58,37 @@ body {
 
 a {
     cursor: pointer;
+}
+
+.bg-modal {
+    position: absolute;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 100;
+    background: white;
+    left: 100px;
+    right: 100px;
+    top: 120px;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+    border: 1px solid rgba(0,0,0,0.3);
+}
+
+    .bg-modal .modal-body {
+        overflow: auto;
+        max-height: 600px;
+    }
+
+@media screen and (max-width: 1000px) {
+    .bg-modal {
+        left: 0;
+        right: 0;
+    }
+}
+
+.bg-preview {
+    height: 200px;
+    background-size: cover;
+    background-position: top center;
 }
 
 .bodybtn {

@@ -61,7 +61,7 @@ namespace GmGard
             {
                 var serviceProvider = services.BuildServiceProvider();
                 var readerFactory = serviceProvider.GetRequiredService<IHttpRequestStreamReaderFactory>();
-                o.ModelBinderProviders.Insert(0, new DefaultHybridModelBinderProvider(o.InputFormatters, readerFactory));
+                o.ModelBinderProviders.Insert(0, new HybridModelBinding.DefaultHybridModelBinderProvider(o.InputFormatters, readerFactory, null));
             });
 
             services.AddOptions();
