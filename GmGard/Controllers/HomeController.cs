@@ -192,9 +192,12 @@ namespace GmGard.Controllers
             return View(model);
         }
 
-        public ActionResult About()
+        public async Task<ActionResult> About()
         {
-            ViewBag.version = _db.Blogs.Find(0).BlogTitle;
+            var moderators = await _userManager.GetUsersInRoleAsync("Moderator");
+            var siteRules = await _db.Blogs.FindAsync(PostConstant.SiteRules);
+            ViewBag.Moderators = moderators;
+            ViewBag.Content = siteRules.Content;
             return View();
         }
 

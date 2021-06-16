@@ -57,6 +57,8 @@ namespace GmGard.Models
         public static readonly int Suggestions = 0;
         public static readonly int Problems = -1;
         public static readonly int HistoryRankings = -2;
+        public static readonly int SiteRules = -1;
+        public static readonly int SiteVersionNotes = 0;
 
         public static bool PostRatingEventActive => DateTime.Now < new DateTime(2019, 2, 11);
     }

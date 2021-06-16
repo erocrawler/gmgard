@@ -32,6 +32,7 @@ export class RaffleIndexComponent implements OnInit {
   cost = 0
   img = ""
   title = ""
+  endMsg = ""
 
   ngOnInit() {
     this.http.get<RaffleConfig>(this.env.apiHost + "/api/raffle", { withCredentials: true }).subscribe(r => {
@@ -44,6 +45,7 @@ export class RaffleIndexComponent implements OnInit {
       this.points = r.points;
       this.cost = r.cost;
       this.img = r.image;
+      this.endMsg = (new Date() >= new Date(this.endTime)) ? "抽奖已结束！抽奖结果请稍后参阅公告。" : "抽奖即将开始，敬请期待！";
     });
   }
 

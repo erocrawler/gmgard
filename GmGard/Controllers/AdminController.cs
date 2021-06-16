@@ -737,13 +737,22 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public ActionResult EditVersion(string data, string version)
+        public async Task<ActionResult> EditVersion(string data, string version)
         {
-            var blog = _db.Blogs.Find(0);
+            var blog = await _db.Blogs.FindAsync(PostConstant.SiteVersionNotes);
             blog.Content = data;
             blog.Links = version;
-            _db.SaveChanges();
-            return Json(true);
+            await _db.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> EditSiteRules(string data)
+        {
+            var blog = await _db.Blogs.FindAsync(PostConstant.SiteRules);
+            blog.Content = data;
+            await _db.SaveChangesAsync();
+            return Ok();
         }
 
         [HttpPost, ValidateAntiForgeryToken]

@@ -1,42 +1,40 @@
-﻿<mat-card>
-  <button mat-button [matMenuTriggerFor]="menu">
-    <mat-icon>more_vert</mat-icon>分类
-  </button>
-  <mat-menu #menu="matMenu">
-    <button *ngFor="let category of categories" mat-menu-item (click)="setCategory(category)">{{category.name}}</button>
-  </mat-menu>
-  <span *ngIf="selectedCategory; else elseBlock">{{ selectedCategory.name }}</span>
-  <ng-template #elseBlock>请选择分类</ng-template>
-  <p *ngIf="selectedCategory">
-    <mat-icon>info</mat-icon>
-    <small>{{ selectedCategory.comment }}</small>
-  </p>
-  <category-fields *ngIf="selectedCategory && selectedCategory.fields.length > 0" [category]="selectedCategory" (title)="updateTitle($event)"></category-fields>
+<mat-card>
+    <button mat-button [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>分类
+    </button>
+    <mat-menu #menu="matMenu">
+        <button *ngFor="let category of categories" mat-menu-item (click)="setCategory(category)">{{category.name}}</button>
+    </mat-menu>
+    <span *ngIf="selectedCategory; else elseBlock">{{ selectedCategory.name }}</span>
+    <ng-template #elseBlock>请选择分类</ng-template>
+    <p *ngIf="selectedCategory">
+        <mat-icon>info</mat-icon>
+        <small>{{ selectedCategory.comment }}</small>
+    </p>
+    <category-fields *ngIf="selectedCategory && selectedCategory.fields.length > 0" [category]="selectedCategory" (title)="updateTitle($event)"></category-fields>
 </mat-card>
 <br />
 <mat-card>
-  <div fxLayout="row">
-    <h2 style="margin:0" fxFlex="100px">
-      标题
+    <h2 style="margin:0">
+        标题
     </h2>
-    <span fxFlex>
-      <mat-button-toggle-group [(ngModel)]="dlsite">
-        <mat-button-toggle [value]="false">投稿搜索</mat-button-toggle>
-        <mat-button-toggle [value]="true">RJ号搜索</mat-button-toggle>
-      </mat-button-toggle-group>
-    </span>
-  </div>
-  <p fxLayout="row">
-    <mat-form-field fxFlex>
-      <input [(ngModel)]="title" matInput #titleTarget />
-    </mat-form-field>
-    <span fxFlex="88px">
-      <button color="primary" mat-raised-button [ngxClipboard]="titleTarget">复制</button>
-    </span>
-  </p>
+    <p fxLayout="row">
+        <mat-form-field fxFlex>
+            <input [(ngModel)]="title" matInput #titleTarget />
+        </mat-form-field>
+        <span fxFlex="88px">
+            <button color="primary" mat-raised-button [ngxClipboard]="titleTarget">复制</button>
+        </span>
+    </p>
 
-  <dlsite-search *ngIf="dlsite; else titleSearch" [title]="title"></dlsite-search>
-  <ng-template #titleSearch>
-    <title-search [title]="title"></title-search>
-  </ng-template>
+    <span>
+        <mat-button-toggle-group [(ngModel)]="dlsite">
+            <mat-button-toggle [value]="false">投稿搜索</mat-button-toggle>
+            <mat-button-toggle [value]="true">RJ号搜索</mat-button-toggle>
+        </mat-button-toggle-group>
+    </span>
+    <dlsite-search *ngIf="dlsite; else titleSearch" [title]="title"></dlsite-search>
+    <ng-template #titleSearch>
+        <title-search [title]="title"></title-search>
+    </ng-template>
 </mat-card>

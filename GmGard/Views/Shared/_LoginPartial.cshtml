@@ -52,13 +52,13 @@
                     <a onclick="barhideshow();" class="btn btn-small btn-info" style="width:0px;padding-left:0px;padding-right:14px;"><i style="opacity:1" id="arrico" class="icon-chevron-left icon-white"></i></a>
                     <a href="@Url.Action("Manage", "Account")" title="账号设定" class="btn btn-small btn-info"><i class="icon-cog icon-white"></i></a>
                     <a href="@Url.Action("Invite", "Account")" title="邀请码" class="btn btn-small btn-info"><i class="icon-gift icon-white"></i></a>
-                    <a href="@Url.Action("Favorite", "Home")" title="我的收藏" class="btn btn-small btn-info"><i class="icon-star icon-white"></i></a>
+                    <a href="@Url.Action("Favorite", "Home", new { name = ""})" title="我的收藏" class="btn btn-small btn-info"><i class="icon-star icon-white"></i></a>
                     <a data-href='@Url.Action("Quest","Home")' title="任务" class="questlink btn btn-small btn-info"><i class="icon-screenshot icon-white"></i></a>
                     <button class="btn btn-small hide"></button>
                 </div>
                 <div class="btn-group">
                 <button class="btn btn-small hide"></button>
-                <a href="@Url.Action("Index","Follow",new { name = ""})" class="btn btn-small btn-info" title="关注主页"><i class="icon-book icon-white"></i></a>
+                <a href="@Url.Action("Index","Follow", new { name = ""})" class="btn btn-small btn-info" title="关注主页"><i class="icon-book icon-white"></i></a>
                 <a href="@Url.Action("Index","Message")" title="消息中心" class="btn btn-small btn-info"><i class="icon-envelope icon-white"></i><span style="margin-left: 2px" class="label label-important">@msgUtil.GetUnreadMsg(User.Identity.Name)</span></a>
                 <a href="javascript:document.getElementById('logoutForm').submit()" class=" btn btn-small btn-info" title="注销"><i class="icon-off icon-white"></i></a>
                 </div>

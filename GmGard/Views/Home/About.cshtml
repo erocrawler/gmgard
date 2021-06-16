@@ -1,10 +1,8 @@
-﻿@{
+﻿@{ 
     ViewBag.Title = "关于本站";
 }
-
 <hgroup id="top" class="title">
-    <h1>@ViewBag.Title</h1>
-    <h2>@ViewBag.Message</h2>
+    <h1>关于本站</h1>
 </hgroup>
 
 <hr />
@@ -19,7 +17,7 @@
 相传诸神创世之时，分别创造了神之庭院Asgard，人类庭院Midgard，以及绅士之庭GMgard……
 =============================↑以上为口胡↑==============================
 本站是一个以分享交流各种ACG资源以及交流汉语文化为目的的分享交流平台。大家可以在这里找到各种资源，也欢迎大家将自己的资源上传来与大家分享。目前本站各方面还在逐渐完善中，如果大家对本站的建设有什么好的想法和建议或者发现了网站的Bug欢迎通过<a href="@Url.Action("Suggestions")" class="btn btn-primary btn-mini">意见建议</a>来告诉我们。
-在您对网站的某项功能感到疑惑时，请留意该功能区域附近是否带有<i class="icon-question-sign"></i>标记。本站所有<i class="icon-question-sign tooltip-toggle" title="这里是帮助提示=w=" data-placement="top"></i>标记在鼠标移过时都会出现帮助提示。推荐在1024×768以上分辨率下使用最新版Firefox或Chrome浏览本站，不推荐使用IE以及各种国产浏览器（国产浏览器的一些规格不符合通用标准，会导致使用部分网站功能时出现莫名其妙的错误）。极度不推荐使用IE10以前的版本进行浏览，<s>谁用IE6打死谁（喂</s> ，如使用IE6浏览遇到问题恕我们不予处理。
+在您对网站的某项功能感到疑惑时，请留意该功能区域附近是否带有<i class="icon-question-sign"></i>标记。本站所有<i class="icon-question-sign tooltip-toggle" title="这里是帮助提示=w=" data-placement="top"></i>标记在鼠标移过时都会出现帮助提示。推荐在1024×768以上分辨率下使用最新版Firefox,Chrome,Edge浏览本站，不推荐使用IE以及各种国产浏览器（国产浏览器的一些规格不符合通用标准，会导致使用部分网站功能时出现莫名其妙的错误）。如使用IE浏览遇到问题恕我们不予处理。
 在本站的资讯分类中有一些教程类的文章。如果各位绅士遇到一些问题（如投稿的方法，游戏无法运行怎么办之类），建议先去资讯分类查找是否有相关教程，若没有再到群里或贴吧提问。
 希望各位绅♂士在绅士之庭玩的开心！
 </pre>
@@ -36,447 +34,56 @@
         <li><a target="_blank" href="mailto:admin@gmgard.us" class="btn btn-primary"><i class="icon-envelope icon-white"></i> 站务Email</a></li>
         <li>站长：@Html.ActionLink("人间入间", "UserInfo", new { name = "人间入间" })<a target="_blank" href="@Url.Action("Msg", new { name = "人间入间" })" class="btn btn-primary"><i class="icon-envelope icon-white"></i> 站内消息</a></li>
         <li>副站长：@Html.ActionLink("Duo", "UserInfo", new { name = "Duo" })<a target="_blank" href="@Url.Action("Msg", new { name = "Duo" })" class="btn btn-primary"><i class="icon-envelope icon-white"></i> 站内消息</a></li>
+        @if (ViewBag.Moderators != null)
+        {
+            foreach (UserProfile user in ViewBag.Moderators)
+            {
+                <li>管理员：@Html.ActionLink(user.NickName, "UserInfo", new { name = user.UserName })</li>
+            }
+        }
     </ul>
 </aside>
 <div class="clear-fix"></div>
-<div>
-
+<div id="site-rules">
     <harmony>
-        <h2 id="rule">站规</h2>
-
-        <br />
-
-<pre>
-在本站请务必遵守以下规定：
-<span id="rule1" class="label label-important tooltip-toggle" title="乱发小广告的关小黑屋哦" data-placement="right">禁止在任何内容中投放广告连接，包括投稿，评论，意见建议，站内消息等。</span>
-<span id="rule2" class="label label-important tooltip-toggle" title="绅♂士何苦为难绅♂士，各位绅♂士要和谐相处哦，不然关到小黑屋冷静一下" data-placement="right">禁止任何形式的人身攻击，地域攻击以及其他引战发言。</span>
-<span id="rule3" class="label label-important tooltip-toggle" title="莫提国事，只谈风月。政治爱好者请出门右拐铁血社区" data-placement="right">禁止谈论政治。</span>
-<span id="rule6" class="label label-important tooltip-toggle" title="包括在单个投稿里和不同投稿里刷无意义评论" data-placement="right">禁止连续刷无意义评论。</span>
-<span id="rule5" class="label label-important tooltip-toggle" title="虽然秀恩爱和闪光弹不是完全禁止，但毕竟过度的话会引发大量单身绅士的反感。保护单身狗，人人有责。" data-placement="right">禁止过度秀恩爱，放闪光弹。</span>
-<span id="rule4" class="label label-warning">投稿前请先阅读<button class="btn btn-mini" onclick="$('html, body').animate({scrollTop:$('#aboutcontri').offset().top}, 'slow');">投稿须知</button>，并遵守其中的规定。</span>
-违反规定者会根据情况进行警告或封禁处理。
-</pre>
-
-        <br />
-
-        <h2 id="aboutaccount">关于账号</h2>
-
-        <br />
-
-<pre>
-为保证各位绅♂士能随时来本站寻找资源，建议大家在能注册的时候花1分钟<a href="@Url.Action("Register", "Account")" class="btn btn-info btn-mini">注册</a>一个账号。另外推荐注册账号后上传自己的头像并添加个人说明，这样可以使各位绅♂士更好地相互了解和认识。
-账号的用户名为登录时使用，昵称为在站上显示的名字，用户名注册后不可修改，昵称每次修改需要消耗200棒棒糖。
-请勿与他人共享账号，一旦发现有在网上公开账号的行为我们会当即封禁该账号。
-</pre>
-
-        <br />
-
-        <h2 id="aboutlevel">关于等级</h2>
-
-        <br />
-
-<pre>
-用户头像下方的“绅士度”条即为经验条。用户的每个投稿被审核通过都会获得15点绅士度，每日签到会获得一定量的绅士度，连续签到获得的绅士度会更多。
-每天第一次评论与第一次评分都会获得经验，注意不要错过哦。
-本站的等级系统主要为娱乐用意，目前等级对应的额外功能有：
-<span class="label label-inverse">到达4级投稿、评论时可以免输验证码。</span>
-<span class="label label-inverse">到达6级可以使用动态GIF头像。</span>
-<span class="label label-important"><s>目前最高等级为21级，第一个到达满级的绅♂士会获得神♂秘♂礼♂物（之后满级会提升至26级，然后以此类推</s></span>
-<span class="label label-important">已经有绅士到达了21级并获得了礼物，当前满级为26级</span>
-如果大家对等级系统有什么好的建议也欢迎通过<a href="@Url.Action("Suggestions")" class="btn btn-primary btn-mini">意见建议</a>来告诉我们。
-</pre>
-
-        <br />
-
-        <h2 id="aboutpoints">关于积分</h2>
-
-        <br />
-
-<pre>
-用户头像右侧的棒棒糖数即为用户的积分。棒棒糖的获取方式与绅士度基本相同，获得数值与绅士度相同。目前每个绅士在账号设定页面都可以领取等同于绅士度数值数量的棒棒糖，每人限领取一次，此功能会在不久后关闭，请各位绅士尽快领取。
-目前棒棒糖的用途为修改昵称，每次修改昵称消耗200棒棒糖。未来会有更多会用到棒棒糖的新功能。
-如果大家对积分系统有什么好的建议也欢迎通过<a href="@Url.Action("Suggestions")" class="btn btn-primary btn-mini">意见建议</a>来告诉我们。
-</pre>
-
-        <br />
-
-        <h2 id="aboutsearch">关于搜索</h2>
-
-        <br />
-
-<pre>
-本站支持标签搜索、标题搜索，以及综合搜索。推荐直接使用综合搜索，综合搜索将搜索标题，标签与正文中的全部内容，并按相关度排序。此外标签搜索支持多个标签，使用空格分开即可搜索包含全部标签的投稿，也可在高级搜索中设置搜索包含任意标签的投稿。
-</pre>
-
-        <br />
-
-        <h2 id="aboutranking">关于评分与评分排行榜</h2>
-
-        <br />
-
-<pre>
-在每个资源的详细页面的标签下方都有评分区域。5个评分项从左到右依次为-1分、0分、1分、3分、5分。希望各位绅士在浏览完所下载的资源后给予对应的资源应得的评分。
-
-本站目前的评分排行榜分为日榜、周榜和总榜。
-    日榜：24小时内的投稿的所得总分的排行。
-    周榜：一周内所有投稿所得评分的排行。周榜在每周一显示上一周的结果，在周二开始显示本周的排行。
-    月榜：一月内所有投稿所得评分的排行。
-各排行榜均为每10分钟更新一次。
-日榜在每天20:00统计当前榜上的投稿，并发放相应的奖励。1、2、3名获得的奖励分别为12、8、5（奖励为绅士度和棒棒糖，以下同）。同一投稿者复数投稿上榜的话则复数位置对应的奖励均归该投稿者获得。榜上4、5名没有单独奖励，只在投稿者有复数资源上榜时有奖励加成（第四名加成为3，第五名加成为2）。
-例如：某日统计时投稿者A有一篇资源位居日榜第一名，那么他获得的奖励为12；投稿者B有两篇资源分别位居2、4名，那么他获得的奖励为8+3=11；投稿者C只有一篇资源位居第5名，那么他在本日不会获得奖励。另一日投稿者A有三篇资源独占日榜1、2、3名，那么他获得的奖励为12+8+5=25；投稿者C有两篇资源分别位居4、5名，那么他获得的奖励为3+2=5。
-周榜在每周一0:00统计当前榜上的投稿，并发放相应的奖励。1、2、3、4、5名获得的奖励分别为20、15、12、10、8，榜上第4、5名也有单独奖励，其他规则与日榜相同。
-月榜在每月1日统计当前榜上的投稿，并发放相应的奖励。1、2、3、4、5名获得的奖励分别为30、20、15、10、8，榜上第4、5名也有单独奖励，其他规则与日榜相同。
-注：由于周榜/月榜统计的是所有投稿在本周/本月内获得的分数，所以可能会有投稿时间不是本周/本月的投稿出现在榜上，这属于正常现象。
-</pre>
-
-        <br />
-
-        <h2 id="aboutmsg">关于站内消息</h2>
-
-        <br />
-
-<pre>
-本站设有站内消息系统，如果您在浏览中发现其他用户发布的资源失效，您可以使用<a target="_blank" href="@Url.Action("Index","Message")" class="btn btn-primary btn-mini"><i class="icon-envelope icon-white"></i> 站内消息</a>功能提醒投稿者补档。补档提醒请不要重复发送，以免对投稿者进行不必要的骚扰。
-如果用户受到其他用户的骚扰（连续多次发送骚扰信息且警告无效者），可以发消息到<a target="_blank" href="@Url.Action("Msg", new { name = "admin" })" class="btn btn-primary btn-mini"><i class="icon-envelope icon-white"></i> 管理员信箱</a>进行举报，管理员受到举报后会尽快进行处理。
-</pre>
-
-        <br />
-
+        @Html.Raw(ViewBag.Content)
     </harmony>
-    <h2 id="aboutcoop">关于合作</h2>
-
-    <br />
-
-<pre>
-有广告或交换友情链接等合作意向者请使用本页面右上方提供的<button class="btn btn-mini" onclick="$('html, body').animate({scrollTop:$('#contact').offset().top}, 'slow');">联系方式</button>联系站长进行合作事宜的商谈。
-</pre>
-
-    <br />
-
-    <h2 id="abouthan">关于汉化组专版</h2>
-
-    <br />
-
-<pre>
-本站的<a target="_blank" href="@Url.Action("Index","Han")">汉化组专版</a>旨在为汉化组提供一个较为直观的作品发布平台。
-如有汉化组有意入驻本站，请贵组的组长或贵组指派的代表通过<button class="btn btn-mini" onclick="$('html, body').animate({scrollTop:$('#contact').offset().top}, 'slow');">联系方式</button>联系站长来商谈具体事宜。
-届时本站将在汉化组专版为贵组提供一个专有的版面，并为贵组组长或代表提供该版面的管理权限。
-欢迎各汉化组入驻本站，绅士之庭期待您的加入！
-</pre>
-
-    <br />
-    <harmony>
-        <h2 id="aboutcontri">投稿须知</h2>
-
-        <br />
-
-<pre>
-投稿请遵守下列规则：
-Ⅰ.本站不接受以下投稿：
-<span id="crule1" class="label label-important tooltip-toggle" data-placement="right" title="包括真人工口图片和真人工口影片">三次元工口物。</span>
-<span id="crule1" class="label label-important tooltip-toggle" data-placement="right" title="转载资源时保持资源的完整性是最基本的要求之一">对原汉化/扫图/提取的资源档案进行过质量压缩的资源。</span>
-<span id="crule6" class="label label-important tooltip-toggle" data-placement="right" title="欧美物的风格对大多数人来说不太能接受，而且会涉及版权问题之类很麻烦（毕竟本站服务器受米国法律制约）">欧美物。</span>
-<span id="crule2" class="label label-important tooltip-toggle" data-placement="right" title="这里是绅♂士之庭，腐女们请绕道吧。伪娘物和扶他物可以发但请在正文和标签中注明">BL物、腐物。</span>
-<span id="crule3" class="label label-important tooltip-toggle" data-placement="right" title="毕竟大多数人不喜欢被猎奇物瞎一脸">R18血腥猎奇物。（表界资源不在此范围内）</span>
-<span id="crule4" class="label label-important tooltip-toggle" data-placement="right" title="放病毒的直接拖出去喂狗不解释">含有病毒、恶意程序的资源。</span>
-<span id="crule7" class="label label-important tooltip-toggle" data-placement="right" title="投稿前请先使用站内搜索来检查该资源是否有人投过，汉化/字幕资源与原版资源相互不为重复资源（中/日以外的语种翻译版本与原版/汉化版算重复资源，但是有中/日以外的语种翻译版本的情况下仍可以投原版/汉化版），不同汉化组/字幕组的资源也相互不为重复资源，单独资源与合集中的资源也相互不为重复资源">重复的投稿。</span>
-<span id="crule5" class="label label-important">违反<button class="btn btn-mini" onclick="$('html, body').animate({scrollTop:$('#rule').offset().top}, 'slow');">站规</button>的投稿。</span>
-所有以上类型投稿均不予以通过审核并直接删除。
-如果您在浏览中发现有资源符合上述情况，您可以点击该投稿页面上方的“报告问题”按钮将该资源报告给我们，我们核实后会将其删除。
-</pre>
-
-<pre>
-Ⅱ.关于投稿格式
-大致的投稿格式可以参考本站现有投稿。
-
-下面将详细叙述各个部分的格式要求以及各分类的注意事项：
-</pre>
-
-<pre>
-1.<span class="label label-inverse">分类与标题</span>
-
-<span class="label label-important">投稿时请正确选择投稿分类。</span>
-
-为了能使他人更容易搜到您的投稿以及防止重复资源投稿，投稿标题请遵循下文中的格式要求：
-
-除小说和表番外所有分类都请使用原标题，不要使用罗马音标题（纯英文字母标题）或译名标题，小说和表番类的标题可以使用译名标题。
-所有标题中都不要出现全角括号【】和（），一律使用[]和()。
-
-a.<span class="label label-info">漫画</span>：
-[汉化组/个人翻译者名称（如果是汉化本）](展会名称（如C84）或杂志名（如失楽天2013年1月号）)[社团名称(作者)/作者（如T2 Art Works(Tony)或Hisasi）] 漫画标题 （题材（如化物語）)
-示例：[空気系☆漢化] (C84) [無限軌道A (トモセシュンサク)] ほうかご会いましょう(オリジナル)
-
-汉化本必须标明汉化者，若找不到汉化者信息且本中没有注明汉化者则标[汉化者不明]而不是[中国翻訳]。
-单行本或连载漫画不需要（展会名称或杂志名）和（题材）两项，整本杂志前面要标上(成年コミック・雑誌)，非民间汉化的中文版单行本最前边标[中文]而不是[中国翻訳]，如果有扫图者信息的话在[中文]后边标出[扫图者]。
-
-漫画分类不接受只有磁链或种子的投稿。
-
-b.<span class="label label-info">动画</span>：
-
-商业动画：
-[字幕组名称（没有请写生肉）][制作公司]动画标题
-示例：[Maho.sub][ピンクパイナップル]恋騎士 Purely☆Kiss The Animation 「エルシア＝ハーヴェンス」
-
-注：由于商业动画分类只包括以动画形式发售的商业作品资源，商业游戏的提取动画或录制动画等请投到商业作CG分类。
-
-同人动画：
-[RJ号][制作组]动画标题
-示例：[RJ125239][ジジ★インイン] 愛ちゃんとピンクルーム
-
-连载动画(表番类)：
-(合集)[字幕组名称]动画标题（如果是多季番要标出第几季）[话数][字幕语言][分辨率][文件格式]
-示例：(合集)[极影字幕社]Aldnoah.Zero第一季[01-12][GB][720P][MP4]
-表番类动画只接受完整合集（至少一季），不接受单话投稿，亦不接受只有磁链或种子的投稿。
-另外擦边球类动画请投到商业动画分类（投稿格式和要求仍与表番类相同）
-
-剧场版动画：
-[字幕组名称]动画标题[剧场版][字幕语言][分辨率][文件格式]
-示例：[华盟字幕社]新世纪福音战士新剧场版：Q(Evangelion: 3.33 You Can (Not) Redo)[剧场版][GB][1080p_BDRIP][MKV][特典附]
-<span class="label label-important">注：不接受中国大陆的商业动画的投稿，亦不接受在中国大陆正式公映中或BD/DVD未发售的剧场版动画投稿。</span>
-
-MMD：
-[MMD]MMD原标题(by 作者名)
-示例：[MMD]奇妙な水着VS奇妙なダンボール完全版(by 野菜パンツ)
-MMD分类不接受只有磁链或种子的投稿。
-
-c.<span class="label label-info">游戏</span>和<span class="label label-info">CG</span>：
-
-商业游戏、CG：
-[发售日期][制作公司]游戏标题
-示例：[130726][Navel] 乙女理論とその周辺
-
-同人游戏、CG：
-[RJ号][制作组]游戏标题
-示例：[RJ042910][月のあくび] くるくるぱおーん
-
-游戏分类不接受的投稿种类：网游，含有联网内容的手游，在中国大陆正式发售的游戏（包括含内购收费内容的免费游戏）。
-
-CG分类不接受只有磁链或种子的投稿。
-
-存档分类只接受同人游戏的存档投稿。
-
-d.<span class="label label-info">画集</span>：
-
-商业画集：
-商业画集只需要写明画集名称即可。
-
-同人画集：
-[汉化组名称（如果是汉化版）](展会名称（如C84）)[社团名称(作者)/作者（如劇毒少女 (ke-ta)）] 漫画标题(题材(如東方Project,原创则不用标))
-示例：
-(C84)[Marvelous Grace(立羽)] Gin Clear essence
-
-P站画师图集：
-[P站ID][画师名]图集名称
-示例：[P站ID47335512][黒茶色のねこ]T督の野望～川内編～
-并在文中附上P站对应链接
-
-图包类需要有一个画师/社团类的主题，且图包中图片数量不少于50。
-
-画集分类不接受只有磁链或种子的投稿。
-
-e.<span class="label label-info">声乐</span>：
-本站只接受ACG相关音乐,以及同人音声。
-
-商业音乐：
-[发售日期]题材和标题(文件格式（如flac+cue，320kmp3等）)
-示例：[130724]TVアニメ『神さまのいない日曜日』EDテーマ「終わらないメロディーを歌いだしました。」[初回限定盤]／小松未可子[320K+BK]
-
-同人音乐：
-(展会名称)(同人音楽)(题材（如果有）)[社团名称] 标题 (文件格式（如flac+cue，320kmp3等）)
-示例：(C87)(同人音楽)(東方)[DiGiTAL WiNG] デジウィ FUTURE (320K)
-
-同人音声：
-[RJ号](同人音声)[制作组]标题
-示例：[RJ102170](同人音声)[VOICE LOVER]ささやき庵 蜜香
-
-声乐分类不接受只有磁链或种子的投稿。（该规定现适用范围已经扩大，详情请参照置顶）
-同时正文中请至少列出曲目表。
-
-f.<span class="label label-info">小说</span>：
-小说分类只接受轻小说（包括全年龄和R18）资源的投稿，小说资源请在压缩包中附上小说插图。
-[版本（汉化组/台版，原版请写生肉）](一般小説/18禁小説)[作者]小说名(卷数)(格式（txt pdf jpg png等）)
-示例： [台角](一般小説)[鎌池和馬 x 灰村キヨタカ] とある魔術の禁書目録(1-10卷)(txt+jpg)
-
-原创小说分类请将小说内容直接贴在正文，并确保所发内容不是完全二次元无关。
-
-小说分类不接受只有磁链或种子的投稿。
-
-g.<span class="label label-info">文章</span>：
-文章分类投稿标题没有固定的要求。
-资讯分类接受的投稿包括：
-新番动画、里番动画、漫画、galgame、轻小说等二次元物的介绍/推荐，二次元新闻等。
-资讯类投稿均要求原创内容，转载二次元新闻等请注明转载，并加上自己的吐槽与评论。
-
-<span class="label label-important">注：R18类资讯请加上“工口物介绍”标签。</span>
-
-工具分类接受的投稿包括：
-二次元工具软件/网站教程等。
-
-心得感想分类接受的投稿包括：
-ACG作品相关感想，二次元游戏攻略、心得等。
-
-h.<span class="label label-info">绘画</span>：
-绘画分类投稿标题同样没有固定要求，绘画分类接受各种原创绘画的投稿（临摹也可以，只要是自己画的）。
-无论你是手残还是触手，无论是线稿还是彩图，无论是单图还是短篇漫画，只要是怀着一颗有爱之心画出的作品那么就欢迎投稿到此分类来和大家一起交流与吐槽。
-本站今后会不定期举办一些主题绘画活动，届时欢迎各位绘画爱好者踊跃参与进来。
-
-<span class="label label-warning">关于合集</span>：
-如果投稿中包括多个资源请在标题中注明它们的关联性，并标注其中资源的数量。关联性可以是相同题材（必须是具体的题材，如同一作品的同人本，而不能是“LOLI”“御姐”这种泛而模糊的题材）、相同作者、相同制作公司等明确而具体的关联。
-如：[14年7月]新作CG合集×10  [ゆずソフト]游戏×5  [無限軌道A (トモセシュンサク)]同人志合集(15本)  [サイクロン (冷泉, 和泉)]奈叶本合集(20本) 等
-并将资源列表列在正文中，或将资源列表截图传到预览图，截资源列表时的请用列表而不是图标的查看方式。
-请不要将无关联的资源放到同一个投稿中。
-</pre>
-
-<pre>
-2.<span id="tmain" class="label label-inverse">正文</span>
-正文中请对所投稿资源进行描述。描述可以很简短（动画、漫画、CG、游戏分类请至少注明纯爱/凌○/ntr/群○等属性），但请不要只写与资源内容无关的内容。小说资源请在正文中注明转自哪里。请不要试图在正文中内嵌恶意代码。如果预览图使用外链图片请在正文编辑器中插入，系统将自动将文中的第一张图片设置为预览图。
-注：本站编辑器中外链图片格式不是[img]图片地址[/img];而是&lt;img src="图片地址" /&gt;。推荐直接使用正文编辑器中的“图像”按钮进行图片的外链，还可以调整图片的显示大小等。
-</pre>
-
-<pre>
-3.<span class="label label-inverse">密码</span>
-发布资源请给压缩包加上解压密码，以减轻菊爆党带来的损害。<span class="label label-important">1G以下的资源一定要加上本站通用密码gmgard.com，原上传者/汉化者要求转载不能加密码的除外。</span>请使用编辑器格式工具中“样式→内联元素样式→Label”标记密码。
-如果在网盘设定了提取码，请将提取码填写在连接旁边的提取码栏中。
-</pre>
-
-<pre>
-4.<span class="label label-inverse">连接</span>
-除资讯分类以外的投稿都必须附带资源链接。资源请传到<span class="label label-success">百度盘、好盘（howfile)</span>等比较常用且方便他人下载的网盘。请勿使用<span class="label label-important">freakshare等国外网盘</span>，以及其他需要长时间等待才可下载的（<span class="label label-important">如yunfile盘</span>）或登录后才可下载的（<span class="label label-important">如115盘</span>）或带有大量弹出式广告的网盘（<span class="label label-important">如城通盘，jk盘</span>），也请勿进行网盘的二次跳转（指将资源传到A网盘，然后将资源链接存入TXT上传到B网盘，然后将TXT的下载链接放到投稿中的这种方式）。给资源加上解压密码并将压缩包重命名为无关的名字可大大降低菊爆党举报成功的概率。请使用winrar、7z、winzip等通用标准压缩软件打包资源，禁止使用<span class="label label-important">快压</span>打包。
-连接框的增减方式与密码框相同。连接在文中会显示为填入左框的文字（若没有填写则默认显示为“下载”），并指向填入右框的连接。
-如：左框内容为“度娘盘”右框内容为“pan.baidu.com”则最终在文中显示为<a class="btn btn-info btn-large" rel="nofollow" target="_blank" href="http://pan.baidu.com">度娘盘</a>
-使用度娘盘时，点击“私密分享”并点击“复制链接及密码”后，直接将复制的内容粘贴到连接框则连接与提取码会自动分开，十分方便。
-投种子资源时可点击连接框右边的BT图标将种子转换为磁链。只有商业动画、同人动画与游戏分类接受只有种子或磁链的投稿，其他分类必须有网盘资源。
-</pre>
-
-<pre>
-5.<span class="label label-inverse">预览图</span>
-投稿时请给资源上传预览图。预览图应为资源的封面，请不要使用与资源内容无关的图片作为预览图。如果预览图露点请打码，打码方式随意（但不要用透明码），只要遮挡住应遮挡的部分即可。注意乳晕要码全，棍子需要打码挡全，伪娘的上面两点也需要打码。投稿中若包含多个资源可以只上传其中一张的预览图（推荐将多本封面拼成一张）。单个投稿中最多可以上传4张预览图，如文章需要插入多于4张图片请使用外链图片，外链的方法请参考 2.<span class="label label-inverse">正文</span>中的介绍。
-</pre>
-
-<pre>
-6.<span class="label label-inverse">标签</span>
-为了方便大家查找资源，请您在投稿时添加资源对应的特征标签。多个标签请用逗号、句号、分号、顿号或是半角空格来分隔。最多10个，每个标签最长20字符。
-所有登陆用户都可以为已有资源添加标签。
-<span class="label label-important">重要</span>所有分类的资源，只要是汉化资源就都要标上<span class="label label-info">汉化</span>标签。如该资源本身是中文资源并非汉化，则标上<span class="label label-info">中文</span>标签。
-以下为各类资源至少需要标上的标签种类。（资源类别：需要的标签类型）
-同人志资源：展会名称（如C84）、同人志题材(如果是原创题材则可不标题材)。
-漫画杂志资源：杂志名称
-漫画单行本或连载漫画资源：漫画作者
-动画资源：制作公司
-游戏和CG资源：制作公司
-画集：画集作者
-音乐：音乐的对应作品
-小说：出版社和作者
-
-详细教程可以参见 <a target="_blank" href="@Url.Action("Details","Blog",new {id = 36474})" class="btn btn-info btn-mini">这里</a>
-</pre>
-
-<pre>
-Ⅲ.关于审核和作者组
-一般用户的投稿在提交后需要经过管理员审核才可以显示在主页和资源列表中。如果投稿不符合要求则会被设定为“未通过”，并通过站内消息说明原因，请在“待审核”页面中找到未通过的投稿并按照要求进行修改。
-在未通过的投稿页面点“编辑”按钮并按要求修改投稿后，点“提交”按钮后投稿会再次进入待审核，无须删掉旧投稿重新投稿。
-如果您一个月内无问题（未被退回过）通过审核的投稿有连续10个以上，您便可以发消息到<a target="_blank" href="@Url.Action("Msg", new { name = "admin" })" class="btn btn-primary btn-mini"><i class="icon-envelope icon-white"></i> 管理员信箱</a>来申请作者权限。如果您的申请被接受您便会进入作者用户组。作者用户组中的用户投稿时不必输入验证码，且投稿不需要被审核。
-若用户进入作者用户组后连续进行不符合要求的投稿，我们保留将用户从作者用户组中移出的权利。
-</pre>
-
-<pre>
-Ⅳ.关于补档与分流
-<span class="label label-inverse">补档</span>
-当一个投稿的资源链接失效后，如果确认了投稿者放弃了该投稿，则可以新投稿来补档。
-判定投稿者放弃原投稿的标准如下：
-①.原投稿者的最后登录日期在一个月之前
-②.原投稿下有提醒资源失效的评论，且原投稿者在评论出现的一周内既未回复该评论亦未自己补档
-③.投稿者在投稿或评论中表明自己无法补档
-④，第①②③条都不满足的情况下，将资源失效问题汇报给投稿者，一周内原投稿者没有回应或原投稿者在回复中表示放弃补档
-
-当有人进行了有效的补档后失效的原投稿会被删除，所以请不要附上原投稿的链接并注上“简介见原投稿”，也不要直接把原投稿中的图链接到新投稿。
-
-在未满足补档标准且原投稿者尚未回复的情况下，可在原投稿的评论中贴出连接进行补档。
-
-<span class="label label-inverse">分流</span>
-如果一个投稿中的主资源的资源链接只有磁链和/或种子，此时可以新投稿来对该投稿进行网盘分流。
-分流投稿的标题需与原投稿的标题一致，并在最前边注明[网盘分流]
-
-<span class="label label-important">注：磁链只可给网盘资源补档，不可给网盘资源分流。</span>
-</pre>
-
-        <br />
-
-    </harmony>
-
-    <h2>其他</h2>
-
-    <br />
-
-<pre>
-本站的基础构架使用ASP.NET CORE编写，外观样式是基于<a target="_blank" href="http://www.bootcss.com/">Bootstrap</a>框架构建的。部分图标由<a target="_blank" href="http://glyphicons.com/">Glyphicons</a>提供。
-由于本站的大部分基础功能都是自行编写的，可改进的空间很多，欢迎各路各种技术宅来帮助我们改进网站。
-</pre>
-
-    <br />
-
-    <div class="spoiler">
-        <div class="spoiler-title show-icon">绅士秘史</div>
-        <div class="spoiler-content hide">
-            <p>
-                2019年4月1日，本站曾一度陷入与友链站魂+的<a href="/gm99894">“收购风波”</a>之中。尽管人们已逐渐将此事遗忘，但却有一名绅士的记载流传于世……
-            </p>
-            <pre>"杉崎key"為了自身利益，和小豆梓版主要求的項鍊，把echo埋在森林裡
-
-"echo版主"原本是一個版主，沒想到跟杉崎key有利益(唯一有項鍊的人)衝突，變成了大樹的肥料
-
-"男子高中生的蜘蛛日常"可能被利用，說服傲沉站長跟人間站長接觸
-
-"傲沉站长"被男子高中生的蜘蛛日常慫恿跟人間入間接觸，一心想讓論壇變好，卻沒想到被有心人士利用，送給人間讀項鍊是小豆梓版主幫忙準備的
-
-"小豆梓版主"託付杉崎key準備項鍊，並把項鍊交給傲沉站长
-
-"彎枝理樹"在樹中看到了某件事，謠言的散佈者，並且持有並相機記錄了許多證據，echo版主可能就埋在她下面
-
-"人间入间"跟lzone玩綠帽遊戲過程中可能翻車了，沉迷於傲沉站长的肉體上
-
-"Rivers77"傲沉放在數理身上的鴿子，看到了那一晚所發生的事件(可能是echo版主被消失也有可能是看到雙方站長開房)，告訴了lzone管理，並跟is版主談判，沒想到對方卻為了明哲保身，當了個吃瓜群眾，持有著錄音筆紀錄了許多事
-
-"lzone管理"長年跟人間玩綠帽遊戲，造成此事件中傲沉站长有辦法把人間攻略下來
-
-"黑犬狂魔""悠久版主"兩位對此事件中並不感興趣，只在意自己喜歡的東西
-
-"is版主"在Rivers77地質問之下表示知道了某人的計畫，可是去沒有想插手的打算，在後續风雷咏叹诗的訪問中似乎是瘋掉了
-
-"风雷咏叹诗"直接或間接訪問所有人並洞察事情的真相，用筆記本記錄下來許多情報
-
-===================================================
-
-此事件最大受益人是杉崎key，極有可能是事件的幕後使者
-
-筆記本可能是樹理持有，風雷拿的是相機，持有物品交換
-
-人間精神委靡的可能性只有兩種，1跟傲沉%了個爽，2知道了項鍊是從某人身上扒下來的(可能性低)
-
-小豆梓版主可能是混亂陣營的，希望事件變得有趣
-
-echo版主去森林的原因不明，可能是找理樹問話</pre>
-        </div>
-    </div>
-
-    <br />
-
-    <h2>声明</h2>
-
-    <br />
-
-<pre>
-本站所有资源均为网友分享，仅供学习交流使用，版权归原作者/出版公司所有，不可用于商业盈利用途。
-资源下载后，请在24小时内自觉删除，否则一切后果自行承担。本站和制作者不承担任何责任。
-如果您认为本站资源内容侵犯了您的著作权益，请您与我们联系，我们核实后会将其删除。
-
-本站面向的用户为中国大陆公民以外的ACG与汉语文化爱好者，资源内容均链接自互联网，站内不储存任何资源，网站在美国进行维护，受美国法律保护。
-<harmony>
-本站登录后可见的额外内容只面向中国大陆公民以外的、年龄达到当地法律规定的成年标准的用户。
-如果您不符合以上标准，请立即退出登录，否则由此引发的一切后果自行承担，本站不承担任何法律责任。
-</harmony>
-</pre>
 </div>
+
+@if (User.IsInRole("Administrator"))
+{
+    <button class="btn" onclick="editrules();" id="editversion">编辑</button>
+    <button class="btn" id="canceledit" onclick="canceledit();" style="display:none;">取消</button>
+    <script>
+        (function (window) {
+            let editor;
+            let original = $('#site-rules').html();
+            function canceledit() {
+                if (editor) {
+                    editor.destroy();
+                    editor = null;
+                    $('#site-rules').html(original);
+                    $('#canceledit').hide();
+                }
+            }
+            function editrules() {
+                if (!editor) {
+                    editor = CKEDITOR.replace("site-rules");
+                    $('#canceledit').show();
+                    return;
+                }
+                $.post('@Url.Action("EditSiteRules", "Admin")', { data: editor.getData() }, function () {
+                    editor.destroy();
+                    editor = null;
+                    $('#canceledit').hide();
+                    original = $('#site-rules').html();
+                });
+            }
+            window.editrules = editrules;
+            window.canceledit = canceledit;
+        })(window);
+    </script>
+}
 
 <script>
     $(function () {
@@ -493,4 +100,8 @@ echo版主去森林的原因不明，可能是找理樹問話</pre>
 
 @section scripts {
     <link href="/ckeditor/plugins/spoiler/css/spoiler.css" rel="stylesheet">
+}
+
+@section end_scripts{
+    <script src="@JsConstant.CKEditor"></script>
 }

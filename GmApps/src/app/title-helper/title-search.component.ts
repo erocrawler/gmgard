@@ -41,7 +41,8 @@ export class TitleSearchComponent implements OnInit, OnChanges {
       .subscribe(b => {
         this.searchActive = false;
         this.blogs = b;
-      })
+      });
+    this.search();
   }
 
   ngOnChanges() {
