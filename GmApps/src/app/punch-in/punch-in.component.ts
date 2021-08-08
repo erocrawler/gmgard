@@ -38,6 +38,10 @@ export class PunchInComponent implements AfterViewInit, OnInit {
         this.getMonthData();
       }
     });
+    this.calendar.monthSelected.subscribe((d: moment.Moment) => {
+      this.activeDate = d;
+      this.getMonthData();
+    })
   }
 
   getMonthData() {

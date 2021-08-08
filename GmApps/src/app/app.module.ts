@@ -24,6 +24,7 @@ import { LoginComponent } from "./login/login.component";
 import { DlsiteSearchComponent } from "./title-helper/dlsite-search.component";
 import { AuditExamToolbarComponent } from "./toolbar/audit-exam-toolbar.component";
 import { RaffleIndexComponent } from "./raffle/raffle-index.component";
+import { AppLayoutComponent } from './app-layout.component';
 
 registerLocaleData(localeCn, "zh-CN");
 
@@ -38,6 +39,7 @@ registerLocaleData(localeCn, "zh-CN");
     DlsiteSearchComponent,
     AuditExamToolbarComponent,
     RaffleIndexComponent,
+    AppLayoutComponent,
   ],
   imports: [
     BrowserModule,

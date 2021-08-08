@@ -8,12 +8,13 @@ import { MatGridListModule } from "@angular/material/grid-list";
 import { GachaComponent } from "./gacha.component";
 import { GachaIndexComponent, GachaConfirmComponent } from "./gacha-index.component";
 import { GachaResultComponent } from "./gacha-result.component";
-import { GachaService } from "./gacha.service";
+import { dbConfig, GachaService } from "./gacha.service";
 import { AppMaterialModule } from "../app-material.module";
 import { CardDetailComponent } from "./card-detail.component";
 import { GachaListComponent } from "./gacha-list.component";
 import { GachaIntroComponent } from './gacha-intro.component';
 import { AdvGameModule } from "../shared/adv-game/adv-game.module";
+import { NgxIndexedDBModule } from "ngx-indexed-db";
 
 const routes: Routes = [
   {
@@ -37,6 +38,7 @@ const routes: Routes = [
     MatGridListModule,
     FlexLayoutModule,
     RouterModule.forChild(routes),
+    NgxIndexedDBModule.forRoot(dbConfig),
     AdvGameModule,
   ],
   declarations: [

@@ -51,7 +51,7 @@ export const CATEGORIES: Category[] = [
     comment: "由于商业动画分类只包括以动画形式发售的商业作品资源，商业游戏的提取动画或录制动画等请投到商业作CG分类。",
   },
   {
-    id: 15, name: "同人贩卖动画", fields: [
+    id: 39, name: "同人贩卖动画", fields: [
       { name: "提取动画", fixed: true, required: false, format: () => "[提取动画]" },
       { name: "字幕组名称", required: false, format: BracketFormat },
       { name: "RJ号", required: true, hint: "也可填dmm编号或“无RJ号”", format: BracketFormat },
@@ -61,7 +61,7 @@ export const CATEGORIES: Category[] = [
     comment: "本分类接受DLsite、FANZA同人等平台以单品形式发售的动画投稿。当制作组同时在上述两个平台发售作品时，优先以RJ号进行标题命名。同人贩卖作品的动画提取也归于本分类，标题需在前面标注[提取动画]。",
   },
   {
-    id: 38, name: "同人粉丝动画", fields: [
+    id: 40, name: "同人粉丝动画", fields: [
       { name: "制作者名", required: true, format: BracketFormat },
       { name: "题材", required: true, hint: "角色的出处，多出处则填“多同人”；无出处则填“原创”", format: (v) => ` ${v} ` },
       { name: "原标题", required: true, hint: "日文原名" },

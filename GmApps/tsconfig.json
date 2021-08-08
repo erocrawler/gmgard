@@ -5,10 +5,11 @@
     "baseUrl": "src",
     "sourceMap": true,
     "declaration": false,
+    "module": "CommonJS",
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "target": "es6",
     "typeRoots": [
       "node_modules/@types",
       "typings"
@@ -26,13 +27,11 @@
       "@angular/platform-browser-dynamic": [ "../node_modules/@angular/platform-browser-dynamic" ],
       "@angular/router": [ "../node_modules/@angular/router" ],
       "@angular/http": [ "../node_modules/@angular/http" ],
-      "angular2-indexeddb": [ "../node_modules/angular2-indexeddb" ],
       "winwheel": ["../node_modules/winwheel"]
     }
   },
   "include": [
     "./src",
-    "node_modules/angular2-indexeddb",
     "node_modules/winwheel"
   ],
   "exclude": [

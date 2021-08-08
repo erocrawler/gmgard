@@ -3,7 +3,7 @@ import { Observable, of, merge } from "rxjs";
 import { Injectable, Inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
-import { AngularIndexedDB } from "angular2-indexeddb";
+import { NgxIndexedDBService, DBConfig } from 'ngx-indexed-db';
 
 import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { GachaRequest } from "../models/GachaRequest";
@@ -25,22 +25,28 @@ class Accumulator {
   }
 }
 
+export const dbConfig: DBConfig = {
+  name: 'gmDB',
+  version: 2,
+  objectStoresMeta: [{
+    store: 'img',
+    storeConfig: { keyPath: [], autoIncrement: false },
+    storeSchema: [],
+  }]
+};
+
 @Injectable()
 export class GachaService {
 
-  constructor(private http: HttpClient, @Inject(ENVIRONMENT) env: Environment, private sanitizer: DomSanitizer) {
+  constructor(
+    private http: HttpClient,
+    @Inject(ENVIRONMENT) env: Environment,
+    private sanitizer: DomSanitizer,
+    private db: NgxIndexedDBService
+  ) {
     this.host = env.apiHost;
-    this.db = new AngularIndexedDB("gmDB", 2);
-    this.db.openDatabase(2, (evt: Event) => {
-      const db: IDBDatabase = (evt.currentTarget as IDBRequest).result;
-      if (db.objectStoreNames.contains("img")) {
-        db.deleteObjectStore("img");
-      }
-      db.createObjectStore("img", { autoIncrement: false });
-    })
   }
 
-  private db: AngularIndexedDB;
   private host: string;
   private animationImages: HTMLImageElement[];
   private animationVideo: HTMLVideoElement;
@@ -162,7 +168,7 @@ export class GachaService {
     const progress: Observable<[number, number]>[] = [];
     for (let i = 0; i < imageURIs.length; ++i) {
       progress.push(new Observable<[number, number]>(observer => {
-        db.getByKey("img", imageURIs[i]).then((data: Blob) => {
+        db.getByKey<Blob>("img", imageURIs[i]).subscribe((data: Blob) => {
           if (data) {
             handleData(i, data);
             observer.complete();
