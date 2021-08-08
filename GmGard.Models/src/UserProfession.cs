@@ -81,7 +81,10 @@ namespace GmGard.Models
             高级搜集者,
             克苏鲁机械,
             至暗の交易,
-            迷影重重
+            迷影重重,
+            南瓜头,
+            莫比乌斯之环,
+            闪光的哈萨维
         }
 
         private static readonly Dictionary<UserProfession, string> professionName = new Dictionary<UserProfession, string>
@@ -158,7 +161,10 @@ namespace GmGard.Models
             { UserProfession.高级搜集者, "高级搜集者" },
             { UserProfession.克苏鲁机械, "克苏鲁机械" },
             { UserProfession.至暗の交易, "至暗の交♂易" },
-            { UserProfession.迷影重重, "迷影重重" }
+            { UserProfession.迷影重重, "迷影重重" },
+            { UserProfession.南瓜头, "🎃" },
+            { UserProfession.莫比乌斯之环, "莫比乌斯之环" },
+            { UserProfession.闪光的哈萨维, "闪光的哈萨维" },
         };
 
         public static Dictionary<UserProfession, string> AllTitleBackground { get; } = new Dictionary<UserProfession, string>

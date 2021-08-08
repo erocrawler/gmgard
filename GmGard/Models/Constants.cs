@@ -2,51 +2,108 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 
 namespace GmGard.Models
 {
     public static class SiteConstant
     {
-        public static readonly string SiteName = "紳士の庭";
-        public static readonly string AltSiteName = "北紳の庭";
-        public static readonly string AltHost = "hggard.com";
-        public static readonly string Host = "gmgard.com";
-        public static readonly string Description = "gmgard.com♢紳士の庭♢ 绅士们的二次元资源分享交流平台";
-        public static readonly string AltDescription = "hggard.com♢北紳の庭♢ 二次元资源分享交流平台";
-        public static readonly string AppHost = "app.gmgard.com";
-        public static readonly string AltAppHost = "app.hggard.com";
+        public class SiteInfo
+        {
+            public string Name { get; set; }
+            public string Host { get; set; }
+            public string StaticHost { get; set; }
+            public string Desc { get; set; }
+            public string Logo { get; set; }
+            public string Title { get; set; }
+            public string AppHost { get; set; }
+        }
+        public static readonly SiteInfo DefaultSite = new()
+        {
+            Name = "紳士の庭",
+            Host = "gmgard.com",
+            Desc = "gmgard.com♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
+            Logo = "//static.gmgard.com/Images/sinsi2.png",
+            Title = "GMgard",
+            StaticHost = "static.gmgard.com",
+            AppHost = "app.gmgard.com",
+        };
+        public static readonly SiteInfo HggardSite = new()
+        {
+            Name = "北紳の庭",
+            Host = "hggard.com",
+            Desc = "hggard.com♢北紳の庭♢ 二次元资源分享交流平台",
+            Logo = "//static.hggard.com/Images/hopo.png",
+            StaticHost = "static.hggard.com",
+            Title = "HGgard",
+            AppHost = "app.hggard.com",
+        };
+        public static readonly SiteInfo GmGardMoeSite = new()
+        {
+            Name = "紳士の庭",
+            Host = "gmgard.moe",
+            Desc = "gmgard.moe♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
+            Logo = "//static.gmgard.moe/Images/sinsi2.png",
+            StaticHost = "static.gmgard.moe",
+            Title = "GMgard",
+            AppHost = "app.gmgard.moe",
+        };
+        public static readonly IDictionary<string, SiteInfo> Sites = new Dictionary<string, SiteInfo>()
+        {
+            { DefaultSite.Host, DefaultSite },
+            { HggardSite.Host, HggardSite },
+            { GmGardMoeSite.Host, GmGardMoeSite },
+        };
         public static readonly string DevAppHost = "localhost:4200";
-        public static readonly string SiteLogo = "//static.gmgard.com/Images/sinsi2.png";
-        public static readonly string AltSiteLogo = "//static.hggard.com/Images/hopo.png";
-        public static readonly string[] AppHostOrigins = new[] { "http://app.gmgard.com", "https://app.gmgard.com", "http://app.hggard.com", "https://app.hggard.com" };
+        public static readonly string[] AppHostOrigins = new[] { 
+            "http://app.gmgard.com", 
+            "https://app.gmgard.com", 
+            "http://app.hggard.com", 
+            "https://app.hggard.com",
+            "http://app.gmgard.moe",
+            "https://app.gmgard.moe",
+        };
         public static readonly string[] DevAppHostOrigins = new[] { "http://localhost:4200" };
-        public static readonly string[] SmileyPaths = { "gmgard.us/smiley", "hggard.us/smiley", "gmgard.com/smiley", "hggard.com/smiley" };
+        public static readonly string[] SmileyPaths = { 
+            "gmgard.us/smiley",
+            "gmgard.com/smiley", 
+            "hggard.com/smiley",
+            "gmgard.moe/smiley",
+        };
+        public static readonly DateTime Anniversary8EndDate = new(2021, 8, 11, 23, 59, 59);
     }
 
     public class ConstantUtil
     {
         private IHttpContextAccessor _contextAccessor;
         private bool isDev;
+        private SiteConstant.SiteInfo _currentSite;
 
         public ConstantUtil(IHttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
             _contextAccessor = contextAccessor;
             isDev = env.IsDevelopment();
+            if (!SiteConstant.Sites.TryGetValue(_contextAccessor.HttpContext.Request.Host.Host, out _currentSite))
+            {
+                _currentSite = SiteConstant.DefaultSite;
+            }
         }
 
-        public bool IsAltSite => _contextAccessor.HttpContext.Request.Host.ToUriComponent().Contains(SiteConstant.AltHost);
+        public string SiteName => _currentSite.Name;
 
-        public string SiteName => IsAltSite ? SiteConstant.AltSiteName : SiteConstant.SiteName;
+        public string SiteHost => _currentSite.Host;
 
-        public string SiteHost => IsAltSite ? SiteConstant.AltHost : SiteConstant.Host;
+        public string SiteDesc => _currentSite.Desc;
 
-        public string SiteDesc => IsAltSite ? SiteConstant.AltDescription : SiteConstant.Description;
+        public string SiteLogo => _currentSite.Logo;
 
-        public string SiteLogo => IsAltSite ? SiteConstant.AltSiteLogo : SiteConstant.SiteLogo;
+        public string SiteTitle => _currentSite.Title;
+
+        public string SiteStaticHost => _currentSite.StaticHost;
 
         public string AppHost {
             get {
-                var host = isDev ? SiteConstant.DevAppHost: (IsAltSite ? SiteConstant.AltAppHost : SiteConstant.AppHost);
+                var host = isDev ? SiteConstant.DevAppHost: _currentSite.AppHost;
                 return (_contextAccessor.HttpContext.Request.IsHttps ? "https://" : "http://") + host;
             }
         }

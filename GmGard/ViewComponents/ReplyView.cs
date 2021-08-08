@@ -24,7 +24,7 @@ namespace GmGard.ViewComponents
 
         private int ReplyPageSize => _appSettings.Value.ReplyPageSize;
 
-        public IViewComponentResult Invoke(int itemid, string name = "", int pagenum = 1, ItemType idtype = ItemType.Blog, bool hottest = false)
+        public async Task<IViewComponentResult> InvokeAsync(int itemid, string name = "", int pagenum = 1, ItemType idtype = ItemType.Blog, bool hottest = false)
         {
             ViewData["idtype"] = idtype;
             ViewData["itemid"] = itemid;
@@ -48,9 +48,9 @@ namespace GmGard.ViewComponents
                 {
                     query = query.OrderByDescending(p => p.post.PostDate);
                 }
-                var paged = query.ToPagedList(pagenum, ReplyPageSize);
+                var paged = await query.ToPagedListAsync(pagenum, ReplyPageSize);
                 model = new X.PagedList.StaticPagedList<Post>(paged.Select(a => a.post), paged.GetMetaData());
-                IDictionary<int, BlogRating> ratings = query.Where(q => q.blograting != null).ToDictionary(q => q.post.PostId, q => q.blograting);
+                IDictionary<int, BlogRating> ratings = paged.Where(q => q.blograting != null).ToDictionary(q => q.post.PostId, q => q.blograting);
                 ViewBag.ratings = ratings;
             }
             else
@@ -64,7 +64,7 @@ namespace GmGard.ViewComponents
                 {
                     query = posts.OrderByDescending(p => p.PostDate);
                 }
-                model = posts.OrderByDescending(p => p.PostDate).ToPagedList(pagenum, ReplyPageSize);
+                model = await posts.OrderByDescending(p => p.PostDate).ToPagedListAsync(pagenum, ReplyPageSize);
             }
             ViewBag.nicknames = _blogUtil.GetNickNames(model.Select(p => p.Author).Concat(model.SelectMany(p => p.Replies).Select(r => r.Author)));
             return View(model);

@@ -33,11 +33,118 @@ namespace GmGardMigrations.OneOffTasks
             [Boolean(Index = false)]
             public bool IsLocalImg { get; set; }
         }
-        
+
+        class BlogProvider
+        {
+            private readonly BlogContext db;
+            private readonly IEnumerable<int> categoryIds;
+            public BlogProvider(BlogContext blogContext, IEnumerable<int> catIds)
+            {
+                db = blogContext;
+                categoryIds = catIds;
+            }
+
+            private IQueryable<GmGard.Models.Blog> Blogs {
+                get
+                {
+                    var blogs = db.Blogs.Where(b => b.BlogID > LAST_BLOG_ID);
+                    if (categoryIds != null)
+                    {
+                        return blogs.Where(b => categoryIds.Contains(b.CategoryID));
+                    }
+                    return blogs;
+                }
+            }
+
+            public int Count()
+            {
+                return Blogs.Where(b => b.BlogID > LAST_BLOG_ID).Count();
+            }
+
+            public IEnumerable<BlogIndexed> GetBlogs(int skip, int size)
+            {
+                return Blogs.Where(b => b.BlogID > LAST_BLOG_ID).OrderBy(b => b.BlogID).Skip(skip).Take(size)
+                        .GroupJoin(db.Posts.Where(p => p.IdType == GmGard.Models.ItemType.Blog), b => b.BlogID, p => p.PostId, (b, p) => new { blog = b, post = p.Count() })
+                        .GroupJoin(db.TagsInBlogs.DefaultIfEmpty(),
+                            b => b.blog.BlogID,
+                            tib => tib.BlogID,
+                            (b, tib) => new
+                            {
+                                b.blog,
+                                tag = tib.Select(t => t.tag),
+                                b.post,
+                            }).ToList()
+                            .Select(b => new BlogIndexed
+                            {
+                                Id = b.blog.BlogID,
+                                Title = b.blog.BlogTitle,
+                                Content = b.blog.Content,
+                                Tags = b.tag.Select(t => t.TagName),
+                                CreateDate = b.blog.BlogDate,
+                                CategoryId = b.blog.CategoryID,
+                                Author = b.blog.Author,
+                                IsHarmony = b.blog.isHarmony,
+                                IsApproved = b.blog.isApproved,
+                                BlogVisit = b.blog.BlogVisit,
+                                PostCount = b.post,
+                                Rating = b.blog.Rating ?? 0,
+                                ImagePath = b.blog.ImagePath,
+                                IsLocalImg = b.blog.IsLocalImg,
+                            });
+            }
+        }
+
         const int LAST_BLOG_ID = 0;
         const int BATCH_SIZE = 10000;
+        
 
-        public static void Run(string endpoint, string username, string password, bool create = false)
+        private static void UpdateBlogs(BlogProvider blogProvider, ElasticClient client)
+        {
+            var totalBlogs = blogProvider.Count();
+            Console.WriteLine($"total blogs: {totalBlogs}");
+            int lastBlogId = LAST_BLOG_ID;
+            for (int i = 0; i < totalBlogs; i += BATCH_SIZE)
+            {
+                var blogs = blogProvider.GetBlogs(i, BATCH_SIZE);
+                Console.WriteLine($"Send Items for {i} to {i + BATCH_SIZE - 1}");
+                var bulk = client.BulkAll(blogs, s => s
+                    // in case of 429 response, how long we should wait before retrying
+                    .BackOffTime(TimeSpan.FromSeconds(5))
+                    // in case of 429 response, how many times to retry before failing
+                    .BackOffRetries(5)
+                    .Index<BlogIndexed>());
+                var waitHandle = new ManualResetEvent(false);
+                var bulkAllObserver = new BulkAllObserver(
+                    onNext: bulkAllResponse =>
+                    {
+                        Console.WriteLine($"Done page {bulkAllResponse.Page} with retry {bulkAllResponse.Retries}");
+                    },
+                    onError: exception =>
+                    {
+                        waitHandle.Set();
+                        throw exception;
+                    },
+                    onCompleted: () =>
+                    {
+                        waitHandle.Set();
+                    });
+                bulk.Subscribe(bulkAllObserver);
+                waitHandle.WaitOne();
+                if (blogs.Count() > 0)
+                {
+                    lastBlogId = blogs.Last().Id;
+                }
+                if (blogs.Count() < BATCH_SIZE)
+                {
+                    break;
+                }
+            }
+            client.Indices.Refresh(Indices.Index("blogs"));
+            Console.WriteLine($"last blogs: {lastBlogId}");
+            Console.ReadLine();
+        }
+
+        public static void Run(string endpoint, string username, string password, bool create = false, IEnumerable<int> categoryIds = null)
         {
             var settings = new ConnectionSettings(new Uri(endpoint)).DefaultIndex("blogs").BasicAuthentication(username, password);
             var client = new ElasticClient(settings);
@@ -65,79 +172,8 @@ namespace GmGardMigrations.OneOffTasks
                 }
             }
             BlogContextFactory blogContextFactory = new BlogContextFactory();
-            using (var db = blogContextFactory.Create())
-            {
-                var totalBlogs = db.Blogs.Where(b => b.BlogID > 0).Count();
-                Console.WriteLine($"total blogs: {totalBlogs}");
-                int lastBlogId = LAST_BLOG_ID;
-                for (int i = 0; i < totalBlogs; i += BATCH_SIZE)
-                {
-                    var blogs = db.Blogs.Where(b => b.BlogID > LAST_BLOG_ID).OrderBy(b => b.BlogID).Skip(i).Take(BATCH_SIZE)
-                        .GroupJoin(db.Posts.Where(p => p.IdType == GmGard.Models.ItemType.Blog), b => b.BlogID, p => p.PostId, (b, p) => new { blog = b, post = p.Count() })
-                        .GroupJoin(db.TagsInBlogs.DefaultIfEmpty(),
-                            b => b.blog.BlogID,
-                            tib => tib.BlogID,
-                            (b, tib) => new
-                            {
-                                b.blog,
-                                tag = tib.Select(t => t.tag),
-                                b.post,
-                            }).ToList();
-                    Console.WriteLine($"Send Items for {i} to {i + BATCH_SIZE - 1}");
-                    var bulk = client.BulkAll(blogs.Select(b => new BlogIndexed
-                    {
-                        Id = b.blog.BlogID,
-                        Title = b.blog.BlogTitle,
-                        Content = b.blog.Content,
-                        Tags = b.tag.Select(t => t.TagName),
-                        CreateDate = b.blog.BlogDate,
-                        CategoryId = b.blog.CategoryID,
-                        Author = b.blog.Author,
-                        IsHarmony = b.blog.isHarmony,
-                        IsApproved = b.blog.isApproved,
-                        BlogVisit = b.blog.BlogVisit,
-                        PostCount = b.post,
-                        Rating = b.blog.Rating ?? 0,
-                        ImagePath = b.blog.ImagePath,
-                        IsLocalImg = b.blog.IsLocalImg,
-                    }), s => s
-                        // in case of 429 response, how long we should wait before retrying
-                        .BackOffTime(TimeSpan.FromSeconds(5))
-                        // in case of 429 response, how many times to retry before failing
-                        .BackOffRetries(5)
-                        .Index<BlogIndexed>());
-                    var waitHandle = new ManualResetEvent(false);
-                    var bulkAllObserver = new BulkAllObserver(
-                        onNext: bulkAllResponse =>
-                        {
-                            // do something after each bulk request
-                            Console.WriteLine($"Done page {bulkAllResponse.Page} with retry {bulkAllResponse.Retries}");
-                        },
-                        onError: exception =>
-                        {
-                            waitHandle.Set();
-                            throw exception;
-                        },
-                        onCompleted: () =>
-                        {
-                            // do something when all bulk operations complete
-                            waitHandle.Set();
-                        });
-                    bulk.Subscribe(bulkAllObserver);
-                    waitHandle.WaitOne();
-                    if (blogs.Count > 0)
-                    {
-                        lastBlogId = blogs.Last().blog.BlogID;
-                    }
-                    if (blogs.Count < BATCH_SIZE)
-                    {
-                        break;
-                    }
-                }
-                client.Indices.Refresh(Indices.Index("blogs"));
-                Console.WriteLine($"last blogs: {lastBlogId}");
-                Console.ReadLine();
-            }
+            using var db = blogContextFactory.Create();
+            UpdateBlogs(new BlogProvider(db, categoryIds), client);
+        }
         }
     }
-}

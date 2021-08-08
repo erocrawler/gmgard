@@ -4,7 +4,7 @@
 @inject RatingUtil ratingUtil
 @inject CategoryUtil catUtil
 @{
-    ViewBag.Title = constantUtil.IsAltSite ? "HGgard" : "GMgard";
+    ViewBag.Title = constantUtil.SiteTitle;
     List<int> features = ViewBag.featuredBlog as List<int>;
     bool first = true;
     var modellist = Model.ToList();

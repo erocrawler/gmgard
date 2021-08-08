@@ -41,12 +41,7 @@ namespace GmGard.TagHelpers
             {
                 return $"//{cookie}/";
             }
-            if (_constantUtil.IsAltSite)
-            {
-                return "//static.hggard.com/";
-            }
-            
-            return "//static.gmgard.com/";
+            return $"//{_constantUtil.SiteStaticHost}/";
         }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)

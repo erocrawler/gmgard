@@ -30,7 +30,7 @@ namespace GmGard.Controllers
         // GET: /Css/
         public async System.Threading.Tasks.Task<ActionResult> Index(string bg = "")
         {
-            string host = _constantUtil.IsAltSite ? BackgroundSetting.AltDefaultHost : BackgroundSetting.DefaultHost;
+            string host = _constantUtil.SiteStaticHost;
             if (bg != "" && !_bgSetting.BackgroundClasses.ContainsValue(bg))
             {
                 return NotFound();
@@ -46,7 +46,7 @@ namespace GmGard.Controllers
 
         public async System.Threading.Tasks.Task<ActionResult> UserBg(string bg = "")
         {
-            string host = _constantUtil.IsAltSite ? BackgroundSetting.AltDefaultHost : BackgroundSetting.DefaultHost;
+            string host = _constantUtil.SiteStaticHost;
             if (bg != "" && !_bgSetting.BackgroundClasses.ContainsValue(bg))
             {
                 return NotFound();

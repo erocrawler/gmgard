@@ -200,7 +200,6 @@ namespace GmGard.Models
     public class BackgroundSetting
     {
         public const string DefaultHost = "static.gmgard.com";
-        public const string AltDefaultHost = "static.hggard.com";
         public List<BackgroundCss> Backgrounds { get; set; }
 
         /// <summary>

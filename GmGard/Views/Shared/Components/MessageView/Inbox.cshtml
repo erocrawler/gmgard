@@ -1,5 +1,4 @@
 ﻿@model X.PagedList.IPagedList<Message>
-@inject BlogUtil blogUtil
 <form asp-action="MultiAct" asp-controller="Message" asp-route-pos="inbox">
     <table style="background-color:white;width:100%;table-layout:fixed;">
         <colgroup>
@@ -35,19 +34,19 @@
                     <tr class="msglist-item">
                         <td><label style="margin:0;text-align:center;"><input type="checkbox" name="op" value="@Item.MsgId" style="margin:0;" /></label></td>
                         <td onclick="readmsg(@Item.MsgId);">
-                            @blogUtil.GetNickName(Item.Sender)
+                            @ViewBag.NickNames[Item.Sender]
                         </td>
                         <td onclick="readmsg(@Item.MsgId);">
                             <p id="msg@(Item.MsgId)" style="font-weight:@(Item.IsRead ? "inherit" : "bold")">
                                 @if (Item.MsgTitle == "新回复通知" || Item.MsgTitle == "提及通知")
-                                           {
-                                               string msgtext;
-                                               var msglink = BlogHelper.getNthLink(2, Item.MsgContent, out msgtext);
-                                               if (msglink != null)
-                                               {
+                                {
+                                    string msgtext;
+                                    var msglink = BlogHelper.getNthLink(2, Item.MsgContent, out msgtext);
+                                    if (msglink != null)
+                                    {
                                         <a target="_blank" class="quickview" href="@msglink">@msgtext</a><i class="icon-share"></i>
                                     }
-                                   }
+                                }
                                 @(Item.MsgTitle == null ? "无标题" : (Item.MsgTitle.Length > 0 ? Item.MsgTitle : "无标题"))
                             </p>
                         </td>
