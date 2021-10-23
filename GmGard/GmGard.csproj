@@ -42,29 +42,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.5.9.4" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.1.28" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.2.0" />
-    <PackageReference Include="HtmlSanitizer" Version="5.0.376" />
-    <PackageReference Include="Humanizer.Core" Version="2.8.26" />
+    <PackageReference Include="HtmlSanitizer" Version="6.0.441" />
+    <PackageReference Include="Humanizer.Core" Version="2.11.10" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.3" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.3">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.9" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.9">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.3">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.9">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
-    <PackageReference Include="MonoTorrent" Version="1.0.29" />
-    <PackageReference Include="NEST" Version="7.11.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.31" />
-    <PackageReference Include="LinqKit" Version="1.1.23" />
+    <PackageReference Include="MonoTorrent" Version="2.0.0" />
+    <PackageReference Include="NEST" Version="7.14.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.36" />
+    <PackageReference Include="LinqKit" Version="1.1.26" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
@@ -74,18 +75,18 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta0010" />
     <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.8.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.12.2" />
     <PackageReference Include="System.IO" Version="4.3.0" />
     <PackageReference Include="System.IO.Pipelines" Version="5.0.1" />
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="Terradue.ServiceModel.Syndication" Version="1.1.1" />
     <PackageReference Include="FluentScheduler" Version="5.5.1" />
-    <PackageReference Include="X.PagedList" Version="8.0.7" />
+    <PackageReference Include="X.PagedList" Version="8.1.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
@@ -110,6 +111,10 @@
       <Generator>DtsGenerator</Generator>
       <LastGenOutput>PunchInHistoryResponse.cs.d.ts</LastGenOutput>
     </Compile>
+    <Compile Update="Models\App\SendMessageRequest.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>SendMessageRequest.cs.d.ts</LastGenOutput>
+    </Compile>
     <Compile Update="Models\App\SpinWheelResult.cs">
       <Generator>DtsGenerator</Generator>
       <LastGenOutput>SpinWheelResult.cs.d.ts</LastGenOutput>
@@ -121,6 +126,10 @@
     <Compile Update="Models\App\TwoFactorAuth.cs">
       <Generator>DtsGenerator</Generator>
       <LastGenOutput>TwoFactorAuth.cs.d.ts</LastGenOutput>
+    </Compile>
+    <Compile Update="Models\App\UserSuggestion.cs">
+      <Generator>DtsGenerator</Generator>
+      <LastGenOutput>UserSuggestion.cs.d.ts</LastGenOutput>
     </Compile>
     <Compile Update="Models\App\Vouchers.cs">
       <Generator>DtsGenerator</Generator>
@@ -184,6 +193,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>PunchInHistoryResponse.cs</DependentUpon>
     </None>
+    <None Update="Models\App\SendMessageRequest.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SendMessageRequest.cs</DependentUpon>
+    </None>
     <None Update="Models\App\SpinWheelResult.cs.d.ts">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -204,6 +218,11 @@
     </None>
     <None Update="Models\App\User.cs.d.ts">
       <DependentUpon>User.cs</DependentUpon>
+    </None>
+    <None Update="Models\App\UserSuggestion.cs.d.ts">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UserSuggestion.cs</DependentUpon>
     </None>
     <None Update="Models\App\Vouchers.cs.d.ts">
       <DesignTime>True</DesignTime>

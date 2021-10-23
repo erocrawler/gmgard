@@ -18,6 +18,11 @@
         <input type="hidden" value="false" name="addFavFlameEffect" />
     </label>
     <br />
+    <label class="checkbox inline" for="ShowBlogDateOnLists">
+        <input type="checkbox" value="true" name="ShowBlogDateOnLists" id="ShowBlogDateOnLists" @if (Model != null && Model.ShowBlogDateOnLists) { <text> checked</text>} />在资源列表显示投稿时间
+        <input type="hidden" value="false" name="ShowBlogDateOnLists" />
+    </label>
+    <br />
 </form>
 <script>
     $(function () {

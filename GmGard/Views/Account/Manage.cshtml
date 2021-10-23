@@ -49,6 +49,10 @@
         {
             return groups[GachaPool.PoolName.August2020];
         }
+        else if (t >= 74 && t < 77)
+        {
+            return new SelectListGroup { Name = "閃光の8周年" };
+        }
         return null;
     }
 
@@ -113,7 +117,7 @@
         </div>
         <div class="accordion-group">
             <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeoptiondiv"><h3>通知与特效设置</h3></a>
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeoptiondiv"><h3>通知与显示设置</h3></a>
             </div>
             <div class="accordion-body collapse" id="changeoptiondiv">
                 <partial name="UserOptions" model="Model.option" />

@@ -233,6 +233,7 @@ namespace GmGard.Models
         public bool sendNoticeForNewPostReply { get; set; }
         public bool addFavFlameEffect { get; set; }
         public bool homepageHideHarmony { get; set; }
+        public bool ShowBlogDateOnLists { get; set; }
 
         [MaxLength(200)]
         public string homepageCategories { get; set; }

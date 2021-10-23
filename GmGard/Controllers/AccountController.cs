@@ -498,9 +498,9 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public PartialViewResult UserOptions(UserOption model)
+        public async Task<PartialViewResult> UserOptions(UserOption model)
         {
-            UserProfile user = _db.Users.Include("option").SingleOrDefault(u => u.UserName == User.Identity.Name);
+            UserProfile user = await _db.Users.Include("option").SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user.option == null)
             {
                 user.option = model;
@@ -510,9 +510,10 @@ namespace GmGard.Controllers
                 user.option.sendNoticeForNewReply = model.sendNoticeForNewReply;
                 user.option.sendNoticeForNewPostReply = model.sendNoticeForNewPostReply;
                 user.option.addFavFlameEffect = model.addFavFlameEffect;
+                user.option.ShowBlogDateOnLists = model.ShowBlogDateOnLists;
                 _blogUtil.CacheUserOption(user.option, user.UserName);
             }
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             ViewBag.Success = true;
             return PartialView(model);
         }

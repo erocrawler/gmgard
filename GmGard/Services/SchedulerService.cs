@@ -209,7 +209,10 @@ namespace GmGard.Services
                         item.Categories.Add(new SyndicationCategory(CategoryName));
                     }
                     var path = BlogHelper.firstImgPath(blog, true);
-                    item.Summary = new CDataSyndicationContent(string.Format("<img src='{0}'></img><br/><p>{1}</p>", path, BlogHelper.getFirstLine(blog.Content, 200, true)));
+                    item.Summary = new CDataSyndicationContent(
+                        new TextSyndicationContent(
+                            string.Format("<img src='{0}'></img><br/><p>{1}</p>", path, BlogHelper.getFirstLine(blog.Content, 200, true)),
+                            TextSyndicationContentKind.Html));
                     item.Authors.Add(new SyndicationPerson(blog.Author));
                     item.PublishDate = blog.BlogDate;
                     item.LastUpdatedTime = blog.BlogDate;

@@ -35,7 +35,7 @@ namespace GmGard
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(option =>
+            var builder = services.AddMvc(option =>
             {
                 option.EnableEndpointRouting = false;
                 option.CacheProfiles.Add("Never", new CacheProfile
@@ -56,6 +56,11 @@ namespace GmGard
                     options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
                 })
                 .AddSessionStateTempDataProvider();
+
+            if (IsDev)
+            {
+                builder.AddRazorRuntimeCompilation();
+            }
 
             services.Configure<MvcOptions>(o =>
             {
@@ -231,7 +236,6 @@ namespace GmGard
                 }
                 builder.AddSerilog();
             });
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

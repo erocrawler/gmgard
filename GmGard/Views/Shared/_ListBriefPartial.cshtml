@@ -22,6 +22,11 @@
             </h4>
             <strong>投稿：@blogUtil.GetNickName(Model.Author)</strong>
             <br />
+            <user-option option="o => o.ShowBlogDateOnLists">
+                <div class="posttime">
+                    <span>投稿日期： </span>@Model.BlogDate &nbsp;&nbsp;
+                </div>
+            </user-option>
         </div>
     </a>
 </li>

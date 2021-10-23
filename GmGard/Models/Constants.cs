@@ -48,13 +48,22 @@ namespace GmGard.Models
             Title = "GMgard",
             AppHost = "app.gmgard.moe",
         };
+        public static readonly SiteInfo DevSite = new()
+        {
+            Name = "紳士の庭（DEV版）",
+            Host = "localhost:59144",
+            Desc = "gmgard.com♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
+            Logo = "//static.gmgard.com/Images/sinsi2.png",
+            Title = "GMgard",
+            StaticHost = "static.gmgard.com",
+            AppHost = "localhost:4200",
+        };
         public static readonly IDictionary<string, SiteInfo> Sites = new Dictionary<string, SiteInfo>()
         {
             { DefaultSite.Host, DefaultSite },
             { HggardSite.Host, HggardSite },
             { GmGardMoeSite.Host, GmGardMoeSite },
         };
-        public static readonly string DevAppHost = "localhost:4200";
         public static readonly string[] AppHostOrigins = new[] { 
             "http://app.gmgard.com", 
             "https://app.gmgard.com", 
@@ -70,20 +79,21 @@ namespace GmGard.Models
             "hggard.com/smiley",
             "gmgard.moe/smiley",
         };
-        public static readonly DateTime Anniversary8EndDate = new(2021, 8, 11, 23, 59, 59);
     }
 
     public class ConstantUtil
     {
         private IHttpContextAccessor _contextAccessor;
-        private bool isDev;
         private SiteConstant.SiteInfo _currentSite;
 
         public ConstantUtil(IHttpContextAccessor contextAccessor, IWebHostEnvironment env)
         {
             _contextAccessor = contextAccessor;
-            isDev = env.IsDevelopment();
-            if (!SiteConstant.Sites.TryGetValue(_contextAccessor.HttpContext.Request.Host.Host, out _currentSite))
+            if (env.IsDevelopment())
+            {
+                _currentSite = SiteConstant.DevSite;
+            }
+            else if (!SiteConstant.Sites.TryGetValue(_contextAccessor.HttpContext.Request.Host.Host, out _currentSite))
             {
                 _currentSite = SiteConstant.DefaultSite;
             }
@@ -101,12 +111,7 @@ namespace GmGard.Models
 
         public string SiteStaticHost => _currentSite.StaticHost;
 
-        public string AppHost {
-            get {
-                var host = isDev ? SiteConstant.DevAppHost: _currentSite.AppHost;
-                return (_contextAccessor.HttpContext.Request.IsHttps ? "https://" : "http://") + host;
-            }
-        }
+        public string AppHost => (_contextAccessor.HttpContext.Request.IsHttps ? "https://" : "http://") + _currentSite.AppHost;
     }
 
     public static class PostConstant

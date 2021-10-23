@@ -1968,6 +1968,10 @@ td {
     white-space: normal;
 }
 
+.posttime {
+    font-size: small;
+}
+
 /*
  * Metro UI CSS
  * Copyright 2012 Sergey Pimenov

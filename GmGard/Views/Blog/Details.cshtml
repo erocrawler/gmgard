@@ -9,6 +9,7 @@
     ViewBag.Title = blog.BlogTitle;
     ViewBag.Description = string.Empty;
     string categoryName = catUtil.categoryInfo(blog.CategoryID);
+    BlogLink[] links = BlogHelper.GetBlogLink(blog.Links);
 }
 
 @section featured
@@ -90,7 +91,6 @@
         @htmlUtil.RewriteBlogImage(blog)
     </div>
     @{ 
-        BlogLink[] links = BlogHelper.GetBlogLink(blog.Links);
         if (links != null && links.Length > 0 && !(links.Length == 1 && links[0].url == null))
         {
             <h4>链接：</h4>
@@ -132,25 +132,6 @@
         }
     </div>
     <div id="edit-tag"></div>
-    <script>
-        (function () {
-            var $bc = $('#blogcontent');
-            $('#imgdivs a').each(function (i, e) {
-                var $c = $(e).clone().find('img').attr('class', 'uimg').attr('rel', 'lightbox[u]').end(),
-                    $i = $bc.find('img[data-index="' + i + '"]');
-                if ($i.length > 0) {
-                    $i.replaceWith($c);
-                    $('#imgdiv' + i).hide();
-                    $(e).hide();
-                }
-            });
-            var dl = @Json.Serialize(links?.Select(l => l.url));
-            $('#dllist a').one('mouseenter', function() {
-                var $this=$(this),dlid = $this.data('dl');
-                if(dlid >= 0){ $this.attr('href', dl[dlid])};
-            }).one('focus',(function(){$(this).trigger('mouseenter')}));
-        })();
-    </script>
     @if (!string.IsNullOrEmpty(Model.AuthorDesc))
     {
         <table class="author-info clear-fix">
@@ -223,9 +204,9 @@
             </td></tr>
         </table>
         TempData["defaultccs"] = "呃。。居然被管理猿打回来了。。。";
-        }
-        else
-        {
+    }
+    else
+    {
         <table>
             <tr>
                 <td rowspan="2"><img src="//static.gmgard.com/Images/warn.png" style="max-height:150px" /></td>
@@ -236,7 +217,8 @@
             </tr>
         </table>
         TempData["defaultccs"] = "看起来不错嘛，快找管理猿审核";
-        }
+    }
+
     <harmony>
         <div class="lazy-content" data-url="@Url.Action("Blog", "Recommendation", new { id = blog.BlogID })"></div>
     </harmony>
@@ -303,11 +285,11 @@ else
     <script src="@JsConstant.CKEditor" cdn></script>
     <script>
         var gm = new gmDetail({
-            blogid : '@blog.BlogID',
-            rateurl : '@Url.Action("Rate")',
-            addfavurl : '@Url.Action("AddFav", new { id=blog.BlogID })',
-            removefavurl : '@Url.Action("RemoveFav", new { id=blog.BlogID })',
-            showflame : '@(User.Identity.IsAuthenticated && blogUtil.GetUserOption(User.Identity.Name, o => o.addFavFlameEffect))',
+            blogid: '@blog.BlogID',
+            rateurl: '@Url.Action("Rate")',
+            addfavurl: '@Url.Action("AddFav", new { id=blog.BlogID })',
+            removefavurl: '@Url.Action("RemoveFav", new { id=blog.BlogID })',
+            showflame: '@(User.Identity.IsAuthenticated && blogUtil.GetUserOption(User.Identity.Name, o => o.addFavFlameEffect))',
             fetchtagsurl: '@Url.Action("FetchTags", "Search")',
             edittagurl: "@Url.Action("EditTag")",
             tagsearchurl: '@Url.Action("Tags", "Search")/',
@@ -322,7 +304,24 @@ else
             rateposturl: "@Url.Action("RatePost", "Reply")",
             editreplyurl: "@Url.Action("EditReply", "Reply")",
             nocomment: $('#no-comment').length > 0,
-        })
+        });
+        (function () {
+            var $bc = $('#blogcontent');
+            $('#imgdivs a').each(function (i, e) {
+                var $c = $(e).clone().find('img').attr('class', 'uimg').attr('rel', 'lightbox[u]').end(),
+                    $i = $bc.find('img[data-index="' + i + '"]');
+                if ($i.length > 0) {
+                    $i.replaceWith($c);
+                    $('#imgdiv' + i).hide();
+                    $(e).hide();
+                }
+            });
+            var dl = @Json.Serialize(links?.Select(l => l.url));
+            $('#dllist a').one('mouseenter', function() {
+                var $this=$(this),dlid = $this.data('dl');
+                if(dlid >= 0){ $this.attr('href', dl[dlid])};
+            }).one('focus',(function(){$(this).trigger('mouseenter')}));
+        })();
     </script>
     @if (User.Identity.IsAuthenticated)
     {
