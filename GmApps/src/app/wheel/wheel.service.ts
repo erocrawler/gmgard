@@ -1,5 +1,4 @@
 import { Injectable, Inject } from "@angular/core";
-import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { HttpClient, HttpResponse } from "@angular/common/http";
 import { IVoucher, Voucher, newVoucher, SpinWheelStatus, SpinWheelResult, StockInfo, PrizeInfo } from "../models/Vouchers";
 import { Observable, forkJoin } from "rxjs";
@@ -9,18 +8,16 @@ export declare type StatusAndVouchers = { status: SpinWheelStatus, vouchers: IVo
 
 @Injectable()
 export class WheelService {
-  host: string;
-  constructor(private http: HttpClient, @Inject(ENVIRONMENT) env: Environment) {
-      this.host = env.apiHost
+  constructor(private http: HttpClient) {
   }
 
   getVouchers(): Observable<IVoucher[]> {
-    return this.http.get<IVoucher[]>(this.host + "/api/Wheel/Get", { withCredentials: true })
+    return this.http.get<IVoucher[]>("/api/Wheel/Get", { withCredentials: true })
       .pipe(map(s => s.map(newVoucher)));
   }
 
   getStatus(): Observable<SpinWheelStatus> {
-    return this.http.get<SpinWheelStatus>(this.host + "/api/Wheel/Status", { withCredentials: true });
+    return this.http.get<SpinWheelStatus>("/api/Wheel/Status", { withCredentials: true });
   }
 
   getStatusAndVoucher(): Observable<StatusAndVouchers> {
@@ -31,42 +28,42 @@ export class WheelService {
   }
 
   spin(type: string): Observable<SpinWheelResult> {
-    return this.http.post<SpinWheelResult>(this.host + "/api/Wheel/Spin", null, { params: { "wheelType": type }, withCredentials: true });
+    return this.http.post<SpinWheelResult>("/api/Wheel/Spin", null, { params: { "wheelType": type }, withCredentials: true });
   }
 
   getStock(): Observable<StockInfo[]> {
-    return this.http.get<StockInfo[]>(this.host + "/api/Wheel/Stock", { withCredentials: true });
+    return this.http.get<StockInfo[]>("/api/Wheel/Stock", { withCredentials: true });
   }
 
   getVoucher(id: string): Observable<IVoucher[]> {
-    return this.http.get<IVoucher[]>(this.host + "/api/Wheel/Voucher", { params: { id }, withCredentials: true });
+    return this.http.get<IVoucher[]>("/api/Wheel/Voucher", { params: { id }, withCredentials: true });
   }
 
   getForUser(name: string): Observable<IVoucher[]> {
-    return this.http.get<IVoucher[]>(this.host + "/api/Wheel/GetForUser", { params: { name }, withCredentials: true });
+    return this.http.get<IVoucher[]>("/api/Wheel/GetForUser", { params: { name }, withCredentials: true });
   }
 
   addStock(name: string, count: number): Observable<HttpResponse<{}>> {
-    return this.http.post(this.host + "/api/Wheel/Stock", null, { params: { prizeName: name, count: count.toString() }, withCredentials: true, observe: "response" });
+    return this.http.post("/api/Wheel/Stock", null, { params: { prizeName: name, count: count.toString() }, withCredentials: true, observe: "response" });
   }
 
   redeemCeiling(): Observable<IVoucher> {
-    return this.http.post<IVoucher>(this.host + "/api/Wheel/RedeemCeiling", null, { withCredentials: true });
+    return this.http.post<IVoucher>("/api/Wheel/RedeemCeiling", null, { withCredentials: true });
   }
 
   redeemPoints(id: string): Observable<PrizeInfo> {
-    return this.http.post<PrizeInfo>(this.host + "/api/Wheel/RedeemPoints", null, { params: { voucherId: id }, withCredentials: true });
+    return this.http.post<PrizeInfo>("/api/Wheel/RedeemPoints", null, { params: { voucherId: id }, withCredentials: true });
   }
 
   redeemCoupon(val: number): Observable<SpinWheelResult> {
-    return this.http.post<SpinWheelResult>(this.host + "/api/Wheel/RedeemCoupon", null, { params: { "spentPoints": val.toString() }, withCredentials: true });
+    return this.http.post<SpinWheelResult>("/api/Wheel/RedeemCoupon", null, { params: { "spentPoints": val.toString() }, withCredentials: true });
   }
 
   exchange(id: string): Observable<IVoucher> {
-    return this.http.post<IVoucher>(this.host + "/api/Wheel/Exchange", null, { params: { voucherId: id }, withCredentials: true });
+    return this.http.post<IVoucher>("/api/Wheel/Exchange", null, { params: { voucherId: id }, withCredentials: true });
   }
 
   markRedeemed(id: string): Observable<{}> {
-    return this.http.post<{}>(this.host + "/api/Wheel/MarkRedeemed", null, { params: { voucherId: id }, withCredentials: true });
+    return this.http.post<{}>("/api/Wheel/MarkRedeemed", null, { params: { voucherId: id }, withCredentials: true });
   }
 }

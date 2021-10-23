@@ -1,17 +1,17 @@
-﻿<div fxLayout="row" fxLayoutAlign="center"
+<div fxLayout="row" fxLayoutAlign="center"
     role="navigation"
-    *ngIf="paged && paged.pageCount > 1">
+    *ngIf="paged && (paged.pageCount > 1 || alwaysShow)">
   <span>
-    <button mat-button [disabled]="!paged.hasPreviousPage" (click)="jump(1)">
+    <button mat-button [disabled]="!hasPreviousPage" (click)="jump(1)">
       第1页
     </button>
-    <button mat-button [disabled]="!paged.hasPreviousPage" (click)="jump(paged.pageNumber - 1)">
+    <button mat-button [disabled]="!hasPreviousPage" (click)="jump(paged.pageNumber - 1)">
       上一页
     </button>
-    <button mat-button [disabled]="!paged.hasNextPage" (click)="jump(paged.pageNumber + 1)">
+    <button mat-button [disabled]="!hasNextPage" (click)="jump(paged.pageNumber + 1)">
       下一页
     </button>
-    <button mat-button [disabled]="!paged.hasNextPage" (click)="jump(paged.pageCount)">
+    <button mat-button [disabled]="!hasNextPage" (click)="jump(paged.pageCount)">
       第{{paged.pageCount}}页
     </button>
     第

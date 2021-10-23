@@ -1,5 +1,4 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { Environment, ENVIRONMENT } from 'environments/environment_token';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -21,7 +20,7 @@ interface RaffleConfig {
 })
 export class RaffleIndexComponent implements OnInit {
 
-  constructor(public snackBar: MatSnackBar, private http: HttpClient, @Inject(ENVIRONMENT) private env: Environment) { }
+  constructor(public snackBar: MatSnackBar, private http: HttpClient) { }
 
   startTime: Date
   endTime: Date
@@ -35,7 +34,7 @@ export class RaffleIndexComponent implements OnInit {
   endMsg = ""
 
   ngOnInit() {
-    this.http.get<RaffleConfig>(this.env.apiHost + "/api/raffle", { withCredentials: true }).subscribe(r => {
+    this.http.get<RaffleConfig>("/api/raffle", { withCredentials: true }).subscribe(r => {
       this.loading = false;
       this.title = r.title
       this.startTime = r.startTime;
@@ -51,7 +50,7 @@ export class RaffleIndexComponent implements OnInit {
 
   buy() {
     this.loading = true;
-    this.http.post(this.env.apiHost + "/api/raffle", '', { observe: "response", withCredentials: true }).subscribe(r => {
+    this.http.post("/api/raffle", '', { observe: "response", withCredentials: true }).subscribe(r => {
       this.loading = false;
       if (r.ok) {
         this.snackBar.open("彩券购买成功", null, { duration: 3000 });

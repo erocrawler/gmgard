@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Antiforgery;
 using GmGard.Services;
 using System.Text;
 using System.Text.Encodings.Web;
+using GmGard.Models.App;
+using System.Collections.Generic;
+using System.Data.Entity;
 
 namespace GmGard.Controllers.App
 {
@@ -339,7 +342,21 @@ namespace GmGard.Controllers.App
             return Ok();
         }
 
-        private async Task<Models.App.TwoFactorAuthSharedKey> LoadSharedKeyAndQrCodeUriAsync(UserProfile user)
+        [HttpPost, Authorize]
+        public async Task<JsonResult> SuggestUser([FromServices] UsersContext udb, string name = "")
+        {
+            name = name.Trim();
+            var users = Enumerable.Empty<UserSuggestion>();
+            if (name.Length >= 2)
+            {
+                users = await udb.Users.Where(u => u.UserName.StartsWith(name) || u.NickName.StartsWith(name))
+                    .OrderByDescending(u => u.NickName.StartsWith(name)).ThenBy(u => u.NickName).Take(5)
+                    .Select(u => new UserSuggestion { UserName = u.UserName, NickName = u.NickName }).ToListAsync();
+            }
+            return Json(users);
+        }
+
+        private async Task<TwoFactorAuthSharedKey> LoadSharedKeyAndQrCodeUriAsync(UserProfile user)
         {
             // Load the authenticator key & QR code URI to display on the form
             var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
@@ -350,20 +367,20 @@ namespace GmGard.Controllers.App
             }
 
             var email = await _userManager.GetEmailAsync(user);
-            return new Models.App.TwoFactorAuthSharedKey
+            return new TwoFactorAuthSharedKey
             {
                 SharedKey = FormatKey(unformattedKey),
                 AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey),
             };
         }
 
-        private string FormatKey(string unformattedKey)
+        private static string FormatKey(string unformattedKey)
         {
             var result = new StringBuilder();
             int currentPosition = 0;
             while (currentPosition + 4 < unformattedKey.Length)
             {
-                result.Append(unformattedKey.Substring(currentPosition, 4)).Append(" ");
+                result.Append(unformattedKey.Substring(currentPosition, 4)).Append(' ');
                 currentPosition += 4;
             }
             if (currentPosition < unformattedKey.Length)

@@ -8,7 +8,7 @@ import {
 } from "@angular/router";
 import { AuthService } from "./auth.service";
 
-import { Observable } from "rxjs/Observable";
+import { Observable } from "rxjs";
 import { of, combineLatest } from "rxjs";
 import { map, catchError } from "rxjs/operators";
 import { User } from "../models/User";

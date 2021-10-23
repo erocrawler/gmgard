@@ -9,21 +9,27 @@ import { Paged } from "app/models/Paged";
 })
 export class PaginationComponent implements OnChanges {
 
-    @Input()
-    public paged: Paged<any>;
+  @Input()
+  public paged: Paged<any>;
 
-    @Output()
-    public pageChange = new EventEmitter<number>();
+  @Input()
+  public alwaysShow: boolean = false;
 
-    constructor() { }
+  @Output()
+  public pageChange = new EventEmitter<number>();
 
-    ngOnChanges() {
+  get hasPreviousPage(): boolean { return this.paged.pageNumber > 1 };
+  get hasNextPage(): boolean { return this.paged.pageNumber < this.paged.pageCount };
+
+  constructor() { }
+
+  ngOnChanges() {
+  }
+
+  jump(page: number) {
+    if (page >= 1 && page <= this.paged.pageCount) {
+      this.pageChange.emit(page);
     }
-
-    jump(page: number) {
-        if (page >= 1 && page <= this.paged.pageCount) {
-            this.pageChange.emit(page);
-        }
-    }
+  }
 
 }

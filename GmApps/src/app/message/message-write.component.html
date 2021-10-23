@@ -1,0 +1,24 @@
+<mat-card fxLayout="column">
+    <mat-card-title>写消息</mat-card-title>
+    <mat-form-field appearance="fill">
+        <mat-label>收件人</mat-label>
+        <input matInput name="recipient" [matAutocomplete]="auto" [formControl]="recipientControl">
+        <mat-autocomplete #auto="matAutocomplete">
+            <mat-option *ngFor="let option of options" [value]="option.userName">
+                {{formatSuggestion(option)}}
+            </mat-option>
+        </mat-autocomplete>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+        <mat-label>标题</mat-label>
+        <input [(ngModel)]='title' matInput name="title">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+        <mat-label>正文</mat-label>
+        <textarea [(ngModel)]='content' matInput name="content" style="height: 200px"></textarea>
+    </mat-form-field>
+    <mat-card-actions fxLayout="row">
+        <button [disabled]="sending" mat-raised-button color="primary" (click)="send()"><mat-icon>send</mat-icon>发送</button>
+        <span fxFlexOffset="5px" fxFlexAlign="center" class="mat-error" *ngIf="errors">{{errors}}</span>
+    </mat-card-actions>
+</mat-card>

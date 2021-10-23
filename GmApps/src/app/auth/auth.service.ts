@@ -6,7 +6,6 @@ import { HttpClient } from "@angular/common/http";
 
 import { AntiForgeryToken } from "../models/AntiForgeryToken";
 import { User, IUser } from "../models/User";
-import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { TwoFactorAuthenticationModel, TwoFactorAuthSharedKey } from "../models/TwoFactorAuth";
 
 export interface LoginResult {
@@ -17,12 +16,10 @@ export interface LoginResult {
 
 @Injectable()
 export class AuthService {
-  private host: string;
   private isLoggedIn?: boolean;
   private user: User;
 
-  constructor(private http: HttpClient, @Inject(ENVIRONMENT) env: Environment) {
-    this.host = env.apiHost;
+  constructor(private http: HttpClient) {
     this.isLoggedIn = null;
   }
 
@@ -31,7 +28,7 @@ export class AuthService {
 
   isAuthenticated(): Observable<boolean> {
     if (this.isLoggedIn === null) {
-      return this.http.get<{ isAuthenticated: boolean }>(this.host + "/api/Account/IsAuthenticated", { withCredentials: true })
+      return this.http.get<{ isAuthenticated: boolean }>("/api/Account/IsAuthenticated", { withCredentials: true })
         .pipe(map(resp => this.isLoggedIn = resp.isAuthenticated as boolean));
     }
     return of(this.isLoggedIn);
@@ -41,7 +38,7 @@ export class AuthService {
     if (this.antiforgeryToken) {
       return of(this.antiforgeryToken);
     }
-    return this.http.get<AntiForgeryToken>(this.host + "/api/Account/GetAntiForgeryToken", { withCredentials: true });
+    return this.http.get<AntiForgeryToken>("/api/Account/GetAntiForgeryToken", { withCredentials: true });
   }
 
   getUser(force: boolean = false): Observable<User> {
@@ -52,7 +49,7 @@ export class AuthService {
     ret = this.isAuthenticated()
       .pipe(switchMap(loggedIn => {
         if (loggedIn) {
-          return this.http.get<IUser>(this.host + "/api/Account/GetUser", { withCredentials: true })
+          return this.http.get<IUser>("/api/Account/GetUser", { withCredentials: true })
             .pipe(map(u => new User(u)));
         }
         return of(null);
@@ -65,7 +62,7 @@ export class AuthService {
 
   login(user: string, password: string, remember: boolean, captcha: string): Observable<LoginResult> {
     const req = { userName: user, password: password, rememberMe: remember, captcha };
-    return this.http.post<LoginResult>(this.host + "/api/Account/Login", req, { withCredentials: true })
+    return this.http.post<LoginResult>("/api/Account/Login", req, { withCredentials: true })
       .pipe(tap(result => {
         if (result.success && !result.require2fa) {
           this.isLoggedIn = true;
@@ -78,7 +75,7 @@ export class AuthService {
       switchMap(token => {
         const req = {};
         req[token.fieldName] = token.value;
-        return this.http.post(this.host + "/api/Account/LogOut", req, { withCredentials: true });
+        return this.http.post("/api/Account/LogOut", req, { withCredentials: true });
       }), map(_ => {
         this.isLoggedIn = false;
         this.user = null;
@@ -87,7 +84,7 @@ export class AuthService {
 
   twoFactorAuthLogin(rememberMe: boolean, rememberMachine: boolean, twoFactorCode: string): Observable<LoginResult> {
     const req = { rememberMe, rememberMachine, twoFactorCode }
-    return this.http.post<LoginResult>(this.host + "/api/Account/TwoFactorAuth", req, { withCredentials: true })
+    return this.http.post<LoginResult>("/api/Account/TwoFactorAuth", req, { withCredentials: true })
       .pipe(tap(result => {
         if (result.success) {
           this.isLoggedIn = true;
@@ -96,7 +93,7 @@ export class AuthService {
   }
 
   recoveryCodeLogin(recoveryCode: string) {
-    return this.http.post<LoginResult>(this.host + "/api/Account/RecoveryCode", { recoveryCode }, { withCredentials: true })
+    return this.http.post<LoginResult>("/api/Account/RecoveryCode", { recoveryCode }, { withCredentials: true })
       .pipe(tap(result => {
         if (result.success) {
           this.isLoggedIn = true;
@@ -105,30 +102,30 @@ export class AuthService {
   }
 
   get2FaData(): Observable<TwoFactorAuthenticationModel> {
-    return this.http.get<TwoFactorAuthenticationModel>(this.host + "/api/Account/Manage2Fa", { withCredentials: true });
+    return this.http.get<TwoFactorAuthenticationModel>("/api/Account/Manage2Fa", { withCredentials: true });
   }
 
   get2FaKeys(): Observable<TwoFactorAuthSharedKey> {
-    return this.http.get<TwoFactorAuthSharedKey>(this.host + "/api/Account/Get2FaKeys", { withCredentials: true });
+    return this.http.get<TwoFactorAuthSharedKey>("/api/Account/Get2FaKeys", { withCredentials: true });
   }
 
   enable2Fa(code: string): Observable<string[]> {
-    return this.http.post<string[]>(this.host + "/api/Account/Enable2Fa", null, { params: { code }, withCredentials: true });
+    return this.http.post<string[]>("/api/Account/Enable2Fa", null, { params: { code }, withCredentials: true });
   }
 
   disable2Fa(reset: boolean): Observable<boolean> {
-    return this.http.post(this.host + "/api/Account/Disable2Fa", null, { params: { "reset": reset.toString() }, observe: "response", withCredentials: true })
+    return this.http.post("/api/Account/Disable2Fa", null, { params: { "reset": reset.toString() }, observe: "response", withCredentials: true })
       .pipe(map(resp => {
         return resp.ok;
       }));
   }
 
   forgetClient(): Observable<boolean> {
-    return this.http.post(this.host + "/api/Account/ForgetClient", null, { observe: "response", withCredentials: true })
+    return this.http.post("/api/Account/ForgetClient", null, { observe: "response", withCredentials: true })
       .pipe(map(resp => resp.ok));
   }
 
   generateRecoveryCodes(): Observable<string[]> {
-    return this.http.post<string[]>(this.host + "/api/Account/GenerateRecoveryCodes", null, { withCredentials: true });
+    return this.http.post<string[]>("/api/Account/GenerateRecoveryCodes", null, { withCredentials: true });
   }
 }

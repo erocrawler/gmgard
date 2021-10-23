@@ -1,0 +1,36 @@
+<div>
+    <ng-container *ngIf="messages && messages.items.length > 0; else emptyBlock">
+        <mat-accordion multi>
+            <mat-expansion-panel hideToggle *ngFor="let msg of messages.items" (opened)="handleOpen(msg)">
+                <mat-expansion-panel-header>
+                    <mat-panel-title class="msg-title" [ngClass]="{'unread': !msg.isRead}">
+                        <span fxFlex="100px">{{msg.senderNickName}}</span>
+                        <span>{{msg.title || "（无标题）"}}</span>
+                        <a *ngIf="msg.quickLink"
+                           [href]="msg.quickLink"
+                           target="_blank"
+                           (click)="$event.stopPropagation()">
+                            <mat-button>{{msg.quickText}}<mat-icon>open_in_new</mat-icon></mat-button>
+                        </a>
+                    </mat-panel-title>
+                    <mat-panel-description fxFlex="150px">
+                        {{msg.sendDate | date:'short'}}
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                    <app-message-details [id]="msg.messageId" [markRead]="true" (delete)="refresh()"></app-message-details>
+                </ng-template>
+            </mat-expansion-panel>
+        </mat-accordion>
+    </ng-container>
+    <ng-template #emptyBlock>
+        <mat-card>
+            <p *ngIf="!loading">无消息！</p>
+        </mat-card>
+    </ng-template>
+</div>
+<br />
+<div class="pagination mat-elevation-z2">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <pagination [paged]="messages" alwaysShow="true" (pageChange)="navigate($event)"></pagination>
+</div>

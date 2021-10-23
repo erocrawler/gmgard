@@ -2,8 +2,8 @@ import { Inject, Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
-import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { AuthService, LoginResult } from "app/auth/auth.service";
+import { Environment, ENVIRONMENT } from "../../environments/environment_token";
 
 @Component({
   selector: "app-login",
@@ -11,7 +11,6 @@ import { AuthService, LoginResult } from "app/auth/auth.service";
   styleUrls: ["./login.component.css"]
 })
 export class LoginComponent implements OnInit {
-
   host: string;
   username: string;
   password: string;
@@ -29,8 +28,9 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    @Inject(ENVIRONMENT) env: Environment,
-    public snackBar: MatSnackBar) {
+    public snackBar: MatSnackBar,
+    @Inject(ENVIRONMENT) env: Environment
+  ) {
     this.host = env.apiHost;
   }
 

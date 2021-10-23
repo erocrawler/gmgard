@@ -25,7 +25,7 @@
                 "output": "assets/js/"
               },
               {
-                "glob": "MaterialIcons-Regular.*",
+                "glob": "material-icons.*",
                 "input": "node_modules/material-icons/iconfont/",
                 "output": "assets/iconfont/"
               }
@@ -139,8 +139,7 @@
   "defaultProject": "gm-app",
   "schematics": {
     "@schematics/angular:component": {
-      "prefix": "app",
-      "styleext": "css"
+      "prefix": "app"
     },
     "@schematics/angular:directive": {
       "prefix": "app"

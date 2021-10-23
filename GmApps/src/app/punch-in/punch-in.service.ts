@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Environment, ENVIRONMENT } from 'environments/environment_token';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Moment } from 'moment';
@@ -35,14 +34,12 @@ export interface PunchInHistoryResponse {
 })
 export class PunchInService {
 
-  host: string;
 
-  constructor(private http: HttpClient, @Inject(ENVIRONMENT) env: Environment) {
-    this.host = env.apiHost;
+  constructor(private http: HttpClient) {
   }
 
   getCost(date: Moment): Observable<PunchInCost> {
-    return this.http.get<PunchInCost>(this.host + "/api/punchIn/cost", { params: { "date": date.format('YYYY-MM-DD') }, withCredentials: true });
+    return this.http.get<PunchInCost>("/api/punchIn/cost", { params: { "date": date.format('YYYY-MM-DD') }, withCredentials: true });
   }
 
   punchIn(date?: Moment, useTicket?: boolean): Observable<PunchInResult> {
@@ -53,7 +50,7 @@ export class PunchInService {
     if (useTicket) {
       form.append("useTicket", "true");
     }
-    return this.http.post<PunchInResult>(this.host + "/api/punchIn/do", form, { withCredentials: true })
+    return this.http.post<PunchInResult>("/api/punchIn/do", form, { withCredentials: true })
       .pipe(catchError((r: HttpErrorResponse) => {
         console.log(r);
         if (r.error.success === false) return of(r.error as PunchInResult);
@@ -63,7 +60,7 @@ export class PunchInService {
 
   history(y: number, m: number): Observable<PunchInHistoryResponse> {
     return this.http.get<PunchInHistoryResponse>(
-      this.host + "/api/punchIn/history",
+      "/api/punchIn/history",
       { params: { year: y.toString(), month: m.toString() }, withCredentials: true })
   }
 }

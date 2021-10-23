@@ -84,7 +84,7 @@ export class ExamPaperComponent implements OnInit {
   }
 
   setDirty() {
-    this.saveDraftSubject.next();
+    this.saveDraftSubject.next(null);
   }
 
   confirmSubmit() {

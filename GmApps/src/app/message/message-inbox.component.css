@@ -1,0 +1,13 @@
+.unread {
+    font-weight: bolder;
+}
+
+.msg-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 40px;
+}
+
+.pagination {
+    background-color: white;
+}

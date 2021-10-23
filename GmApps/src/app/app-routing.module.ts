@@ -11,14 +11,12 @@ import { AdminGuard } from "./auth/admin-guard.service";
 import { RaffleIndexComponent } from "./raffle/raffle-index.component";
 import { AdManagerGuard } from "./auth/admanager-guard.service";
 import { AppLayoutComponent } from "./app-layout.component";
+import { MessageToolbarComponent } from "./toolbar/message-toolbar.component";
 
 const routes: Routes = [
   { path: "", redirectTo: "/title-helper", pathMatch: "full" },
   { path: "raffle", component: RaffleIndexComponent, data: { title: "绅士彩券" }, canActivate: [AuthGuard] },
   { path: "account", loadChildren: () => import('app/account/account.module').then(m => m.AccountModule), data: { title: "账户管理" }, canActivate: [AuthGuard] },
-  {
-    path: "message", loadChildren: () => import('app/message/message.module').then(m => m.MessageModule), canActivate: [AuthGuard]
-  },
   {
     path: "",
     component: AppLayoutComponent,
@@ -46,6 +44,12 @@ const routes: Routes = [
         path: "game",
         loadChildren: () => import("app/game/game.module").then(m => m.GameModule),
         data: { title: "绅士冒险" },
+        canActivate: [AuthGuard]
+      },
+      {
+        path: "message",
+        loadChildren: () => import('app/message/message.module').then(m => m.MessageModule),
+        data: { title: "消息中心", toolbar: MessageToolbarComponent },
         canActivate: [AuthGuard]
       },
       {

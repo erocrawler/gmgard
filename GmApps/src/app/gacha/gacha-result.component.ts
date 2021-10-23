@@ -5,8 +5,7 @@ import { MatDialog } from "@angular/material/dialog";
 import { GachaResult, GachaItem } from "../models/GachaResult";
 import { IGachaAnimation, IGachaCard } from "./gacha-animation";
 import { CardDetailComponent } from "./card-detail.component";
-import { Subscription } from "rxjs/Subscription";
-import { defer, from, concat } from "rxjs";
+import { from, Subscription } from "rxjs";
 import { finalize } from "rxjs/operators";
 
 class GachaCard implements IGachaCard {

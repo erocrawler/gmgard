@@ -2,29 +2,35 @@
     ViewBag.Title = "消息中心";
     string context = ViewBag.DisplayTab;
 }
+@inject ConstantUtil constUtil
 
-<div class="navbar">
-    <div class="navbar-inner">
-    <a class="brand" style="text-decoration: none;cursor:default;">消息中心</a>
-    <ul class="nav" id="msgmenu">
-    <li @if(context == null || context == "inbox"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Inbox")');"><img src="//static.gmgard.com/Images/inbox.png" /> 收件箱<b id="UnreadCount"></b></a></li>
-    <li @if(context == "outbox"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Outbox")');"><img src="//static.gmgard.com/Images/outbox.png" /> 发件箱</a></li>
-    <li @if(context == "write"){ <text>class="active"</text>}><a onclick="selected(this,'@Url.Action("Write")');"><img src="//static.gmgard.com/Images/write.png" /> 写消息</a></li>
-    </ul>
+<div id="old-ui" class="hide">
+    <div class="navbar">
+        <div class="navbar-inner">
+        <a class="brand" style="text-decoration: none;cursor:default;">消息中心</a>
+        <ul class="nav" id="msgmenu" data-context="@context">
+        <li data-context="inbox"><a data-url='@Url.Action("Inbox")'><img src="//static.gmgard.com/Images/inbox.png" /> 收件箱<b id="UnreadCount"></b></a></li>
+        <li data-context="outbox"><a data-url='@Url.Action("Outbox")'><img src="//static.gmgard.com/Images/outbox.png" /> 发件箱</a></li>
+        <li data-context="write"><a data-url='@Url.Action("Write")'><img src="//static.gmgard.com/Images/write.png" /> 写消息</a></li>
+        </ul>
+        </div>
     </div>
-</div>
 
-<div class="tabcontent">
-    <div id="multiview">
-        @await Component.InvokeAsync(nameof(MessageView), new { context = context })
+    <div class="tabcontent">
+        <div id="multiview">
+        </div>
+        <img id="loading" src="//static.gmgard.com/Images/loading.gif" style="display:none;margin:0 auto 100px auto;" />
     </div>
-    <img id="loading" src="//static.gmgard.com/Images/loading.gif" style="display:none;margin:0 auto 100px auto;" />
+    <button id="use-new" class="btn btn-large">使用新界面（测试）</button>
 </div>
-
+<div id="new-ui" class="hide">
+    <iframe style="width:100%;border:none;height:800px" src="@(constUtil.AppHost)/message/@context"></iframe>
+    <button id="use-old" class="btn btn-large">使用旧界面</button>
+</div>
 @section scripts{
     <script>
         function unread(obj) {
-            var $t = $(obj), isReadOnly = $t.hasClass('active');
+            var $t = $(obj);
             $.ajax({
                 url: $t.toggleClass('active').attr('href'),
                 cache: false,
@@ -33,15 +39,13 @@
             $("#multiview").hide();
             $("#loading").css('display', 'block');
         }
-        function selected(obj, posturl) {
-            if (obj.parentElement.className == "active")
+        function selected(obj) {
+            var $t = $(obj);
+            var posturl = $t.data('url');
+            if ($t.hasClass("active"))
                 return;
-            var ullist = document.getElementById('msgmenu');
-            var lilist = ullist.getElementsByTagName('li');
-            for (i = 0; i < lilist.length; i++) {
-                lilist[i].className = "";
-            }
-            obj.parentElement.className = "active";
+            $('#msgmenu li').removeClass("active");
+            $t.addClass("active");
             $.ajax({
                 url: posturl,
                 cache: false,
@@ -102,6 +106,32 @@
         function checkall(ele) {
             $('input[name=op]').prop('checked', ele.checked);
         }
+        function initOld() {
+            var ctx = $('#msgmenu').data('context') || "inbox";
+            var sel = $('#msgmenu li[data-context="' + ctx + '"] a');
+            selected(sel[0]); 
+        }
+        $(function () {
+            $('#msgmenu a').click(function () { selected(this) });
+            var useOld = localStorage["gmmessageui"] !== 'new';
+            if (useOld) {
+                initOld();
+                $('#old-ui').show();
+            } else {
+                $('#new-ui').show();
+            }
+            $('#use-old').click(function () {
+                localStorage.setItem('gmmessageui', 'old');
+                initOld();
+                $('#old-ui').show();
+                $('#new-ui').hide();
+            })
+            $('#use-new').click(function () {
+                localStorage.setItem('gmmessageui', 'new');
+                $('#old-ui').hide();
+                $('#new-ui').show();
+            })
+        })
     </script>
 }
 @section end_scripts{

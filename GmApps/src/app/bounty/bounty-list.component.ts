@@ -18,47 +18,47 @@ import { first, switchMap, share, catchError } from "rxjs/operators";
 })
 export class BountyListComponent implements OnInit {
 
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private service: BountyService,
-        private snackBar: MatSnackBar,
-        private pageScrollService: PageScrollService,
-        @Inject(DOCUMENT) private document: any) { }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private service: BountyService,
+    private snackBar: MatSnackBar,
+    private pageScrollService: PageScrollService,
+    @Inject(DOCUMENT) private document: any) { }
 
-    bounties: Paged<BountyPreview>;
-    loading: boolean;
-    showType: BountyShowType;
+  bounties: Paged<BountyPreview>;
+  loading: boolean;
+  showType: BountyShowType;
 
-    private navSource = new Observable<Paged<BountyPreview>>();
+  private navSource = new Observable<Paged<BountyPreview>>();
 
-    ngOnInit() {
-      this.navSource = this.route.queryParams
-          .pipe(
-            switchMap((query: Params) => {
-                const page = +query["page"] || 1;
-                this.showType = query["show"] || "All";
-                this.loading = true;
-                return this.service.list(this.showType, page).pipe(catchError(err => {
-                    this.snackBar.open("列表加载失败，请刷新重试。", null, { duration: 3000 });
-                    return of<Paged<BountyPreview>>();
-                }));
-            }),
-            share());
-        this.navSource.subscribe((bounties: Paged<BountyPreview>) => {
-                this.bounties = bounties;
-                this.loading = false;
-            });
-    }
+  ngOnInit() {
+    this.navSource = this.route.queryParams
+      .pipe(
+        switchMap((query: Params) => {
+          const page = +query["page"] || 1;
+          this.showType = query["show"] || "All";
+          this.loading = true;
+          return this.service.list(this.showType, page).pipe(catchError(err => {
+            this.snackBar.open("列表加载失败，请刷新重试。", null, { duration: 3000 });
+            return of<Paged<BountyPreview>>();
+          }));
+        }),
+        share());
+    this.navSource.subscribe((bounties: Paged<BountyPreview>) => {
+      this.bounties = bounties;
+      this.loading = false;
+    });
+  }
 
-    navigate(page: number) {
-        this.router.navigate(["bounty"], { queryParams: { "page": page }, queryParamsHandling: "merge" })
-            .then((success: boolean) => {
-                if (success) {
-                    this.navSource.pipe(first()).subscribe(() =>
-                        this.pageScrollService.start(
-                          this.pageScrollService.create({ document: this.document, scrollTarget: "#bounty-list", duration: 500 })));
-                }
-            });
-    }
+  navigate(page: number) {
+    this.router.navigate(["bounty"], { queryParams: { "page": page }, queryParamsHandling: "merge" })
+      .then((success: boolean) => {
+        if (success) {
+          this.navSource.pipe(first()).subscribe(() =>
+            this.pageScrollService.start(
+              this.pageScrollService.create({ document: this.document, scrollTarget: "#bounty-list", duration: 500 })));
+        }
+      });
+  }
 }

@@ -5,7 +5,6 @@ import { HttpClient } from "@angular/common/http";
 import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import { NgxIndexedDBService, DBConfig } from 'ngx-indexed-db';
 
-import { ENVIRONMENT, Environment } from "../../environments/environment_token";
 import { GachaRequest } from "../models/GachaRequest";
 import { GachaResult, GachaStats, GachaItemDetails } from "../models/GachaResult";
 import { GachaImageAnimation } from "./gacha-image-animation";
@@ -40,14 +39,11 @@ export class GachaService {
 
   constructor(
     private http: HttpClient,
-    @Inject(ENVIRONMENT) env: Environment,
     private sanitizer: DomSanitizer,
     private db: NgxIndexedDBService
   ) {
-    this.host = env.apiHost;
   }
 
-  private host: string;
   private animationImages: HTMLImageElement[];
   private animationVideo: HTMLVideoElement;
   private lastResult: GachaResult = null;
@@ -111,7 +107,7 @@ export class GachaService {
   gacha(pool: string, count: 1 | 10): Observable<GachaResult> {
     this.stats = null;
     const request: GachaRequest = { count, pool }
-    return this.http.post<GachaResult>(this.host + "/api/Gacha/GetResult", request, {
+    return this.http.post<GachaResult>("/api/Gacha/GetResult", request, {
       withCredentials: true
     }).pipe(tap(r => this.lastResult = r));
   }
@@ -120,7 +116,7 @@ export class GachaService {
     if (this.stats) {
       return of(this.stats);
     }
-    return this.http.get<GachaStats>(this.host + "/api/Gacha/GetStats", { withCredentials: true })
+    return this.http.get<GachaStats>("/api/Gacha/GetStats", { withCredentials: true })
       .pipe(tap(result => this.stats = result));
   }
 
@@ -128,7 +124,7 @@ export class GachaService {
     if (this.pools) {
       return of(this.pools);
     }
-    return this.http.get<GachaSetting[]>(this.host + "/api/Gacha/GetCurrentPools", { withCredentials: true })
+    return this.http.get<GachaSetting[]>("/api/Gacha/GetCurrentPools", { withCredentials: true })
       .pipe(map(settings => {
         this.pools = new Map<string, GachaPool>();
         for (const s of settings) {

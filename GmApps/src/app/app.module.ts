@@ -1,8 +1,8 @@
 import { BrowserModule } from "@angular/platform-browser";
-import { NgModule, LOCALE_ID } from "@angular/core";
+import { NgModule, LOCALE_ID, Injectable, Inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { registerLocaleData } from "@angular/common";
-import { HttpClientModule, HttpClientXsrfModule } from "@angular/common/http";
+import { HttpClientModule, HttpClientXsrfModule, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { FlexLayoutModule } from "@angular/flex-layout";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ReactiveFormsModule } from "@angular/forms";
@@ -12,7 +12,7 @@ import { ClipboardModule } from "ngx-clipboard";
 import { AppMaterialModule } from "./app-material.module";
 
 import { environment } from "../environments/environment";
-import { ENVIRONMENT } from "../environments/environment_token";
+import { Environment, ENVIRONMENT } from "../environments/environment_token";
 
 import { AppComponent } from "./app.component";
 import { AppRoutingModule } from "./app-routing.module";
@@ -22,11 +22,25 @@ import { PageNotFoundComponent } from "./page-not-found.component"
 import { TitleSearchComponent } from "./title-helper/title-search.component";
 import { LoginComponent } from "./login/login.component";
 import { DlsiteSearchComponent } from "./title-helper/dlsite-search.component";
-import { AuditExamToolbarComponent } from "./toolbar/audit-exam-toolbar.component";
 import { RaffleIndexComponent } from "./raffle/raffle-index.component";
 import { AppLayoutComponent } from './app-layout.component';
+import { Observable } from "rxjs";
 
 registerLocaleData(localeCn, "zh-CN");
+
+@Injectable()
+export class EnvHostInterceptor implements HttpInterceptor {
+
+  host: string
+  constructor(@Inject(ENVIRONMENT) env: Environment) {
+    this.host = env.apiHost;
+  }
+
+  intercept(req: HttpRequest<any>, next: HttpHandler):
+    Observable<HttpEvent<any>> {
+    return next.handle(req.clone({url: this.host + req.url}));
+  }
+}
 
 @NgModule({
   declarations: [
@@ -37,7 +51,6 @@ registerLocaleData(localeCn, "zh-CN");
     TitleSearchComponent,
     LoginComponent,
     DlsiteSearchComponent,
-    AuditExamToolbarComponent,
     RaffleIndexComponent,
     AppLayoutComponent,
   ],
@@ -54,10 +67,10 @@ registerLocaleData(localeCn, "zh-CN");
     AppRoutingModule,
   ],
   providers: [
-      { provide: ENVIRONMENT, useValue: environment },
-      { provide: LOCALE_ID, useValue: "zh-CN" },
+    { provide: ENVIRONMENT, useValue: environment },
+    { provide: LOCALE_ID, useValue: "zh-CN" },
+    { provide: HTTP_INTERCEPTORS, useClass: EnvHostInterceptor, multi: true },
   ],
-  entryComponents: [AuditExamToolbarComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

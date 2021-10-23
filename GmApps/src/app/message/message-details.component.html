@@ -1,0 +1,36 @@
+<mat-progress-bar mode="indeterminate" *ngIf="loading; else contentBlock"></mat-progress-bar>
+<ng-template #contentBlock>
+    <p fxLayout="row">
+        <span style="margin-right:10px">
+            发件人：
+            <a [href]="msg.senderLink" target="_blank">
+                <img class="mat-card-avatar" [src]="msg.senderAvatar" [alt]="msg.senderNickName" />
+                {{msg.senderNickName}}
+            </a>
+        </span>
+        <span>
+            收件人：
+            <a [href]="msg.recipientLink" target="_blank">
+                <img class="mat-card-avatar" [src]="msg.recipientAvatar" [alt]="msg.recipientNickName" />
+                {{msg.recipientNickName}}
+            </a>
+        </span>
+        <span fxFlex></span>
+        <span>
+            <a mat-button (click)="handleDelete()">
+                <mat-icon>delete</mat-icon>
+                删除
+            </a>
+            <a mat-button [routerLink]="['/message', 'write']" [state]="{ msg: msg, action: 'reply'}">
+                <mat-icon>reply</mat-icon>
+                回复
+            </a>
+            <a mat-button [routerLink]="['/message', 'write']" [state]="{ msg: msg, action: 'forward'}">
+                <mat-icon>forward</mat-icon>
+                转发
+            </a>
+        </span>
+    </p>
+    <hr />
+    <div [innerHTML]="content"></div>
+</ng-template>

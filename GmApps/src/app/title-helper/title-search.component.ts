@@ -31,9 +31,9 @@ export class TitleSearchComponent implements OnInit, OnChanges {
           this.searchActive = true;
           return this.blogService.search(this.title);
         }
-        return of([]);
+        return of<BlogPreview[]>([]);
       }),
-      catchError((err) => {
+      catchError((_) => {
         this.searchActive = false;
         this.snackBar.open("投稿搜索失败，请重试。", null, { duration: 3000 });
         return of<BlogPreview[]>([]);
