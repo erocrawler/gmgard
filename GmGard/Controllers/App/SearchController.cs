@@ -54,7 +54,7 @@ namespace GmGard.Controllers.App
                     ImageUrl = BlogHelper.firstImgPath(b),
                     Title = b.BlogTitle,
                     CreateDate = b.BlogDate,
-                    Url = Url.Action("Details", "Blog", new { id = b.BlogID }, Request.Scheme),
+                    Url = Url.Action("Details", "Blog", new { Area = "", id = b.BlogID }, Request.Scheme),
             }), blogs.Blogs.GetMetaData());
             return Json(new Paged<BlogPreview>(items));
         }

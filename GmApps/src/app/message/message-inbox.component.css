@@ -8,6 +8,16 @@
     max-height: 40px;
 }
 
-.pagination {
+.white {
     background-color: white;
+    border-radius: 4px;
+}
+
+.inbox-bar {
+    padding: 1em 24px;
+}
+
+.test-height {
+    transition: height 0.25s;
+    height: var(--calc-height);
 }

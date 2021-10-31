@@ -142,6 +142,10 @@ namespace GmGard.Controllers.App
             {
                 return Forbid();
             }
+            if (!m.IsRead)
+            {
+                _cache.Remove("unreadmsg" + m.Recipient.ToLower());
+            }
             DeleteMessage(m);
             await _udb.SaveChangesAsync();
             return Ok();
@@ -158,10 +162,11 @@ namespace GmGard.Controllers.App
             {
                 return Forbid();
             }
-            if (markRead)
+            if (markRead && !m.IsRead)
             {
                 m.IsRead = true;
                 await _udb.SaveChangesAsync();
+                _cache.Remove("unreadmsg" + User.Identity.Name.ToLower());
             }
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(m.MsgContent);
@@ -222,7 +227,6 @@ namespace GmGard.Controllers.App
 
         public async Task<ActionResult> Batch(MessageBatchRequest request)
         {
-            var sqlUser = new SqlParameter("user", User.Identity.Name);
             if (request.MsgIds == null)
             {
                 return NoContent();

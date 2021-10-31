@@ -29,6 +29,7 @@ export class MessageInboxComponent implements OnInit {
       .pipe(
         switchMap((query: Params) => {
           this.page = +query["page"] || 1;
+          this.unreadOnly = query["unreadOnly"] === "true";
           this.loading = true;
           return this.service.inbox(this.page, this.unreadOnly).pipe(
             catchError(() => {
@@ -48,15 +49,20 @@ export class MessageInboxComponent implements OnInit {
   }
 
   navigate(num: number) {
-    this.router.navigate([{ page: num }], { relativeTo: this.route });
+    this.router.navigate([{ page: num, unreadOnly: this.unreadOnly }], { relativeTo: this.route });
   }
 
   refresh() {
-    this.service.outbox(this.page).pipe(
+    this.service.inbox(this.page, this.unreadOnly).pipe(
       catchError(() => {
         this.snackBar.open("列表加载失败，请刷新重试。", null, { duration: 3000 });
         return of<Paged<MessageDisplay>>();
       })
     ).subscribe(md => this.messages = md);
+  }
+
+  showUnread(yes: boolean) {
+    this.unreadOnly = yes;
+    this.navigate(this.page);
   }
 }

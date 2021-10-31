@@ -99,6 +99,18 @@ namespace GmGard.Models
             }
         }
 
+        private string EffectiveProtocol
+        {
+            get
+            {
+                if (_contextAccessor.HttpContext.Request.Headers.TryGetValue("X-Forwarded-Proto", out Microsoft.Extensions.Primitives.StringValues val) && val.Count > 0)
+                {
+                    return val[^1];
+                }
+                return _contextAccessor.HttpContext.Request.IsHttps ? "https" : "http";
+            }
+        }
+
         public string SiteName => _currentSite.Name;
 
         public string SiteHost => _currentSite.Host;
@@ -111,7 +123,7 @@ namespace GmGard.Models
 
         public string SiteStaticHost => _currentSite.StaticHost;
 
-        public string AppHost => (_contextAccessor.HttpContext.Request.IsHttps ? "https://" : "http://") + _currentSite.AppHost;
+        public string AppHost => EffectiveProtocol + "://" + _currentSite.AppHost;
     }
 
     public static class PostConstant

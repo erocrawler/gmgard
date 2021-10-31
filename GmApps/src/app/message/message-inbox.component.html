@@ -1,4 +1,9 @@
 <div>
+    <div class="white mat-elevation-z2 inbox-bar">
+        <button mat-stroked-button *ngIf="unreadOnly" (click)="showUnread(false)"><mat-icon>mark_as_unread</mat-icon> 查看全部</button>
+        <button mat-stroked-button *ngIf="!unreadOnly" (click)="showUnread(true)"><mat-icon>mark_email_unread</mat-icon> 只看未读</button>
+    </div>
+    <br />
     <ng-container *ngIf="messages && messages.items.length > 0; else emptyBlock">
         <mat-accordion multi>
             <mat-expansion-panel hideToggle *ngFor="let msg of messages.items" (opened)="handleOpen(msg)">
@@ -30,7 +35,7 @@
     </ng-template>
 </div>
 <br />
-<div class="pagination mat-elevation-z2">
+<div class="white mat-elevation-z2">
     <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
     <pagination [paged]="messages" alwaysShow="true" (pageChange)="navigate($event)"></pagination>
 </div>
