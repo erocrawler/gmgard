@@ -33,6 +33,7 @@
     "gsap": "^3.8.0",
     "material-icons": "^1.10.0",
     "moment": "^2.29.1",
+    "moment-timezone": "^0.5.34",
     "ng2-ckeditor": "^1.3.4",
     "ngx-clipboard": "^14.0.1",
     "ngx-indexed-db": "^9.4.0",

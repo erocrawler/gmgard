@@ -45,6 +45,7 @@ namespace GmGard.Models
         public DbSet<PunchInHistory> PunchInHistories { get; set; }
         public DbSet<UserRaffle> UserRaffles { get; set; }
 
+        public DbSet<RaffleConfig> RaffleConfigs { get; set; }
         public DbSet<UserVoucher> UserVouchers { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -555,6 +556,7 @@ namespace GmGard.Models
         public DateTime TimeStamp { get; set; }
 
         public virtual UserProfile User { get; set; }
+        public virtual RaffleConfig Config { get; set; }
     }
 
     public class UserVoucher

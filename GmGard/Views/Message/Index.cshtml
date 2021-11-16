@@ -113,7 +113,7 @@
         }
         $(function () {
             $('#msgmenu a').click(function () { selected(this) });
-            var useOld = localStorage["gmmessageui"] !== 'new';
+            var useOld = localStorage["gmmessageui"] === 'old';
             if (useOld) {
                 initOld();
                 $('#old-ui').show();

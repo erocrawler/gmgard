@@ -15,7 +15,7 @@ import { MessageToolbarComponent } from "./toolbar/message-toolbar.component";
 
 const routes: Routes = [
   { path: "", redirectTo: "/title-helper", pathMatch: "full" },
-  { path: "raffle", component: RaffleIndexComponent, data: { title: "绅士彩券" }, canActivate: [AuthGuard] },
+  { path: "raffle/:id", component: RaffleIndexComponent, data: { title: "绅士彩券" }, canActivate: [AuthGuard] },
   { path: "account", loadChildren: () => import('app/account/account.module').then(m => m.AccountModule), data: { title: "账户管理" }, canActivate: [AuthGuard] },
   {
     path: "",

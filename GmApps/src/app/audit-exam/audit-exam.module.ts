@@ -2,7 +2,6 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FlexLayoutModule } from "@angular/flex-layout";
 import { FormsModule } from "@angular/forms";
-import { HttpClientModule } from "@angular/common/http";
 
 import { AppMaterialModule } from "../app-material.module";
 import { AuditExamComponent } from "./audit-exam.component";
@@ -21,7 +20,6 @@ import { AdminExamPaperComponent } from "./admin/admin-exam-paper.component";
         AppMaterialModule,
         FlexLayoutModule,
         FormsModule,
-        HttpClientModule,
         ExamRoutingModule,
     ],
     declarations: [

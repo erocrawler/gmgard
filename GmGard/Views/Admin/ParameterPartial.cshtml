@@ -1,6 +1,8 @@
 ﻿@model AdminViewModel
+@inject ConstantUtil constUtil
 
 <h2>数据设置</h2>
+<p><a target="_blank" href="@(constUtil.AppHost)/admin/raffle">管理抽奖<i class="icon icon-share"></i></a></p>
 <form asp-action="DataSettings" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#datamsg" method="post" asp-antiforgery="true" id="data-settings-form">
     <div class="row-fluid">
         <div class="span6">

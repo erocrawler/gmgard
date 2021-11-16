@@ -1,0 +1,76 @@
+<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+<ng-container *ngIf="configs && configs.items.length > 0">
+    <mat-accordion multi>
+        <mat-expansion-panel *ngFor="let cfg of configs.items">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    {{cfg.title}}
+                </mat-panel-title>
+                <mat-panel-description fxFlex="200px">
+                    {{cfg.eventStart | date:'shortDate'}} ~ {{cfg.eventEnd | date:'shortDate'}}
+                </mat-panel-description>
+            </mat-expansion-panel-header>
+            <mat-panel-description fxLayout="column" fxLayoutAlign="start start">
+                <mat-form-field class="long" appearance="fill">
+                    <mat-label>标题</mat-label>
+                    <input matInput [(ngModel)]="cfg.title" type="text">
+                </mat-form-field>
+                <mat-form-field class="long" appearance="fill">
+                    <mat-label>图片</mat-label>
+                    <input matInput [(ngModel)]="cfg.image" type="url">
+                </mat-form-field>
+                <mat-form-field appearance="fill">
+                    <mat-label>价格</mat-label>
+                    <input matInput [(ngModel)]="cfg.raffleCost" type="number">
+                </mat-form-field>
+                <mat-form-field appearance="fill">
+                    <mat-label>活动时间</mat-label>
+                    <mat-date-range-input [rangePicker]="picker">
+                        <input matStartDate placeholder="开始日期" [(ngModel)]="cfg.eventStart">
+                        <input matEndDate placeholder="结束日期" [(ngModel)]="cfg.eventEnd">
+                    </mat-date-range-input>
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+                <div fxLayoutGap="5px">
+                    <button mat-raised-button [disabled]="loading" (click)="update(cfg)">更新</button>
+                    <button mat-raised-button [disabled]="loading" (click)="draft(cfg)" color="accent">抽奖</button>
+                </div>
+            </mat-panel-description>
+        </mat-expansion-panel>
+    </mat-accordion>
+</ng-container>
+<br />
+<mat-expansion-panel>
+    <mat-expansion-panel-header>
+        <mat-panel-title>
+            新抽奖
+        </mat-panel-title>
+    </mat-expansion-panel-header>
+    <mat-panel-description fxLayout="column" fxLayoutAlign="start start">
+        <mat-form-field class="long" appearance="fill">
+            <mat-label>标题</mat-label>
+            <input matInput [(ngModel)]="newCfg.title" type="text">
+        </mat-form-field>
+        <mat-form-field class="long" appearance="fill">
+            <mat-label>图片</mat-label>
+            <input matInput [(ngModel)]="newCfg.image" type="url">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>价格</mat-label>
+            <input matInput [(ngModel)]="newCfg.raffleCost" type="number">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>活动时间</mat-label>
+            <mat-date-range-input [rangePicker]="picker">
+                <input matStartDate placeholder="开始日期" [(ngModel)]="newCfg.eventStart">
+                <input matEndDate placeholder="结束日期" [(ngModel)]="newCfg.eventEnd">
+            </mat-date-range-input>
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+        <div>
+            <button mat-raised-button [disabled]="loading" (click)="add(newCfg)">添加</button>
+        </div>
+    </mat-panel-description>
+</mat-expansion-panel>

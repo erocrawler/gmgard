@@ -6,8 +6,6 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MessageToolbarComponent } from './message-toolbar.component';
 
-
-
 @NgModule({
   declarations: [
     AuditExamToolbarComponent,

@@ -55,19 +55,13 @@ namespace GmGard
                 {
                     options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
                 })
-                .AddSessionStateTempDataProvider();
+                .AddSessionStateTempDataProvider()
+                .AddHybridModelBinder();
 
             if (IsDev)
             {
                 builder.AddRazorRuntimeCompilation();
             }
-
-            services.Configure<MvcOptions>(o =>
-            {
-                var serviceProvider = services.BuildServiceProvider();
-                var readerFactory = serviceProvider.GetRequiredService<IHttpRequestStreamReaderFactory>();
-                o.ModelBinderProviders.Insert(0, new HybridModelBinding.DefaultHybridModelBinderProvider(o.InputFormatters, readerFactory, null));
-            });
 
             services.AddOptions();
 
@@ -80,7 +74,6 @@ namespace GmGard
             services.Configure<DataSettingsModel>(ConfigFromDataFile("App_Data/DataSettings.json"));
             services.Configure<BackgroundSetting>(ConfigFromDataFile("App_Data/BackgroundSetting.json"));
             services.Configure<Models.App.AuditExamConfig>(ConfigFromDataFile("App_Data/AuditExam.json"));
-            services.Configure<Models.App.RaffleConfig>(ConfigFromDataFile("App_Data/RaffleConfig.json"));
             services.Configure<Models.App.WheelConfig>(ConfigFromDataFile("App_Data/WheelConfig.json"));
 
             services.AddMemoryCache();

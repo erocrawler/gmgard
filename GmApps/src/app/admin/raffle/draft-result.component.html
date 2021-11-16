@@ -1,0 +1,31 @@
+<h1 mat-dialog-title>抽选结果</h1>
+<div mat-dialog-content fxFlexLayout="column">
+    <p>总奖券数：<strong>{{dataSource.total}}</strong></p>
+    <table mat-table [dataSource]="dataSource.result" style="width: 100%">
+        <ng-container matColumnDef="userName">
+            <th mat-header-cell *matHeaderCellDef> 用户名 </th>
+            <td mat-cell *matCellDef="let element"> {{element.user.userName}} </td>
+        </ng-container>
+        <ng-container matColumnDef="nickName">
+            <th mat-header-cell *matHeaderCellDef> 用户昵称 </th>
+            <td mat-cell *matCellDef="let element"> {{element.user.nickName}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef> 奖券号 </th>
+            <td mat-cell *matCellDef="let element"> {{element.code}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef> 抽奖日期 </th>
+            <td mat-cell *matCellDef="let element"> {{element.date | date: "short"}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['userName', 'nickName', 'code', 'date']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['userName', 'nickName', 'code', 'date'];"></tr>
+    </table>
+    <p>注：抽选结果不在系统保存。再次点击抽奖按钮可重新抽取。</p>
+</div>
+<div mat-dialog-actions>
+    <button mat-raised-button color="primary" cdkFocusInitial mat-dialog-close>确认</button>
+</div>

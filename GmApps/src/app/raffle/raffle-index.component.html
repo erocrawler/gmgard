@@ -2,7 +2,7 @@
     <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
     <ng-container *ngIf="title">
         <h1>{{title}}</h1>
-        <img mat-card-image [src]="img" alt="飞机杯" />
+        <img mat-card-image *ngIf="img" [src]="img" alt="飞机杯" />
         <div *ngIf="isActive; else elseBlock">
             <ul>
                 <li>活动时间：{{startTime | date:'short'}} —— {{endTime | date:'short'}}</li>
