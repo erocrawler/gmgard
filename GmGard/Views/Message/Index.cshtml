@@ -24,7 +24,8 @@
     <button id="use-new" class="btn btn-large">使用新界面（测试）</button>
 </div>
 <div id="new-ui" class="hide">
-    <iframe style="width:100%;border:none;height:1200px" src="@(constUtil.AppHost)/message/@context"></iframe>
+    <iframe loading="lazy" onerror="loaderror(this)" onload="console.log(this)" style="width:100%;border:none;height:1200px" src="@(constUtil.AppHost)/message/@context"></iframe>
+    <p>如果无法显示，请尝试在<a href="@(constUtil.AppHost)/message/@context" target="_blank">新窗口中打开</a>，或使用旧界面。</p>
     <button id="use-old" class="btn btn-large">使用旧界面</button>
 </div>
 @section scripts{

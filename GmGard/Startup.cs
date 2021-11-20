@@ -55,8 +55,7 @@ namespace GmGard
                 {
                     options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
                 })
-                .AddSessionStateTempDataProvider()
-                .AddHybridModelBinder();
+                .AddSessionStateTempDataProvider();
 
             if (IsDev)
             {

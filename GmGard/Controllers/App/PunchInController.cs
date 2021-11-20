@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using GmGard.Models;
 using GmGard.Models.App;
 using GmGard.Services;
-using HybridModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -74,7 +73,7 @@ namespace GmGard.Controllers.App
         }
 
         [HttpPost]
-        public async Task<ActionResult> Do([FromHybrid]PunchInRequest request)
+        public async Task<ActionResult> Do([FromBody]PunchInRequest request)
         {
             var user = await _udb.Users.Include(u => u.PunchIns).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             var d = request.Date.GetValueOrDefault(DateTime.Now);

@@ -403,7 +403,14 @@ namespace GmGard.Controllers.App
             return Json(ToPaged(blogs));
         }
 
-        public async Task<JsonResult> Search([FromServices]ISearchProvider searchProvider, [HybridModelBinding.FromHybrid]SearchModel model, int limit = 10, int skip = 0)
+        [HttpPost, ActionName("Search")]
+        public Task<JsonResult> PostSearch([FromServices]ISearchProvider searchProvider, [FromBody]SearchModel model, int limit = 10, int skip = 0)
+        {
+            return Search(searchProvider, model, limit, skip);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> Search([FromServices]ISearchProvider searchProvider, [FromQuery]SearchModel model, int limit = 10, int skip = 0)
         {
             limit = Math.Min(Math.Max(limit, 1), 100);
             int page = skip <= 0 ? 1 : (skip / limit + 1);

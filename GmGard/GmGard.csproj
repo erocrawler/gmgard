@@ -47,7 +47,6 @@
     <PackageReference Include="EntityFramework.CodeFirstStoreFunctions" Version="1.2.0" />
     <PackageReference Include="HtmlSanitizer" Version="6.0.441" />
     <PackageReference Include="Humanizer.Core" Version="2.11.10" />
-    <PackageReference Include="HybridModelBinding" Version="0.18.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.11" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.1" />

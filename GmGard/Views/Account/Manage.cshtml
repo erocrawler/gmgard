@@ -111,7 +111,7 @@
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#two-factor-auth"><h3>两步验证设置</h3></a>
             </div>
             <div class="accordion-body collapse" id="two-factor-auth">
-                <iframe style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/account/2fa"></iframe>
+                <iframe loading="lazy" style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/account/2fa"></iframe>
                 <p>如果无法显示，请尝试在<a href="@(constUtil.AppHost)/account/2fa" target="_blank">新窗口中打开</a></p>
             </div>
         </div>
@@ -231,6 +231,7 @@
             </div>
         </div>
     </div>
+<p>由于盗号问题频发，如需更改邮箱，<a asp-action="Msg" asp-controller="Home" asp-route-name="admin">请联系管理员</a>。</p>
 
 @section scripts {
     <style>

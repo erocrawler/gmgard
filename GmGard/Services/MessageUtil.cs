@@ -38,6 +38,8 @@ namespace GmGard.Services
 
         public void SendExpChangeNotice(string noticeuser, string actor, string reason)
             => SendNoticeMsg(noticeuser, NoticeType.ExpChange, actor, reason);
+        public void SendEmailUpdateNotice(string noticeuser, string actor, string reason)
+            => SendNoticeMsg(noticeuser, NoticeType.UpdateEmail, actor, reason);
 
         public void SendNoticeMsg(string noticeuser, NoticeType type, string actor, string content = null, string url = null)
         {

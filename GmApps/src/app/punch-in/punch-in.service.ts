@@ -43,16 +43,8 @@ export class PunchInService {
   }
 
   punchIn(date?: Moment, useTicket?: boolean): Observable<PunchInResult> {
-    let form = new FormData();
-    if (date) {
-      form.append("date", date.format('YYYY-MM-DD'));
-    }
-    if (useTicket) {
-      form.append("useTicket", "true");
-    }
-    return this.http.post<PunchInResult>("/api/punchIn/do", form, { withCredentials: true })
+    return this.http.post<PunchInResult>("/api/punchIn/do", { date: date.format('YYYY-MM-DD'), useTicket })
       .pipe(catchError((r: HttpErrorResponse) => {
-        console.log(r);
         if (r.error.success === false) return of(r.error as PunchInResult);
         throw r;
       }));

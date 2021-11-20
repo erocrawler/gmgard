@@ -152,19 +152,42 @@
         </div>
     </div>
 </div>
-<h2>经验与积分调整</h2>
 <div id="manageexpdiv">
     <form asp-action="ManageExp" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#expmsg" method="post">
-        <input id="expname" name="expname" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
-        <input name="expcount" title="经验" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
-        <input name="ptscount" title="积分" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
-        <input type="submit" class="btn butnfix" value="提交" /><br />
-        <input name="reason" type="text" class="span6" placeholder="原因" maxlength="100" />
-        <label for="reasoncheck" class="inline checkbox">
-            <input type="checkbox" id="reasoncheck" value="true" name="reasoncheck" /> 发送通知
-        </label>
-        <h4 data-valmsg-for="expname" data-valmsg-replace="true"></h4>
-        <h4 class="text-info" id="expmsg"></h4>
+        <fieldset>
+            <legend style="display: block">经验与积分调整</legend>
+            <label>用户名</label>
+            <input id="expname" name="expname" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+
+            <label>经验/积分</label>
+            <input name="expcount" title="经验" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
+            <input name="ptscount" title="积分" data-toggle="tooltip" value="0" type="number" data-val="true" class="span2" />
+            <label>原因</label>
+            <input name="reason" type="text" class="span6" placeholder="原因" maxlength="100" />
+            <label for="reasoncheck" class="inline checkbox">
+                <input type="checkbox" id="reasoncheck" value="true" name="reasoncheck" /> 发送通知
+            </label>
+            <input type="submit" class="btn" value="提交" />
+            <h4 data-valmsg-for="expname" data-valmsg-replace="true"></h4>
+            <h4 class="text-info" id="expmsg"></h4>
+        </fieldset>
+    </form>
+</div>
+
+<div id="manage-email">
+    <form asp-action="ManageEmail" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#emailmsg" method="post">
+        <fieldset>
+            <legend style="display: block">更改邮箱</legend>
+            <label>用户名</label>
+            <input id="expname" name="username" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
+            <label>旧邮箱</label>
+            <input name="oldEmail" type="email" data-val="true" class="span3" />
+            <label>新邮箱</label>
+            <input name="newEmail" type="email" data-val="true" class="span3" />
+            <input type="submit" class="btn" value="修改" /><br />
+            <h4 data-valmsg-for="emailmsg" data-valmsg-replace="true"></h4>
+            <h4 class="text-info" id="emailmsg"></h4>
+        </fieldset>
     </form>
 </div>
 <script>

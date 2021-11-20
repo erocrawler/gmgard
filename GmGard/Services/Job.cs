@@ -88,7 +88,8 @@ namespace GmGard.Services
             DeleteBlog,
             ExpChange,
             Mention,
-            RankReward
+            RankReward,
+            UpdateEmail,
         }
         public string NoticeUser { get; set; }
         public NoticeType Type { get; set; }

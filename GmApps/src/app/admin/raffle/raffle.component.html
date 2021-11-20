@@ -32,6 +32,7 @@
                     <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-date-range-picker #picker></mat-date-range-picker>
                 </mat-form-field>
+                <p>抽奖链接：<code>/home/app?path=/raffle/{{cfg.id}}</code></p>
                 <div fxLayoutGap="5px">
                     <button mat-raised-button [disabled]="loading" (click)="update(cfg)">更新</button>
                     <button mat-raised-button [disabled]="loading" (click)="draft(cfg)" color="accent">抽奖</button>

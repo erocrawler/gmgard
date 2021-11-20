@@ -5,7 +5,7 @@
 }
 
 <div class="signdiv">
-    <form asp-area="App" asp-action="Do" asp-controller="PunchIn" id="punch-form" class="hide" asp-antiforgery="true"></form>
+    <form asp-area="App" asp-action="Do" asp-controller="PunchIn" id="punch-form" class="hide"></form>
     <div class="btn-group">
         <a class="btn btn-danger" id="phistory" href="#punchin-modal" role="button" data-toggle="modal" title="签到日历"><i class="icon-calendar"></i></a>
         @if (hasSigned > 0)
@@ -41,15 +41,20 @@
         e.preventDefault();
         var e = document.getElementById("checkin"),
             w = document.getElementById("checkw");
-        $.post($(this).attr('action'), $(this).serialize(), function (resp) {
-            if (resp.success) {
-                w.textContent = "连续签到" + resp.consecutiveDays + "天";
-                $.globalMessenger().post("签到成功" + (resp.expBonus > 0 ? ("，绅士度+" + resp.expBonus + "，棒棒糖+" + resp.expBonus) : ""));
-                $(e).attr('class', 'btn btn-danger disabled');
-            }
-            $(e).html(w);
-            phist.insertBefore(e);
-            chuncai.chuncaiSay('好好撸管，天天签到！');
+        $.ajax($(this).attr('action'), {
+            success: function (resp) {
+                if (resp.success) {
+                    w.textContent = "连续签到" + resp.consecutiveDays + "天";
+                    $.globalMessenger().post("签到成功" + (resp.expBonus > 0 ? ("，绅士度+" + resp.expBonus + "，棒棒糖+" + resp.expBonus) : ""));
+                    $(e).attr('class', 'btn btn-danger disabled');
+                }
+                $(e).html(w);
+                phist.insertBefore(e);
+                chuncai.chuncaiSay('好好撸管，天天签到！');
+            },
+            data: "{}",
+            contentType: 'application/json',
+            type: "POST",
         }).fail(function (f) {
             if (f.responseJSON) {
                 if (f.responseJSON.consecutiveDays) {

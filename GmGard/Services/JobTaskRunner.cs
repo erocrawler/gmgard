@@ -286,6 +286,16 @@ namespace GmGard.Services
                         IsSenderDelete = true
                     });
                     return;
+                case NoticeType.UpdateEmail:
+                    await AddMessage(new Message
+                    {
+                        Sender = "admin",
+                        Recipient = args.NoticeUser,
+                        MsgTitle = "邮箱更改通知",
+                        MsgContent = string.Format("您的邮箱已被更改<br>{0}<br>如有疑问，请联系管理员。", args.Content),
+                        IsSenderDelete = true
+                    });
+                    return;
 
                 default:
                     return;

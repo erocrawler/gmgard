@@ -48,6 +48,7 @@ namespace GmGard.Models
         [ReadOnlySetting, JsonIgnore]
         public string SearchBackendType  { get; set; }
         public string UploadBackendType { get; set; }
+        public string HttpRequestProxy { get; set; }
     }
 
     public class DataSettingsModel

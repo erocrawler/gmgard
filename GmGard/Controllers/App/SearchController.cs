@@ -11,7 +11,7 @@ using System.IO;
 using System.Collections.Generic;
 using GmGard.Extensions;
 using Microsoft.Extensions.Options;
-using HybridModelBinding;
+using System.Threading.Tasks;
 
 namespace GmGard.Controllers.App
 {
@@ -22,22 +22,32 @@ namespace GmGard.Controllers.App
     [ApiController]
     public class SearchController : AppControllerBase
     {
-        private readonly BlogContext db_;
         private readonly ISearchProvider searchProvider_;
         private readonly BlogUtil blogUtil_;
         private readonly HarmonySettingsModel harmonySettings_;
+        private readonly System.Uri proxyAddress_;
 
-        public SearchController(BlogContext db, ISearchProvider searchProvider, BlogUtil blogUtil, IOptions<AppSettingsModel> harmonySettings)
+        public SearchController(ISearchProvider searchProvider, BlogUtil blogUtil, IOptions<AppSettingsModel> harmonySettings)
         {
-            db_ = db;
             searchProvider_ = searchProvider;
             blogUtil_ = blogUtil;
             harmonySettings_ = harmonySettings.Value.HarmonySettings ?? new HarmonySettingsModel();
+            if (System.Uri.TryCreate(harmonySettings.Value.HttpRequestProxy, System.UriKind.Absolute, out System.Uri result))
+            {
+                proxyAddress_ = result;
+            }
         }
 
         private bool IsHarmony => harmonySettings_.Harmony && !User.Identity.IsAuthenticated;
 
-        public async System.Threading.Tasks.Task<JsonResult> Blog([FromHybrid]SearchModel model, int limit = 10, int skip = 0)
+        [HttpPost, ActionName("Blog")]
+        public Task<JsonResult> PostBlog([FromBody]SearchModel model, int limit = 10, int skip = 0)
+        {
+            return Blog(model, limit, skip);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> Blog([FromQuery]SearchModel model, int limit = 10, int skip = 0)
         {
             limit = System.Math.Min(System.Math.Max(limit, 1), 100);
             int page = skip <= 0 ? 1 : (skip / limit + 1);
@@ -61,20 +71,25 @@ namespace GmGard.Controllers.App
         
         [HttpPost]
         [Authorize(Policy = "Harmony")]
-        public JsonResult Dlsite([FromBody] string q)
+        public async Task<JsonResult> Dlsite([FromBody] string q)
         {
             if (string.IsNullOrWhiteSpace(q))
                 return Json(null);
             var url = string.Format(@"http://www.dlsite.com/maniax/fsr/=/language/jp/sex_category%5B0%5D/male/keyword/{0}/per_page/30/show_type/1", WebUtility.UrlEncode(q));
             HttpWebRequest webRequest = WebRequest.CreateHttp(url);
+            if (proxyAddress_ != null)
+            {
+                webRequest.Proxy = new WebProxy(proxyAddress_, true);
+            }
             webRequest.CookieContainer = new CookieContainer();
             webRequest.CookieContainer.Add(new System.Uri(url), new Cookie("adultchecked", "1", "/"));
             webRequest.UserAgent = Request.Headers[HeaderNames.UserAgent];
             webRequest.Accept = Request.Headers[HeaderNames.Accept];
             try
             {
+                var resp = await webRequest.GetResponseAsync();
                 var doc = new HtmlAgilityPack.HtmlDocument();
-                doc.Load(webRequest.GetResponse().GetResponseStream(), System.Text.Encoding.UTF8);
+                doc.Load(resp.GetResponseStream(), System.Text.Encoding.UTF8);
                 var node = doc.GetElementbyId("search_result_list");
                 if (node == null)
                 {

@@ -17,6 +17,7 @@ using System.Data.SqlClient;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using GmGard.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace GmGard.Controllers
 {
@@ -560,10 +561,49 @@ namespace GmGard.Controllers
             return msg;
         }
 
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<string> ManageEmail(string username, string oldEmail, string newEmail, string reason)
+        {
+            if (string.IsNullOrEmpty(username))
+            {
+                return "请输入用户名";
+            }
+            username = username.ToLower();
+            if (!new EmailAddressAttribute().IsValid(newEmail))
+            {
+                return "新邮箱无效";
+            }
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return "查无此人";
+            }
+            if (!user.Email.Equals(oldEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return "旧邮箱有误";
+            }
+            if (_udb.Users.Any(u => u.Email == newEmail))
+            {
+                return "新邮箱已被注册";
+            }
+            user.Email = newEmail;
+            await _userManager.UpdateAsync(user);
+            var msg = string.Format("旧：{0}，新：{1}", oldEmail, newEmail);
+            _msgUtil.SendEmailUpdateNotice(username, User.Identity.Name, msg);
+            _adminUtil.log(User.Identity.Name, "修改邮箱", msg, reason);
+            return "修改成功";
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<string> ManageExp(string expname, string expcount, string ptscount, string reason, bool reasoncheck = false)
         {
+            if (string.IsNullOrEmpty(expname))
+            {
+                return "请输入用户名";
+            }
             expname = expname.ToLower();
             string msg = string.Empty;
             int exp = 0;
