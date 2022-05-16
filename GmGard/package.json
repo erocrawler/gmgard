@@ -4,7 +4,7 @@
   "private": true,
   "description": "The gentelmen's garden.",
   "devDependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "graceful-fs": "^4.2.3",
     "gulp": "4.0.2",
     "gulp-concat": "2.6.1",
