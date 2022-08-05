@@ -100,15 +100,15 @@
     {
         <tr>
             <td><span class="newq">Mega<br />Post</span><br /><span class="label label-important ldaily">日常</span></td>
-            <td class="lalign">投5稿并通过审核</td>
-            <td><i title="绅士度" class="ico-shinshi"></i>×15，<i title="棒棒糖" class="ico-lolly"></i>×15</td>
+            <td class="lalign">投@(QuestService.dayBlogCount)稿并通过审核</td>
+            <td><i title="绅士度" class="ico-shinshi"></i>×@QuestService.dayBlogExp<i title="棒棒糖" class="ico-lolly"></i>×@QuestService.dayBlogExp</td>
             <td>@{
-                    if (blogcount >= 5)
+                    if (blogcount >= QuestService.dayBlogCount)
                     {
                         <span class="label label-success">已完成</span>
                     }
                     else{
-                        <span class="label">@blogcount / 5</span>
+                        <span class="label">@blogcount / @QuestService.dayBlogCount</span>
                     }
                 }</td>
         </tr>
@@ -117,15 +117,19 @@
     {
         <tr>
             <td><span class="newq">エ号<br />作戦</span><br /><span class="label label-important lweekly">周常</span></td>
-            <td class="lalign">1周内投15稿并通过审核</td>
-            <td><i title="绅士度" class="ico-shinshi"></i>×60，<i title="棒棒糖" class="ico-lolly"></i>×60</td>
+            <td class="lalign">1周内投@(QuestService.weekBlogCount)稿并通过审核</td>
+            <td>
+                <i title="绅士度" class="ico-shinshi"></i>×@QuestService.weekBlogCount，
+                <i title="棒棒糖" class="ico-lolly"></i>×@QuestService.weekBlogCount，<br>
+                <i title="补签券" class="icon-gift"></i>补签券×1
+            </td>
             <td>@{
-                    if (weekblogcount >= 15)
+                    if (weekblogcount >= @QuestService.weekBlogCount)
                     {
                         <span class="label label-success">已完成</span>
                     }
                     else{
-                        <span class="label">@weekblogcount / 15</span>
+                        <span class="label">@weekblogcount / @QuestService.weekBlogCount</span>
                     }
                 }</td>
         </tr>

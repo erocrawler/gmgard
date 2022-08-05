@@ -20,8 +20,8 @@ namespace GmGard.Services
         public const int weekBlogExp = 60;
         public const int dayBlogExp = 15;
 
-        public const int dayBlogCount = 5;
-        public const int weekBlogCount = 15;
+        public const int dayBlogCount = 3;
+        public const int weekBlogCount = 7;
 
         public const int EventBlogId = 98704;
 
@@ -153,6 +153,7 @@ namespace GmGard.Services
                     if (user.quest.WeekBlogCount == weekBlogCount)
                     {
                         expUtil.addExp(user, weekBlogExp);
+                        user.quest.PunchInTicket++;
                     }
                 }
             }
