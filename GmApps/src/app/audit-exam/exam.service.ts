@@ -19,7 +19,7 @@ export class ExamService {
     }
 
     getExam(version: string): Observable<Exam> {
-        return this.http.get<Exam>(`/assets/audit-exam-${version}.json`);
+        return this.http.get<Exam>(`~/assets/audit-exam-${version}.json`);
     }
 
     saveExamDraft(draft: ExamSubmission): Observable<boolean> {

@@ -38,7 +38,12 @@ export class EnvHostInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler):
     Observable<HttpEvent<any>> {
-    return next.handle(req.clone({url: this.host + req.url, withCredentials: true}));
+    if (req.url && req.url[0] == "/") {
+      return next.handle(req.clone({ url: this.host + req.url, withCredentials: true }));
+    } else if (req.url && req.url[0] == "~") {
+      return next.handle(req.clone({ url: req.url.substring(1), withCredentials: true }));
+    }
+    return next.handle(req);
   }
 }
 
