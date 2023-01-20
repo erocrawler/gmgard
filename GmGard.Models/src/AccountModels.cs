@@ -47,6 +47,10 @@ namespace GmGard.Models
 
         public DbSet<RaffleConfig> RaffleConfigs { get; set; }
         public DbSet<UserVoucher> UserVouchers { get; set; }
+        public DbSet<GameScenario> GameScenarios { get; set; }
+        public DbSet<ScenarioChoice> ScenarioChoices { get; set; }
+        public DbSet<UserGameData> UserGameDatas { get; set; }
+        public DbSet<UserVisitedScenario> UserVisitedScenarios { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -115,6 +119,25 @@ namespace GmGard.Models
             follow.HasRequired(f => f.follow)
                 .WithMany()
                 .HasForeignKey(f => f.FollowID)
+                .WillCascadeOnDelete(false);
+
+            var scenarioChoice = modelBuilder.Entity<ScenarioChoice>();
+            scenarioChoice
+                .HasRequired(s => s.Scenario)
+                .WithMany(s => s.Choices)
+                .HasForeignKey(s => s.ScenarioID)
+                .WillCascadeOnDelete(false);
+
+            var userGameData = modelBuilder.Entity<UserGameData>();
+            userGameData
+                .HasRequired(u => u.Game)
+                .WithMany()
+                .HasForeignKey(u => u.GameID)
+                .WillCascadeOnDelete(false);
+            userGameData
+                .HasMany(u => u.VisitedScenarios)
+                .WithRequired(v => v.UserGameData)
+                .HasForeignKey(u => new { u.UserID, u.GameID })
                 .WillCascadeOnDelete(false);
         }
     }
@@ -586,4 +609,5 @@ namespace GmGard.Models
             WheelC,
         }
     }
+
 }

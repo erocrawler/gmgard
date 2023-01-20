@@ -1,26 +1,50 @@
+import { BehaviorSubject, Observable, Subject } from "rxjs";
+import { GameScenario, Choice, Dialog, Narrator, Effects } from "../../models/GameScenario";
 
-export class GameScenarios<P> {
-  constructor(s :Scenario<P>[]) {
-    this.scenes = s.reduce((v, cur) => { v.set(cur.title, cur); return v; }, new Map<P, Scenario<P>>());
+export interface IGameScenarioProvider {
+  currentScene: Observable<GameScenario>
+  next(choiceId: number)
+  prev()
+}
+
+export class GameScenarios {
+  constructor(private sceneProvider: IGameScenarioProvider) {
+    sceneProvider.currentScene.subscribe(c => {
+      if (!c) {
+        return;
+      }
+      this.currentScene = c;
+      this.currentDialog = 0;
+      this.initDialog();
+      this.sceneReadySbj.next(true);
+    });
   }
 
-  private scenes: Map<P, Scenario<P>>
-  currentDialog = 0;
-  currentText = 0;
-  currentScene: Scenario<P>
-  currentEffects: Map<number, Effects>;
+  private sceneReadySbj = new BehaviorSubject<boolean>(false);
+  private currentDialog = 0;
+  private currentText = 0;
+  private currentScene: GameScenario
+  private currentEffects: Map<number, Effects>;
 
-  getScene(progress: P): Scenario<P> {
-      return this.scenes.get(progress)
+  get sceneReady(): Observable<boolean> {
+    return this.sceneReadySbj;
   }
 
-  setScene(progress: P) {
-    this.currentDialog = 0;
-    this.currentScene = this.getScene(progress);
-    this.initDialog();
+  nextScene(progress: number) {
+    this.sceneReadySbj.next(false);
+    this.sceneProvider.next(progress);
   }
 
-  getChoice(): Choice<P>[] {
+  prevScene() {
+    this.sceneReadySbj.next(false);
+    this.sceneProvider.prev();
+  }
+
+  getAssets(): string[] {
+    return this.currentScene.dialogs.map(d => d.bgImg).concat(this.currentScene.narrators.map(d => d.avatar));
+  }
+
+  getChoice(): Choice[] {
     if (!this.currentScene.next) {
       return [];
     }
@@ -67,38 +91,4 @@ export class GameScenarios<P> {
     this.currentText++;
     return [this.currentScene.narrators.find(v => v.name == name), text, e];
   }
-}
-
-export interface Narrator {
-  avatar: string
-  name: string
-  display?: string
-}
-
-export interface Dialog {
-  bgImg: string
-  texts: [string, string][]
-  effect?: { pos: number, kind: Effects }[]
-}
-
-export interface Scenario<P> {
-  title: P
-  dialogs: Dialog[]
-  narrators: Narrator[]
-  next?: Choice<P>[]
-  prev?: P
-}
-
-export interface Choice<P> {
-  text: string
-  result: P
-}
-
-export enum Effects {
-  NONE,
-  SPARK,
-  SHAKE,
-  FLASH,
-  TITLE,
-  CENTER_BG,
 }

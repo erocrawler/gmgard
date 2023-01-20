@@ -47,7 +47,7 @@ body {
         background-position: left top;
     }
 
-    html.bg25, html.new {
+    html.bg25, html.bg28 {
         background-position: right -100px;
     }
 }

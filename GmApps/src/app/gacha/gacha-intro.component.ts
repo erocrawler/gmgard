@@ -1,8 +1,6 @@
-import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { GameScenarios } from '../shared/adv-game/scenario';
-import { August2020 } from './intro-scenarios';
-import { AdvGameComponent } from '../shared/adv-game/adv-game.component';
 
 @Component({
   selector: 'app-gacha-intro',
@@ -11,24 +9,18 @@ import { AdvGameComponent } from '../shared/adv-game/adv-game.component';
 })
 export class GachaIntroComponent implements OnInit, AfterViewInit {
 
-  constructor(private activatedRoute: ActivatedRoute, private router: Router, private cd: ChangeDetectorRef) { }
+  constructor(private activatedRoute: ActivatedRoute, private router: Router) { }
 
-  adv: GameScenarios<void>;
-  @ViewChild(AdvGameComponent) game: AdvGameComponent<void>;
+  // TODO: Finish this next time.
+  adv: GameScenarios;
   showType: string
 
   ngOnInit(): void {
     this.showType = this.activatedRoute.snapshot.paramMap.get("showType")
-    if (this.showType == "august2020") {
-      this.adv = new GameScenarios<void>([August2020]);
-    } else {
-      this.exit();
-    }
+    this.exit();
   }
 
-  ngAfterViewInit(): void {
-    setTimeout(() => this.game.playChapter(null), 4)
-  }
+  ngAfterViewInit(): void {}
 
   exit() {
     this.router.navigate(["/gacha", {showType: this.showType}]);

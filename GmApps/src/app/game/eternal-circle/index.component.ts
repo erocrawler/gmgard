@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { GameService } from '../game.service';
-import { EternalCircleStatus, EternalCircleProgress } from 'app/models/EternalCircleStatus';
 import { MatDialog } from '@angular/material/dialog';
 import { AlertComponent, AlertArg } from 'app/shared/alert-dialog';
-import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { EternalCircleGameScenario } from './eternal-circle-game-scenario.service';
+import { Dialog, GameScenario, GameStatus, Narrator } from '../../models/GameScenario';
+import { Scenarios } from './scenario';
+import { GameScenarios } from '../../shared/adv-game/scenario';
 
 @Component({
   templateUrl: './index.component.html',
@@ -13,16 +14,52 @@ import { of } from 'rxjs';
 })
 export class IndexComponent implements OnInit {
 
-  constructor(private gameService: GameService, private router: Router, public dialog: MatDialog) { }
+  constructor(private gameSceneService: EternalCircleGameScenario, public dialog: MatDialog) {
+    this.seedScene = Scenarios.map(s => {
+      let gs: GameScenario = {
+        id: s.title,
+        dialogs: s.dialogs.map(d => {
+          let ds: Dialog = {
+            bgImg: d.bgImg,
+            effect: d.effect,
+            texts: d.texts
+          };
+          return ds;
+        }),
+        narrators: s.narrators.map(n => {
+          let ns: Narrator = {
+            avatar: n.avatar,
+            name: n.name,
+            display: n.display || n.name,
+          }
+          return ns;
+        }),
+        next: s.next || [],
+      };
+      return gs;
+    });
+    this.scenarios = new GameScenarios(gameSceneService);
+  }
 
+  scenarios: GameScenarios
   loading = true
-  status: EternalCircleStatus
+  status: GameStatus
+  playing = false;
+  seedScene: GameScenario[]
+  isNewGame = true;
 
   ngOnInit() {
-    this.gameService.eternalCircleStatus().subscribe(r => {
+    this.loading = true;
+    this.gameSceneService.status().subscribe(r => {
       this.status = r
+      this.isNewGame = this.status.newGameScenarioId === this.status.currentScenario.id;
       this.loading = false;
     })
+  }
+
+  start() {
+    this.playing = true;
+    this.gameSceneService.start(this.status.currentScenario);
   }
 
   confirmRetry() {
@@ -31,14 +68,26 @@ export class IndexComponent implements OnInit {
       .afterClosed().pipe(
         switchMap(ok => {
           if (ok) {
-            return this.gameService.eternalCircleProgress(EternalCircleProgress.Prologue);
+            return this.gameSceneService.restart();
           }
-          return of(false);
+          return of(null);
         })
-      ).subscribe(ok => {
-        if (ok) {
-          this.router.navigate(['/game/eternal-circle', 'play']);
+      ).subscribe(status => {
+        if (status) {
+          this.status = status;
+          this.isNewGame = true;
+          this.playing = true;
+          this.gameSceneService.start(this.status.currentScenario);
         }
       })
+  }
+
+  handleExit() {
+    this.playing = false;
+    this.ngOnInit();
+  }
+
+  stringify(o: Object): string {
+    return JSON.stringify(o);
   }
 }

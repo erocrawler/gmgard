@@ -1,9 +1,10 @@
-import { Component, OnInit, HostListener, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, OnInit, HostListener, Input, Output, EventEmitter, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Effects, Narrator, Choice, GameScenarios } from './scenario';
+import { GameScenarios } from './scenario';
 import { TextAnimation } from './text-animation';
 import { debounceTime, delay } from 'rxjs/operators';
 import { fromEvent, Subject, Subscription, of } from 'rxjs';
+import { Choice, Effects, Narrator } from '../../models/GameScenario';
 
 @Component({
   selector: 'app-adv-game',
@@ -11,12 +12,11 @@ import { fromEvent, Subject, Subscription, of } from 'rxjs';
   styleUrls: ['./adv-game.component.css'],
   exportAs: 'appAdvGame'
 })
-export class AdvGameComponent<P> implements OnInit, OnDestroy {
+export class AdvGameComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(private sanitizer: DomSanitizer) { }
 
-  @Input() scenarios: GameScenarios<P>
-  @Output() choice = new EventEmitter<P>();
+  @Input() scenarios: GameScenarios
   @Output() ended = new EventEmitter<void>();
   @Output() exit = new EventEmitter<void>();
   bgimg1: string
@@ -26,7 +26,7 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
   narrator?: Narrator
   waitClick = false
   waitChoose = false
-  choices: Choice<P>[]
+  choices: Choice[]
   text: SafeHtml
   currentEffect: string
   textAnimation: TextAnimation;
@@ -36,6 +36,7 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
   imgWidth = 800;
   imgHeight = 500;
   imgSub: Subscription;
+  readySub: Subscription;
   loading = true;
   loadingMode = "indeterminate";
   loadingProgress = 0;
@@ -50,13 +51,31 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
     this.resize();
     this.textAnimation = new TextAnimation(this.textSubject);
     this.textSubject.subscribe(s => { this.text = this.sanitizer.bypassSecurityTrustHtml(s) });
+    this.initScene();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.scenarios && this.scenarios && !changes.scenarios.firstChange) {
+      this.initScene();
+    }
+  }
+
+  initScene() {
+    this.readySub = this.scenarios.sceneReady.subscribe((ready: boolean) => {
+      if (ready) {
+        this.preloadImg();
+        this.play();
+      }
+    })
   }
 
   ngOnDestroy() {
     this.imgSub.unsubscribe();
+    this.readySub.unsubscribe();
+    
   }
 
-  preloadImg() {
+  private preloadImg() {
     this.loading = true;
     this.loadingMode = "determinate";
     this.loadingProgress = 0;
@@ -78,8 +97,7 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
       imgs.add(i);
       this.imgCache.push(img);
     }
-    this.scenarios.currentScene.narrators.forEach(n => loadImg(n.avatar))
-    this.scenarios.currentScene.dialogs.forEach(n => loadImg(n.bgImg));
+    this.scenarios.getAssets().forEach(n => loadImg(n));
   }
 
   @HostListener('document:keypress', ['$event'])
@@ -89,7 +107,7 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
     }
   }
 
-  resize() {
+  private resize() {
     if (window.innerWidth >= 800) {
       this.imgWidth = 800;
     } else {
@@ -109,25 +127,27 @@ export class AdvGameComponent<P> implements OnInit, OnDestroy {
     this.play();
   }
 
-  playChapter(progress: P) {
-    this.scenarios.setScene(progress);
+  setLoading() {
     this.choices = null;
     this.waitChoose = false;
     this.hasImg = false;
-    this.preloadImg();
-    this.play();
+    this.loading = true;
+    this.loadingMode = "indeterminate";
   }
 
-  handleChoice(ev: MouseEvent, choice: P) {
+  handleChoice(ev: MouseEvent, choice: number) {
     if (ev) {
       ev.stopPropagation();
     }
-    this.choice.next(choice);
+    this.setLoading();
+    this.scenarios.nextScene(choice);
   }
 
   handlePrev(ev: MouseEvent) {
+    ev.stopPropagation();
     this.isEnded = false;
-    this.handleChoice(ev, this.scenarios.currentScene.prev);
+    this.setLoading();
+    this.scenarios.prevScene();
   }
 
   play() {

@@ -4,7 +4,7 @@ export interface EternalCircleStatus {
   retryCount: number;
 }
 export enum EternalCircleProgress {
-  Prologue = 0,
+  Prologue = 1,
   Act1Start,
   Act1After,
   ACT1End,

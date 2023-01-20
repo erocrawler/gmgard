@@ -9,7 +9,6 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule } from '@angular/forms';
 import { HintDialogComponent } from './treasure-hunt/hint-dialog.component';
 import { IndexComponent } from './eternal-circle/index.component';
-import { PlayComponent } from './eternal-circle/play.component';
 import { AlertModule } from 'app/shared/alert-dialog';
 import { AdvGameModule } from '../shared/adv-game/adv-game.module';
 
@@ -27,11 +26,6 @@ const routes: Routes = [
         pathMatch: "full",
         component: IndexComponent,
       },
-      {
-        path: "play",
-        pathMatch: "full",
-        component: PlayComponent,
-      },
     ]
   },
 ];
@@ -48,6 +42,6 @@ const routes: Routes = [
     RouterModule.forChild(routes),
   ],
   entryComponents: [PuzzleDetailComponent, HintDialogComponent],
-  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, IndexComponent, PlayComponent],
+  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, IndexComponent],
 })
 export class GameModule { }

@@ -16,7 +16,6 @@
         <button class="choice-btn" mat-button color="primary" fxFlex *ngFor="let ch of choices" (click)="handleChoice($event, ch.result)">{{ch.text}}</button>
     </mat-card-footer>
     <mat-card-actions *ngIf="isEnded">
-        <button *ngIf="currentScene.prev" mat-raised-button color="primary" (click)="handlePrev($event)">返回上一节</button>
         <button mat-raised-button color="accent" (click)="handleExit()">返回标题</button>
     </mat-card-actions>
 </mat-card>
