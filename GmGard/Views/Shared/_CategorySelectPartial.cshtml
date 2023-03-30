@@ -3,7 +3,7 @@
 @{
     IEnumerable<Category> categoryList = catUtil.GetCategoryList();
     var PCateID = -1;
-    var selectedIds = Model.SelectedIds ?? new HashSet<int>();
+    var selectedIds = Model.SelectedIds ?? categoryList.Where(c => !c.HideFromHomePage).Select(c => c.CategoryID).ToHashSet();
     var counts = Model.CategoryItemCount ?? new Dictionary<int, long>();
     ViewBag.SelectedIds = selectedIds;
     ViewBag.CategoryItemCount = counts;

@@ -7,19 +7,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MessageToolbarComponent } from './message-toolbar.component';
 
 @NgModule({
-  declarations: [
-    AuditExamToolbarComponent,
-    MessageToolbarComponent,
-  ],
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    RouterModule,
-    MatIconModule,
-  ],
-  entryComponents: [
-    AuditExamToolbarComponent,
-    MessageToolbarComponent,
-  ]
+    declarations: [
+        AuditExamToolbarComponent,
+        MessageToolbarComponent,
+    ],
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        RouterModule,
+        MatIconModule,
+    ]
 })
 export class ToolbarModule { }

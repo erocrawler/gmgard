@@ -87,7 +87,7 @@ namespace GmGard.Controllers
         public ActionResult Index(int page = 1)
         {
             int pagesize = homepagesize;
-            var query = _db.Blogs.Include("posts").Where(b => b.isApproved == true);
+            var query = _db.Blogs.Where(b => b.isApproved == true);
             string categoryIds = string.Empty;
             bool hideHarmony = false;
             bool cachable = true;
@@ -111,11 +111,18 @@ namespace GmGard.Controllers
                     tagBlacklist = JsonConvert.DeserializeObject<List<int>>(opt.homepageTagBlacklist);
                     cachable = false;
                 }
-                if (catIdList.Count > 0 || tagBlacklist.Count > 0)
+                if (catIdList.Count > 0)
                 {
                     catIdList = _catUtil.GetCategoryWithSubcategories(catIdList);
-                    query = BlogHelper.getFilteredQuery(_db, query, tagBlacklist, catIdList, featuredBlogId);
                 }
+                var filter = new BlogFilter(_db)
+                {
+                    Whitelistcategories = catIdList,
+                    Whitelistids = featuredBlogId,
+                    Blacklisttags = tagBlacklist,
+                    BlacklistCategories = _catUtil.GetCategoryList().Where(c => c.HideFromHomePage).Select(c => c.CategoryID),
+                };
+                query = filter.Filter(query);
                 if (hideHarmony == true)
                 {
                     query = query.Where(b => !b.isHarmony);

@@ -4,8 +4,8 @@ import { AlertComponent, AlertArg } from 'app/shared/alert-dialog';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { EternalCircleGameScenario } from './eternal-circle-game-scenario.service';
-import { Dialog, GameScenario, GameStatus, Narrator } from '../../models/GameScenario';
-import { GameScenarios } from '../../shared/adv-game/scenario';
+import { Dialog, GameScenario, GameStatus, Narrator } from 'app/models/GameScenario';
+import { GameScenarios } from 'app/shared/adv-game/scenario';
 
 @Component({
   templateUrl: './index.component.html',

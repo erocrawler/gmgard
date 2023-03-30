@@ -72,7 +72,7 @@ namespace GmGard.Controllers.App
                 IsApproved = bd.blog.isApproved,
                 LockTags = bd.Option.LockTags,
                 NoComment = bd.Option.NoComment,
-                NoRate = bd.Option.NoRate,
+                NoRate = bd.Option.NoRate || categoryUtil_.GetCategory(bd.blog.CategoryID).DisableRating,
                 Rating = ratingUtil_.GetRating(bd.blog.BlogID),
                 Tags = bd.tag.ToDictionary(t => t.TagID, t => t.TagName),
                 Title = bd.blog.BlogTitle,
@@ -257,6 +257,7 @@ namespace GmGard.Controllers.App
                             tag = b.tag,
                             Option = b.blog.option,
                             IsFavorite = f.Count() > 0,
+                            Category = b.blog.Category
                         });
             }
             else
@@ -268,7 +269,8 @@ namespace GmGard.Controllers.App
                     {
                         blog = b,
                         tag = tib.Select(t => t.tag),
-                        Option = b.option
+                        Option = b.option,
+                        Category = b.Category
                     });
             }
 
@@ -286,22 +288,22 @@ namespace GmGard.Controllers.App
         [HttpPost]
         public async Task<IActionResult> Rate(RateRequest req)
         {
-            var blog = await db_.Blogs.Include(b => b.option).SingleOrDefaultAsync(b => b.BlogID == req.BlogId);
+            var blog = await db_.Blogs.Include(b => b.option).Include(b => b.Category).SingleOrDefaultAsync(b => b.BlogID == req.BlogId);
             if (blog == null)
             {
                 return NotFound();
             }
-            if (blog.option != null && blog.option.NoRate)
+            if (blog.option != null && blog.option.NoRate || blog.Category.DisableRating)
             {
                 return Forbid();
             }
-            string status = ratingUtil_.TryRateBlog(req.BlogId, req.Rating);
-            if (status != "ok")
+            var ret = ratingUtil_.TryRateBlog(req.BlogId, req.Rating);
+            if (!ret.success)
             {
-                return BadRequest(new { error = status });
+                return BadRequest(new { ret.error });
             }
             return Json(new RateResponse {
-                Status = status,
+                Status = ret.success ? "ok" : ret.error,
                 Message = HttpContext.Items["QuestMsg"] as string,
                 Rating = ratingUtil_.GetRating(req.BlogId, false)
             });
@@ -437,6 +439,7 @@ namespace GmGard.Controllers.App
                             tag = b.tag,
                             Option = b.blog.option,
                             IsFavorite = f.Count() > 0,
+                            Category = b.blog.Category
                         });
             }
             else
@@ -449,7 +452,8 @@ namespace GmGard.Controllers.App
                         {
                             blog = b,
                             tag = tib.Select(t => t.tag),
-                            Option = b.option
+                            Option = b.option,
+                            Category = b.Category
                         });
             }
             return Json(ToPaged(new X.PagedList.StaticPagedList<BlogDetailDisplay>(

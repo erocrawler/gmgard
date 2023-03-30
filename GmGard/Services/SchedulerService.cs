@@ -86,7 +86,7 @@ namespace GmGard.Services
                         db.HistoryRankings.AddRange(ranking1month);
                     }
 
-                    var rankings24h = db.Blogs.Where(b => !NoRankCategories.Contains(b.CategoryID) && DbFunctions.DiffMinutes(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true)
+                    var rankings24h = db.Blogs.Where(b => !b.Category.DisableRanking && DbFunctions.DiffMinutes(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true)
                         .OrderByDescending(r => r.Rating)
                         .ThenByDescending(r => r.BlogDate)
                         .Take(RankSize)
@@ -139,7 +139,7 @@ namespace GmGard.Services
             return db.BlogRatings.Where(r => DbFunctions.DiffDays(since, r.ratetime) >= 0).GroupBy(r => r.BlogID)
                 .Select(g => new { blogId = g.Key, rating = g.Sum(r => r.value) })
                 .Join(
-                    db.Blogs.Where(b => b.isApproved == true && !NoRankCategories.Contains(b.CategoryID)),
+                    db.Blogs.Where(b => b.isApproved == true && !b.Category.DisableRanking),
                     a => a.blogId,
                     b => b.BlogID,
                     (a, b) =>
@@ -235,7 +235,7 @@ namespace GmGard.Services
             using (var scope = _scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<BlogContext>();
-                var rankings = db.Blogs.Where(b => DbFunctions.DiffMinutes(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true && !NoRankCategories.Contains(b.CategoryID))
+                var rankings = db.Blogs.Where(b => DbFunctions.DiffMinutes(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true && !b.Category.DisableRanking)
                         .Join(db.BlogRatings.GroupBy(r => r.BlogID).Select(g => new { blogId = g.Key, rating = g.Sum(r => r.value) })
                             , b => b.BlogID, r => r.blogId, (b, r) => new
                             {

@@ -5,22 +5,22 @@ namespace MyMVCWeb.Migrations
     using System.Data.Entity.Migrations;
     using System.Data.Entity.Migrations.Infrastructure;
     using System.Resources;
-
-    [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class AddBlogVersion : IMigrationMetadata
+    
+    [GeneratedCode("EntityFramework.Migrations", "6.4.4")]
+    public sealed partial class AddCategoryOptions : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(AddBlogVersion));
-
+        private readonly ResourceManager Resources = new ResourceManager(typeof(AddCategoryOptions));
+        
         string IMigrationMetadata.Id
         {
-            get { return "201605030454123_AddBlogVersion"; }
+            get { return "202303270957572_AddCategoryOptions"; }
         }
-
+        
         string IMigrationMetadata.Source
         {
             get { return null; }
         }
-
+        
         string IMigrationMetadata.Target
         {
             get { return Resources.GetString("Target"); }

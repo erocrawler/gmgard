@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using GmGard.Extensions;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace GmGard.Controllers.App
 {
@@ -76,20 +77,24 @@ namespace GmGard.Controllers.App
             if (string.IsNullOrWhiteSpace(q))
                 return Json(null);
             var url = string.Format(@"http://www.dlsite.com/maniax/fsr/=/language/jp/sex_category%5B0%5D/male/keyword/{0}/per_page/30/show_type/1", WebUtility.UrlEncode(q));
-            HttpWebRequest webRequest = WebRequest.CreateHttp(url);
+            var handler = new HttpClientHandler();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
             if (proxyAddress_ != null)
             {
-                webRequest.Proxy = new WebProxy(proxyAddress_, true);
+                handler.Proxy = new WebProxy(proxyAddress_, true);
+                handler.UseProxy = true;
             }
-            webRequest.CookieContainer = new CookieContainer();
-            webRequest.CookieContainer.Add(new System.Uri(url), new Cookie("adultchecked", "1", "/"));
-            webRequest.UserAgent = Request.Headers[HeaderNames.UserAgent];
-            webRequest.Accept = Request.Headers[HeaderNames.Accept];
+            var cookie = new Cookie("adultchecked", "1", "/", "dlsite.com");
+            var cookieHeader = new CookieHeaderValue(cookie.Name, cookie.Value);
+            request.Headers.Add(HeaderNames.Cookie, cookieHeader.ToString());
+            request.Headers.Add(HeaderNames.UserAgent, Request.Headers[HeaderNames.UserAgent].ToString());
+            request.Headers.Add(HeaderNames.Accept, Request.Headers[HeaderNames.Accept].ToString());
+            var client = new HttpClient(handler);
             try
             {
-                var resp = await webRequest.GetResponseAsync();
+                var resp = await client.SendAsync(request);
                 var doc = new HtmlAgilityPack.HtmlDocument();
-                doc.Load(resp.GetResponseStream(), System.Text.Encoding.UTF8);
+                doc.Load(resp.Content.ReadAsStream(), System.Text.Encoding.UTF8);
                 var node = doc.GetElementbyId("search_result_list");
                 if (node == null)
                 {

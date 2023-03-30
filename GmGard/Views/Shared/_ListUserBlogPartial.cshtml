@@ -4,7 +4,7 @@
 @inject RatingUtil rateUtil
 <li id="@Model.BlogID">
     <div  class="badge bottom">
-        @catUtil.categoryInfo(Model.CategoryID)
+        @catUtil.CategoryInfo(Model.CategoryID)
     </div>
     <div class="badge">
         评分：@(rateUtil.GetRating(Model.BlogID).Total)

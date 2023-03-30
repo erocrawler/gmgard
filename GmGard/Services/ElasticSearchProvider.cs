@@ -200,7 +200,7 @@ namespace GmGard.Services
                 {
                     queries.Add(q.Term("author", m.Author));
                 }
-                IEnumerable<int> flatCategories = null;
+                IEnumerable<int> flatCategories = _categoryUtil.GetCategoryList().Where(c => !c.HideFromHomePage).Select(c => c.CategoryID);
                 if (m.CurrentCategory.HasValue)
                 {
                     flatCategories = _categoryUtil.GetCategoryWithSubcategories(m.CurrentCategory.Value);

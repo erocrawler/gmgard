@@ -7,17 +7,17 @@
     int? id = ViewBag.CategoryId;
     ViewBag.CategoryBadge = !id.HasValue;
     ViewBag.AncestorBadge = !id.HasValue;
+    Category category = null;
     if (id.HasValue)
     {
-        var category = catUtil.GetCategoryList().SingleOrDefault(c => c.CategoryID == id);
+        category = catUtil.GetCategoryList().SingleOrDefault(c => c.CategoryID == id);
         ViewBag.CategoryBadge = category.SubCategories != null;
     }
     SearchModel search = Model.SearchModel ?? new SearchModel();
     string str = "资源列表";
     if(id.HasValue){
-        string desc;
-        str = catUtil.categoryInfo(id.Value, out desc);
-        <h2 style="display: inline" title="@desc">@str</h2>
+        str = category.CategoryName;
+        <h2 style="display: inline" title="@category.Description">@str</h2>
     }
     else{
         <h2 style="display: inline">@str</h2>

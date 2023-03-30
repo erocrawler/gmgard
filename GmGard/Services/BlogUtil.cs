@@ -328,7 +328,8 @@ namespace GmGard.Services
                         blog = b,
                         tag = tib.Select(t => t.tag),
                         Option = b.option,
-                        IsFavorite = _db.Favorites.Count(f => f.Username == HttpContext.User.Identity.Name && f.BlogID == id) > 0
+                        IsFavorite = _db.Favorites.Count(f => f.Username == HttpContext.User.Identity.Name && f.BlogID == id) > 0,
+                        Category = b.Category
                     });
                 bd = query.SingleOrDefault();
             }
@@ -339,7 +340,8 @@ namespace GmGard.Services
                     {
                         blog = b,
                         tag = tib.Select(t => t.tag),
-                        Option = b.option
+                        Option = b.option,
+                        Category = b.Category
                     });
                 bd = query.SingleOrDefault();
             }
@@ -364,7 +366,7 @@ namespace GmGard.Services
                 : blogDetailDisplay.Option.LockDesc;
             var blog = blogDetailDisplay.blog;
             blog.BlogVisit = _visitCounter.GetBlogVisit(blog.BlogID, true);
-            blogDetailDisplay.Option.NoRate = (blog.isApproved != true && !blogDetailDisplay.Option.NoApprove) || blogDetailDisplay.Option.NoRate;
+            blogDetailDisplay.Option.NoRate = (blog.isApproved != true && !blogDetailDisplay.Option.NoApprove) || blogDetailDisplay.Option.NoRate || blogDetailDisplay.Category.DisableRating;
         }
     }
 }

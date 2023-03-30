@@ -34,16 +34,15 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [
-    AppMaterialModule,
-    CommonModule,
-    FlexLayoutModule,
-    MatDialogModule,
-    FormsModule,
-    AlertModule,
-    RouterModule.forChild(routes)
-  ],
-  entryComponents: [RecoveryCodeComponent],
-  declarations: [TwoFactorAuthComponent, AccountComponent, RecoveryCodeComponent, Enable2faComponent]
+    imports: [
+        AppMaterialModule,
+        CommonModule,
+        FlexLayoutModule,
+        MatDialogModule,
+        FormsModule,
+        AlertModule,
+        RouterModule.forChild(routes)
+    ],
+    declarations: [TwoFactorAuthComponent, AccountComponent, RecoveryCodeComponent, Enable2faComponent]
 })
 export class AccountModule { }

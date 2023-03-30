@@ -22,7 +22,7 @@ namespace MyMVCWeb.Migrations
             
             AddColumn("dbo.Posts", "Rating", c => c.Int(nullable: false, defaultValue:0));
 
-            SqlFile("../../PostRating_trigger.sql");
+            SqlFile("../../../PostRating_trigger.sql");
         }
         
         public override void Down()

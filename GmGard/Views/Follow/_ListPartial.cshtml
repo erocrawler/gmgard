@@ -9,10 +9,10 @@
     <div class="feed-header">
         @foreach (var parentID in catUtil.GetParentCategories(Model.CategoryID))
         {
-            <span class="badge badge-info" >@catUtil.categoryInfo(parentID)</span><span>&nbsp;</span><i class="icon icon-chevron-right icon-fix"></i>
+            <span class="badge badge-info" >@catUtil.CategoryInfo(parentID)</span><span>&nbsp;</span><i class="icon icon-chevron-right icon-fix"></i>
         }
         <span class="badge badge-info">
-            @catUtil.categoryInfo(Model.CategoryID)
+            @catUtil.CategoryInfo(Model.CategoryID)
         </span>
         <a target="_blank" href="@href">
             <strong>

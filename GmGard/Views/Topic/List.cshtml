@@ -7,10 +7,9 @@
     int id;
     if (int.TryParse(str, out id))
     {
-        string desc;
-        str = catUtil.categoryInfo(id, out desc);
-
-        <h2 style="display: inline" title="@desc">@str</h2>
+        var cat = catUtil.GetCategory(id);
+        str = cat.CategoryName;
+        <h2 style="display: inline" title="@cat.Description">@cat.CategoryName</h2>
     }
     else
     {

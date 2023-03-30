@@ -13,6 +13,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { DraftResultComponent } from './raffle/draft-result.component';
 import { MatTableModule } from '@angular/material/table';
+import { CategoryComponent } from './category/category.component';
 
 const routes: Routes = [
   {
@@ -21,24 +22,24 @@ const routes: Routes = [
     children: [
       { path: "", pathMatch: "full", redirectTo: "registration" },
       { path: "registration", component: RegistrationComponent },
+      { path: "category", component: CategoryComponent },
       { path: "raffle", component: RaffleComponent },
     ]
   },
 ];
 
 @NgModule({
-  imports: [
-    AppMaterialModule,
-    MatDialogModule,
-    MatDatepickerModule,
-    MatMomentDateModule,
-    MatTableModule,
-    CommonModule,
-    FlexLayoutModule,
-    FormsModule,
-    RouterModule.forChild(routes)
-  ],
-  entryComponents: [DeleteConfirmationComponent],
-  declarations: [AdminComponent, RegistrationComponent, DeleteConfirmationComponent, RaffleComponent, DraftResultComponent]
+    imports: [
+        AppMaterialModule,
+        MatDialogModule,
+        MatDatepickerModule,
+        MatMomentDateModule,
+        MatTableModule,
+        CommonModule,
+        FlexLayoutModule,
+        FormsModule,
+        RouterModule.forChild(routes)
+    ],
+    declarations: [AdminComponent, RegistrationComponent, DeleteConfirmationComponent, RaffleComponent, DraftResultComponent, CategoryComponent]
 })
 export class AdminModule { }

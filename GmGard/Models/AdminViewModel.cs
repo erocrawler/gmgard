@@ -151,8 +151,8 @@ namespace GmGard.Models
         public List<UserProfile> Writers { get; set; }
         public List<UserProfile> Auditors { get; set; }
         public List<UserProfile> BannedUsers { get; set; }
-        public List<Category> allCategory { get; set; }
-        public List<HanGroup> allHanGroup { get; set; }
+        public List<Category> AllCategory { get; set; }
+        public List<HanGroup> AllHanGroup { get; set; }
         public List<Advertisment> AllAds { get; set; }
         public int totalauditcount { get; set; }
         public int auditcount { get; set; }

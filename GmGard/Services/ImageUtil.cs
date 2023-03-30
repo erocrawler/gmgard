@@ -47,9 +47,9 @@ namespace GmGard.Services
 
         public string SaveAvatar(string name, MemoryStream data, string path)
         {
-            using (var img = Image.Load(data, out var format))
+            using (var img = Image.Load(data))
             {
-                name += "." + format.FileExtensions.First();
+                name += "." + img.Metadata.DecodedImageFormat.FileExtensions.First();
                 img.Save(path + name);
             }
             return name;
@@ -112,7 +112,7 @@ namespace GmGard.Services
                 Width = 500 - X;
             if (Y + Height >= 500)
                 Height = 500 - Y;
-            using (var img = Image.Load(stream, out var format))
+            using (var img = Image.Load(stream))
             {
                 img.Mutate(ctx =>
                 {
@@ -124,7 +124,7 @@ namespace GmGard.Services
                 });
                 using (var outStream = new MemoryStream())
                 {
-                    img.Save(outStream, format);
+                    img.Save(outStream, img.Metadata.DecodedImageFormat);
                     return outStream.ToArray();
                 }
             }

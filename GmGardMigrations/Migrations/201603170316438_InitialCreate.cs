@@ -1,4 +1,4 @@
-namespace GmGard.Migrations
+namespace MyMVCWeb.Migrations
 {
     using System;
     using System.Data.Entity.Migrations;

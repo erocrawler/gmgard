@@ -31,17 +31,16 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [
-    AppMaterialModule,
-    MatDialogModule,
-    CommonModule,
-    FlexLayoutModule,
-    FormsModule,
-    AlertModule,
-    AdvGameModule,
-    RouterModule.forChild(routes),
-  ],
-  entryComponents: [PuzzleDetailComponent, HintDialogComponent],
-  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, IndexComponent],
+    imports: [
+        AppMaterialModule,
+        MatDialogModule,
+        CommonModule,
+        FlexLayoutModule,
+        FormsModule,
+        AlertModule,
+        AdvGameModule,
+        RouterModule.forChild(routes),
+    ],
+    declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, IndexComponent]
 })
 export class GameModule { }

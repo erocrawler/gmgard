@@ -18,9 +18,9 @@
                 <i class="icon-list"></i> 分类：
                 @foreach (var parentID in catUtil.GetParentCategories(topic.CategoryID))
                 {
-                    <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.categoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
+                    <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.CategoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
                 }
-                <a class="badge badge-info" href="@Url.Action("List", "Topic", new { id = topic.CategoryID })">@catUtil.categoryInfo(topic.CategoryID)</a>
+                <a class="badge badge-info" href="@Url.Action("List", "Topic", new { id = topic.CategoryID })">@catUtil.CategoryInfo(topic.CategoryID)</a>
             <hr />
             <span style="font-size:small"><a href="@Url.Action("UserInfo", "Home", new { name = topic.Author })"><i class="icon-user"></i>@blogUtil.GetNickName(topic.Author)</a> 于 @topic.CreateDate 发布，最后更新于 @topic.UpdateDate
                 &nbsp;<i class="icon-eye-open"></i> <span style="color: #808080">@(topic.TopicVisit)</span> 次浏览&nbsp;

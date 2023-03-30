@@ -5,16 +5,15 @@ import { MatDialogModule } from "@angular/material/dialog";
 import { AlertComponent } from "./alert.component";
 
 @NgModule({
-  imports: [
-    CommonModule,
-    MatDialogModule,
-    MatButtonModule,
-  ],
-  exports: [
-    AlertComponent,
-  ],
-  entryComponents: [AlertComponent],
-  declarations: [AlertComponent],
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        MatButtonModule,
+    ],
+    exports: [
+        AlertComponent,
+    ],
+    declarations: [AlertComponent]
 })
 export class AlertModule { }
 

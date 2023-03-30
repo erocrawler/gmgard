@@ -13,17 +13,15 @@ namespace GmGard.Services
         {
         }
 
-        public string categoryInfo(int id)
-        {
-            string desc;
-            return categoryInfo(id, out desc);
-        }
-
-        public string categoryInfo(int id, out string Desc)
+        public string CategoryInfo(int id)
         {
             var category = GetCategoryList().SingleOrDefault(c => c.CategoryID == id);
-            Desc = category.Description;
             return category.CategoryName;
+        }
+
+        public Category GetCategory(int id)
+        {
+            return GetCategoryList().SingleOrDefault(c => c.CategoryID == id);
         }
 
         public List<string> GetFullCategoryNames(int id)

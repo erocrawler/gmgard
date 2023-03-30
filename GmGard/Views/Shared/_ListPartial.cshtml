@@ -10,19 +10,19 @@
             <harmony>
                 @if (ViewBag.AncestorBadge == true)
                 {
-                    @catUtil.categoryInfo(catUtil.GetAncestor(parentId))
+                    @catUtil.CategoryInfo(catUtil.GetAncestor(parentId))
                 }
                 else if (parentId == ViewBag.CategoryId)
                 {
-                    @catUtil.categoryInfo(Model.CategoryID)
+                    @catUtil.CategoryInfo(Model.CategoryID)
                 }
                 else
                 {
-                    @catUtil.categoryInfo(parentId)
+                    @catUtil.CategoryInfo(parentId)
                 }
             </harmony>
             <harmony show="true">
-                @catUtil.categoryInfo(catUtil.GetAncestor(parentId))
+                @catUtil.CategoryInfo(catUtil.GetAncestor(parentId))
             </harmony>
         </div>
     }

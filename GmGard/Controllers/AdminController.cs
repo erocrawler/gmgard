@@ -171,10 +171,8 @@ namespace GmGard.Controllers
             switch (context)
             {
                 case "Category":
-                    model.allCategory = _catUtil.GetCategoryList();
-                    model.allHanGroup = _db.HanGroups.Include("members").ToList();
+                    model.AllHanGroup = _db.HanGroups.Include("members").ToList();
                     ViewBag.HgMsg = TempData["HgMsg"];
-                    ViewBag.CategoryMsg = TempData["CategoryMsg"];
                     break;
 
                 case "Users":
@@ -225,77 +223,6 @@ namespace GmGard.Controllers
         public PartialViewResult Log(int pagenum)
         {
             return PartialView(GetLog(pagenum));
-        }
-
-        [HttpPost]
-        public ActionResult ManageCategory(Category category, string action)
-        {
-            Category c;
-            switch (action)
-            {
-                case "new":
-                    if (string.IsNullOrWhiteSpace(category.CategoryName))
-                    {
-                        TempData["CategoryMsg"] = "请输入栏目名称";
-                    }
-                    else
-                    {
-                        if (category.ParentCategoryID.HasValue)
-                        {
-                            Category parent = _db.Categories.Single(cc => cc.CategoryID == category.ParentCategoryID);
-                            category.ParentCategory = parent;
-                        }
-                        _db.Categories.Add(category);
-                        _db.SaveChanges();
-                        TempData["CategoryMsg"] = "添加成功";
-                    }
-                    break;
-
-                case "edit":
-                    if (string.IsNullOrWhiteSpace(category.CategoryName))
-                    {
-                        TempData["CategoryMsg"] = "请输入栏目名称";
-                    }
-                    else if (category.ParentCategoryID.HasValue && category.ParentCategoryID == category.CategoryID)
-                    {
-                        TempData["CategoryMsg"] = "无效的父级栏目ID";
-                    }
-                    else
-                    {
-                        c = _db.Categories.Single(cc => cc.CategoryID == category.CategoryID);
-                        c.CategoryName = category.CategoryName;
-                        c.Description = category.Description;
-                        if (category.ParentCategoryID.HasValue)
-                        {
-                            Category parent = _db.Categories.Single(cc => cc.CategoryID == category.ParentCategoryID);
-                            c.ParentCategory = parent;
-                        }
-                        _db.SaveChanges();
-                        TempData["CategoryMsg"] = "编辑成功";
-                    }
-                    break;
-
-                case "del":
-                    c = _db.Categories.Single(cc => cc.CategoryID == category.CategoryID);
-                    if (c.SubCategories != null && c.SubCategories.Count > 0)
-                    {
-                        TempData["CategoryMsg"] = "不可删除带有次级栏目的栏目";
-                    }
-                    if (c.Blogs == null || c.Blogs.Count == 0)
-                    {
-                        _db.Categories.Remove(c);
-                        _db.SaveChanges();
-                        TempData["CategoryMsg"] = "删除成功";
-                    }
-                    else
-                    {
-                        TempData["CategoryMsg"] = "不可删除非空栏目";
-                    }
-                    break;
-            }
-            _cache.Remove("~Categories");
-            _cache.Remove("HomeHeader");
-            return RedirectToAction("Manage", new { context = "Category" });
         }
 
         [HttpPost]

@@ -1,62 +1,8 @@
 ﻿@model GmGard.Models.AdminViewModel
-@inject CategoryUtil catUtil
+@inject ConstantUtil constUtil
 
 <h2>栏目管理</h2>
-<h4 class="text-info">@ViewBag.CategoryMsg</h4>
-    <table id="categorytable" class="manage-table">
-        <colgroup>
-            <col style="width:25%" />
-            <col style="width:50%" />
-            <col style="width:25%" />
-        </colgroup>
-        <thead>
-            <tr>
-                <th>分类名称</th>
-                <th>父分类</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-    @foreach (var Item in Model.allCategory)
-    {
-        <tr style="display:none;">
-            <td>
-                <input type="text" id="editname@(Item.CategoryID)" value="@Item.CategoryName" />
-            </td>
-            <td>
-                <select asp-items="catUtil.GetCategoryDropdown(Item.ParentCategoryID.HasValue ? Item.ParentCategoryID.Value : 0)" id="editparent@(Item.CategoryID)" name="ParentCategory"></select>
-            </td>
-            <td>
-                <button class="cancelbtn btn btn-mini" name="@Item.CategoryID">取消</button><button class="submitbtn btn btn-mini" name="@Item.CategoryID">确认</button>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                @Item.CategoryName
-            </td>
-            <td>
-                @(Item.ParentCategoryID.HasValue ? Item.ParentCategory.CategoryName : "")
-            </td>
-            <td>
-                <button class="delbtn btn btn-mini" name="@Item.CategoryID">删除</button><button class="editbtn btn btn-mini" name="@Item.CategoryID">编辑</button>
-            </td>
-        </tr>
-    }
-        </tbody>
-        <tfoot>
-        <tr>
-            <td>
-                <input type="text" id="newname" value="" data-val="true" data-val-regex="无效的名字" data-val-regex-pattern="^[a-zA-Z0-9_\u4e00-\u9fa5]{1,20}$" data-val-required="请输入名字" />
-            </td>
-            <td>
-                <select asp-items="catUtil.GetCategoryDropdown()" id="newparent" name="ParentCategory"></select>
-            </td>
-            <td>
-                <Button ID="NewCategory" class="btn">添加</Button>
-            </td>
-        </tr>
-        </tfoot>
-    </table>
+<iframe loading="lazy" style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/admin/category"></iframe>
 
 <h2>汉化组管理</h2>
 <h4 class="text-info">@ViewBag.HgMsg</h4>
@@ -76,7 +22,7 @@
             </tr>
         </thead>
         <tbody>
-        @foreach (var item in Model.allHanGroup)
+        @foreach (var item in Model.AllHanGroup)
         {
             var members = string.Join(", ", item.members.Where(h => h.GroupLvl == 1).Select(h => h.Username));
             <tr style="display:none;" data-id="@(item.HanGroupID)">
@@ -127,12 +73,6 @@
         </tfoot>
     </table>
 
-<form asp-action="ManageCategory" asp-controller="Admin" method="post" id="managecategory" asp-antiforgery="true">
-    <input type="hidden" name="CategoryID" id="categoryid" />
-    <input type="hidden" name="CategoryName" id="categoryname" />
-    <input type="hidden" name="ParentCategoryID" id="categoryparent" />
-    <input type="hidden" name="action" id="action" />
-</form>
 <form asp-action="ManageHangroup" asp-controller="Admin" method="post" id="managehg" asp-antiforgery="true">
     <input type="hidden" name="id" id="hangroupid" />
     <input type="hidden" name="uri" id="hangroupuri" />
@@ -142,57 +82,6 @@
 </form>
 
 <script>
-    $("#categorytable .editbtn").click(function () {
-        var $this = $(this);
-        var id = $this.attr('name');
-        var tr = $this.parents('tr');
-        tr.hide();
-        tr.prev().show();
-        //$('#tr'+id).hide();
-        //$('#tre' + id).show();
-        var title = $('#editname' + id).val();
-        var parent = $('#editparent' + id).val();
-        $('#editname' + id).data('title', title);
-        $('#editparent' + id).data('parent', parent);
-    });
-    $("#categorytable .cancelbtn").click(function () {
-        var $this = $(this);
-        var id = $this.attr('name');
-        var tr = $this.parents('tr');
-        tr.hide();
-        tr.next().show();
-        $('#editname' + id).val($('#editname' + id).data('title'));
-        $('#editparent' + id).val($('#editparent' + id).data('parent'));
-    });
-    $("#categorytable .delbtn").click(function () {
-        if (confirm("确认删除？（无法删除非空栏目）")) {
-            var $this = $(this);
-            var id = $this.attr('name');
-            $('#categoryid').val(id);
-            $('#action').val('del');
-            $('#managecategory').submit();
-        }
-    });
-    $("#categorytable .submitbtn").click(function () {
-        var $this = $(this);
-        var id = $this.attr('name');
-        $('#categoryid').val(id);
-        var parent = $('#editparent' + id).val();
-        var title = $('#editname' + id).val();
-        $('#categoryname').val(title);
-        $('#categoryparent').val(parent);
-        $('#action').val('edit');
-        $('#managecategory').submit();
-    });
-    $("#NewCategory").click(function () {
-        var nparent = $('#newparent').val();
-        var ntitle = $('#newname').val();
-        $('#categoryname').val(ntitle);
-        $('#categoryparent').val(nparent);
-        $('#action').val('new');
-        $('#managecategory').submit();
-    });
-
     $("#hantable .editbtn").click(function () {
         var $this = $(this);
         var tr = $this.parents('tr');

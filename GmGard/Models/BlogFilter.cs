@@ -6,13 +6,15 @@ namespace GmGard.Models
     public class BlogFilter
     {
         private BlogContext db;
-        private readonly List<int> empty = new List<int>();
-        private List<int> _whitelistcategories;
-        private List<int> _whitelistids;
-        private List<int> _blacklisttags;
-        public List<int> Whitelistcategories { private get { return _whitelistcategories; } set { _whitelistcategories = value ?? empty; } }
-        public List<int> Whitelistids { private get { return _whitelistids; } set { _whitelistids = value ?? empty; } }
-        public List<int> Blacklisttags { private get { return _blacklisttags; } set { _blacklisttags = value ?? empty; } }
+        private readonly List<int> empty = new();
+        private IEnumerable<int> _whitelistcategories;
+        private IEnumerable<int> _whitelistids;
+        private IEnumerable<int> _blacklisttags;
+        private IEnumerable<int> _blacklistCategories;
+        public IEnumerable<int> Whitelistcategories { private get { return _whitelistcategories; } set { _whitelistcategories = value ?? empty; } }
+        public IEnumerable<int> Whitelistids { private get { return _whitelistids; } set { _whitelistids = value ?? empty; } }
+        public IEnumerable<int> Blacklisttags { private get { return _blacklisttags; } set { _blacklisttags = value ?? empty; } }
+        public IEnumerable<int> BlacklistCategories { private get { return _blacklistCategories; } set { _blacklistCategories = value ?? empty; } }
 
         public BlogFilter(BlogContext db)
         {
@@ -23,11 +25,12 @@ namespace GmGard.Models
         public IQueryable<Blog> Filter(IQueryable<Blog> blogquery)
         {
             var query = blogquery.GroupJoin(db.TagsInBlogs, b => b.BlogID, t => t.BlogID, (b, t) => new { blog = b, tag = t }).SelectMany(bt => bt.tag.DefaultIfEmpty(), (b, t) => new { blog = b.blog, tag = t.TagID });
-            if (Whitelistcategories.Count != 0)
+            if (Whitelistcategories.Count() != 0)
             {
                 query = query.Where(a => Whitelistcategories.Contains(a.blog.CategoryID) || Whitelistids.Contains(a.blog.BlogID));
             }
-            return query.Select(a => a.blog).Except(query.Where(a => Blacklisttags.Contains(a.tag)).Select(a => a.blog)).Distinct();
+            var blacklistCategories = BlacklistCategories.Except(Whitelistcategories);
+            return query.Select(a => a.blog).Except(query.Where(a => Blacklisttags.Contains(a.tag) || blacklistCategories.Contains(a.blog.CategoryID)).Select(a => a.blog)).Distinct();
         }
 
         public void UpdateDatabase()
@@ -48,7 +51,7 @@ namespace GmGard.Models
                     INNER JOIN [dbo].[TagsInBlogs] AS [Extent4] ON [Extent3].[BlogID] = [Extent4].[BlogID]
                     WHERE (1 = [Extent3].[isApproved]) AND ((CASE WHEN ([Extent3].[CategoryID] IN ({0})) THEN cast(1 as bit) ELSE cast(0 as bit) END) = 1) AND ([Extent4].[TagID] IN ({1}))) AS [Except1]
 		            )
-            THEN 1 ELSE 0 END", Whitelistcategories.Count > 0 ? string.Join(",", Whitelistcategories) : "''", Blacklisttags.Count > 0 ? string.Join(",", Blacklisttags) : "''", Whitelistids.Count > 0 ? string.Join(",", Whitelistids) : "''"));
+            THEN 1 ELSE 0 END", Whitelistcategories.Count() > 0 ? string.Join(",", Whitelistcategories) : "''", Blacklisttags.Count() > 0 ? string.Join(",", Blacklisttags) : "''", Whitelistids.Count() > 0 ? string.Join(",", Whitelistids) : "''"));
         }
     }
 }

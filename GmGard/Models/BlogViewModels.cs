@@ -19,6 +19,7 @@ namespace GmGard.Models
         public BlogOption Option { get; set; }
         public bool IsAuthor { get; set; }
         public bool IsFavorite { get; set; }
+        public Category Category { get; set; }
     }
 
     public class BlogEdit

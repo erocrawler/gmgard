@@ -54,7 +54,7 @@ namespace GmGard.Controllers.App
             switch (request.Type)
             {
                 case Models.App.Comment.CommentType.Blog:
-                    var blog = await _db.Blogs.Include("option").SingleOrDefaultAsync(b => b.BlogID == request.ItemId);
+                    var blog = await _db.Blogs.Include(b => b.option).Include(b => b.Category).SingleOrDefaultAsync(b => b.BlogID == request.ItemId);
                     if (blog == null)
                     {
                         return NotFound();
@@ -66,7 +66,7 @@ namespace GmGard.Controllers.App
                     UsersRating userrate = null;
                     if (request.Rating != null && RatingUtil.RatingValue.ContainsKey(request.Rating.Value))
                     {
-                        if (blog.option.NoRate)
+                        if (blog.option != null && blog.option.NoRate || blog.Category.DisableRating)
                         {
                             return Forbid();
                         }

@@ -59,7 +59,7 @@ namespace GmGard.Models
             modelBuilder.ComplexType<RankedBlogId>();
             modelBuilder.Conventions.Add(new FunctionsConvention<BlogContext>("dbo"));
             modelBuilder.Entity<Blog>()
-                        .HasRequired(e => e.category)
+                        .HasRequired(e => e.Category)
                         .WithMany(c => c.Blogs)
                         .HasForeignKey(e => e.CategoryID)
                         .WillCascadeOnDelete(false);
@@ -119,7 +119,7 @@ namespace GmGard.Models
         public DateTime BlogDate { get; set; }
 
         [ForeignKey("CategoryID")]
-        public virtual Category category { get; set; }
+        public virtual Category Category { get; set; }
 
         [Required]
         public int CategoryID { get; set; }

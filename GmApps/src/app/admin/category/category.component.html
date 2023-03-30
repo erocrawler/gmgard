@@ -1,0 +1,82 @@
+<table>
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>父分类</th>
+            <th>选项</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let cat of categoryViewModels">
+            <ng-container *ngTemplateOutlet="cat.editing ? editBlock : readonlyBlock; context: {$implicit: cat}">
+            </ng-container>
+        </tr>
+        <tr><td></td><td></td><td></td><td><button mat-button (click)="add()">添加</button></td></tr>
+    </tbody>
+</table>
+
+<ng-template #editBlock let-cat>
+    <td>
+        <mat-form-field appearance="fill">
+            <mat-label>名称</mat-label>
+            <input matInput type="text" [(ngModel)]="cat.categoryName">
+        </mat-form-field>
+    </td>
+    <td>
+        <mat-form-field appearance="fill">
+            <mat-label>父分类</mat-label>
+            <mat-select [(ngModel)]="cat.parentCategoryID">
+                <mat-option [value]="null"></mat-option>
+                <mat-option *ngFor="let c of categoryDropdown" [value]="c.value">
+                    {{c.viewValue}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </td>
+    <td>
+        <mat-form-field appearance="fill">
+            <mat-label>选项</mat-label>
+            <mat-select [(ngModel)]="cat.options">
+                <mat-option value="linkOptional">
+                    不要求投稿链接
+                </mat-option>
+                <mat-option value="disableRanking">
+                    不参与排行
+                </mat-option>
+                <mat-option value="disableRating">
+                    不参与评分
+                </mat-option>
+                <mat-option value="hideFromHomePage">
+                    不在主页与资源列表默认显示
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </td>
+    <td>
+        <button mat-button [disabled]="cat.saving" (click)="save(cat)">保存</button>
+        <button mat-button [disabled]="cat.saving" (click)="delete(cat)">删除</button>
+        <button mat-button [disabled]="cat.saving" (click)="cancelEdit(cat)">取消</button>
+    </td>
+</ng-template>
+<ng-template #readonlyBlock let-cat>
+    <td><span>{{cat.categoryName}}</span></td>
+    <td><span>{{cat.parentName}}</span></td>
+    <td>
+        <span>
+            <mat-icon title="不要求投稿链接" *ngIf="cat.linkOptional">link_off</mat-icon>
+        </span>
+        <span>
+            <mat-icon title="不参与排行" *ngIf="cat.disableRanking">public_off</mat-icon>
+        </span>
+        <span>
+            <mat-icon title="不参与评分" *ngIf="cat.disableRating">mobiledata_off</mat-icon>
+        </span>
+        <span>
+            <mat-icon title="不在主页与资源列表默认显示" *ngIf="cat.hideFromHomePage">visibility_off</mat-icon>
+        </span>
+    </td>
+    <td>
+        <button (click)="edit(cat)">编辑</button>
+    </td>
+</ng-template>

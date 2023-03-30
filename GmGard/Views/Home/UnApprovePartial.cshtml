@@ -22,7 +22,7 @@
             {
                 <li @if(b.isApproved==false){<text>class="selected warning"</text>}>
                     <div class="badge">
-                        @catUtil.categoryInfo(b.CategoryID)
+                        @catUtil.CategoryInfo(b.CategoryID)
                     </div>
                     <a class="listlink" target="_blank" href="@Url.Action("Details", "Blog", new {id = b.BlogID})">
                         <div class="icon">

@@ -8,7 +8,7 @@
     Blog blog = Model.blog;
     ViewBag.Title = blog.BlogTitle;
     ViewBag.Description = string.Empty;
-    string categoryName = catUtil.categoryInfo(blog.CategoryID);
+    string categoryName = catUtil.CategoryInfo(blog.CategoryID);
     BlogLink[] links = BlogHelper.GetBlogLink(blog.Links);
 }
 
@@ -31,7 +31,7 @@
     <harmony>
         @foreach (var parentID in catUtil.GetParentCategories(blog.CategoryID))
         {
-            <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.categoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
+            <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = parentID })">@catUtil.CategoryInfo(parentID)</a><span>&nbsp;</span><i class="icon icon-chevron-right"></i>
         }
         <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = blog.CategoryID })">@categoryName</a>
     </harmony>
@@ -39,7 +39,7 @@
         @{ 
             var ancestorid = catUtil.GetAncestor(blog.CategoryID);
         }
-        <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = ancestorid })">@catUtil.categoryInfo(ancestorid)</a>
+        <a class="badge badge-info" href="@Url.Action("List", "Blog", new { id = ancestorid })">@catUtil.CategoryInfo(ancestorid)</a>
     </harmony>
     <hr />
     <span style="font-size:small;position:relative;"><a href="@Url.Action("UserInfo", "Home", new { name = blog.Author })"><i class="icon-user"></i>@blogUtil.GetNickName(blog.Author)</a> 于 @blog.BlogDate 发布

@@ -79,8 +79,8 @@ else
                             <p>@b.BlogDate</p>
                         </td>
                         <td>
-                            <p class="label label-inverse">@catUtil.categoryInfo(catUtil.GetAncestor(b.CategoryID))</p>
-                            <p class="label label-info">@catUtil.categoryInfo(b.CategoryID)</p>
+                            <p class="label label-inverse">@catUtil.CategoryInfo(catUtil.GetAncestor(b.CategoryID))</p>
+                            <p class="label label-info">@catUtil.CategoryInfo(b.CategoryID)</p>
                         </td>
                         <td>
                             <p><a asp-action="UserInfo" asp-controller="Home" asp-route-name="@b.Author">@nicknames[b.Author]</a></p>

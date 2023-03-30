@@ -30,27 +30,26 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    AppMaterialModule,
-    MatDialogModule,
-    MatGridListModule,
-    FlexLayoutModule,
-    RouterModule.forChild(routes),
-    NgxIndexedDBModule.forRoot(dbConfig),
-    AdvGameModule,
-  ],
-  declarations: [
-    GachaComponent,
-    GachaIndexComponent,
-    GachaResultComponent,
-    GachaConfirmComponent,
-    CardDetailComponent,
-    GachaListComponent,
-    GachaIntroComponent
-  ],
-  entryComponents: [GachaConfirmComponent, CardDetailComponent],
-  providers: [GachaService],
+    imports: [
+        CommonModule,
+        FormsModule,
+        AppMaterialModule,
+        MatDialogModule,
+        MatGridListModule,
+        FlexLayoutModule,
+        RouterModule.forChild(routes),
+        NgxIndexedDBModule.forRoot(dbConfig),
+        AdvGameModule,
+    ],
+    declarations: [
+        GachaComponent,
+        GachaIndexComponent,
+        GachaResultComponent,
+        GachaConfirmComponent,
+        CardDetailComponent,
+        GachaListComponent,
+        GachaIntroComponent
+    ],
+    providers: [GachaService]
 })
 export class GachaModule { }

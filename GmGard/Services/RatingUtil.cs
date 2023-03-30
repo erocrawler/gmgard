@@ -160,7 +160,7 @@ namespace GmGard.Services
             return ratings.ToDictionary(v => v.BlogID, v => v.value);
         }
 
-        public string TryRateBlog(int id, int rating)
+        public (bool success, string error) TryRateBlog(int id, int rating)
         {
             string credential = ExpUtil.GetIPAddress(Context);
             bool rated = false;
@@ -168,7 +168,7 @@ namespace GmGard.Services
             {
                 if (!Context.User.Identity.IsAuthenticated)
                 {
-                    return "login";
+                    return (false, "login");
                 }
                 credential = Context.User.Identity.Name;
                 rated = _db.BlogRatings.Any(r => r.BlogID == id && r.credential == credential);
@@ -179,15 +179,15 @@ namespace GmGard.Services
             }
             if (rated)
             {
-                return "rated" + (RateWithAccount ? "" : "_today");
+                return (false, "rated" + (RateWithAccount ? "" : "_today"));
             }
             var Rate = AddBlogRating(id, rating, credential);
             if (Rate == null)
             {
-                return "error";
+                return (false, "error");
             }
             TriggerRateBlog(Rate);
-            return "ok";
+            return (true, "");
         }
     }
 }

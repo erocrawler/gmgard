@@ -263,15 +263,6 @@ namespace GmGard.Models
             return content;
         }
 
-        public static IQueryable<Blog> getFilteredQuery(BlogContext db, IQueryable<Blog> blogquery, List<int> blacklisttags, List<int> whitelistcategories, List<int> whitelistblogs)
-        {
-            var filter = new BlogFilter(db);
-            filter.Whitelistcategories = whitelistcategories;
-            filter.Whitelistids = whitelistblogs;
-            filter.Blacklisttags = blacklisttags;
-            return filter.Filter(blogquery);
-        }
-
         public static IQueryable<Blog> getSortedQuery(BlogContext db, IQueryable<Blog> query, string sort)
         {
             switch (sort)

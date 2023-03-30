@@ -74,8 +74,6 @@ namespace GmGard.Controllers
         
         private int ListPageSize => _appSettings.ListPageSize;
 
-        public List<int> NolinkCategories => _appSettings.NoLinkCategories;
-
         private List<int> FeaturedBlogId => _dataSettings.FeaturedBlogIdList();
 
         private HarmonySettingsModel HarmonySettings => _appSettings.HarmonySettings;
@@ -108,7 +106,7 @@ namespace GmGard.Controllers
         public async Task<ActionResult> List([FromServices]ISearchProvider searchProvider, int? id, SearchModel search, int page = 1)
         {
             int pagesize = ListPageSize;
-            search = search ?? new SearchModel();
+            search ??= new SearchModel();
             if (id.HasValue && id.Value > 0)
             {
                 if (!_catUtil.GetCategoryList().Any(l => l.CategoryID == id.Value))
@@ -181,7 +179,7 @@ namespace GmGard.Controllers
                     ModelState.AddModelError("", "内容不能为空或纯图片");
                     throw new BlogException();
                 }
-                if (NolinkCategories == null || !NolinkCategories.Contains(blog.CategoryID))
+                if (_catUtil.GetCategory(blog.CategoryID).LinkOptional)
                 {
                     if (blog.BlogLinks == null)
                     {
@@ -453,7 +451,7 @@ namespace GmGard.Controllers
         {
             ViewBag.CategoryList = _catUtil.GetCategoryDropdown(blog.CategoryID);
             ViewBag.id = id;
-            if (NolinkCategories == null || !NolinkCategories.Contains(blog.CategoryID))
+            if (_catUtil.GetCategory(blog.CategoryID).LinkOptional)
             {
                 if (blog.BlogLinks == null)
                 {
@@ -700,21 +698,30 @@ namespace GmGard.Controllers
         {
             int id = int.Parse(blogid);
             int value = int.Parse(rating);
-            string status = _ratingUtil.TryRateBlog(id, value);
-            if (status == "login")
+            var blog = _db.Blogs.Include(b => b.option).Include(b => b.Category).SingleOrDefault(b => b.BlogID == id);
+            if (blog == null)
             {
-                 return Json(new { errmsg = "请登录后再评分！" });
+                return NotFound();
             }
-            else if (status == "rated")
+            if (blog.option != null && blog.option.NoRate || blog.Category.DisableRating)
             {
-                return Json(new { errmsg = "您已经评过分了！" });
-            } 
-            else if (status == "rated_today")
-            {
-                return Json(new { errmsg = "今天已经评过分了！" });
+                return Forbid();
             }
-            else if (status == "error")
+            (bool success, string status) = _ratingUtil.TryRateBlog(id, value);
+            if (!success)
             {
+                if (status == "login")
+                {
+                    return Json(new { errmsg = "请登录后再评分！" });
+                }
+                else if (status == "rated")
+                {
+                    return Json(new { errmsg = "您已经评过分了！" });
+                }
+                else if (status == "rated_today")
+                {
+                    return Json(new { errmsg = "今天已经评过分了！" });
+                }
                 return Json(new { errmsg = "无效的评分，请刷新重试" });
             }
             var total = _ratingUtil.GetRating(id, false);

@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon.Runtime.Internal.Util;
+using Amazon.S3.Model;
 using GmGard.Models;
 using GmGard.Models.App;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static GmGard.Models.App.NewItemCount;
+using static Nest.JoinField;
 
 namespace GmGard.Controllers.App
 {
@@ -21,10 +25,12 @@ namespace GmGard.Controllers.App
     public class AdminController : AppControllerBase
     {
         private readonly UsersContext udb_;
+        private readonly BlogContext db_;
 
-        public AdminController(UsersContext udb)
+        public AdminController(UsersContext udb, BlogContext db)
         {
             udb_ = udb;
+            db_ = db;
         }
 
         [HttpGet, HttpPost]
@@ -108,6 +114,62 @@ namespace GmGard.Controllers.App
             }
             udb_.UserCodes.Remove(userCode);
             await udb_.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> Category()
+        {
+            return Json(await db_.Categories.ToListAsync());
+        }
+
+
+        [HttpPost]
+        public async Task<ActionResult> Category([FromBody] Models.Category category)
+        {
+            if (string.IsNullOrWhiteSpace(category.CategoryName))
+            {
+                return BadRequest(new { err = "请输入栏目名称" });
+            }
+            if (category.ParentCategoryID.HasValue)
+            {
+                var parent = await db_.Categories.SingleOrDefaultAsync(cc => cc.CategoryID == category.ParentCategoryID);
+                if (parent == null || parent.CategoryID == category.CategoryID)
+                {
+                    return BadRequest(new { err = "无效的父级栏目ID" });
+                }
+                category.ParentCategory = parent;
+            }
+            if (db_.Categories.Any(c => c.CategoryID == category.CategoryID))
+            {
+                db_.Entry(category).State = EntityState.Modified;
+            }
+            else
+            {
+                db_.Categories.Add(category);
+            }
+            await db_.SaveChangesAsync();
+            return Json(new {id = category.CategoryID});
+        }
+
+        [HttpDelete]
+        public async Task<ActionResult> Category(int id)
+        {
+            var cat = await db_.Categories.SingleOrDefaultAsync(cc => cc.CategoryID == id);
+            if (cat == null)
+            {
+                return NotFound();
+            }
+            if (cat.ParentCategoryID.HasValue)
+            {
+                return BadRequest(new { err = "不可删除带有次级栏目的栏目" });
+            }
+            if (cat.Blogs.Any())
+            {
+                return BadRequest(new { err = "不可删除非空栏目" });
+            }
+            db_.Entry(cat).State = EntityState.Deleted;
+            await db_.SaveChangesAsync();
             return Ok();
         }
     }

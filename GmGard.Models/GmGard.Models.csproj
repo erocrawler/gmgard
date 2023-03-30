@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <DefineConstants>$(DefineConstants);IS_CORE</DefineConstants>
     <AssemblyName>GmGard.Models</AssemblyName>
     <PackageId>GmGard.Models</PackageId>

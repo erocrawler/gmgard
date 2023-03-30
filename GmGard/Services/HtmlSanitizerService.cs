@@ -1,4 +1,4 @@
-﻿using Ganss.XSS;
+﻿using Ganss.Xss;
 using GmGard.Models;
 using Microsoft.AspNetCore.Identity;
 using System;

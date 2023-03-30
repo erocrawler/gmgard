@@ -147,14 +147,14 @@
                 <harmony>
                     @foreach (var parentID in catUtil.GetParentCategories(blog.CategoryID))
                     {
-                        <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@parentID">@catUtil.categoryInfo(parentID)</a>
+                        <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@parentID">@catUtil.CategoryInfo(parentID)</a>
                         <i class="icon icon-chevron-right icon-fix"></i>
                     }
-                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@blog.CategoryID">@catUtil.categoryInfo(blog.CategoryID)</a><span>&nbsp;| </span>
+                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="@blog.CategoryID">@catUtil.CategoryInfo(blog.CategoryID)</a><span>&nbsp;| </span>
                 </harmony>
                 <harmony show="true">
                     @{ var ancestorid = catUtil.GetAncestor(blog.CategoryID); }
-                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="ancestorid">@catUtil.categoryInfo(ancestorid)</a><span>&nbsp;| </span>
+                    <a class="badge badge-info" asp-action="List" asp-controller="Blog" asp-route-id="ancestorid">@catUtil.CategoryInfo(ancestorid)</a><span>&nbsp;| </span>
                 </harmony>
                 <i class="icon-tags"></i>
                 标签：

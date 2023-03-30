@@ -16,6 +16,17 @@ export interface DraftResult {
   }[]
 }
 
+export interface Category {
+  categoryID: number,
+  categoryName: string,
+  description: string,
+  linkOptional: boolean,
+  disableRanking: boolean,
+  disableRating: boolean,
+  hideFromHomePage: boolean,
+  parentCategoryID?: number,
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -28,11 +39,11 @@ export class AdminService {
     return this.http.post<InvitationCodeResponse>("/api/Admin/InvitationCode", request, { withCredentials: true })
       .pipe(catchError((result: HttpErrorResponse) => {
         if (result.status === 404) {
-          return throwError({ message: "未找到" });
+          return throwError(() => ({ message: "未找到" }));
         } else if (result.error.error) {
-          return throwError({ message: result.error.error })
+          return throwError(() => ({ message: result.error.error }))
         }
-        return throwError({ message: result.message });
+        return throwError(() => ({ message: result.message }));
       }));
   }
 
@@ -47,15 +58,40 @@ export class AdminService {
       })
       .pipe(catchError((result: HttpErrorResponse) => {
         if (result.status === 404) {
-          return throwError({ message: "未找到" });
+          return throwError(() => ({ message: "未找到" }));
         }
         else if (result.status == 400) {
-          return throwError({
+          return throwError(() => ({
             message: "无效的邀请码:" + (result.error["error"] || "")
-          });
+          }));
         }
-        return throwError({ message: result.message });
+        return throwError(() => ({ message: result.message }));
       }), map(r => r.ok));
+  }
+
+  getCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>("/api/Admin/Category")
+  }
+
+  updateCategory(c: Category): Observable<number> {
+    return this.http.post<{id: number}>("/api/Admin/Category", c, { observe: "response" })
+      .pipe(
+        catchError((result: HttpErrorResponse) => {
+          return throwError(() => new Error(result.message))
+        }),
+        map(r => r.body.id))
+  }
+
+  deleteCategory(c: number): Observable<boolean> {
+    return this.http.delete("/api/Admin/Category", { params: { id: c }, observe: "response" })
+      .pipe(
+        catchError((result: HttpErrorResponse) => {
+          if (result.status === 404) {
+            return throwError(() => new Error("未找到"));
+          }
+          return throwError(() => new Error(result.message))
+        }),
+        map(r => r.ok))
   }
 
   allRaffles(page: number): Observable<Paged<RaffleConfig>> {

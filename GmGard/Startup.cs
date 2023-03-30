@@ -50,7 +50,6 @@ namespace GmGard
                     option.SslPort = int.Parse(SslPort);
                 }
             })
-                .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();

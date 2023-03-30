@@ -38,24 +38,23 @@ export class CustomDateAdapter extends MomentDateAdapter {
 }
 
 @NgModule({
-  declarations: [PunchInComponent, PunchInDetailComponent],
-  entryComponents: [PunchInComponent, PunchInDetailComponent],
-  imports: [
-    CommonModule,
-    FlexLayoutModule,
-    MatProgressSpinnerModule,
-    MatDatepickerModule,
-    MatProgressBarModule,
-    MatCardModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatMomentDateModule,
-    MatSnackBarModule,
-    RouterModule.forChild(routes),
-  ],
-  providers: [
-    PunchInService,
-    { provide: DateAdapter, useClass: CustomDateAdapter },
-  ],
+    declarations: [PunchInComponent, PunchInDetailComponent],
+    imports: [
+        CommonModule,
+        FlexLayoutModule,
+        MatProgressSpinnerModule,
+        MatDatepickerModule,
+        MatProgressBarModule,
+        MatCardModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatMomentDateModule,
+        MatSnackBarModule,
+        RouterModule.forChild(routes),
+    ],
+    providers: [
+        PunchInService,
+        { provide: DateAdapter, useClass: CustomDateAdapter },
+    ]
 })
 export class PunchInModule { }
