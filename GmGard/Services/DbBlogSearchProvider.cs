@@ -54,11 +54,21 @@ namespace GmGard.Services
             if (m.CurrentCategory.HasValue)
             {
                 flatCategories = _categoryUtil.GetCategoryWithSubcategories(m.CurrentCategory.Value);
-                predicate = predicate.And(b => flatCategories.Contains(b.CategoryID));
             }
             if (m.CategoryIds != null && m.CategoryIds.Count() > 0)
             {
-                flatCategories = m.CategoryIds.Aggregate(new List<int>(), (l, id) => { l.AddRange(_categoryUtil.GetCategoryWithSubcategories(id)); return l; });
+                IEnumerable<int> userCategories = m.CategoryIds.Aggregate(new List<int>(), (l, id) => { l.AddRange(_categoryUtil.GetCategoryWithSubcategories(id)); return l; });
+                if (m.CurrentCategory.HasValue)
+                {
+                    flatCategories = userCategories.Intersect(flatCategories);
+                }
+                else
+                {
+                    flatCategories = userCategories;
+                }
+            } 
+            if (flatCategories.Any())
+            {
                 predicate = predicate.And(b => flatCategories.Contains(b.CategoryID));
             }
             if (!string.IsNullOrWhiteSpace(m.Tags))

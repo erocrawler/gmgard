@@ -98,10 +98,16 @@ namespace GmGard.Models
                 && !StartDate.HasValue && !EndDate.HasValue;
         }
 
+        public bool IsDefault()
+        {
+            return (new[] { Tags, Title, Query }).All(string.IsNullOrEmpty) 
+                && !StartDate.HasValue && !EndDate.HasValue && _categoryIds.Count == 0;
+        }
+
         public string CacheKey(int PageNumber, int PageCount)
         {
             var category = (CurrentCategory.HasValue ? CurrentCategory.ToString() : string.Empty) + '|' + string.Join(",", _categoryIds);
-            return $"{PageNumber}|{PageCount}|{Harmony.ToString()}|{Sort}|{category}|{string.Join(",", _tagIds)}";
+            return $"{PageNumber}|{PageCount}|{Harmony}|{Sort}|{category}|{string.Join(",", _tagIds)}";
         }
 
         public SearchRouteDictionary ToRouteDictionary()

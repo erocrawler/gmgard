@@ -528,9 +528,8 @@ namespace GmGard.Controllers
         public async Task<PartialViewResult> HPSetting(HPSettingsModel model)
         {
             string option, tagBlacklist = null;
-            var allCategories = _catUtil.GetCategoryList();
             var categories = model.GetCategoryOptions();
-            if (categories.SelectedIds.Count == 0 || (allCategories.Count == categories.SelectedIds.Count))
+            if (categories.SelectedIds.Count == 0)
             {
                 option = string.Empty;
             }

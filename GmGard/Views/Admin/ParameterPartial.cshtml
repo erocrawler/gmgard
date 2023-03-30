@@ -77,10 +77,6 @@
     <div class="row">
         <div class="span5">
             <h3>参数设置</h3>
-            <label for="noLinkCategories">无需链接的栏目编号（用[,]分隔）</label>
-            <input type="text" id="noLinkCategories" asp-for="appsettings.NoLinkCategories" list-value-value="@Model.appsettings.NoLinkCategories" />
-            <label for="NoRankCategories">不上榜的栏目编号（用[,]分隔）</label>
-            <input type="text" id="NoRankCategories" asp-for="appsettings.NoRankCategories" list-value-value="@Model.appsettings.NoRankCategories" />
             <label for="updateinterval">排行更新间隔（分钟）</label>
             <input type="number" id="updateinterval" asp-for="appsettings.UpdateInterval" />
             <label for="expaddonpass">审核通过奖励</label>

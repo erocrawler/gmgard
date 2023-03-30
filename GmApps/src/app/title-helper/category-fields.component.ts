@@ -1,6 +1,6 @@
 import { Subscription } from "rxjs"
 import { Component, Input, OnChanges, EventEmitter, Output } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { UntypedFormControl, UntypedFormGroup, Validators } from "@angular/forms";
 
 import { Category } from "./category";
 
@@ -13,7 +13,7 @@ export class CategoryFieldsComponent implements OnChanges  {
     @Input()
     category: Category;
 
-    categoryForm: FormGroup;
+    categoryForm: UntypedFormGroup;
 
     @Output()
     title = new EventEmitter<string>();
@@ -30,14 +30,14 @@ export class CategoryFieldsComponent implements OnChanges  {
             this.titleSubscription.unsubscribe();
         }
         const group = {};
-        group["前缀"] = new FormControl();
+        group["前缀"] = new UntypedFormControl();
         this.category.fields.forEach(cf => {
-            group[cf.name] = new FormControl(
+            group[cf.name] = new UntypedFormControl(
                 cf.default,
                 cf.required ? Validators.required : Validators.nullValidator)
         });
-        group["后缀"] = new FormControl();
-        this.categoryForm = new FormGroup(group);
+        group["后缀"] = new UntypedFormControl();
+        this.categoryForm = new UntypedFormGroup(group);
 
 
         this.titleSubscription = this.categoryForm.valueChanges

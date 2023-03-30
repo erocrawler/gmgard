@@ -7,7 +7,7 @@
     var controller = ViewBag.SearchController as string ?? ViewContext.RouteData.Values["controller"];
 }
 
-<form asp-action="@action" asp-controller="@controller" method="get" id="searchform" class="well hide">
+<form asp-action="@action" asp-controller="@controller" method="get" id="searchform" class="well @(Model.IsDefault() ? "hide" : "")">
     <input type="hidden" value="@Model.SortOptions().CurrentSort" name="sort" />
     <harmony>
         @await Html.PartialAsync("_CategorySelectPartial", Model.GetCategoryOptions())
@@ -74,13 +74,8 @@
             $(this).toggleClass('active'),
             $('#searchform').slideToggle(200);
         }).css("display", "inline-block");
-        var inputs = $('#searchform').find('input[type="checkbox"]:checked, input[type="text"]');
-        for (var i = 0; i < inputs.length; i++) {
-            if (inputs.eq(i).val()) {
-                $('#advanced-search').addClass('active'),
-                $('#searchform').show();
-                break;
-            }
+        if (!$('#searchform').hasClass('hide')) {
+            $('#advanced-search').addClass('active');
         }
         // Determine if this browser supports the date input type.
         if (!(function () {

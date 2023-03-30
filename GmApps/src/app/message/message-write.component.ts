@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { debounceTime, switchMap } from 'rxjs/operators';
@@ -21,7 +21,7 @@ export class MessageWriteComponent implements OnInit {
   stateMsg: MessageDetails
   content: string
   title: string
-  recipientControl: FormControl
+  recipientControl: UntypedFormControl
   options: UserSuggestion[]
   sending = false;
   errors: string
@@ -33,7 +33,7 @@ export class MessageWriteComponent implements OnInit {
       this.action = state.action;
       this.stateMsg = state.msg;
     }
-    this.recipientControl = new FormControl();
+    this.recipientControl = new UntypedFormControl();
   }
 
   ngOnInit(): void {

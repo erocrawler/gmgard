@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GmGard.Filters
 {
-    public class ValidateFileAttribute : RequiredAttribute
+    public class ValidateFileAttribute : ValidationAttribute
     {
-        private int filesize;
+        private readonly int filesize;
 
         public ValidateFileAttribute(int filesize)
         {

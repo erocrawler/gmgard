@@ -75,8 +75,6 @@ namespace GmGard.Controllers
         private int listpagesize => _appSettings.ListPageSize;
         private int replypagesize => _appSettings.ReplyPageSize;
 
-        private SelectList sl => new SelectList(_catUtil.GetCategoryList(), "CategoryID", "CategoryName");
-
         public static event EventHandler<TopicEventArgs> OnDeleteTopic;
 
         public static event EventHandler<TopicEventArgs> OnNewTopic;
@@ -145,7 +143,7 @@ namespace GmGard.Controllers
         [Authorize(Roles = "Writers,Administrator,Moderator")]
         public ActionResult Create()
         {
-            ViewBag.CategoryID = sl;
+            ViewBag.CategoryID = _catUtil.GetCategoryDropdown();
             return View();
         }
 
@@ -157,7 +155,7 @@ namespace GmGard.Controllers
         [Authorize(Roles = "Writers,Administrator,Moderator")]
         public async Task<ActionResult> Create(TopicEdit topic, [FromServices] HtmlSanitizerService sanitizerService)
         {
-            ViewBag.CategoryID = sl;
+            ViewBag.CategoryID = _catUtil.GetCategoryDropdown();
             topic.LoadBlog(_db);
             if (ModelState.IsValid)
             {
@@ -247,7 +245,7 @@ namespace GmGard.Controllers
                 return NotFound();
             }
             ViewBag.id = id;
-            ViewBag.CategoryID = new SelectList(_catUtil.GetCategoryList(), "CategoryID", "CategoryName", topic.CategoryID);
+            ViewBag.CategoryID = _catUtil.GetCategoryDropdown();
             return View(new TopicEdit(_db, topic));
         }
 
@@ -260,7 +258,7 @@ namespace GmGard.Controllers
         public async Task<ActionResult> Edit(int id, TopicEdit etopic, [FromServices] HtmlSanitizerService sanitizerService)
         {
             etopic.LoadBlog(_db);
-            ViewBag.CategoryID = new SelectList(_catUtil.GetCategoryList(), "CategoryID", "CategoryName", etopic.CategoryID);
+            ViewBag.CategoryID = _catUtil.GetCategoryDropdown();
             int ret = TagUtil.CheckBlogTag(etopic.TagName, 1);
             if (ret != 0)
             {

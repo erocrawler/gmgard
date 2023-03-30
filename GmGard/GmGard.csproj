@@ -34,6 +34,9 @@
     <None Update="wwwroot\bower_components\**\*;wwwroot\_references.js;">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
+	<None Update="appsettings.*.json">
+		<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+	</None>
   </ItemGroup>
 
   <ItemGroup>

@@ -11,8 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using static GmGard.Models.App.NewItemCount;
-using static Nest.JoinField;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GmGard.Controllers.App
 {
@@ -26,11 +25,13 @@ namespace GmGard.Controllers.App
     {
         private readonly UsersContext udb_;
         private readonly BlogContext db_;
+        private readonly IMemoryCache cache_;
 
-        public AdminController(UsersContext udb, BlogContext db)
+        public AdminController(UsersContext udb, BlogContext db, IMemoryCache cache)
         {
             udb_ = udb;
             db_ = db;
+            cache_ = cache;
         }
 
         [HttpGet, HttpPost]
@@ -149,6 +150,8 @@ namespace GmGard.Controllers.App
                 db_.Categories.Add(category);
             }
             await db_.SaveChangesAsync();
+            cache_.Remove("~Categories");
+            cache_.Remove("HomeHeader");
             return Json(new {id = category.CategoryID});
         }
 
@@ -170,6 +173,8 @@ namespace GmGard.Controllers.App
             }
             db_.Entry(cat).State = EntityState.Deleted;
             await db_.SaveChangesAsync();
+            cache_.Remove("~Categories");
+            cache_.Remove("HomeHeader");
             return Ok();
         }
     }

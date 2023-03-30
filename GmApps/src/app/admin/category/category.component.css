@@ -1,0 +1,8 @@
+.cat-table {
+    width: 100%;
+    text-align: center;
+}
+tbody .mat-cell {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}

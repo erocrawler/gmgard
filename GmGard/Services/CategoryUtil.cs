@@ -71,12 +71,7 @@ namespace GmGard.Services
 
         public List<Category> GetCategoryList()
         {
-            var cl = _cache.Get<List<Category>>("~Categories");
-            if (cl == null)
-            {
-                cl = _db.Categories.ToList();
-                _cache.Set("~Categories", cl);
-            }
+            var cl = _cache.GetOrCreate<List<Category>>("~Categories", (_) => _db.Categories.ToList());
             return cl;
         }
 

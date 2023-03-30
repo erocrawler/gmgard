@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AdminService, Category } from '../admin.service';
 
 interface CategoryView extends Category {
@@ -15,7 +16,9 @@ interface CategoryView extends Category {
 })
 export class CategoryComponent implements OnInit {
 
-  constructor(private service: AdminService) { }
+  constructor(
+    private service: AdminService,
+    private snackBar: MatSnackBar) { }
 
   categories: Map<number, Category>
   categoryViewModels: CategoryView[] = [];
@@ -120,12 +123,23 @@ export class CategoryComponent implements OnInit {
       linkOptional: cat.options.indexOf("linkOptional") >= 0,
       parentCategoryID: cat.parentCategoryID,
     }
-    this.service.updateCategory(newCat).subscribe(id => {
-      newCat.categoryID = id;
-      this.categories.set(id, newCat);
-      this.cancelEdit(cat);
-      cat.saving = false;
-      this.updateCategoryDropdown();
+    this.service.updateCategory(newCat).subscribe({
+      next: id => {
+        newCat.categoryID = id;
+        cat.categoryID = id;
+        this.categories.set(id, newCat);
+        this.cancelEdit(cat);
+        cat.saving = false;
+        this.updateCategoryDropdown();
+      },
+      error: (error: Error) => {
+        cat.saving = false;
+        let msg = "请求失败，请重试。";
+        if (error.message) {
+          msg = error.message;
+        }
+        this.snackBar.open(msg, null, { duration: 3000 })
+      }
     })
   }
 
@@ -138,10 +152,20 @@ export class CategoryComponent implements OnInit {
     }
     if (this.categories.has(cat.categoryID)) {
       cat.saving = true;
-      this.service.deleteCategory(cat.categoryID).subscribe(_ => {
-        this.categories.delete(cat.categoryID);
-        doRemove();
-        this.updateCategoryDropdown();
+      this.service.deleteCategory(cat.categoryID).subscribe({
+        next: _ => {
+          this.categories.delete(cat.categoryID);
+          doRemove();
+          this.updateCategoryDropdown();
+        },
+        error: (error: Error) => {
+          cat.saving = false;
+          let msg = "请求失败，请重试。";
+          if (error.message) {
+            msg = error.message;
+          }
+          this.snackBar.open(msg, null, { duration: 3000 })
+        }
       })
     } else {
       doRemove();

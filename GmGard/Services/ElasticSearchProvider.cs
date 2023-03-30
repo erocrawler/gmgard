@@ -205,19 +205,19 @@ namespace GmGard.Services
                 {
                     flatCategories = _categoryUtil.GetCategoryWithSubcategories(m.CurrentCategory.Value);
                 }
-                if (m.CategoryIds != null && m.CategoryIds.Count() > 0)
+                if (m.CategoryIds != null && m.CategoryIds.Any())
                 {
-                    var ids = m.CategoryIds.Aggregate(new List<int>(), (l, id) => { l.AddRange(_categoryUtil.GetCategoryWithSubcategories(id)); return l; });
-                    if (flatCategories != null)
+                    var userCategories = m.CategoryIds.Aggregate(new List<int>(), (l, id) => { l.AddRange(_categoryUtil.GetCategoryWithSubcategories(id)); return l; });
+                    if (m.CurrentCategory.HasValue)
                     {
-                        flatCategories = flatCategories.Intersect(ids);
+                        flatCategories = flatCategories.Intersect(userCategories);
                     }
                     else
                     {
-                        flatCategories = ids;
+                        flatCategories = userCategories;
                     }
                 }
-                if (flatCategories != null && flatCategories.Count() > 0)
+                if (flatCategories.Any())
                 {
                     queries.Add(q.Terms(ts => ts.Field("categoryId").Terms(flatCategories)));
                 }
