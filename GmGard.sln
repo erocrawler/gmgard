@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGard.Models", "GmGard.Mod
 EndProject
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "GmApps", "GmApps\", "{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}"
 	ProjectSection(WebsiteProperties) = preProject
-		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.8"
 		Debug.AspNetCompiler.VirtualPath = "/localhost_59853"
 		Debug.AspNetCompiler.PhysicalPath = "GmApps\"
 		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59853\"

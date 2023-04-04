@@ -48,6 +48,16 @@ namespace GmGard.Models
             Title = "GMgard",
             AppHost = "app.gmgard.moe",
         };
+        public static readonly SiteInfo LzoneMoeSite = new()
+        {
+            Name = "紳士の庭",
+            Host = "lzone.moe",
+            Desc = "lzone.moe♢L娘の庭♢ L娘的二次元资源分享交流平台",
+            Logo = "//static.lzone.moe/Images/lzone2.png",
+            StaticHost = "static.lzone.moe",
+            Title = "Lzone",
+            AppHost = "app.lzone.moe",
+        };
         public static readonly SiteInfo DevSite = new()
         {
             Name = "紳士の庭（DEV版）",
@@ -63,6 +73,7 @@ namespace GmGard.Models
             { DefaultSite.Host, DefaultSite },
             { HggardSite.Host, HggardSite },
             { GmGardMoeSite.Host, GmGardMoeSite },
+            { LzoneMoeSite.Host, LzoneMoeSite },
         };
         public static readonly string[] AppHostOrigins = new[] { 
             "http://app.gmgard.com", 
@@ -71,6 +82,8 @@ namespace GmGard.Models
             "https://app.hggard.com",
             "http://app.gmgard.moe",
             "https://app.gmgard.moe",
+            "http://app.lzone.moe",
+            "https://app.lzone.moe",
         };
         public static readonly string[] DevAppHostOrigins = new[] { "http://localhost:4200" };
         public static readonly string[] SmileyPaths = { 
@@ -78,6 +91,7 @@ namespace GmGard.Models
             "gmgard.com/smiley", 
             "hggard.com/smiley",
             "gmgard.moe/smiley",
+            "lzone.moe/smiley",
         };
     }
 

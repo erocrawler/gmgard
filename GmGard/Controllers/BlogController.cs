@@ -179,7 +179,7 @@ namespace GmGard.Controllers
                     ModelState.AddModelError("", "内容不能为空或纯图片");
                     throw new BlogException();
                 }
-                if (_catUtil.GetCategory(blog.CategoryID).LinkOptional)
+                if (!_catUtil.GetCategory(blog.CategoryID).LinkOptional)
                 {
                     if (blog.BlogLinks == null)
                     {
@@ -451,7 +451,7 @@ namespace GmGard.Controllers
         {
             ViewBag.CategoryList = _catUtil.GetCategoryDropdown(blog.CategoryID);
             ViewBag.id = id;
-            if (_catUtil.GetCategory(blog.CategoryID).LinkOptional)
+            if (!_catUtil.GetCategory(blog.CategoryID).LinkOptional)
             {
                 if (blog.BlogLinks == null)
                 {

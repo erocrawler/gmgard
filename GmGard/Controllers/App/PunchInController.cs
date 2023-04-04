@@ -67,7 +67,7 @@ namespace GmGard.Controllers.App
         [HttpGet]
         public async Task<ActionResult> Cost(DateTime date)
         {
-            var cost = await _udb.Users.Where(u => u.UserName == User.Identity.Name).Select(u => new PunchInCost { CurrentPoints = u.Points, Tickets = u.quest.PunchInTicket }).SingleOrDefaultAsync();
+            var cost = await _udb.Users.Where(u => u.UserName == User.Identity.Name).Select(u => new PunchInCost { CurrentPoints = u.Points, Tickets = u.quest == null ? 0 : u.quest.PunchInTicket }).SingleOrDefaultAsync();
             cost.Cost = MakeUpCost(date);
             return Json(cost);
         }

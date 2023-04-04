@@ -386,7 +386,10 @@ namespace GmGard
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             new WebHostBuilder()
-                .UseKestrel()
+                .UseKestrel((opt) =>
+                {
+                    opt.AllowSynchronousIO = true;
+                })
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>();
