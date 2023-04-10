@@ -133,20 +133,17 @@ namespace GmGard
             services.AddSingleton<IAuthorizationHandler, HarmonyHandler>();
             services.AddSingleton<IAuthorizationHandler, AdminAccessHandler>();
 
-            if (_env.IsProduction())
+            services.AddSingleton(provider =>
             {
-                services.AddSingleton(provider =>
-                {
-                    var scheduler = new SchedulerService(
-                        provider.GetRequiredService<IServiceScopeFactory>(),
-                        provider.GetRequiredService<IWebHostEnvironment>(),
-                        provider.GetRequiredService<IMemoryCache>(),
-                        provider.GetRequiredService<IOptions<AppSettingsModel>>(),
-                        provider.GetRequiredService<ILoggerFactory>());
-                    JobManager.Initialize(scheduler);
-                    return scheduler;
-                });
-            }
+                var scheduler = new SchedulerService(
+                    provider.GetRequiredService<IServiceScopeFactory>(),
+                    provider.GetRequiredService<IWebHostEnvironment>(),
+                    provider.GetRequiredService<IMemoryCache>(),
+                    provider.GetRequiredService<IOptions<AppSettingsModel>>(),
+                    provider.GetRequiredService<ILoggerFactory>());
+                JobManager.Initialize(scheduler);
+                return scheduler;
+            });
             services.AddScoped<JobTaskRunner>();
             services.AddSingleton<BackgroundTaskQueue>();
             services.AddHostedService<BackgroundJobService>();
@@ -233,10 +230,7 @@ namespace GmGard
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, QuestService questService, IServiceProvider services)
         {
             services.GetService<ElasticSearchUpdateService>();
-            if (env.IsProduction())
-            {
-                services.GetRequiredService<SchedulerService>();
-            }
+            services.GetRequiredService<SchedulerService>();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

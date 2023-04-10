@@ -32,7 +32,7 @@ namespace GmGard.Services
 
         private void OnJobException(JobExceptionInfo obj)
         {
-            _logger.LogError(new EventId(2), obj.Exception, "Job {0}: {1}", obj.Name, obj.Exception.Message);
+            _logger.LogError(obj.Exception, "Error running job {Name}: {Message}", obj.Name, obj.Exception.Message);
         }
 
         private void OnAppSettingsChanged(object sender, SettingsEventArgs e)
@@ -52,7 +52,6 @@ namespace GmGard.Services
         private AppSettingsModel _appSettings;
 
         private int UpdateInterval => _appSettings.UpdateInterval;
-        private List<int> NoRankCategories => _appSettings.NoRankCategories;
         private List<int> DailyReward => _appSettings.DailyReward;
         private List<int> WeeklyReward => _appSettings.WeeklyReward;
         private List<int> MonthlyReward => _appSettings.MonthlyReward;
@@ -78,6 +77,10 @@ namespace GmGard.Services
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<BlogContext>();
+                    if (UpdateInterval > 1)
+                    {
+                        db.Database.CommandTimeout = (UpdateInterval - 1) * 60;
+                    }
                     var sincemonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
                     if (DateTime.Today.Day != 1) // Show last month on day 1
                     {
