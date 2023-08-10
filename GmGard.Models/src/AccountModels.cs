@@ -47,6 +47,7 @@ namespace GmGard.Models
 
         public DbSet<RaffleConfig> RaffleConfigs { get; set; }
         public DbSet<UserVoucher> UserVouchers { get; set; }
+        public DbSet<Game> Games { get; set; }
         public DbSet<GameScenario> GameScenarios { get; set; }
         public DbSet<ScenarioChoice> ScenarioChoices { get; set; }
         public DbSet<UserGameData> UserGameDatas { get; set; }

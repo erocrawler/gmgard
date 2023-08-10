@@ -11,7 +11,14 @@ namespace GmGard.Models.App
         public int Progress { get; set; }
         public int RetryCount { get; set; }
         public int NewGameScenarioId { get; set; }
+        public IEnumerable<string> Inventory { get; set; }
         public GameScenario CurrentScenario { get; set; }
+        public IEnumerable<GameChapter> Chapters { get; set; }
+    }
+    public class GameChapter
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
     public class GameScenario
     {
@@ -20,14 +27,34 @@ namespace GmGard.Models.App
         public IEnumerable<Dialog> Dialogs { get; set; }
         public IEnumerable<Choice> Next { get; set; }
 
-        public static GameScenario Create(GmGard.Models.GameScenario s)
+        public object Data { get; set; }
+
+        public static GameScenario Create(GmGard.Models.GameScenario s, IEnumerable<string> Inventory)
         {
             return new GameScenario
             {
                 Id = s.ScenarioID,
                 Narrators = JsonConvert.DeserializeObject<IEnumerable<Narrator>>(s.Narrators),
                 Dialogs = JsonConvert.DeserializeObject<IEnumerable<Dialog>>(s.Dialogs),
-                Next = s.Choices.Select(c => new Choice { Text = c.Title, Result = c.NextScenarioID })
+                Data = JsonConvert.DeserializeObject(s.Data),
+                Next = s.Choices.Select(c =>
+                {
+                    bool locked = false;
+                    if (!string.IsNullOrEmpty(c.ChoiceData))
+                    {
+                        var data = JsonConvert.DeserializeObject<ChoiceData>(c.ChoiceData);
+                        if (data.RequireItems != null)
+                        {
+                            locked = data.RequireItems.Any(i => !Inventory.Contains(i));
+                        }
+                    }
+                    return new Choice
+                    {
+                        Text = c.Title,
+                        Result = c.NextScenarioID,
+                        Locked = locked,
+                    };
+                })
             };
         }
     }
@@ -35,6 +62,24 @@ namespace GmGard.Models.App
     {
         public string Text { get; set; }
         public int Result { get; set; }
+        public bool Locked { get; set; }
+    }
+    public class ChoiceData
+    {
+        public IEnumerable<string> GetItems { get; set; }
+        public IEnumerable<string> RequireItems { get; set; }
+        public IEnumerable<string> GetTitle { get; set; }
+        public QuestionResult QuestionResult { get; set; }
+    }
+    public class QuestionResult
+    {
+        public class ScoreResult
+        {
+            public IEnumerable<int> Score { get; set; }
+            public int Next { get; set; }
+        }
+        public IEnumerable<int> Answers { get; set; }
+        public IEnumerable<ScoreResult> Results { get; set; }
     }
     public class Narrator
     {

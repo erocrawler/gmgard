@@ -8,7 +8,8 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule } from '@angular/forms';
 import { HintDialogComponent } from './treasure-hunt/hint-dialog.component';
-import { IndexComponent } from './eternal-circle/index.component';
+import { IndexComponent as EcIndexComponent } from './eternal-circle/index.component';
+import { IndexComponent as TwIndexComponent } from './tarnished-world/index.component';
 import { AlertModule } from 'app/shared/alert-dialog';
 import { AdvGameModule } from '../shared/adv-game/adv-game.module';
 
@@ -24,7 +25,17 @@ const routes: Routes = [
       {
         path: "",
         pathMatch: "full",
-        component: IndexComponent,
+        component: EcIndexComponent,
+      },
+    ]
+  },
+  {
+    path: "tarnished-world",
+    children: [
+      {
+        path: "",
+        pathMatch: "full",
+        component: TwIndexComponent,
       },
     ]
   },
@@ -41,6 +52,6 @@ const routes: Routes = [
         AdvGameModule,
         RouterModule.forChild(routes),
     ],
-    declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, IndexComponent]
+  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, EcIndexComponent, TwIndexComponent]
 })
 export class GameModule { }

@@ -218,6 +218,7 @@ export class AdvGameComponent implements OnInit, OnDestroy, OnChanges {
 
   nextScene() {
     let chocies = this.scenarios.getChoice();
+    console.log(chocies);
     if (chocies.length == 0) {
       this.isEnded = true;
       this.ended.next();

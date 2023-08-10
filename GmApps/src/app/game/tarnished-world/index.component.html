@@ -1,0 +1,15 @@
+<mat-card *ngIf="!playing" class="index-card">
+    <mat-card-header>
+        <mat-card-title>褪色世界</mat-card-title>
+    </mat-card-header>
+    <img mat-card-image src="/assets/eternal-circle/暂用封面.jpg" alt="褪色世界">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <mat-card-actions *ngIf="!loading && isNewGame">
+        <button mat-button color="primary" (click)="start()">开始游戏</button>
+    </mat-card-actions>
+    <mat-card-actions *ngIf="!loading && !isNewGame">
+        <button mat-button color="primary" (click)="start()">继续游戏</button>
+        <button mat-button (click)="confirmRetry()">重新开始</button>
+    </mat-card-actions>
+</mat-card>
+<app-adv-game *ngIf="playing" [scenarios]="scenarios" (exit)="handleExit()"></app-adv-game>

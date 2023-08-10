@@ -28,6 +28,10 @@
     word-wrap: break-word;
 }
 
+.text-body.narrator {
+    max-width: 550px;
+}
+
 .choice-btn > span {
     white-space: normal;
 }

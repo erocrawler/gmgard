@@ -43,6 +43,4 @@ testem.log
 .DS_Store
 Thumbs.db
 
-src/assets/eternal-circle
-src/assets/wheel-prizes
-src/assets/cards
+src/assets/

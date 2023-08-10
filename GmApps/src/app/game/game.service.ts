@@ -5,7 +5,8 @@ import { TreasureHuntStatus, TreasureHuntAttemptResult } from 'app/models/Treasu
 import { GameScenario, GameStatus } from '../models/GameScenario';
 
 export enum GameID {
-  EternalCircle = 1
+  EternalCircle = 1,
+  TarnishedWorld = 2
 }
 
 @Injectable({
@@ -32,11 +33,20 @@ export class GameService {
     return this.http.get<GameStatus>("/api/Game/Start", { withCredentials: true, params: { id: id, restart: true } });
   }
 
+  gameChapter(id: GameID, chapter: number): Observable<GameStatus> {
+    return this.http.get<GameStatus>("/api/Game/Start", { withCredentials: true, params: { id: id, jump: chapter } });
+  }
+
   nextScene(id: GameID, p: number): Observable<GameScenario> {
     return this.http.post<GameScenario>("/api/Game/Next", null, { params: { progress: p, id: id },  withCredentials: true });
   }
 
   prevScene(id: GameID): Observable<GameScenario> {
     return this.http.post<GameScenario>("/api/Game/Prev", null, { params: { id: id }, withCredentials: true });
+  }
+
+
+  questionare(id: GameID, answers: number[]): Observable<GameScenario> {
+    return this.http.post<GameScenario>("/api/Game/Questionare", answers, { params: { id: id }, withCredentials: true });
   }
 }

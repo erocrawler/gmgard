@@ -13,6 +13,8 @@ namespace GmGard.Models
         [Key]
         public int GameID { get; set; }
         public string GameName { get; set; }
+        public string GameChapters { get; set; }
+        public string ItemList { get; set; }
     }
     public class GameScenario
     {
@@ -36,6 +38,7 @@ namespace GmGard.Models
         [Key, ForeignKey("NextScenario"), Column(Order = 1)]
         public int NextScenarioID { get; set; }
         public string Title { get; set; }
+        public string ChoiceData { get; set; }
 
         [InverseProperty("Choices")]
         public virtual GameScenario Scenario { get; set; }
@@ -57,6 +60,7 @@ namespace GmGard.Models
         public virtual GameScenario CurrentScenario { get; set; }
         public int RetryCount { get; set; }
         public ICollection<UserVisitedScenario> VisitedScenarios { get; set; }
+        public string Inventory { get; set; }
 
     }
 

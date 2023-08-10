@@ -3,17 +3,19 @@
         <img *ngIf="bgimg1" [src]="bgimg1" alt="" [ngClass]="{'show': show1}">
         <img *ngIf="bgimg2" [src]="bgimg2" alt="" [ngClass]="{'show': !show1}">
     </div>
-    <mat-card-header *ngIf="narrator">
-        <img fxFlex="100px" class="ev-avatar" mat-card-avatar [src]="narrator.avatar" />
-        <mat-card-title>{{narrator.display || narrator.name}}</mat-card-title>
-    </mat-card-header>
-    <p class="text-body">
-        <span #textArea [innerHtml]="text"></span>
-        <span *ngIf="waitClick"><img style="height:15px" src="/assets/eternal-circle/nextpage.gif" alt="nextpage" /></span>
-    </p>
+    <div fxLayout="row">
+        <mat-card-header fxFlex="212px" *ngIf="narrator">
+            <img fxFlex="100px" class="ev-avatar" mat-card-avatar [src]="narrator.avatar" />
+            <mat-card-title>{{narrator.display || narrator.name}}</mat-card-title>
+        </mat-card-header>
+        <p class="text-body" [class.narrator]="narrator">
+            <span #textArea [innerHtml]="text"></span>
+            <span *ngIf="waitClick"><img style="height:15px" src="/assets/eternal-circle/nextpage.gif" alt="nextpage" /></span>
+        </p>
+    </div>
     <mat-progress-bar *ngIf="loading" [mode]="loadingMode" [value]="loadingProgress"></mat-progress-bar>
     <mat-card-footer  fxLayout="column" *ngIf="choices">
-        <button class="choice-btn" mat-button color="primary" fxFlex *ngFor="let ch of choices" (click)="handleChoice($event, ch.result)">{{ch.text}}</button>
+        <button class="choice-btn" mat-button color="primary" fxFlex *ngFor="let ch of choices" [disabled]="ch.locked" (click)="handleChoice($event, ch.result)">{{ch.text}}</button>
     </mat-card-footer>
     <mat-card-actions *ngIf="isEnded">
         <button mat-raised-button color="accent" (click)="handleExit()">返回标题</button>

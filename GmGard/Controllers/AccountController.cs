@@ -295,7 +295,7 @@ namespace GmGard.Controllers
                 if (string.IsNullOrWhiteSpace(model.NickName))
                 {
                     model.NickName = model.UserName;
-                    if (CheckNickName(model.NickName) != null)
+                    if (CheckNickName(model.NickName).Value != null)
                     {
                         ModelState.SetModelValue("NickName", new ValueProviderResult(model.UserName));
                         ModelState.AddModelError("NickName", "昵称已被使用，请更改。");

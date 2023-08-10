@@ -1,10 +1,13 @@
 ﻿using GmGard.Models;
 using GmGard.Models.App;
 using GmGard.Services;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using SixLabors.ImageSharp.Formats;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -33,7 +36,7 @@ namespace GmGard.Controllers.App
         }
 
         [HttpGet]
-        public async Task<ActionResult> Start(int id, bool restart = false)
+        public async Task<ActionResult> Start(int id, bool restart = false, int jump = 0)
         {
             var gameStart = await _udb.GameScenarios
                         .Where(g => g.GameID == id)
@@ -61,7 +64,8 @@ namespace GmGard.Controllers.App
                             GameID = id,
                             VisitDate = DateTimeOffset.Now,
                         }
-                    }
+                    },
+                    Inventory = "",
                 };
                 _udb.UserGameDatas.Add(gamedata);
                 await _udb.SaveChangesAsync();
@@ -72,16 +76,31 @@ namespace GmGard.Controllers.App
                 gamedata.RetryCount++;
                 await _udb.SaveChangesAsync();
             }
+            else if (jump > 0)
+            {
+                var game = await _udb.Games.FindAsync(id);
+                var chapters = JsonConvert.DeserializeObject<IEnumerable<GameChapter>>(game.GameChapters);
+                var chapter = chapters.FirstOrDefault(c => c.Id == jump);
+                if (chapter == null || !gamedata.VisitedScenarios.Any(v => v.GameID == id && v.ScenarioID == jump))
+                {
+                    return NotFound();
+                }
+                gamedata.CurrentScenarioID = jump;
+                gamedata.RetryCount++;
+                await _udb.SaveChangesAsync();
+            }
             else
             {
                 currentScene = gamedata.CurrentScenario;
             }
+            var inv = JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory);
             return Json(new GameStatus
             {
                 Progress = gamedata.CurrentScenarioID,
                 NewGameScenarioId = gameStart.ScenarioID,
                 RetryCount = gamedata.RetryCount,
-                CurrentScenario = Models.App.GameScenario.Create(currentScene),
+                CurrentScenario = Models.App.GameScenario.Create(currentScene, inv),
+                Inventory = inv,
             });
         }
         [HttpPost]
@@ -89,6 +108,7 @@ namespace GmGard.Controllers.App
         {
             var gamedata = await _udb.UserGameDatas
                 .Include(u => u.CurrentScenario.Choices)
+                .Include(u => u.VisitedScenarios)
                 .FirstOrDefaultAsync(u => u.User.UserName == User.Identity.Name && u.GameID == id);
             if (gamedata == null || gamedata.CurrentScenario.Choices.Count > 0)
             {
@@ -116,15 +136,62 @@ namespace GmGard.Controllers.App
                 VisitDate = DateTimeOffset.Now,
             });
             await _udb.SaveChangesAsync();
-            return Json(Models.App.GameScenario.Create(prev));
+            return Json(Models.App.GameScenario.Create(prev, JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory)));
         }
 
+        [HttpPost] 
+        public async Task<ActionResult> Questionare(int id, [FromBody] IEnumerable<int> answers)
+        {
+            var gamedata = await _udb.UserGameDatas
+                .Include(u => u.CurrentScenario.Choices)
+                .Include(u => u.VisitedScenarios)
+                .FirstOrDefaultAsync(u => u.User.UserName == User.Identity.Name && u.GameID == id);
+            if (gamedata == null)
+            {
+                return NotFound();
+            }
+            if (gamedata.CurrentScenario.Choices.Count != 1)
+            {
+                return NotFound();
+            }
+            var choice = gamedata.CurrentScenario.Choices.First();
+            if (choice.ChoiceData == null)
+            {
+                return NotFound();
+            }
+            var data = JsonConvert.DeserializeObject<ChoiceData>(choice.ChoiceData);
+            if (data.QuestionResult == null)
+            {
+                return NotFound();
+            }
+            int correctCount = 0;
+            for (int i = 0; i < data.QuestionResult.Answers.Count(); i++)
+            {
+                if (data.QuestionResult.Answers.ElementAt(i) == answers.ElementAtOrDefault(i))
+                {
+                    correctCount++;
+                }
+            }
+            var nextId = data.QuestionResult.Results.First(r => r.Score.Contains(correctCount)).Next;
+            var next = await _udb.GameScenarios.FindAsync(nextId);
+            gamedata.CurrentScenario = next;
+            gamedata.VisitedScenarios.Add(new UserVisitedScenario
+            {
+                Scenario = gamedata.CurrentScenario,
+                GameID = id,
+                Attempt = gamedata.RetryCount,
+                VisitDate = DateTimeOffset.Now,
+            });
+            await _udb.SaveChangesAsync();
+            return Json(Models.App.GameScenario.Create(gamedata.CurrentScenario, JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory)));
+        }
 
         [HttpPost]
         public async Task<ActionResult> Next(int progress, int id)
         {
             var gamedata = await _udb.UserGameDatas
                 .Include(u => u.CurrentScenario.Choices.Select(c => c.Scenario))
+                .Include(u => u.VisitedScenarios)
                 .FirstOrDefaultAsync(u => u.User.UserName == User.Identity.Name && u.GameID == id);
             if (gamedata == null)
             {
@@ -135,6 +202,39 @@ namespace GmGard.Controllers.App
             {
                 return NotFound();
             }
+            var inv = JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory);
+            var choiceData = choice.ChoiceData == null ? null : JsonConvert.DeserializeObject<ChoiceData>(choice.ChoiceData);
+            if (choiceData != null)
+            {
+                if (choiceData.RequireItems != null && choiceData.RequireItems.Any(i => !inv.Contains(i)))
+                { 
+                    return BadRequest();
+                }
+                if (choiceData.GetItems != null)
+                {
+                    if (inv == null)
+                    {
+                        inv = choiceData.GetItems;
+                    }
+                    else
+                    {
+                        inv = inv.Concat(choiceData.GetItems).Distinct();
+                    }
+                    gamedata.Inventory = JsonConvert.SerializeObject(inv);
+                }
+                if (choiceData.GetTitle != null && choiceData.GetTitle.Count() > 0)
+                {
+                    var userTitle = await _udb.UserQuests.FindAsync(gamedata.UserID);
+                    foreach (var title in choiceData.GetTitle)
+                    {
+                        if (Enum.TryParse<UserQuest.UserProfession>(title, out var result))
+                        {
+                            userTitle.AddTitle(result);
+                        }
+                    }
+                }
+            }
+
             gamedata.CurrentScenario = choice.NextScenario;
             if (gamedata.VisitedScenarios == null)
             {
@@ -148,7 +248,7 @@ namespace GmGard.Controllers.App
                 VisitDate = DateTimeOffset.Now,
             });
             await _udb.SaveChangesAsync();
-            return Json(Models.App.GameScenario.Create(gamedata.CurrentScenario));
+            return Json(Models.App.GameScenario.Create(gamedata.CurrentScenario, inv));
         }
     }
 }
