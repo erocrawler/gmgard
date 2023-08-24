@@ -11,7 +11,7 @@ namespace GmGard.Models.App
         public int Progress { get; set; }
         public int RetryCount { get; set; }
         public int NewGameScenarioId { get; set; }
-        public IEnumerable<string> Inventory { get; set; }
+        public IEnumerable<GameInventory> Inventory { get; set; }
         public GameScenario CurrentScenario { get; set; }
         public IEnumerable<GameChapter> Chapters { get; set; }
     }
@@ -19,6 +19,11 @@ namespace GmGard.Models.App
     {
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+    public class GameInventory
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
     }
     public class GameScenario
     {
@@ -68,7 +73,7 @@ namespace GmGard.Models.App
     {
         public IEnumerable<string> GetItems { get; set; }
         public IEnumerable<string> RequireItems { get; set; }
-        public IEnumerable<string> GetTitle { get; set; }
+        public IEnumerable<string> GetTitles { get; set; }
         public QuestionResult QuestionResult { get; set; }
     }
     public class QuestionResult

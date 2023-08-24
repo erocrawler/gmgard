@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { TarnishedWorldGameScenarioService } from './tarnished-world-game-scenario.service';
 import { Dialog, GameScenario, GameStatus, Narrator } from 'app/models/GameScenario';
 import { GameScenarios } from 'app/shared/adv-game/scenario';
+import { ItemListComponent } from './item-list.component';
 
 @Component({
   templateUrl: './index.component.html',
@@ -26,15 +27,28 @@ export class IndexComponent implements OnInit {
   ngOnInit() {
     this.loading = true;
     this.gameSceneService.status().subscribe(r => {
-      this.status = r
-      this.isNewGame = this.status.newGameScenarioId === this.status.currentScenario.id;
-      this.loading = false;
+      this.updateStatus(r);
     })
+  }
+
+  private updateStatus(status: GameStatus) {
+    this.status = status;
+    this.isNewGame = this.status.newGameScenarioId === this.status.currentScenario.id;
+    this.loading = false;
   }
 
   start() {
     this.playing = true;
     this.gameSceneService.start(this.status.currentScenario);
+  }
+
+  jump(id: number) {
+    this.loading = true;
+    this.gameSceneService.jump(id).subscribe(r => {
+      this.updateStatus(r);
+      this.playing = true;
+      this.gameSceneService.start(this.status.currentScenario);
+    });
   }
 
   confirmRetry() {
@@ -62,7 +76,7 @@ export class IndexComponent implements OnInit {
     this.ngOnInit();
   }
 
-  stringify(o: Object): string {
-    return JSON.stringify(o);
+  showInventory() {
+    this.dialog.open(ItemListComponent, { data: this.status.inventory });
   }
 }

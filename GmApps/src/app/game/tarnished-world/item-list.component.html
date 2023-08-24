@@ -1,0 +1,14 @@
+<div mat-dialog-title class="dialog-title">
+    <h2>道具一览</h2>
+    <button mat-icon-button mat-dialog-close>
+        <mat-icon>close</mat-icon>
+    </button>
+</div>
+<mat-grid-list cols="4" rowHeight="1:2">
+    <mat-grid-tile *ngFor="let item of data">
+        <div class="item-tile">
+            <img src="/assets/tarnished-world/items/{{item.name}}.png" [title]="item.name"/>
+            <p><strong>{{item.name}}</strong>：{{item.description}}</p>
+        </div>
+    </mat-grid-tile>
+</mat-grid-list>

@@ -35,10 +35,17 @@ namespace GmGard.Controllers.App
             _logger = loggerFactory.CreateLogger(nameof(GameController));
         }
 
+        private void DeserializeGameData(Game game, out IEnumerable<GameChapter> chapters, out IEnumerable<GameInventory> inventoryData)
+        {
+            chapters = JsonConvert.DeserializeObject<IEnumerable<GameChapter>>(game.GameChapters ?? "");
+            inventoryData = JsonConvert.DeserializeObject<IEnumerable<GameInventory>>(game.ItemList ?? "");
+        }
+
         [HttpGet]
         public async Task<ActionResult> Start(int id, bool restart = false, int jump = 0)
         {
             var gameStart = await _udb.GameScenarios
+                        .Include(s => s.Game)
                         .Where(g => g.GameID == id)
                         .OrderBy(g => g.ScenarioID)
                         .FirstOrDefaultAsync();
@@ -46,31 +53,38 @@ namespace GmGard.Controllers.App
             {
                 return NotFound();
             }
-            var user = await _udb.Users.SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            var game = gameStart.Game;
+            DeserializeGameData(game, out IEnumerable<GameChapter> chapters, out IEnumerable<GameInventory> inventoryData);
+            var userId = await _udb.Users.Where(u => u.UserName == User.Identity.Name).Select(u => u.Id).SingleOrDefaultAsync();
             var currentScene = gameStart;
-            var gamedata = await _udb.UserGameDatas.FindAsync(user.Id, id);
+            var gamedata = await _udb.UserGameDatas
+                .Include(v => v.VisitedScenarios)
+                .SingleOrDefaultAsync(d => d.GameID == id && d.UserID == userId);
             if (gamedata == null)
             {
                 gamedata = new UserGameData
                 {
-                    UserID = user.Id,
+                    UserID = userId,
                     GameID = id,
                     CurrentScenarioID = gameStart.ScenarioID,
                     VisitedScenarios = new List<UserVisitedScenario>()
                     {
                         new UserVisitedScenario
                         {
+                            UserID = userId,
                             Scenario = gameStart,
                             GameID = id,
                             VisitDate = DateTimeOffset.Now,
                         }
                     },
-                    Inventory = "",
+                    Inventory = "[]",
                 };
                 _udb.UserGameDatas.Add(gamedata);
                 await _udb.SaveChangesAsync();
-            }
-            else if (restart)
+            }  
+            var visitedChapters = chapters.Where(c => gamedata.VisitedScenarios.Any(v => v.ScenarioID == c.Id));
+
+            if (restart)
             {
                 gamedata.CurrentScenarioID = gameStart.ScenarioID;
                 gamedata.RetryCount++;
@@ -78,29 +92,29 @@ namespace GmGard.Controllers.App
             }
             else if (jump > 0)
             {
-                var game = await _udb.Games.FindAsync(id);
-                var chapters = JsonConvert.DeserializeObject<IEnumerable<GameChapter>>(game.GameChapters);
-                var chapter = chapters.FirstOrDefault(c => c.Id == jump);
-                if (chapter == null || !gamedata.VisitedScenarios.Any(v => v.GameID == id && v.ScenarioID == jump))
+                var chapter = visitedChapters.FirstOrDefault(c => c.Id == jump);
+                if (chapter == null)
                 {
                     return NotFound();
                 }
                 gamedata.CurrentScenarioID = jump;
                 gamedata.RetryCount++;
                 await _udb.SaveChangesAsync();
+                currentScene = await _udb.GameScenarios.FindAsync(jump);
             }
             else
             {
                 currentScene = gamedata.CurrentScenario;
             }
-            var inv = JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory);
+            var userInventory = JsonConvert.DeserializeObject<IEnumerable<string>>(gamedata.Inventory) ?? Enumerable.Empty<string>();
             return Json(new GameStatus
             {
                 Progress = gamedata.CurrentScenarioID,
                 NewGameScenarioId = gameStart.ScenarioID,
                 RetryCount = gamedata.RetryCount,
-                CurrentScenario = Models.App.GameScenario.Create(currentScene, inv),
-                Inventory = inv,
+                CurrentScenario = Models.App.GameScenario.Create(currentScene, userInventory),
+                Inventory = inventoryData.Where(i => userInventory.Contains(i.Name)),
+                Chapters = visitedChapters,
             });
         }
         [HttpPost]
@@ -222,10 +236,18 @@ namespace GmGard.Controllers.App
                     }
                     gamedata.Inventory = JsonConvert.SerializeObject(inv);
                 }
-                if (choiceData.GetTitle != null && choiceData.GetTitle.Count() > 0)
+                if (choiceData.GetTitles != null && choiceData.GetTitles.Count() > 0)
                 {
                     var userTitle = await _udb.UserQuests.FindAsync(gamedata.UserID);
-                    foreach (var title in choiceData.GetTitle)
+                    if (userTitle == null)
+                    {
+                        userTitle = new UserQuest
+                        {
+                            UserId = gamedata.UserID,
+                        };
+                        _udb.UserQuests.Add(userTitle);
+                    }
+                    foreach (var title in choiceData.GetTitles)
                     {
                         if (Enum.TryParse<UserQuest.UserProfession>(title, out var result))
                         {

@@ -12,6 +12,9 @@ import { IndexComponent as EcIndexComponent } from './eternal-circle/index.compo
 import { IndexComponent as TwIndexComponent } from './tarnished-world/index.component';
 import { AlertModule } from 'app/shared/alert-dialog';
 import { AdvGameModule } from '../shared/adv-game/adv-game.module';
+import { MatMenuModule } from '@angular/material/menu';
+import { ItemListComponent } from './tarnished-world/item-list.component';
+import { MatGridListModule } from '@angular/material/grid-list';
 
 const routes: Routes = [
   {
@@ -45,6 +48,8 @@ const routes: Routes = [
     imports: [
         AppMaterialModule,
         MatDialogModule,
+        MatMenuModule,
+        MatGridListModule,
         CommonModule,
         FlexLayoutModule,
         FormsModule,
@@ -52,6 +57,6 @@ const routes: Routes = [
         AdvGameModule,
         RouterModule.forChild(routes),
     ],
-  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, EcIndexComponent, TwIndexComponent]
+  declarations: [TreasureHuntComponent, PuzzleDetailComponent, HintDialogComponent, EcIndexComponent, TwIndexComponent, ItemListComponent]
 })
 export class GameModule { }

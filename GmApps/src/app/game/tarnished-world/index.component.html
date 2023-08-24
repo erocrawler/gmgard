@@ -2,14 +2,27 @@
     <mat-card-header>
         <mat-card-title>褪色世界</mat-card-title>
     </mat-card-header>
-    <img mat-card-image src="/assets/eternal-circle/暂用封面.jpg" alt="褪色世界">
+    <img mat-card-image src="/assets/tarnished-world/崩溃的世界.png" alt="褪色世界">
     <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
-    <mat-card-actions *ngIf="!loading && isNewGame">
-        <button mat-button color="primary" (click)="start()">开始游戏</button>
-    </mat-card-actions>
-    <mat-card-actions *ngIf="!loading && !isNewGame">
-        <button mat-button color="primary" (click)="start()">继续游戏</button>
-        <button mat-button (click)="confirmRetry()">重新开始</button>
+    <mat-card-actions *ngIf="!loading">
+        <ng-container *ngIf="isNewGame; else continueTmpl">
+            <button mat-button color="primary" (click)="start()">开始游戏</button>
+        </ng-container>
+        <ng-template #continueTmpl>
+            <button mat-button color="primary" (click)="start()">继续游戏</button>
+            <button mat-button (click)="confirmRetry()">重新开始</button>
+        </ng-template>
+        <ng-container *ngIf="status.chapters && status.chapters.length > 0">
+            <button mat-button [matMenuTriggerFor]="menu">章节选择</button>
+            <mat-menu #menu="matMenu">
+                <button mat-menu-item *ngFor="let chapter of status.chapters" (click)="jump(chapter.id)">
+                    {{chapter.name}}
+                </button>
+            </mat-menu>
+        </ng-container>
+        <ng-container *ngIf="status.inventory && status.inventory.length > 0">
+            <button mat-button (click)="showInventory()">道具一览</button>
+        </ng-container>
     </mat-card-actions>
 </mat-card>
 <app-adv-game *ngIf="playing" [scenarios]="scenarios" (exit)="handleExit()"></app-adv-game>

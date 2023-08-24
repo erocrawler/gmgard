@@ -35,6 +35,11 @@
               "src/mat-icon.scss",
               "node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "./node_modules"
+              ]
+            },
             "scripts": []
           },
           "configurations": {

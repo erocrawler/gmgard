@@ -5,6 +5,7 @@
 .bgimg {
     position: relative;
     overflow: hidden;
+    margin-bottom: -100px;
 }
 
     .bgimg > img {
@@ -23,6 +24,20 @@
     width: 100px;
 }
 
+.dialog-container {
+    z-index: 1;
+    width: 800px;
+    min-height: 100px;
+}
+
+.dialog-content {
+    padding: 16px;
+    min-height: 100px;
+    border-radius: 4px;
+    border: #3f51b5 solid 2px;
+    background: linear-gradient(0deg,rgba(255,255,255,1) 0%,rgba(255,255,255,1) 50%,rgba(255,255,255,.5) 100%);
+}
+
 .text-body {
     max-width: 760px;
     word-wrap: break-word;
@@ -30,6 +45,16 @@
 
 .text-body.narrator {
     max-width: 550px;
+}
+
+.mat-card-title.narrator-name {
+    background-image: url(/assets/文字底纹.png);
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: 90%;
+    min-width: 100px;
+    text-align: center;
+    padding-bottom: 6px;
 }
 
 .choice-btn > span {

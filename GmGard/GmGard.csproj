@@ -104,7 +104,7 @@
   <ItemGroup>
     <Compile Update="Models\App\GameScenario.cs">
       <Generator>DtsGenerator</Generator>
-      <LastGenOutput>GameScenario.d.ts</LastGenOutput>
+      <LastGenOutput>GameScenario.cs.d.ts</LastGenOutput>
     </Compile>
     <Compile Update="Models\App\MessageDisplay.cs">
       <Generator>DtsGenerator</Generator>
@@ -182,7 +182,7 @@
     <None Update="Models\App\GachaStats.cs.d.ts">
       <DependentUpon>GachaStats.cs</DependentUpon>
     </None>
-    <None Update="Models\App\GameScenario.d.ts">
+    <None Update="Models\App\GameScenario.cs.d.ts">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>GameScenario.cs</DependentUpon>

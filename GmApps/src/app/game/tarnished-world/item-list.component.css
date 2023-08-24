@@ -1,0 +1,19 @@
+.dialog-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+:host {
+    width: 800px;
+    display: block;
+}
+.item-tile {
+    height: 100%;
+}
+    .item-tile p {
+        margin: 1em;
+    }
+
+    .item-tile img {
+        border-radius: 8px;
+    }

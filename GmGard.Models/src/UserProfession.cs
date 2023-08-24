@@ -84,7 +84,9 @@ namespace GmGard.Models
             迷影重重,
             南瓜头,
             莫比乌斯之环,
-            闪光的哈萨维
+            闪光的哈萨维,
+            涩の魂,
+            对世界的珍视之心,
         }
 
         private static readonly Dictionary<UserProfession, string> professionName = new Dictionary<UserProfession, string>
@@ -165,6 +167,8 @@ namespace GmGard.Models
             { UserProfession.南瓜头, "🎃" },
             { UserProfession.莫比乌斯之环, "莫比乌斯之环" },
             { UserProfession.闪光的哈萨维, "闪光的哈萨维" },
+            { UserProfession.涩の魂, "涩の魂" },
+            { UserProfession.对世界的珍视之心, "对世界的珍视之心" }
         };
 
         public static Dictionary<UserProfession, string> AllTitleBackground { get; } = new Dictionary<UserProfession, string>

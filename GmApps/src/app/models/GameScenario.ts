@@ -4,12 +4,16 @@ export interface GameStatus {
   retryCount: number;
   newGameScenarioId: number;
   currentScenario: GameScenario;
-  inventory: string[];
+  inventory: Inventory[];
   chapters: Chapter[];
 }
 export interface Chapter {
   id: number;
   name: string;
+}
+export interface Inventory {
+  name: string;
+  description: string;
 }
 export interface GameScenario {
   id: number;
