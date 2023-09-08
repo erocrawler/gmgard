@@ -300,10 +300,9 @@ namespace GmGard.Models
                 return false;
             }
             User.Profession = profession;
-            User.AddTitle(profession);
-            int count = 0;
+            User.AddTitle((int)profession);
             string key = profession.ToString().ToLower();
-            _professionStats.TryGetValue(key, out count);
+            _professionStats.TryGetValue(key, out int count);
             _professionStats[key] = count + 1;
             return true;
         }
@@ -575,7 +574,7 @@ namespace GmGard.Models
             }
             if (User.Profession == UserQuest.UserProfession.Loli && Descriptor.GetAct6Choice() == "true")
             {
-                User.AddTitle(UserQuest.UserProfession.ShiroiStocking);
+                User.AddTitle(6);
             }
             return true;
         }

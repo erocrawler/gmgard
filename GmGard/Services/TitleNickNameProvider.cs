@@ -12,11 +12,13 @@ namespace GmGard.Services
     {
         private UsersContext _udb;
         private IMemoryCache _cache;
+        private TitleService _titleService;
 
-        public TitleNickNameProvider(IMemoryCache cache, UsersContext udb)
+        public TitleNickNameProvider(IMemoryCache cache, UsersContext udb, TitleService titleService)
         {
             _udb = udb;
             _cache = cache;
+            _titleService = titleService;
         }
 
         public string GetNickName(string user)
@@ -35,7 +37,7 @@ namespace GmGard.Services
             {
                 var result = _udb.Users.Where(u => u.UserName == user).Select(u => new {
                     u.NickName,
-                    Title = u.quest == null ? UserQuest.UserProfession.None : u.quest.Title
+                    Title = u.quest == null ? new int?() : u.quest.Title
                 }).SingleOrDefault();
                 nick = result == null ? string.Empty : BuildNickName(result.Title, result.NickName, user);
                 _cache.Set("nick" + user, nick);
@@ -46,7 +48,7 @@ namespace GmGard.Services
         public IDictionary<string, string> GetNickNames(IEnumerable<string> users)
         {
             var names = new HashSet<string>(users, StringComparer.OrdinalIgnoreCase);
-            var result = new Dictionary<string, string>(names.Count(), StringComparer.OrdinalIgnoreCase);
+            var result = new Dictionary<string, string>(names.Count, StringComparer.OrdinalIgnoreCase);
             var uncached = new List<string>();
             foreach (var n in names)
             {
@@ -65,7 +67,7 @@ namespace GmGard.Services
                 var name2nick = _udb.Users.Where(u => uncached.Contains(u.UserName))
                     .ToDictionary(u => u.UserName.ToLower(), u => new {
                         u.NickName,
-                        Title = u.quest == null ? UserQuest.UserProfession.None : u.quest.Title
+                        Title = u.quest == null ? new int?() : u.quest.Title
                     });
                 foreach (var name in uncached)
                 {
@@ -85,20 +87,19 @@ namespace GmGard.Services
 
         public void UpdateNickNameCache(UserProfile user)
         {
-            var profession = user.quest?.Title;
-            _cache.Set("nick" + user.UserName.ToLower(), BuildNickName(profession.GetValueOrDefault(UserQuest.UserProfession.None), user.NickName, user.UserName));
+            _cache.Set("nick" + user.UserName.ToLower(), BuildNickName(user.quest?.Title, user.NickName, user.UserName));
         }
 
-        private string BuildNickName(UserQuest.UserProfession title, string nickname, string username)
+        private string BuildNickName(int? title, string nickname, string username)
         {
             if (string.IsNullOrEmpty(username))
             {
                 return string.Empty;
             }
-            StringBuilder sb = new StringBuilder();
-            if (title != UserQuest.UserProfession.None)
+            StringBuilder sb = new();
+            if (title.HasValue && title > 0)
             {
-                sb.AppendFormat("[{0}] ", UserQuest.ProfessionName(title));
+                sb.AppendFormat("[{0}] ", _titleService.GetTitleName(title.Value));
             }
             if (string.IsNullOrEmpty(nickname))
             {

@@ -284,8 +284,10 @@ namespace GmGard.Controllers
 
             UserProfile p = await _udb.Users.Include("quest").Include("auditor").AsNoTracking().SingleOrDefaultAsync(u => u.UserName == name);
             if (p == null)
+            {
                 return NotFound();
-            UserInfoModel userInfo = new UserInfoModel
+            }
+            UserInfoModel userInfo = new()
             {
                 UserBlogs = await _db.Blogs.CountAsync(b => b.Author == name),
                 UserPosts = await _db.Posts.CountAsync(b => b.Author == p.UserName),
@@ -297,7 +299,6 @@ namespace GmGard.Controllers
                 UserView = view,
                 SubModel = model,
                 Profile = p,
-                UserTitle = (p.quest?.Title).GetValueOrDefault(UserQuest.UserProfession.None),
                 UserBackground = p.quest?.PersonalBackground,
             };
             return View(userInfo);

@@ -1,4 +1,5 @@
 ﻿using GmGard.Models;
+using GmGard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,13 +18,15 @@ namespace GmGard.Controllers
         private ICompositeViewEngine _viewEngine;
         private IActionContextAccessor _actionAccessor;
         private readonly ConstantUtil _constantUtil;
+        private readonly TitleService _titleService;
 
-        public CssController(IOptionsSnapshot<BackgroundSetting> bgSetting, ICompositeViewEngine viewEngine, IActionContextAccessor actionAccessor, ConstantUtil constantUtil)
+        public CssController(IOptionsSnapshot<BackgroundSetting> bgSetting, ICompositeViewEngine viewEngine, IActionContextAccessor actionAccessor, ConstantUtil constantUtil, TitleService titleService)
         {
             _bgSetting = bgSetting.Value;
             _viewEngine = viewEngine;
             _actionAccessor = actionAccessor;
             _constantUtil = constantUtil;
+            _titleService = titleService;
         }
 
         //
@@ -55,7 +58,7 @@ namespace GmGard.Controllers
             {
                 host = _bgSetting.BackgroundClasses.First(p => p.Value == bg).Key;
             }
-            var bgs = UserQuest.AllTitleBackground.Values.Distinct();
+            var bgs = _titleService.AllTitleBackgrounds.Values.Distinct();
             ViewBag.HostName = host;
             return await RenderCssAsync("UserBg", bgs);
         }

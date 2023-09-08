@@ -148,6 +148,7 @@ namespace GmGard
             services.AddSingleton<BackgroundTaskQueue>();
             services.AddHostedService<BackgroundJobService>();
             services.AddSingleton<QuestService>();
+            services.AddSingleton<TitleService>();
             services.AddSingleton<IVisitCounter>(s => 
             {
                 if (_env.IsStaging()) {

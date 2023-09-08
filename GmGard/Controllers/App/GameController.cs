@@ -27,12 +27,14 @@ namespace GmGard.Controllers.App
         private UsersContext _udb;
         private ExpUtil _expUtil;
         private ILogger _logger;
+        private TitleService _titleService;
 
-        public GameController(UsersContext udb, ExpUtil expUtil, ILoggerFactory loggerFactory)
+        public GameController(UsersContext udb, ExpUtil expUtil, ILoggerFactory loggerFactory, TitleService titleService)
         {
             _udb = udb;
             _expUtil = expUtil;
             _logger = loggerFactory.CreateLogger(nameof(GameController));
+            _titleService = titleService;
         }
 
         private void DeserializeGameData(Game game, out IEnumerable<GameChapter> chapters, out IEnumerable<GameInventory> inventoryData)
@@ -249,9 +251,10 @@ namespace GmGard.Controllers.App
                     }
                     foreach (var title in choiceData.GetTitles)
                     {
-                        if (Enum.TryParse<UserQuest.UserProfession>(title, out var result))
+                        int? titleId = _titleService.GetTitleId(title);
+                        if (titleId.HasValue)
                         {
-                            userTitle.AddTitle(result);
+                            userTitle.AddTitle(titleId.Value);
                         }
                     }
                 }

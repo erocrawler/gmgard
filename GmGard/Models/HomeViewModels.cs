@@ -95,7 +95,6 @@ namespace GmGard.Models
         public string UserView { get; set; }
         public X.PagedList.IPagedList SubModel { get; set; }
         public IList<string> UserRoles { get; set; }
-        public UserQuest.UserProfession UserTitle { get; set; }
         public string UserBackground { get; set; }
     }
 }

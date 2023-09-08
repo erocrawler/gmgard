@@ -52,6 +52,8 @@ namespace GmGard.Models
         public DbSet<ScenarioChoice> ScenarioChoices { get; set; }
         public DbSet<UserGameData> UserGameDatas { get; set; }
         public DbSet<UserVisitedScenario> UserVisitedScenarios { get; set; }
+        public DbSet<TitleConfig> TitleConfigs { get; set; }
+        public DbSet<GachaTitleConditionConfig> GachaTitleConditionConfigs { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -296,6 +298,26 @@ namespace GmGard.Models
         }
     }
 
+    public class TitleConfig
+    {
+        [Key]
+        public int TitleID { get; set; }
+        public string TitleName { get; set; }
+        public string TitleDescription { get; set; }
+        public string TitleImage { get; set; }
+    }
+
+    public class GachaTitleConditionConfig
+    {
+        [Key]
+        public int ConditionID { get; set; }
+        public string ConditionType { get; set; }
+        [ForeignKey("TitleConfig")]
+        public int TitleID { get; set; }
+        public virtual TitleConfig TitleConfig { get; set; }
+        public string ConditionRequirements { get; set; }
+    }
+
     public partial class UserQuest
     {
         public virtual UserProfile user { get; set; }
@@ -319,7 +341,9 @@ namespace GmGard.Models
 
         public int DayBlogCount { get; set; }
         public int WeekBlogCount { get; set; }
-        public UserProfession Title { get; set; }
+        [ForeignKey("TitleConfig")]
+        public int Title { get; set; }
+        public virtual TitleConfig TitleConfig { get; set; }
         public string PersonalBackground { get; set; }
         public byte[] Titles { get; set; }
 

@@ -177,7 +177,7 @@ namespace GmGard.Controllers
             }
             quest.Profession = profession;
             quest.IsDead = false;
-            quest.AddTitle(quest.Profession);
+            quest.AddTitle((int)quest.Profession);
             await _udb.SaveChangesAsync();
             return Json(new { success = true });
         }

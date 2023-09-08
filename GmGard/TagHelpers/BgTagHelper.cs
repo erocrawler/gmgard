@@ -1,4 +1,5 @@
 ﻿using GmGard.Models;
+using GmGard.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -45,14 +46,16 @@ namespace GmGard.TagHelpers
     {
         private BackgroundSetting _bgSetting;
         private IUrlHelper _urlHelper;
+        private TitleService _titleService;
 
         [ViewContext]
         public ViewContext ViewContext { get; set; }
 
-        public UserBackgroundCssTagHelper(IUrlHelper urlHelper, IOptionsSnapshot<BackgroundSetting> bgSetting)
+        public UserBackgroundCssTagHelper(IUrlHelper urlHelper, IOptionsSnapshot<BackgroundSetting> bgSetting, TitleService titleService)
         {
             _urlHelper = urlHelper;
             _bgSetting = bgSetting.Value;
+            _titleService = titleService;
         }
 
         public override int Order => base.Order - 1;
@@ -62,7 +65,7 @@ namespace GmGard.TagHelpers
             var bg = _bgSetting.GetUserBackground(ViewContext.HttpContext.Request);
             output.TagName = "link";
             output.Attributes.Add("rel", "stylesheet");
-            output.Attributes.Add("href", _urlHelper.Action("UserBg", "Css", new { bg = bg.BgClassName, v = UserQuest.AllTitleBackground.Count }));
+            output.Attributes.Add("href", _urlHelper.Action("UserBg", "Css", new { bg = bg.BgClassName, v = _titleService.AllTitleBackgrounds.Count }));
         }
     }
 }

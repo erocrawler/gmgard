@@ -1,70 +1,28 @@
 ﻿@model UserProfile
 @inject BlogUtil blogUtil
 @inject ExpUtil expUtil
+@inject TitleService titleService
 @inject IOptionsSnapshot<BackgroundSetting> bgSetting
 @inject ConstantUtil constUtil
 @{
     ViewBag.Title = "账号设置";
     int points = expUtil.getUserPoints(User.Identity.Name);
     var setting = bgSetting.Value;
-    var currentTitle = Model.quest?.Title.ToString();
-    var allTitles = Model.quest?.AllTitles();
-    var groups = new Dictionary<GachaPool.PoolName, SelectListGroup>()
-{
-{ GachaPool.PoolName.FourthAnniversary, new SelectListGroup { Name = "四周年抽奖活动" } },
-{ GachaPool.PoolName.Touhou1st, new SelectListGroup { Name = "幻想乡推荐召唤第一弹" } },
-{ GachaPool.PoolName.April2018, new SelectListGroup { Name = "路人女主的养成方法" } },
-{ GachaPool.PoolName.June2018, new SelectListGroup { Name = "少女の辉" } },
-{ GachaPool.PoolName.April2019, new SelectListGroup { Name = "绅士之魂诞生" } },
-{ GachaPool.PoolName.August2020, new SelectListGroup { Name = "七周年特异点" } },
-};
-    SelectListGroup TitleGroup(UserQuest.UserProfession title)
-    {
-        int t = (int)title;
-        if (t >= 7 && t < 30)
-        {
-            return groups[GachaPool.PoolName.FourthAnniversary];
-        }
-        else if (t >= 30 && t < 42)
-        {
-            return groups[GachaPool.PoolName.Touhou1st];
-        }
-        else if (t >= 42 && t < 51)
-        {
-            return groups[GachaPool.PoolName.April2018];
-        }
-        else if (t >= 51 && t < 59)
-        {
-            return groups[GachaPool.PoolName.June2018];
-        }
-        else if (t >= 59 && t < 67)
-        {
-            return groups[GachaPool.PoolName.April2019];
-        }
-        else if (title == UserQuest.UserProfession.轮回独断)
-        {
-            return new SelectListGroup { Name = "六周年冒险活动" };
-        }
-        else if (t >= 68 && t < 74)
-        {
-            return groups[GachaPool.PoolName.August2020];
-        }
-        else if (t >= 74 && t < 77)
-        {
-            return new SelectListGroup { Name = "閃光の8周年" };
-        }
-        else if (t >= 77 && t < 79)
-        {
-            return new SelectListGroup { Name = "十周年活动" };
-        }
-        return null;
-    }
-
-    SelectListGroup BgGroup(string bg)
-    {
-        var kvp = UserQuest.AllTitleBackground.First(t => t.Value == bg);
-        return TitleGroup(kvp.Key);
-    }
+    var currentTitle = Model.quest?.Title;
+    var allTitles = Model.quest == null ? Enumerable.Empty<TitleConfig>() : titleService.AllUserTitles(Model.quest);
+    var bgItems = (new[] { new SelectListItem() })
+        .Concat(
+            allTitles.Where(t => !string.IsNullOrEmpty(t.TitleImage))
+                .GroupBy(t => t.TitleDescription)
+                .Select(g => new { Group = new SelectListGroup { Name = g.Key }, Items = g.Select(gg => gg.TitleImage).Distinct()})
+                .SelectMany(g =>
+                    g.Items.Select(name => new SelectListItem
+                            {
+                                Text = name,
+                                Value = name,
+                                Group = g.Group,
+                                Selected = Model.quest.PersonalBackground == name
+                            })));
 }
 
 <hgroup class="title">
@@ -132,52 +90,24 @@
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#change-title"><h3>称号与个人页面背景</h3></a>
             </div>
             <div class="accordion-body collapse" id="change-title">
-                <h3>称号设置<small>（灰色表示尚未解锁)</small></h3>
-                <ul id="user-title" data-url="@Url.Action("ChangeTitle")" data-current="@currentTitle" class="listview fluid"
-                    data-titles="@Json.Encode(allTitles?.Where(t => (int)t < 7).Select(t => t.ToString()))">
-                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Loli">
-                        <strong>萝莉</strong>
-                    </li>
-                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Onee">
-                        <strong>御姐</strong>
-                    </li>
-                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Otokonoko">
-                        <strong>伪娘</strong>
-                    </li>
-                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Futa">
-                        <strong>扶她</strong>
-                    </li>
-                    <li class="muted" title="三周年冒险活动职业" data-name="@UserQuest.UserProfession.Shiro">
-                        <strong>白学家</strong>
-                    </li>
-                    <li class="muted" title="三周年冒险活动Good End" data-name="@UserQuest.UserProfession.ShiroiStocking">
-                        <strong>白丝萝莉</strong>
-                    </li>
-                    @if (Model.quest != null)
-                    {
-                        @foreach (var title in allTitles.Where(t => (int)t >= 7))
+                @if (allTitles.Count() == 0)
+                {
+                    <p>你还没有获得任何称号</p>
+                }
+                @if (allTitles.Count() > 0)
+                {
+                    <h3>称号设置</h3>
+                    <ul id="user-title" data-url="@Url.Action("ChangeTitle")" data-current="@currentTitle" class="listview fluid">
+                        @foreach (var title in allTitles)
                         {
-                            <li title="@TitleGroup(title)?.Name" data-name="@title" data-bg="@UserQuest.TitleBackground(title)">
-                                <strong>@UserQuest.ProfessionName(title)</strong>
+                            <li title="@title.TitleDescription" data-name="@title.TitleID" data-bg="@title.TitleImage">
+                                <strong>@title.TitleName</strong>
                             </li>
                         }
-                    }
-                </ul>
-                @if (allTitles != null && allTitles.Count > 0)
-                {
-                    var items = (new[] { new SelectListItem() }).Concat(allTitles.Where(t => UserQuest.AllTitleBackground.ContainsKey(t))
-                        .Select(t => UserQuest.TitleBackground(t)).Distinct()
-                        .Select(t => new SelectListItem
-                        {
-                            Text = t,
-                            Value = t,
-                            Group = BgGroup(t),
-                            Selected = Model.quest.PersonalBackground == t
-                        }));
-
+                    </ul>
                     <h3>个人页面背景</h3>
                     <button id="user-bg-sync" class="btn butnfix">与称号对应</button>
-                    <select id="user-bg" data-value="@Model.quest.PersonalBackground" data-url="@Url.Action("ChangeBackground")" asp-items="items"></select>
+                    <select id="user-bg" data-value="@Model.quest.PersonalBackground" data-url="@Url.Action("ChangeBackground")" asp-items="bgItems"></select>
                     <div id="bgmsg" style="height:320px; background-size:cover; background-position: center" class="@Model.quest.PersonalBackground"></div>
                     <br />
                 }
@@ -352,7 +282,7 @@
                 .click(function () {
                     var $t = $(this), chosen = $t.data('name');
                     if ($t.hasClass('selected')) {
-                        chosen = 'None';
+                        chosen = 0;
                     }
                     $.post($title.data('url'), { title: chosen }, function (r) {
                         if (r && r.success) {

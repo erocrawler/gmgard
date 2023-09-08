@@ -727,7 +727,7 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> ChangeTitle([FromServices]INickNameProvider nicknameProvider, UserQuest.UserProfession? title)
+        public async Task<JsonResult> ChangeTitle([FromServices]INickNameProvider nicknameProvider, int? title)
         {
             if (!title.HasValue)
             {
@@ -745,10 +745,10 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> ChangeBackground(string name)
+        public async Task<JsonResult> ChangeBackground([FromServices]TitleService titleService, string name)
         {
             var user = await GetCurrentUserAsync();
-            var possibleTitles = UserQuest.AllTitleBackground.Where(kvp => kvp.Value == name);
+            var possibleTitles = titleService.AllTitleBackgrounds.Where(kvp => kvp.Value == name);
             if (user.quest == null || !(string.IsNullOrEmpty(name) || possibleTitles.Any(t => user.quest.HasTitle(t.Key))))
             {
                 return Json(new { success = false });
