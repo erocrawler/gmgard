@@ -58,7 +58,7 @@ namespace GmGard.Controllers
             {
                 host = _bgSetting.BackgroundClasses.First(p => p.Value == bg).Key;
             }
-            var bgs = _titleService.AllTitleBackgrounds.Values.Distinct();
+            var bgs = _titleService.AllTitleBackgrounds;
             ViewBag.HostName = host;
             return await RenderCssAsync("UserBg", bgs);
         }

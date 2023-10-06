@@ -65,7 +65,7 @@ namespace GmGard.TagHelpers
             var bg = _bgSetting.GetUserBackground(ViewContext.HttpContext.Request);
             output.TagName = "link";
             output.Attributes.Add("rel", "stylesheet");
-            output.Attributes.Add("href", _urlHelper.Action("UserBg", "Css", new { bg = bg.BgClassName, v = _titleService.AllTitleBackgrounds.Count }));
+            output.Attributes.Add("href", _urlHelper.Action("UserBg", "Css", new { bg = bg.BgClassName, v = _titleService.AllTitleBackgrounds.Count() }));
         }
     }
 }

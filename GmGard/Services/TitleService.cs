@@ -27,12 +27,7 @@ namespace GmGard.Services
             return _titleConfigs.FirstOrDefault(x => x.TitleName == titleName)?.TitleID;
         }
 
-        public Dictionary<int, string> AllTitleBackgrounds => _titleConfigs.ToDictionary(x => x.TitleID, x => x.TitleImage);
-
-        public string GetTitleBackground(int titleId)
-        {
-            return _titleConfigs.FirstOrDefault(x => x.TitleID == titleId)?.TitleImage ?? "";
-        }
+        public IEnumerable<string> AllTitleBackgrounds => _titleConfigs.Where(x => !string.IsNullOrEmpty(x.TitleImage)).SelectMany(x => x.TitleImage.Split(";")).Distinct();
 
         public IEnumerable<TitleConfig> AllUserTitles(UserQuest user)
         {

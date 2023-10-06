@@ -748,8 +748,8 @@ namespace GmGard.Controllers
         public async Task<JsonResult> ChangeBackground([FromServices]TitleService titleService, string name)
         {
             var user = await GetCurrentUserAsync();
-            var possibleTitles = titleService.AllTitleBackgrounds.Where(kvp => kvp.Value == name);
-            if (user.quest == null || !(string.IsNullOrEmpty(name) || possibleTitles.Any(t => user.quest.HasTitle(t.Key))))
+            var possibleBgs = titleService.AllUserTitles(user.quest).Where(t => !string.IsNullOrEmpty(t.TitleImage)).SelectMany(t => t.TitleImage.Split(';')).ToHashSet();
+            if (user.quest == null || !string.IsNullOrEmpty(name) && !possibleBgs.Contains(name))
             {
                 return Json(new { success = false });
             }

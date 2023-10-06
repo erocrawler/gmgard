@@ -14,7 +14,7 @@
         .Concat(
             allTitles.Where(t => !string.IsNullOrEmpty(t.TitleImage))
                 .GroupBy(t => t.TitleDescription)
-                .Select(g => new { Group = new SelectListGroup { Name = g.Key }, Items = g.Select(gg => gg.TitleImage).Distinct()})
+                .Select(g => new { Group = new SelectListGroup { Name = g.Key }, Items = g.SelectMany(gg => gg.TitleImage.Split(";")).Distinct() })
                 .SelectMany(g =>
                     g.Items.Select(name => new SelectListItem
                             {
@@ -299,7 +299,7 @@
                 });
             });
             $('#user-bg-sync').click(function () {
-                $('#user-bg').val($title.find('li.selected').data('bg')).trigger('change');
+                $('#user-bg').val($title.find('li.selected').data('bg').split(';')[0]).trigger('change');
             });
         });
         $('#choose-image-collapse').one('show', function () {
