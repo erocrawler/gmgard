@@ -24,7 +24,7 @@ namespace GmGard.Controllers
         // GET: /Avatar/Show/name
         public ActionResult Show(string name = null)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(name) || !User.Identity.IsAuthenticated)
             {
                 return Redirect(defaultavatar);
             }
