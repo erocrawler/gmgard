@@ -23,6 +23,13 @@ html {
     }
 }
 
+@media screen and (min-width: 1921px) {
+    bg.bg31, bg.new {
+        background-size: auto;
+        background-image: url(/Images/bg31_2560.jpg);
+    }
+}
+
 html.bg5, html.bg9 {
     background-color: black;
 }
