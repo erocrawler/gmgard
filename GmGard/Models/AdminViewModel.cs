@@ -190,12 +190,15 @@ namespace GmGard.Models
         [Required]
         public string Position1440 { get; set; }
 
+        public bool Has2560 { get; set; }
         public BackgroundType Type { get; set; }
 
         public string BackgroundUrl1440 { get { return BackgroundUrl.Replace(".jpg", "_1440.jpg"); } }
         public string BackgroundUrl1024 { get { return BackgroundUrl.Replace(".jpg", "_1024.jpg"); } }
+        public string BackgroundUrl2560 { get { return BackgroundUrl.Replace(".jpg", "_2560.jpg"); } }
         public string BannerUrl1440 { get { return BannerUrl.Replace(".jpg", "_1440.jpg"); } }
         public string BannerUrl1024 { get { return BannerUrl.Replace(".jpg", "_1024.jpg"); } }
+        public string BannerUrl2560 { get { return BannerUrl.Replace(".jpg", "_2560.jpg"); } }
     }
 
     public class BackgroundSetting

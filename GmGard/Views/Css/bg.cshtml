@@ -27,6 +27,13 @@
     <text>html.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl1024) }</text>
 }
 }
+@@media screen and (min-width: 1921px)
+{
+@foreach (var bg in AllBg.Where(b => b.Has2560))
+{
+    <text>html.@bg.Name@ClassName { background-image: url(@host@bg.BackgroundUrl2560); }</text>
+}
+}
 
 @string.Join(",", FixedBg.Select(b => "body." + b.Name)){ background-image: none; }
 @string.Join(",", FixedBg.Select(b => "html." + b.Name)){ background-repeat: no-repeat; background-attachment:fixed }
@@ -47,5 +54,12 @@
 @foreach (var bg in NormalBg)
 {
     <text>body.@bg.Name@ClassName{ background-image: url(@host@bg.BannerUrl1024) }</text>
+}
+}
+@@media screen and (min-width: 1921px)
+{
+@foreach (var bg in NormalBg.Where(b => b.Has2560))
+{
+    <text>body.@bg.Name@ClassName { background-image: url(@host@bg.BannerUrl2560); }</text>
 }
 }

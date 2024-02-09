@@ -34,9 +34,13 @@
                             <label class="small">背景位置(1440px)<input type="text" name="Backgrounds[@i].Position1440" value="@Item.Position1440" /></label>
                             <label class="small">
                                 <input type="checkbox" name="Backgrounds[@i].Type" value="@BackgroundCss.BackgroundType.Fixed"
-                                        @if (Item.Type == BackgroundCss.BackgroundType.Fixed) { <text> checked</text>} /> 固定背景
+                                       checked="@(Item.Type == BackgroundCss.BackgroundType.Fixed)" /> 固定背景
                             </label>
                             <input type="hidden" name="Backgrounds[@i].Type" value="@BackgroundCss.BackgroundType.Normal" />
+                            <label class="small">
+                                <input type="checkbox" name="Backgrounds[@i].Has2560" value="true" checked="@(Item.Has2560)" /> 2560背景
+                            </label>
+                            <input type="hidden" name="Backgrounds[@i].Has2560" value="false" />
                         </td>
                         <td>
                             <input type="button" class="btn delete-bg" value="删除" />
@@ -107,11 +111,14 @@
         <td>
             <label class="small">背景URL<input class="bg-field" type="text" name="Backgrounds[{{index}}].BackgroundUrl" value="Images/bg{{nindex}}.jpg" /></label>
             <label class="small">前景URL<input class="banner-field" type="text" name="Backgrounds[{{index}}].BannerUrl" value="Images/banner{{nindex}}.jpg" /></label>
-            <label class="small">背景位置<input type="text" name="Backgrounds[{{index}}].Position" value="" /></label>
-            <label class="small">背景位置(1440px)<input type="text" name="Backgrounds[{{index}}].Position1440" value="" /></label>
-            <input type="hidden" name="Backgrounds[{{index}}].Type" value="@BackgroundCss.BackgroundType.Normal" />
+            <label class="small">背景位置<input type="text" name="Backgrounds[{{index}}].Position" value="center 0" /></label>
+            <label class="small">背景位置(1440px)<input type="text" name="Backgrounds[{{index}}].Position1440" value="center 0" /></label>
             <label class="small"><input type="checkbox" name="Backgrounds[{{index}}].Type" value="@BackgroundCss.BackgroundType.Fixed" /> 固定背景
             </label>
+            <input type="hidden" name="Backgrounds[{{index}}].Type" value="@BackgroundCss.BackgroundType.Normal" />
+            <label class="small"><input type="checkbox" name="Backgrounds[{{index}}].Has2560" value="true"/> 2560背景
+            </label>
+            <input type="hidden" name="Backgrounds[{{index}}].Has2560" value="false" />
         </td>
     <td>
             <input type="button" class="btn delete-bg" value="删除" />

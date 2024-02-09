@@ -29,14 +29,6 @@ var wwwroot = "./wwwroot/",
         wwwroot + 'bower_components/jquery-ui/themes/base/core.css',
         wwwroot + 'bower_components/jquery-ui/themes/base/datepicker.css',
         wwwroot + 'bower_components/jquery-ui/themes/base/theme.css'
-    ],
-    messengerJs: [
-        wwwroot + 'bower_components/messenger/build/js/messenger.js',
-        wwwroot + 'bower_components/messenger/build/js/messenger-theme-future.js'
-    ],
-    messengerCss: [
-        wwwroot + 'bower_components/messenger/build/css/messenger.css',
-        wwwroot + 'bower_components/messenger/build/css/messenger-theme-future.css'
     ]
 };
 
@@ -55,9 +47,6 @@ paths.jqueryDest = paths.webroot + "Scripts/jquery.min.js";
 paths.jqueryValDest = paths.webroot + "Scripts/jquery.validation.min.js";
 paths.datepickerDest = paths.webroot + "Scripts/datepicker.min.js";
 
-paths.messengerJsDest = paths.webroot + "Scripts/messenger.min.js";
-paths.messengerCssDest = paths.webroot + "Content/messenger.min.css";
-
 paths.tagManager = paths.webroot + "Scripts/tagmanager.js";
 
 function cleanJs(cb) {
@@ -66,8 +55,7 @@ function cleanJs(cb) {
     (c) => { rimraf(paths.combineCanvasJsDest, c); },
     (c) => { rimraf(paths.jqueryDest, c); },
     (c) => { rimraf(paths.jqueryValDest, c); },
-    (c) => { rimraf(paths.datepickerDest, c); },
-    (c) => { rimraf(paths.messengerJsDest, c); }
+    (c) => { rimraf(paths.datepickerDest, c); }
   ], cb);
 }
 
@@ -97,8 +85,7 @@ function minJs() {
   var jquery = gulp.src([paths.jquerysrc]).pipe(gulp.dest(paths.jsPath));
   var jqueryVal = gulp.src(paths.jqueryvalidation).pipe(concat(paths.jqueryValDest)).pipe(gulp.dest('.'));
   var datepicker = gulp.src(paths.datepicker).pipe(concat(paths.datepickerDest)).pipe(gulp.dest('.'));
-  var messenger = gulp.src(paths.messengerJs).pipe(concat(paths.messengerJsDest)).pipe(uglify()).pipe(gulp.dest('.'));
-  return merge(combineJs, combineCanvasJs, minTagJs, jquery, jqueryVal, datepicker, messenger);
+  return merge(combineJs, combineCanvasJs, minTagJs, jquery, jqueryVal, datepicker);
 }
 
 function minCss() {
@@ -109,10 +96,6 @@ function minCss() {
       .pipe(gulp.dest(paths.webroot + "Content/")),
     gulp.src(paths.datepickerCss)
       .pipe(concat(paths.datepickerCssDest))
-      .pipe(cssmin())
-      .pipe(gulp.dest('.')),
-    gulp.src(paths.messengerCss)
-      .pipe(concat(paths.messengerCssDest))
       .pipe(cssmin())
       .pipe(gulp.dest('.')));
 }
