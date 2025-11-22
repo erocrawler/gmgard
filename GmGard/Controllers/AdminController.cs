@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using GmGard.Filters;
 using GmGard.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using GmGard.Services;
@@ -139,24 +139,47 @@ namespace GmGard.Controllers
             var query = _udb.AdminLogs.OrderByDescending(l => l.LogTime);
             return query.ToPagedList(pagenum, 40);
         }
-
-        private static List<UserProfile> getAdmins(UsersContext db)
+        private async Task<List<UserProfile>> getAdminsAsync()
         {
-            var admins = db.Roles.Where(r => r.Name == "Administrator" || r.Name == "Moderator" || r.Name == "AdManager").SelectMany(r => r.Users.Select(ur => ur.UserId));
-            return db.Users.Where(u => admins.Contains(u.Id)).ToList();
+            var adminUserIds = _udb.UserRoles
+                .Where(ur => _udb.Roles.Any(r => (r.Name == "Administrator" || r.Name == "Moderator" || r.Name == "AdManager") && r.Id == ur.RoleId))
+                .Select(ur => ur.UserId);
+
+            return await _udb.Users
+                .Where(u => adminUserIds.Contains(u.Id))
+                .ToListAsync();
+        }
+        private async Task<List<UserProfile>> getAuditorsAsync()
+        {
+            var auditorUserIds = _udb.UserRoles
+                .Where(ur => _udb.Roles.Any(r => r.Name == "Auditor" && r.Id == ur.RoleId))
+                .Select(ur => ur.UserId);
+
+            return await _udb.Users
+                .Include(u => u.auditor)
+                .Where(u => auditorUserIds.Contains(u.Id))
+                .ToListAsync();
         }
 
-        private static List<UserProfile> getAuditors(UsersContext db)
+        private async Task<List<UserProfile>> getBannedUsersAsync()
         {
-            return db.Users.Include("auditor").Where(u => db.Roles.FirstOrDefault(r => r.Name == "Auditor").Users.Select(ur => ur.UserId).Contains(u.Id)).ToList();
-        }
-
-        private static List<UserProfile> getBannedUsers(UsersContext db)
-        {
-            var users = db.Users.AsNoTracking().Where(u => db.Roles.FirstOrDefault(r => r.Name == "Banned").Users.Select(ur => ur.UserId).Contains(u.Id));
-            var banned = users.Join(db.AdminLogs.Where(l => l.Action == "封禁").GroupBy(l => new { l.Action, l.Target }).Select(g => g.OrderByDescending(gl => gl.LogTime).FirstOrDefault()),
-                                    u => u.UserName, l => l.Target, (u, l) => new { User = u, Reason = l.Reason, Time = l.LogTime });
-            return banned.ToList().Select(a =>
+            var bannedUserIds = _udb.UserRoles
+                .Where(ur => _udb.Roles.Any(r => r.Name == "Banned" && r.Id == ur.RoleId))
+                .Select(ur => ur.UserId);
+            var banned = await _udb.Users
+                .AsNoTracking()
+                .Where(u => bannedUserIds.Contains(u.Id))
+                .Join(
+                    _udb.AdminLogs
+                        .Where(l => l.Action == "封禁")
+                        .GroupBy(l => l.Target)
+                        .Select(g => g.OrderByDescending(gl => gl.LogTime).FirstOrDefault()),
+                    user => user.UserName,
+                    log => log.Target,
+                    (user, log) => new { User = user, Reason = log.Reason, Time = log.LogTime }
+                )
+                .ToListAsync();
+            return banned.Select(a =>
             {
                 var u = a.User;
                 u.LastLoginDate = a.Time;
@@ -176,10 +199,10 @@ namespace GmGard.Controllers
                     break;
 
                 case "Users":
-                    model.Admins = getAdmins(_udb);
+                    model.Admins = await getAdminsAsync();
                     model.Writers = (await _userManager.GetUsersInRoleAsync("Writers")).ToList();
-                    model.Auditors = getAuditors(_udb);
-                    model.BannedUsers = getBannedUsers(_udb);
+                    model.Auditors = await getAuditorsAsync();
+                    model.BannedUsers = await getBannedUsersAsync();
                     break;
 
                 case "AdManage":
@@ -205,8 +228,8 @@ namespace GmGard.Controllers
                     model.harmonyblogcount = _db.Blogs.Count(b => b.isHarmony);
                     model.auditcount = _db.Blogs.Where(b => b.isApproved == null && b.BlogID > 0).Count();
                     model.bannedusercount = (await _userManager.GetUsersInRoleAsync("Banned")).Count;
-                    model.todaynewitem = _db.Blogs.Where(b => DbFunctions.DiffDays(b.BlogDate, DateTime.Now) == 0).Count();
-                    model.yesterdaynewitem = _db.Blogs.Where(b => DbFunctions.DiffDays(b.BlogDate, DateTime.Now) == 1).Count();
+                    model.todaynewitem = _db.Blogs.Where(b => EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) == 0).Count();
+                    model.yesterdaynewitem = _db.Blogs.Where(b => EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) == 1).Count();
                     model.totalauditcount = _db.Blogs.Count();
                     model.totalusercount = _udb.Users.Count();
                     ViewBag.AdminLogs = GetLog(1);
@@ -465,7 +488,7 @@ namespace GmGard.Controllers
                 }
                 if (deletecomment)
                 {
-                    _db.Database.ExecuteSqlCommand("delete from Posts where Author = @banname; delete from Replies where Author = @banname;", new SqlParameter("@banname", banname));
+                    _db.Database.ExecuteSqlRaw("delete from Posts where Author = @banname; delete from Replies where Author = @banname;", new SqlParameter("@banname", banname));
                 }
                 user.Level = 0;
                 await _userManager.AddToRoleAsync(user, "Banned");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using GmGard.Services;
 using GmGard.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Controllers
 {

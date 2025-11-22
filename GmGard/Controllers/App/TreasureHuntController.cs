@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using GmGard.Models;
@@ -207,13 +207,13 @@ namespace GmGard.Controllers.App
                         return BadRequest(new { error = "本题已经回答过了。"});
                     }
                     rank = _udb.TreasureHuntAttempts
-                        .Where(u => u.TargetPuzzle == req.Id && u.IsCorrect && !u.User.Roles.Any(r => r.RoleId == 1 || r.RoleId == 3)) // 1 = Admin, 3 = Moderator
+                        .Where(u => u.TargetPuzzle == req.Id && u.IsCorrect && !_udb.Set<IdentityUserRole<int>>().Where(r => r.RoleId == 1 || r.RoleId == 3).Select(r => r.UserId).Contains(u.UserID)) // 1 = Admin, 3 = Moderator
                         .GroupBy(u => u.UserID)
                         .Count() + 1;
                     if (correctCount == 7)  // final answer correct.
                     {
                         var completedUserCount = _udb.TreasureHuntAttempts
-                            .Where(u => u.IsCorrect && !u.User.Roles.Any(r => r.RoleId == 1 || r.RoleId == 3)) // 1 = Admin, 3 = Moderator
+                            .Where(u => u.IsCorrect && !_udb.Set<IdentityUserRole<int>>().Where(r => r.RoleId == 1 || r.RoleId == 3).Select(r => r.UserId).Contains(u.UserID)) // 1 = Admin, 3 = Moderator
                             .GroupBy(u => u.UserID)
                             .Where(g => g.GroupBy(gg => gg.TargetPuzzle).Count() == PuzzleCount)
                             .Count();
@@ -247,7 +247,7 @@ namespace GmGard.Controllers.App
         private async Task<TreasureHuntStatus> GetCommonStatusAsync()
         {
             var completedUsers = _udb.TreasureHuntAttempts
-                .Where(u => u.IsCorrect && !u.User.Roles.Any(r => r.RoleId == 1 || r.RoleId == 3)) // 1 = Admin, 3 = Moderator
+                .Where(u => u.IsCorrect && !_udb.Set<IdentityUserRole<int>>().Where(r => r.RoleId == 1 || r.RoleId == 3).Select(r => r.UserId).Contains(u.UserID)) // 1 = Admin, 3 = Moderator
                 .GroupBy(u => u.UserID)
                 .Where(g => g.GroupBy(gg => gg.TargetPuzzle).Count() == PuzzleCount);
             var completedUserCount = await completedUsers.CountAsync();

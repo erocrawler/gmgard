@@ -1,4 +1,4 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;

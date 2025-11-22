@@ -1,10 +1,10 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 

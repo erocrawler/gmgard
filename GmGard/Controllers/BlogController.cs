@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
@@ -13,7 +13,7 @@ using X.PagedList;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 

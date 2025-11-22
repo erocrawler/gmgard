@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using GmGard.Models.App;
 using Microsoft.Extensions.Options;
 using GmGard.Extensions;
 using Microsoft.AspNetCore.Authorization;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Controllers.App
 {

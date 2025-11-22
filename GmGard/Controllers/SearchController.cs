@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -47,7 +47,7 @@ namespace GmGard.Controllers
             {
                 return NotFound();
             }
-            await _db.Database.ExecuteSqlCommandAsync("Update Tags Set TagVisit = TagVisit + 1 Where TagId = @id", new System.Data.SqlClient.SqlParameter("@id", tag.TagID));
+            await _db.Database.ExecuteSqlRawAsync("Update Tags Set TagVisit = TagVisit + 1 Where TagId = @id", new System.Data.SqlClient.SqlParameter("@id", tag.TagID));
             return RedirectToAction("List", "Blog", new { Tags = tag.TagName, sort, page });
         }
 

@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
@@ -12,8 +12,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace GmGard.Controllers
@@ -401,19 +401,19 @@ namespace GmGard.Controllers
             if (model == null)
             {
                 model = new UserRanking();
-                var exp = _udb.Database.SqlQuery<RankTuple>(@"Select u.username as Name, u.experience as Value, Rank() over 
+                var exp = _udb.Set<RankTuple>().FromSqlRaw(@"Select u.username as Name, u.experience as Value, Rank() over 
                     (Order by u.experience desc) as Ranking 
                     from UserProfile as u");
 
-                var sign = _udb.Database.SqlQuery<RankTuple>(@"Select u.username as Name, u.ConsecutiveSign as Value, Rank() over 
+                var sign = _udb.Set<RankTuple>().FromSqlRaw(@"Select u.username as Name, u.ConsecutiveSign as Value, Rank() over 
                     (Order by u.ConsecutiveSign desc) as Ranking 
                     from UserProfile as u");
 
-                var blogs = _db.Database.SqlQuery<RankTuple>(@"with t as (select Author as Name, Count(BlogID) as Value 
+                var blogs = _db.Set<RankTuple>().FromSqlRaw(@"with t as (select Author as Name, Count(BlogID) as Value 
                     from Blogs group by Author) 
                     select t.Name, t.Value, Rank() over (order by t.Value desc) as Ranking from t");
 
-                var posts = _db.Database.SqlQuery<RankTuple>(@"with t as(
+                var posts = _db.Set<RankTuple>().FromSqlRaw(@"with t as(
                  select nt.Name, sum(counts) as Value from
                  ((
 	                select Author as Name, Count(PostID) as counts from posts

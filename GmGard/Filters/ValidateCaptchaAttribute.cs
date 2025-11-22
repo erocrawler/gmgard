@@ -1,4 +1,4 @@
-﻿using GmGard.Services;
+using GmGard.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 

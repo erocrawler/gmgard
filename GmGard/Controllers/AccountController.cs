@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GmGard.Filters;
 using GmGard.Models;
@@ -9,13 +9,12 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
-using AspNetCore.Identity.EntityFramework6;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Http;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using GmGard.Extensions;
 using System.Collections.Generic;
 
@@ -30,7 +29,7 @@ namespace GmGard.Controllers
             UsersContext udb,
             UserManager<UserProfile> userManager,
             SignInManager<UserProfile> signInManager,
-            RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> roleManager,
+            RoleManager<IdentityRole<int>> roleManager,
             IMemoryCache cache,
             ExpUtil expUtil,
             ImageUtil imgUtil,
@@ -54,7 +53,7 @@ namespace GmGard.Controllers
 
         private readonly UserManager<UserProfile> _userManager;
         private readonly SignInManager<UserProfile> _signInManager;
-        private readonly RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<int>> _roleManager;
         private readonly IMemoryCache _cache;
         private RegisterSettingsModel _registerSettings;
         private BlogContext _bdb;

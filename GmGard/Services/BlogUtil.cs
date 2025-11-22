@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
@@ -206,7 +206,7 @@ namespace GmGard.Services
             if (auditTypes.Any(ba => ba == BlogAudit.Action.Approve || ba == BlogAudit.Action.Deny) && auditTypes.Any(ba => ba == BlogAudit.Action.VoteApprove || ba == BlogAudit.Action.VoteDeny))
             {
                     // If vote accuracy was affected by this blog, move all audits to BlogID = 0 to preserve them.
-                    await _db.Database.ExecuteSqlCommandAsync(@"WITH maxv AS (SELECT max(BlogVersion) AS v FROM BlogAudits WHERE BlogID = 0)
+                    await _db.Database.ExecuteSqlRawAsync(@"WITH maxv AS (SELECT max(BlogVersion) AS v FROM BlogAudits WHERE BlogID = 0)
                         UPDATE BlogAudits SET BlogVersion = BlogVersion + ISNULL(maxv.v, 0), BlogID = 0 FROM BlogAudits, maxv WHERE BlogID = @id", new SqlParameter("@id", id));
             }
             try

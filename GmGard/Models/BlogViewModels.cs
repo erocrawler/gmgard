@@ -1,8 +1,8 @@
-﻿using GmGard.Filters;
+using GmGard.Filters;
 using GmGard.Services;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace GmGard.Models

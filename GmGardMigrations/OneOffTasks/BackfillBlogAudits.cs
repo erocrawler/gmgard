@@ -13,8 +13,8 @@ namespace GmGardMigrations.OneOffTasks
         {
             BlogContextFactory blogContextFactory = new BlogContextFactory();
             UsersContextFactory usersContextFactory = new UsersContextFactory();
-            using (var udb = usersContextFactory.Create())
-            using (var db = blogContextFactory.Create())
+            using (var udb = usersContextFactory.CreateDbContext(null))
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var start = new DateTime(2017, 11, 24);
                 var audits = db.BlogAudits.Where(b => b.AuditDate > start).GroupBy(b => b.BlogID);

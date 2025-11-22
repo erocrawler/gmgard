@@ -1,4 +1,4 @@
-﻿using GmGard.Filters;
+using GmGard.Filters;
 using GmGard.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -1,59 +1,34 @@
 ﻿using GmGard.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data.Entity.Infrastructure;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GmGardMigrations
 {
-    public static class ContextHelper
+    public class UsersContextFactory : IDesignTimeDbContextFactory<UsersContext>
     {
-        public static string GetLocalDB(string connectionString)
+        public UsersContext CreateDbContext(string[] args)
         {
-            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../GmGard/App_Data");
-            return connectionString.Replace("|DataDirectory|", dbPath);
+            var optionsBuilder = new DbContextOptionsBuilder<UsersContext>();
+            // Use a default connection string for migration generation
+            var connectionString = "Server=(localdb)\\mssqllocaldb;Database=GmGardUser;Trusted_Connection=True;MultipleActiveResultSets=true";
+            optionsBuilder.UseSqlServer(connectionString);
+
+            return new UsersContext(optionsBuilder.Options);
         }
     }
 
-    public class UsersContextFactory : IDbContextFactory<UsersContext>
+    public class BlogContextFactory : IDesignTimeDbContextFactory<BlogContext>
     {
-        public UsersContext Create()
+        public BlogContext CreateDbContext(string[] args)
         {
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../App.config");
-            var config = ConfigurationManager.OpenMappedMachineConfiguration(new ConfigurationFileMap(configPath));
-            var user = config.ConnectionStrings.ConnectionStrings["GmGardUser"].ConnectionString;
-            return new UsersContext(ContextHelper.GetLocalDB(user));
+            var optionsBuilder = new DbContextOptionsBuilder<BlogContext>();
+            // Use a default connection string for migration generation
+            var connectionString = "Server=(localdb)\\mssqllocaldb;Database=GmGardData;Trusted_Connection=True;MultipleActiveResultSets=true";
+            optionsBuilder.UseSqlServer(connectionString);
+
+            return new BlogContext(optionsBuilder.Options);
         }
     }
-
-    public class UsersContext : GmGard.Models.UsersContext
-    {
-        public UsersContext(string connectionString) : base(connectionString)
-        {
-        }
-    }
-
-    public class BlogContextFactory : IDbContextFactory<BlogContext>
-    {
-        public BlogContext Create()
-        {
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../App.config");
-            var config = ConfigurationManager.OpenMappedMachineConfiguration(new ConfigurationFileMap(configPath));
-            var conn = config.ConnectionStrings.ConnectionStrings["GmGardData"].ConnectionString;
-            return new BlogContext(ContextHelper.GetLocalDB(conn));
-        }
-    }
-
-    public class BlogContext : GmGard.Models.BlogContext
-    {
-        public BlogContext(string connectionString) : base(connectionString)
-        {
-            Database.CommandTimeout = 3600;
-        }
-    }
-
 }

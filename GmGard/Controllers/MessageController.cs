@@ -1,4 +1,4 @@
-﻿using GmGard.Filters;
+using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
 using GmGard.ViewComponents;
@@ -11,7 +11,7 @@ using X.PagedList;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
@@ -320,7 +320,7 @@ namespace GmGard.Controllers
                 switch (action)
                 {
                     case "del-all":
-                        await _udb.Database.ExecuteSqlCommandAsync(
+                        await _udb.Database.ExecuteSqlRawAsync(
                                 @"Delete from Messages where IsSenderDelete='true' and Recipient=@user;
                                   Delete from Messages where Recipient=@user and Sender=@user;
                                   Update Messages set IsRecipientDelete='true' where Recipient=@user;", sqlUser);
@@ -348,7 +348,7 @@ namespace GmGard.Controllers
                         break;
 
                     case "read-all":
-                        await _udb.Database.ExecuteSqlCommandAsync("Update Messages set IsRead='true' where Recipient=@user and IsRead='false'", sqlUser);
+                        await _udb.Database.ExecuteSqlRawAsync("Update Messages set IsRead='true' where Recipient=@user and IsRead='false'", sqlUser);
                         break;
                 }
                 await _udb.SaveChangesAsync();
@@ -359,7 +359,7 @@ namespace GmGard.Controllers
                 switch (action)
                 {
                     case "del-all":
-                        await _udb.Database.ExecuteSqlCommandAsync(
+                        await _udb.Database.ExecuteSqlRawAsync(
                                 @"Delete from Messages where IsRecipientDelete='true' and Sender=@user;
                                   Delete from Messages where Recipient=@user and Sender=@user;
                                   Update Messages set IsSenderDelete='true' where Sender=@user;", sqlUser);

@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -164,8 +164,11 @@ namespace GmGard.Controllers
             }
             var version = blog.blogAudits.Where(ba => ba.AuditAction == BlogAudit.Action.Approve || ba.AuditAction == BlogAudit.Action.Deny)
                 .DefaultIfEmpty().Max(bm => bm == null ? 0 : bm.BlogVersion) + 1;
-            var audit = _db.BlogAudits.Find(id, User.Identity.Name, version)
-                ?? _db.BlogAudits.Add(new BlogAudit { Auditor = User.Identity.Name, BlogID = id, BlogVersion = version });
+            var audit = _db.BlogAudits.Find(id, User.Identity.Name, version);
+            if (audit == null)
+            {
+                audit = _db.BlogAudits.Add(new BlogAudit { Auditor = User.Identity.Name, BlogID = id, BlogVersion = version }).Entity;
+            }
             if (audit.AuditAction == auditAction)
             {
                 return Json(new { success = true });

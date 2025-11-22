@@ -1,11 +1,11 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -33,7 +33,7 @@ namespace GmGard.ViewComponents
             if (model == null)
             {
                 model = new Dictionary<int, HeaderDisplay>(categories.Count);
-                var counts = _db.Blogs.Where(b => b.isApproved == true && DbFunctions.DiffDays(b.BlogDate, DateTime.Now) <= 1)
+                var counts = _db.Blogs.Where(b => b.isApproved == true && EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) <= 1)
                     .GroupBy(b => b.CategoryID)
                     .Select(b => new { CategoryID = b.Key, newItems = b.Count() })
                     .ToList();

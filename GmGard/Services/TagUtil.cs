@@ -1,10 +1,10 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 using System.Threading.Tasks;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using GmGard.Extensions;
 
 namespace GmGard.Services
@@ -101,7 +101,7 @@ namespace GmGard.Services
             _db.SaveChanges();
             if (hasdelete)
             {
-                _db.Database.ExecuteSqlCommand("Delete From Tags Where TagID not in ((Select TagID from TagsInBlogs) union (Select TagID from Topics))");
+                _db.Database.ExecuteSqlRaw("Delete From Tags Where TagID not in ((Select TagID from TagsInBlogs) union (Select TagID from Topics))");
             }
             return UpdatedTags;
         }

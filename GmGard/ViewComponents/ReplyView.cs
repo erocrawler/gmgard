@@ -1,10 +1,11 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Models;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace GmGard.ViewComponents

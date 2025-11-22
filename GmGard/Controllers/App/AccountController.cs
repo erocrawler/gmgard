@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using GmGard.Models;
-using AspNetCore.Identity.EntityFramework6;
 using GmGard.Filters;
 using Microsoft.AspNetCore.Antiforgery;
 using GmGard.Services;
@@ -14,7 +13,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using GmGard.Models.App;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Controllers.App
 {
@@ -27,7 +26,7 @@ namespace GmGard.Controllers.App
     {
         private readonly UserManager<UserProfile> _userManager;
         private readonly SignInManager<UserProfile> _signInManager;
-        private readonly RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<int>> _roleManager;
         private readonly IAntiforgery _antiforgery;
         private readonly INickNameProvider _nickNameProvider;
         private readonly UrlEncoder _urlEncoder;
@@ -35,7 +34,7 @@ namespace GmGard.Controllers.App
         public AccountController(
             UserManager<UserProfile> userManager,
             SignInManager<UserProfile> signInManager,
-            RoleManager<AspNetCore.Identity.EntityFramework6.IdentityRole> roleManager,
+            RoleManager<IdentityRole<int>> roleManager,
             INickNameProvider nickNameProvider,
             IAntiforgery antiforgery,
             UrlEncoder urlEncoder)
@@ -229,6 +228,7 @@ namespace GmGard.Controllers.App
 
         //
         // POST: /Account/LogOff
+        //
 
         [HttpPost]
         [Authorize]

@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Models
 {
@@ -35,7 +36,7 @@ namespace GmGard.Models
 
         public void UpdateDatabase()
         {
-            db.Database.ExecuteSqlCommand(string.Format(@"Update Blogs SET isHarmony = CASE WHEN BlogID IN (
+            db.Database.ExecuteSqlRaw(string.Format(@"Update Blogs SET isHarmony = CASE WHEN BlogID IN (
             SELECT
                 [Except1].[BlogID]
 

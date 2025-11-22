@@ -1,11 +1,11 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 
 namespace GmGard.Services
@@ -129,7 +129,7 @@ namespace GmGard.Services
             }
             else
             {
-                rating = _db.BlogRatings.FirstOrDefault(r => r.BlogID == blogid && r.credential == credential && DbFunctions.DiffDays(r.ratetime, DateTime.Today) == 0);
+                rating = _db.BlogRatings.FirstOrDefault(r => r.BlogID == blogid && r.credential == credential && EF.Functions.DateDiffDay(r.ratetime, DateTime.Today) == 0);
             }
             var self = new UsersRating
             {
@@ -155,7 +155,7 @@ namespace GmGard.Services
             }
             else
             {
-                ratings = _db.BlogRatings.Where(r => blogids.Contains(r.BlogID) && r.credential == credential && DbFunctions.DiffDays(r.ratetime, DateTime.Today) == 0);
+                ratings = _db.BlogRatings.Where(r => blogids.Contains(r.BlogID) && r.credential == credential && EF.Functions.DateDiffDay(r.ratetime, DateTime.Today) == 0);
             }
             return ratings.ToDictionary(v => v.BlogID, v => v.value);
         }
@@ -175,7 +175,7 @@ namespace GmGard.Services
             }
             else
             {
-                rated = _db.BlogRatings.Any(r => r.BlogID == id && r.credential == credential && DbFunctions.DiffDays(r.ratetime, DateTime.Today) < 1);
+                rated = _db.BlogRatings.Any(r => r.BlogID == id && r.credential == credential && EF.Functions.DateDiffDay(r.ratetime, DateTime.Today) < 1);
             }
             if (rated)
             {

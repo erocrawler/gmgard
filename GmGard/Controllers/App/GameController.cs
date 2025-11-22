@@ -1,4 +1,4 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using GmGard.Models.App;
 using GmGard.Services;
 using Humanizer;
@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using SixLabors.ImageSharp.Formats;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 

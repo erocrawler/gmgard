@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
@@ -183,10 +183,10 @@ namespace GmGard.Services
             if (c == null)
             {
                 // 0 = Suggestions, -1 = Report
-                var specialBlogs = _db.Posts.Where(p => (p.ItemId == 0 || p.ItemId == -1) && p.IdType == ItemType.Blog && DbFunctions.DiffDays(p.PostDate, DateTime.Now) < 1);
+                var specialBlogs = _db.Posts.Where(p => (p.ItemId == 0 || p.ItemId == -1) && p.IdType == ItemType.Blog && EF.Functions.DateDiffDay(p.PostDate, DateTime.Now) < 1);
                 c1 = specialBlogs.Count(p => p.ItemId == 0);
                 c2 = specialBlogs.Count(p => p.ItemId == -1);
-                c3 = _udb.Messages.Count(p => p.Recipient == "admin" && DbFunctions.DiffDays(p.MsgDate, DateTime.Now) < 1);
+                c3 = _udb.Messages.Count(p => p.Recipient == "admin" && EF.Functions.DateDiffDay(p.MsgDate, DateTime.Now) < 1);
                 c = string.Format("{0}/{1}/{2}", c1, c2, c3);
                 _cache.Set<string>("NewSuggestionCount", c, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) });
             }

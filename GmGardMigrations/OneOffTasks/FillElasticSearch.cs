@@ -1,4 +1,5 @@
-﻿using Nest;
+﻿using GmGard.Models;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -172,7 +173,7 @@ namespace GmGardMigrations.OneOffTasks
                 }
             }
             BlogContextFactory blogContextFactory = new BlogContextFactory();
-            using var db = blogContextFactory.Create();
+            using var db = blogContextFactory.CreateDbContext(null);
             UpdateBlogs(new BlogProvider(db, categoryIds), client);
         }
         }

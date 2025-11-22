@@ -1,9 +1,10 @@
-﻿using FluentScheduler;
+using FluentScheduler;
 using GmGard.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Services
 {
@@ -53,7 +54,7 @@ namespace GmGard.Services
                 var ValueString = IdPairs.Select(v => string.Format("({0},{1})", v.Key, v.Value));
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    GetDB(scope).Database.ExecuteSqlCommand(
+                    GetDB(scope).Database.ExecuteSqlRaw(
                         @"UPDATE b SET BlogVisit = t.BlogVisit
                     FROM Blogs b
                     JOIN (
@@ -86,7 +87,7 @@ namespace GmGard.Services
                 var ValueString = IdPairs.Select(v => string.Format("({0},{1})", v.Key, v.Value));
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    GetDB(scope).Database.ExecuteSqlCommand(
+                    GetDB(scope).Database.ExecuteSqlRaw(
                         @"UPDATE b SET TopicVisit = t.TopicVisit
                         FROM Topics b
                         JOIN (

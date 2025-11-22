@@ -1,9 +1,10 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace GmGard.Services

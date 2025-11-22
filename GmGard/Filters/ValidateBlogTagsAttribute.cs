@@ -1,4 +1,4 @@
-﻿using GmGard.Services;
+using GmGard.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace GmGard.Filters

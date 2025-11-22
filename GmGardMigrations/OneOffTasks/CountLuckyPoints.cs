@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GmGard.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,7 +15,7 @@ namespace GmGardMigrations.OneOffTasks
         {
             DateTime reduceTime = new DateTime(2020, 6, 2, 17, 30, 0);
             UsersContextFactory usersContextFactory = new UsersContextFactory();
-            using (var udb = usersContextFactory.Create())
+            using (var udb = usersContextFactory.CreateDbContext(null))
             {
                 var lps = udb.UserVouchers.Where(uv => uv.VoucherKind == GmGard.Models.UserVoucher.Kind.WheelA).ToList();
                 var dict = new Dictionary<int, int>();
@@ -38,7 +40,7 @@ namespace GmGardMigrations.OneOffTasks
 	                    VALUES " + string.Join(",", ValueString) +
                         ") t (id, p) ON u.UserId = t.id";
                 Console.Out.WriteLine(sql);
-                udb.Database.ExecuteSqlCommand(sql);
+                udb.Database.ExecuteSqlRaw(sql);
             }
         }
 
@@ -47,7 +49,7 @@ namespace GmGardMigrations.OneOffTasks
             UsersContextFactory usersContextFactory = new UsersContextFactory();
 
             using (var f = File.CreateText("luckypoints.csv"))
-            using (var udb = usersContextFactory.Create())
+            using (var udb = usersContextFactory.CreateDbContext(null))
             {
                 f.WriteLine("用户名,当前积分,累计积分");
                 var lps = udb.UserVouchers.Where(uv => uv.VoucherKind == GmGard.Models.UserVoucher.Kind.LuckyPoint)

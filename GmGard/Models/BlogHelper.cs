@@ -1,4 +1,4 @@
-﻿using GmGard.Services;
+using GmGard.Services;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Html;
 using System;
@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 
 namespace GmGard.Models

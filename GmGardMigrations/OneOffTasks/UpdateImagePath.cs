@@ -28,7 +28,7 @@ namespace GmGardMigrations.OneOffTasks
                 }
                 return a;
             });
-            using (var db = blogContextFactory.Create())
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var allLegacies = db.Blogs.Where(b => b.IsLocalImg && !b.ImagePath.Contains("static.gmgard")).ToList();
                 Console.Out.WriteLine("total legacy: " + allLegacies.Count);

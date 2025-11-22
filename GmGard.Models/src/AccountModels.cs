@@ -4,27 +4,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity;
-using AspNetCore.Identity.EntityFramework6;
-using System.Data.Entity.Infrastructure.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace GmGard.Models
 {
-    [DbConfigurationType(typeof(DbCodeConfiguration))]
-    public class UsersContext : IdentityDbContext<UserProfile>
+    public class UsersContext : IdentityDbContext<UserProfile, IdentityRole<int>, int>
     {
-        public UsersContext(string nameOrConnectionString, ILoggerFactory logger)
-            : base(nameOrConnectionString)
-        {
-            var log = logger.CreateLogger<UsersContext>();
-            Database.Log = l =>
-            {
-                log.LogInformation(l);
-            };
-        }
-
-        public UsersContext(string connectionString)
-            : base(connectionString)
+        public UsersContext(DbContextOptions<UsersContext> options)
+            : base(options)
         {
         }
 
@@ -55,93 +44,110 @@ namespace GmGard.Models
         public DbSet<TitleConfig> TitleConfigs { get; set; }
         public DbSet<GachaTitleConditionConfig> GachaTitleConditionConfigs { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             // Needed to ensure subclasses share the same table
             var user = modelBuilder.Entity<UserProfile>()
                 .ToTable("UserProfile");
             user.Property(u => u.UserName)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("UserNameIndex") { IsUnique = true }));
+                .HasMaxLength(20);
+            user.HasIndex(u => u.UserName)
+                .IsUnique()
+                .HasDatabaseName("UserNameIndex");
             user.Property(u => u.NormalizedUserName)
-                .HasMaxLength(20)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("NormalizedUserNameIndex") { IsUnique = true }));
+                .HasMaxLength(20);
+            user.HasIndex(u => u.NormalizedUserName)
+                .IsUnique()
+                .HasDatabaseName("NormalizedUserNameIndex");
             user.Property(u => u.Email)
-                .HasMaxLength(50)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("UserEmailIndex") { IsUnique = true }));
+                .HasMaxLength(50);
+            user.HasIndex(u => u.Email)
+                .IsUnique()
+                .HasDatabaseName("UserEmailIndex");
             user.Property(u => u.NormalizedEmail)
-                .HasMaxLength(50)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("NormalizedEmailIndex") { IsUnique = true }));
-            user.HasMany(u => u.Roles).WithRequired().HasForeignKey(ur => ur.UserId);
-            user.HasMany(u => u.Claims).WithRequired().HasForeignKey(uc => uc.UserId);
-            user.HasMany(u => u.Logins).WithRequired().HasForeignKey(ul => ul.UserId);
-            user.HasMany(u => u.Tokens).WithRequired().HasForeignKey(ut => ut.UserId);
+                .HasMaxLength(50);
+            user.HasIndex(u => u.NormalizedEmail)
+                .IsUnique()
+                .HasDatabaseName("NormalizedEmailIndex");
 
-            modelBuilder.Entity<IdentityUserRole>()
+            modelBuilder.Entity<IdentityUserRole<int>>()
                 .HasKey(r => new { r.UserId, r.RoleId })
+                .HasName("PK_AspNetUserRoles");
+            modelBuilder.Entity<IdentityUserRole<int>>()
                 .ToTable("AspNetUserRoles");
 
-            modelBuilder.Entity<IdentityUserLogin>()
+            modelBuilder.Entity<IdentityUserLogin<int>>()
                 .HasKey(l => new { l.LoginProvider, l.ProviderKey, l.UserId })
+                .HasName("PK_AspNetUserLogins");
+            modelBuilder.Entity<IdentityUserLogin<int>>()
                 .ToTable("AspNetUserLogins");
 
-            modelBuilder.Entity<IdentityUserClaim>()
+            modelBuilder.Entity<IdentityUserClaim<int>>()
                 .ToTable("AspNetUserClaims");
 
-            var role = modelBuilder.Entity<IdentityRole>()
+            var role = modelBuilder.Entity<IdentityRole<int>>()
                 .ToTable("AspNetRoles");
             role.Property(r => r.Name)
                 .IsRequired()
-                .HasMaxLength(256)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("RoleNameIndex") { IsUnique = true }));
-
+                .HasMaxLength(256);
+            role.HasIndex(r => r.Name)
+                .IsUnique()
+                .HasDatabaseName("RoleNameIndex");
             role.Property(r => r.NormalizedName)
                 .IsRequired()
-                .HasMaxLength(256)
-                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("RoleNormalizedNameIndex") { IsUnique = true }));
-            role.HasMany(r => r.Users).WithRequired().HasForeignKey(ur => ur.RoleId);
-            role.HasMany(r => r.Claims).WithRequired().HasForeignKey(ur => ur.RoleId);
+                .HasMaxLength(256);
+            role.HasIndex(r => r.NormalizedName)
+                .IsUnique()
+                .HasDatabaseName("RoleNormalizedNameIndex");
 
-            modelBuilder.Entity<IdentityRoleClaim>()
+            modelBuilder.Entity<IdentityRoleClaim<int>>()
                 .ToTable("AspNetRoleClaims");
 
-            var tokens = modelBuilder.Entity<IdentityUserToken>()
+            var tokens = modelBuilder.Entity<IdentityUserToken<int>>()
                 .ToTable("AspNetUserTokens");
             tokens.HasKey(t => new { t.UserId, t.LoginProvider, t.Name })
-                .Property(t => t.LoginProvider)
+                .HasName("PK_AspNetUserTokens");
+            tokens.Property(t => t.LoginProvider)
                 .HasMaxLength(128);
             tokens.Property(t => t.Name).HasMaxLength(128);
 
-            var follow = modelBuilder.Entity<Follow>()
-                .HasKey(f => new { f.UserID, f.FollowID });
-            follow.HasRequired(f => f.user)
-                .WithMany(u => u.follows)
-                .HasForeignKey(f => f.UserID)
-                .WillCascadeOnDelete(true);
-            follow.HasRequired(f => f.follow)
-                .WithMany()
-                .HasForeignKey(f => f.FollowID)
-                .WillCascadeOnDelete(false);
+            modelBuilder.Entity<Follow>(follow =>
+            {
+                follow.HasKey(f => new { f.UserID, f.FollowID });
+                follow.HasOne(f => f.user)
+                    .WithMany(u => u.follows)
+                    .HasForeignKey(f => f.UserID)
+                    .OnDelete(DeleteBehavior.Cascade);
+                follow.HasOne(f => f.follow)
+                    .WithMany()
+                    .HasForeignKey(f => f.FollowID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             var scenarioChoice = modelBuilder.Entity<ScenarioChoice>();
             scenarioChoice
-                .HasRequired(s => s.Scenario)
+                .HasOne(s => s.Scenario)
                 .WithMany(s => s.Choices)
                 .HasForeignKey(s => s.ScenarioID)
-                .WillCascadeOnDelete(false);
+                .OnDelete(DeleteBehavior.Restrict);
 
             var userGameData = modelBuilder.Entity<UserGameData>();
             userGameData
-                .HasRequired(u => u.Game)
+                .HasOne(u => u.Game)
                 .WithMany()
                 .HasForeignKey(u => u.GameID)
-                .WillCascadeOnDelete(false);
+                .OnDelete(DeleteBehavior.Restrict);
             userGameData
                 .HasMany(u => u.VisitedScenarios)
-                .WithRequired(v => v.UserGameData)
+                .WithOne(v => v.UserGameData)
                 .HasForeignKey(u => new { u.UserID, u.GameID })
-                .WillCascadeOnDelete(false);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AuditExamSubmission>()
+                .HasKey(a => new { a.UserID, a.Version });
         }
     }
 
@@ -198,7 +204,7 @@ namespace GmGard.Models
         public DateTime PicDate { get; set; }
     }
 
-    public class UserProfile : IdentityUser
+    public class UserProfile : IdentityUser<int>
     {
         [Key, Column("UserId")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -485,10 +491,10 @@ namespace GmGard.Models
 
     public class AuditExamSubmission
     {
-        [Key, Column(Order = 1), ForeignKey("User")]
+        [Column(Order = 1), ForeignKey("User")]
         public int UserID { get; set; }
 
-        [Key, Column(Order = 2), MaxLength(20)]
+        [Column(Order = 2), MaxLength(20)]
         public string Version { get; set; }
 
         public string RawSubmission { get; set; }

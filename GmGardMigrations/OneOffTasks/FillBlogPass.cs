@@ -22,7 +22,7 @@ namespace GmGardMigrations.OneOffTasks
         public static void Run()
         {
             BlogContextFactory blogContextFactory = new BlogContextFactory();
-            using (var db = blogContextFactory.Create())
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var totalBlogs = db.Blogs.Where(b => b.BlogID > 0).Count();
                 Console.WriteLine($"total blogs: {totalBlogs}");

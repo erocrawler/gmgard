@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Filters;
 using GmGard.Models;
 using GmGard.Services;
@@ -13,7 +13,8 @@ using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Entity;
+
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -97,8 +98,8 @@ namespace GmGard.Controllers
         }
 
         public ActionResult List(int? id, int page = 1, string sort = "")
-        {
-            var topics = _db.Topics.Include(t => t.tag);
+        {            
+            IQueryable<Topic> topics = _db.Topics.Include(t => t.tag);
             if (id.HasValue && id.Value > 0)
             {
                 if (_catUtil.GetCategoryList().Find(l => l.CategoryID == id.Value) == null)

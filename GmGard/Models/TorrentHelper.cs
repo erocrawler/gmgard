@@ -1,4 +1,4 @@
-﻿using MonoTorrent;
+using MonoTorrent;
 
 namespace GmGard.Models
 {

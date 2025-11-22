@@ -1,8 +1,8 @@
 ﻿using GmGard.Models;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -53,7 +53,7 @@ namespace GmGardMigrations.OneOffTasks
         public static void Run()
         {
             BlogContextFactory blogContextFactory = new BlogContextFactory();
-            using (var db = blogContextFactory.Create())
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var joins = db.HistoryRankings.Join(db.Blogs, r => r.BlogID, b => b.BlogID, (r, b) => new { rank = r, blog = b, pc = db.Posts.Count(p => p.ItemId == b.BlogID && p.IdType == ItemType.Blog) });
                 int count = joins.Count();
@@ -75,7 +75,7 @@ namespace GmGardMigrations.OneOffTasks
                 }
             }
 
-            using (var db = blogContextFactory.Create())
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var rankdata = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../App_Data/ranking.js"));
                 var rankings = JsonConvert.DeserializeObject<RankingList>(rankdata);
@@ -162,11 +162,11 @@ namespace GmGardMigrations.OneOffTasks
             DateTime firstday = new DateTime(year, month, 1);
             DateTime lastDay = new DateTime(firstday.Year, firstday.Month, DateTime.DaysInMonth(firstday.Year, firstday.Month));
             var factory = new BlogContextFactory();
-            using (var db = factory.Create())
+            using (var db = factory.CreateDbContext(null))
             {
-                var oldRankings = db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && DbFunctions.DiffMonths(lastDay, h.RankDate) == 0).ToList();
+                var oldRankings = db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && EF.Functions.DateDiffMonth(lastDay, h.RankDate) == 0).ToList();
                 db.HistoryRankings.RemoveRange(oldRankings);
-                var rankings = db.BlogRatings.Where(r => DbFunctions.DiffMonths(firstday, r.ratetime) == 0).GroupBy(r => r.BlogID)
+                var rankings = db.BlogRatings.Where(r => EF.Functions.DateDiffMonth(firstday, r.ratetime) == 0).GroupBy(r => r.BlogID)
                     .Select(g => new { blogId = g.Key, rating = g.Sum(r => r.value) })
                     .Join(
                         db.Blogs.Where(b => b.isApproved == true && !(new[] { 11, 12 }).Contains(b.CategoryID)),

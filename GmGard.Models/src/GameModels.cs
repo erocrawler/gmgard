@@ -66,11 +66,13 @@ namespace GmGard.Models
 
     public class UserVisitedScenario
     {
-        [Key, ForeignKey("UserGameData"), Column(Order = 0)]
+        [Key, Column(Order = 0)]
         public int UserID { get; set; }
 
-        [Key, ForeignKey("UserGameData"), Column(Order = 1)]
+        [Key, Column(Order = 1)]
         public int GameID { get; set; }
+        
+        [ForeignKey("UserID, GameID")]
         public virtual UserGameData UserGameData { get; set; }
 
         [Key, Column(Order = 2), ForeignKey("Scenario")]

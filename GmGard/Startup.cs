@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using GmGard.Models;
-using AspNetCore.Identity.EntityFramework6;
 using GmGard.Filters;
 using GmGard.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +15,7 @@ using Microsoft.AspNetCore.Routing;
 using Serilog;
 using System.IO;
 using FluentScheduler;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.WebEncoders;
 using System.Text.Encodings.Web;
@@ -77,10 +76,10 @@ namespace GmGard
             services.AddMemoryCache();
             services.AddSession();
 
-            services.AddScoped(p => new BlogContext(_dataDbConnectionString, p.GetRequiredService<ILoggerFactory>()));
-            services.AddScoped(p => new UsersContext(_userDbConnectionString, p.GetRequiredService<ILoggerFactory>()));
+            services.AddDbContext<BlogContext>(options => options.UseSqlServer(_dataDbConnectionString));
+            services.AddDbContext<UsersContext>(options => options.UseSqlServer(_userDbConnectionString));
 
-            services.AddIdentity<UserProfile, AspNetCore.Identity.EntityFramework6.IdentityRole>(options =>
+            services.AddIdentity<UserProfile, IdentityRole<int>>(options =>
             {
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
@@ -89,8 +88,7 @@ namespace GmGard
                 options.User.RequireUniqueEmail = true;
                 options.User.AllowedUserNameCharacters = string.Empty;
             })
-                .AddUserStore<UserStore<UserProfile, UsersContext>>()
-                .AddRoleStore<RoleStore<UsersContext>>()
+                .AddEntityFrameworkStores<UsersContext>()
                 .AddErrorDescriber<GmIdentityErrorDescriber>()
                 .AddDefaultTokenProviders();
 
@@ -237,15 +235,6 @@ namespace GmGard
                 app.UseDeveloperExceptionPage();
                 //app.UseDatabaseErrorPage();
                 //app.UseBrowserLink();
-
-                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-                {
-                    Database.SetInitializer(new BlogDBinit());
-                    Database.SetInitializer(new UserDBinit(
-                        serviceScope.ServiceProvider.GetService<IPasswordHasher<UserProfile>>()));
-                    serviceScope.ServiceProvider.GetService<BlogContext>().Database.Initialize(false);
-                    serviceScope.ServiceProvider.GetService<UsersContext>().Database.Initialize(false);
-                }
             }
             else
             {

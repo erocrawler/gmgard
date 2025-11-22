@@ -1,4 +1,4 @@
-﻿namespace GmGard.Models
+namespace GmGard.Models
 {
     public class AuditModel
     {

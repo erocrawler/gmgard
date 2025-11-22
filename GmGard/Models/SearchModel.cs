@@ -1,4 +1,4 @@
-﻿using GmGard.Extensions;
+using GmGard.Extensions;
 using GmGard.Services;
 using LinqKit;
 using Microsoft.AspNetCore.Mvc;

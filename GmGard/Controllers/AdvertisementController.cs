@@ -1,4 +1,4 @@
-﻿using GmGard.Filters;
+using GmGard.Filters;
 using GmGard.Models;
 using GmGard.ViewComponents;
 using Microsoft.AspNetCore.Authorization;

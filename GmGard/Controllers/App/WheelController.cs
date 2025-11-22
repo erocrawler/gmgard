@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -371,7 +371,7 @@ namespace GmGard.Controllers.App
             }
             var user = await _userManager.GetUserAsync(User);
             var todayDrawCount = await _udb.UserVouchers
-                .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && DbFunctions.DiffDays(v.IssueTime, DateTime.Today) == 0)
+                .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && EF.Functions.DateDiffDay(v.IssueTime, DateTime.Today) == 0)
                 .CountAsync();
             if (todayDrawCount >= 3 && !User.IsInRole("AdManager") && !User.IsInRole("Administrator"))
             {

@@ -9,7 +9,7 @@ namespace GmGardMigrations.OneOffTasks
         public static void AddCode(int userid, int count)
         {
             UsersContextFactory usersContextFactory = new UsersContextFactory();
-            using (var udb = usersContextFactory.Create())
+            using (var udb = usersContextFactory.CreateDbContext(null))
             {
                 for (int i = 0; i <count; i++)
                 {

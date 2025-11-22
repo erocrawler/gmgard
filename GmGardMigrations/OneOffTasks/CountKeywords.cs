@@ -64,7 +64,7 @@ namespace GmGardMigrations.OneOffTasks
 
             var keywordDict = new Dictionary<string, int>();
             BlogContextFactory blogContextFactory = new BlogContextFactory();
-            using (var db = blogContextFactory.Create())
+            using (var db = blogContextFactory.CreateDbContext(null))
             {
                 var blogCount = db.Blogs.Count();
                 for (int i = 0; i < blogCount; i += BATCH_SIZE)

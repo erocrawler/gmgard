@@ -1,4 +1,4 @@
-﻿using static GmGard.Services.CacheService;
+using static GmGard.Services.CacheService;
 using GmGard.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.ViewComponents
 {

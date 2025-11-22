@@ -1,4 +1,4 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -126,7 +126,7 @@ namespace GmGard.Services
                 }
                 // It is possible the auditor also voted. In that case update the vote as decision, don't calculate the auditor's statistics.
                 var blogAudit = latestAudits.SingleOrDefault(la => la.BlogID == args.BlogId && la.Auditor == args.Auditor && la.BlogVersion == version)
-                    ?? db.BlogAudits.Add(new BlogAudit { Auditor = args.Auditor, BlogID = args.BlogId, BlogVersion = version });
+                    ?? db.BlogAudits.Add(new BlogAudit { Auditor = args.Auditor, BlogID = args.BlogId, BlogVersion = version }).Entity;
                 blogAudit.AuditAction = args.Action;
                 blogAudit.AuditDate = DateTime.Now;
                 blogAudit.Reason = args.Reason;

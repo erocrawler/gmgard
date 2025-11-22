@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using GmGard.Models;
 using GmGard.Services;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Controllers
 {
@@ -183,7 +183,7 @@ namespace GmGard.Controllers
         }
 
         private Task<UserQuest> GetQuestAsync(bool includeUser = false) =>
-            (includeUser ? (_udb.UserQuests.Include(u => u.user)) : _udb.UserQuests)
+            (includeUser ? (_udb.UserQuests.Include(u => u.user)) : (IQueryable<UserQuest>)_udb.UserQuests)
                 .SingleOrDefaultAsync(u => u.user.UserName == User.Identity.Name);
 
         private async Task<Dictionary<string, int>> GetProfessionStatsAsync()

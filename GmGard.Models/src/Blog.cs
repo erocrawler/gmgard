@@ -1,33 +1,19 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using CodeFirstStoreFunctions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity;
-using System.Data.Entity.Core.Objects;
-using System.Data.Entity.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace GmGard.Models
 {
-    [DbConfigurationType(typeof(DbCodeConfiguration))]
     public class BlogContext : DbContext
     {
-        public BlogContext(string nameOrConnectionString, ILoggerFactory logger)
-            :base(nameOrConnectionString)
-        {
-            var log = logger.CreateLogger<BlogContext>();
-            Database.Log = l =>
-            {
-                log.LogInformation(l);
-            };
-        }
-
-        public BlogContext(string nameOrConnectionString)
-            : base(nameOrConnectionString)
+        public BlogContext(DbContextOptions<BlogContext> options)
+            : base(options)
         {
         }
 
@@ -53,43 +39,27 @@ namespace GmGard.Models
         public DbSet<Bounty> Bounties { get; set; }
         public DbSet<Answer> Answers { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.ComplexType<RankedBlogId>();
-            modelBuilder.Conventions.Add(new FunctionsConvention<BlogContext>("dbo"));
+            modelBuilder.Entity<RankedBlogId>().HasNoKey();
+            modelBuilder.HasDbFunction(typeof(BlogContext).GetMethod(nameof(FreeTextSearchBlog), new[] { typeof(string) }))
+                .HasName("FreeTextSearchBlog");
+            modelBuilder.HasDbFunction(typeof(BlogContext).GetMethod(nameof(ContainsSearchBlog), new[] { typeof(string) }))
+                .HasName("ContainsSearchBlog");
+
             modelBuilder.Entity<Blog>()
-                        .HasRequired(e => e.Category)
+                        .HasOne(e => e.Category)
                         .WithMany(c => c.Blogs)
                         .HasForeignKey(e => e.CategoryID)
-                        .WillCascadeOnDelete(false);
+                        .OnDelete(DeleteBehavior.Restrict);
         }
 
-        [DbFunction("BlogContext", "FreeTextSearchBlog")]
         public IQueryable<RankedBlogId> FreeTextSearchBlog(string SearchTitle)
-        {
-            var SearchTitleParameter = SearchTitle != null ?
-                new ObjectParameter("SearchTitle", SearchTitle) :
-                new ObjectParameter("SearchTitle", typeof(string));
+            => FromExpression(() => FreeTextSearchBlog(SearchTitle));
 
-            return ((IObjectContextAdapter)this).ObjectContext
-                .CreateQuery<RankedBlogId>(
-                    string.Format("[{0}].{1}", GetType().Name,
-                        "[FreeTextSearchBlog](@SearchTitle)"), SearchTitleParameter);
-        }
-
-        [DbFunction("BlogContext", "ContainsSearchBlog")]
         public IQueryable<RankedBlogId> ContainsSearchBlog(string SearchTitle)
-        {
-            var SearchTitleParameter = SearchTitle != null ?
-                new ObjectParameter("SearchTitle", SearchTitle) :
-                new ObjectParameter("SearchTitle", typeof(string));
-
-            return ((IObjectContextAdapter)this).ObjectContext
-                .CreateQuery<RankedBlogId>(
-                    string.Format("[{0}].{1}", GetType().Name,
-                        "[ContainsSearchBlog](@SearchTitle)"), SearchTitleParameter);
-        }
+            => FromExpression(() => ContainsSearchBlog(SearchTitle));
     }
 
     public class RankedBlogId
@@ -100,7 +70,7 @@ namespace GmGard.Models
 
     public class Blog
     {
-        [ScaffoldColumn(false), DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
+        [ScaffoldColumn(false), DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BlogID { get; set; }
 
         [Required(ErrorMessage = "请输入标题"), StringLength(120, ErrorMessage = "标题不得超过120个字符"), Display(Name = "标题")]
@@ -145,7 +115,6 @@ namespace GmGard.Models
 
     public class BlogOption
     {
-        [Key, ForeignKey("blog")]
         public int BlogID { get; set; }
 
         public bool LockTags { get; set; }
