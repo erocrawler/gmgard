@@ -28,7 +28,7 @@ namespace GmGard.Controllers
 
         public ActionResult Index(int page = 1)
         {
-            var userprofile = _udb.Users.Include("follows").SingleOrDefault(u => u.UserName == User.Identity.Name);
+            var userprofile = _udb.Users.Include(u => u.follows).SingleOrDefault(u => u.UserName == User.Identity.Name);
             var followedNames = userprofile.follows.Select(u => u.follow.UserName);
             var query = _db.Blogs.Where(b => followedNames.Contains(b.Author) && b.isApproved == true).OrderByDescending(b => b.BlogDate);
 

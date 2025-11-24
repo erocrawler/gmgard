@@ -50,69 +50,214 @@ namespace GmGard.Models
             // Init ExpTable
             if (!context.ExpTable.Any())
             {
+                // Add special records with specific IDs
+                context.ExpTable.Add(new ExperienceTable { Level = 0, ExperienceStart = 0, ExperienceEnd = 0, Title = "缺省" });
+                context.ExpTable.Add(new ExperienceTable { Level = -1, ExperienceStart = -1, ExperienceEnd = -1, Title = "小黑屋" });
+                context.ExpTable.Add(new ExperienceTable { Level = 99, ExperienceStart = 999, ExperienceEnd = 999, Title = "管理员" });
+                
+                // Add sample data
                 GetExpTableSample().ForEach(e => context.ExpTable.Add(e));
-                try
-                {
-                    context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT ExperienceTables ON; Insert Into dbo.ExperienceTables (Level, ExperienceStart,ExperienceEnd,Title) values (0,0,0,'缺省'); SET IDENTITY_INSERT ExperienceTables OFF;");
-                    context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT ExperienceTables ON; Insert Into dbo.ExperienceTables (Level, ExperienceStart,ExperienceEnd,Title) values (-1,-1,-1,'小黑屋'); SET IDENTITY_INSERT ExperienceTables OFF;");
-                    context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT ExperienceTables ON; Insert Into dbo.ExperienceTables (Level, ExperienceStart,ExperienceEnd,Title) values (99,999,999,'管理员'); SET IDENTITY_INSERT ExperienceTables OFF;");
-                }
-                catch { }
+                
                 await context.SaveChangesAsync();
             }
         }
 
         public static void SeedBlog(BlogContext context)
         {
+            var isPostgreSQL = context.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL";
+
             if (!context.Categories.Any())
             {
                 GetCategories().ForEach(c => context.Categories.Add(c));
+                context.SaveChanges();
+                
+                // Reset sequence for PostgreSQL after inserting with explicit IDs
+                if (isPostgreSQL)
+                {
+                    context.Database.ExecuteSqlRaw("SELECT setval(pg_get_serial_sequence('\"Categories\"', 'CategoryID'), COALESCE(MAX(\"CategoryID\"), 1)) FROM \"Categories\";");
+                }
             }
             
             if (!context.Blogs.Any())
             {
                 GetBlogs().ForEach(p => context.Blogs.Add(p));
+                
+                // Add special system blogs with specific IDs
+                context.Blogs.Add(new Blog
+                {
+                    BlogID = 0,
+                    BlogTitle = "V0.01",
+                    Content = "版本历史",
+                    BlogDate = DateTime.Now,
+                    CategoryID = 1,
+                    Author = "admin",
+                    isApproved = false,
+                    BlogVisit = 0,
+                    IsLocalImg = false
+                });
+                context.Blogs.Add(new Blog
+                {
+                    BlogID = -1,
+                    BlogTitle = "举报消息",
+                    Content = "举报消息",
+                    BlogDate = DateTime.Now,
+                    CategoryID = 1,
+                    Author = "admin",
+                    isApproved = false,
+                    BlogVisit = 0,
+                    IsLocalImg = false
+                });
+                
                 context.SaveChanges();
                 
-                try
+                // Reset sequence for PostgreSQL after inserting with explicit IDs
+                if (isPostgreSQL)
                 {
-                    // Using ExecuteSqlRaw for identity insert and triggers
-                    context.Database.ExecuteSqlRaw(@"set Identity_insert Blogs on;
-                                                     Insert into dbo.Blogs (blogid, BlogTitle, Content, ImagePath, isLocalImg, BlogDate,CategoryID, Author, isApproved, BlogVisit, isHarmony)
-                                                     values (0, 'V0.01', '版本历史', null, 'false', GETDATE(), 1, 'admin', 'false', 0, 'false'),
-                                                            (-1, '举报消息', '举报消息', null, 'false', GETDATE(), 1, 'admin', 'false', 0, 'false');
-                                                     set Identity_insert Blogs off;");
+                    context.Database.ExecuteSqlRaw("SELECT setval(pg_get_serial_sequence('\"Blogs\"', 'BlogID'), GREATEST(COALESCE(MAX(\"BlogID\"), 1), 1)) FROM \"Blogs\";");
                 }
-                catch { }
             }
 
             if (!context.Posts.Any())
             {
                 GetPosts().ForEach(p => context.Posts.Add(p));
                 context.SaveChanges();
+                
+                // Reset sequence for PostgreSQL after inserting with explicit IDs
+                if (isPostgreSQL)
+                {
+                    context.Database.ExecuteSqlRaw("SELECT setval(pg_get_serial_sequence('\"Posts\"', 'PostId'), COALESCE(MAX(\"PostId\"), 1)) FROM \"Posts\";");
+                }
             }
 
-            // Trigger creation should probably be in a migration, but if we keep it here:
-            try 
+            // Create database triggers if they don't exist
+            CreateTriggersIfNotExist(context);
+        }
+
+        private static void CreateTriggersIfNotExist(BlogContext context)
+        {
+            var isPostgreSQL = context.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL";
+            
+            try
             {
-                context.Database.ExecuteSqlRaw(@"create trigger Rating_trigger
-                    on ratings
-                    after insert,update,delete
-                    as
-                    begin
-                    update b
-                    set b.Rating = (
-                        select isnull(SUM(ratings.value), 0) from Ratings where
-                        BlogID = i.BlogID
-                        )
-                    from dbo.Blogs as b inner join 
-                    (select BlogID from inserted union select BlogID from deleted) as i 
-                    on i.BlogID = b.BlogID
-                    end");
+                if (isPostgreSQL)
+                {
+                    // PostgreSQL triggers
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE OR REPLACE FUNCTION update_blog_rating()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            UPDATE ""Blogs""
+                            SET ""Rating"" = COALESCE((
+                                SELECT SUM(""Value"")
+                                FROM ""Ratings""
+                                WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"")
+                            ), 0)
+                            WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"");
+                            RETURN NULL;
+                        END;
+                        $$ LANGUAGE plpgsql;
+                    ");
+
+                    context.Database.ExecuteSqlRaw(@"
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'rating_trigger') THEN
+                                CREATE TRIGGER rating_trigger
+                                AFTER INSERT OR UPDATE OR DELETE ON ""Ratings""
+                                FOR EACH ROW
+                                EXECUTE FUNCTION update_blog_rating();
+                            END IF;
+                        END $$;
+                    ");
+
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE OR REPLACE FUNCTION update_post_rating()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            UPDATE ""Blogs""
+                            SET ""Rating"" = COALESCE((
+                                SELECT SUM(""Value"")
+                                FROM ""PostRatings""
+                                WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"")
+                            ), 0)
+                            WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"");
+                            RETURN NULL;
+                        END;
+                        $$ LANGUAGE plpgsql;
+                    ");
+
+                    context.Database.ExecuteSqlRaw(@"
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'postrating_trigger') THEN
+                                CREATE TRIGGER postrating_trigger
+                                AFTER INSERT OR UPDATE OR DELETE ON ""PostRatings""
+                                FOR EACH ROW
+                                EXECUTE FUNCTION update_post_rating();
+                            END IF;
+                        END $$;
+                    ");
+                }
+                else
+                {
+                    // SQL Server triggers
+                    context.Database.ExecuteSqlRaw(@"
+                        IF NOT EXISTS (SELECT * FROM sys.triggers WHERE name = 'Rating_trigger')
+                        BEGIN
+                            EXEC('
+                                CREATE TRIGGER Rating_trigger
+                                ON Ratings
+                                AFTER INSERT, UPDATE, DELETE
+                                AS
+                                BEGIN
+                                    UPDATE b
+                                    SET b.Rating = (
+                                        SELECT ISNULL(SUM(ratings.value), 0) 
+                                        FROM Ratings 
+                                        WHERE BlogID = i.BlogID
+                                    )
+                                    FROM dbo.Blogs AS b 
+                                    INNER JOIN (
+                                        SELECT BlogID FROM inserted 
+                                        UNION 
+                                        SELECT BlogID FROM deleted
+                                    ) AS i ON i.BlogID = b.BlogID
+                                END
+                            ')
+                        END
+                    ");
+
+                    context.Database.ExecuteSqlRaw(@"
+                        IF NOT EXISTS (SELECT * FROM sys.triggers WHERE name = 'PostRating_trigger')
+                        BEGIN
+                            EXEC('
+                                CREATE TRIGGER PostRating_trigger
+                                ON PostRatings
+                                AFTER INSERT, UPDATE, DELETE
+                                AS
+                                BEGIN
+                                    UPDATE b
+                                    SET b.Rating = (
+                                        SELECT ISNULL(SUM(postratings.value), 0) 
+                                        FROM PostRatings 
+                                        WHERE BlogID = i.BlogID
+                                    )
+                                    FROM dbo.Blogs AS b 
+                                    INNER JOIN (
+                                        SELECT BlogID FROM inserted 
+                                        UNION 
+                                        SELECT BlogID FROM deleted
+                                    ) AS i ON i.BlogID = b.BlogID
+                                END
+                            ')
+                        END
+                    ");
+                }
             }
             catch
             {
-                // Trigger might already exist
+                // Triggers might already exist or there might be permission issues
+                // This is not critical for initial setup
             }
         }
 

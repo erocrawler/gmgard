@@ -55,7 +55,7 @@ namespace GmGard.Controllers
             {
                 name = model.grouplist.First().url;
             }
-            model.hangroup = _db.HanGroups.Include("blogs").SingleOrDefault(h => h.GroupUri == name);
+            model.hangroup = _db.HanGroups.Include(h => h.blogs).SingleOrDefault(h => h.GroupUri == name);
             if (model.hangroup == null)
             {
                 return NotFound();
@@ -79,7 +79,7 @@ namespace GmGard.Controllers
         [HttpGet, Authorize, HanMemberFilter]
         public ActionResult Edit(int id = 1)
         {
-            var hg = _db.HanGroups.Include("blogs").SingleOrDefault(h => h.HanGroupID == id);
+            var hg = _db.HanGroups.Include(h => h.blogs).SingleOrDefault(h => h.HanGroupID == id);
             if (hg == null)
                 return RedirectToAction("Index");
             var model = new HanEdit(hg);
@@ -89,7 +89,7 @@ namespace GmGard.Controllers
         [HttpPost]
         public async Task<ActionResult> Edit(HanEdit model)
         {
-            var hg = _db.HanGroups.Include("blogs").Include("members").SingleOrDefault(m => m.HanGroupID == model.ID);
+            var hg = _db.HanGroups.Include(h => h.blogs).Include(h => h.members).SingleOrDefault(m => m.HanGroupID == model.ID);
             if (hg == null)
                 return NotFound();
             byte[] imgbtye = null;

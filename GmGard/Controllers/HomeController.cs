@@ -282,7 +282,7 @@ namespace GmGard.Controllers
                 return PartialView(view + "Partial", model);
             }
 
-            UserProfile p = await _udb.Users.Include("quest").Include("auditor").AsNoTracking().SingleOrDefaultAsync(u => u.UserName == name);
+            UserProfile p = await _udb.Users.Include(u => u.quest).Include(u => u.auditor).AsNoTracking().SingleOrDefaultAsync(u => u.UserName == name);
             if (p == null)
             {
                 return NotFound();
@@ -390,7 +390,7 @@ namespace GmGard.Controllers
             return RedirectToActionPermanent("Do", "PunchIn", new { Area = "App" });
         }
 
-        public ViewResult UserRanking()
+        public async Task<ViewResult> UserRanking()
         {
             string cachename = "userranking";
             if (User.Identity.IsAuthenticated)
@@ -401,50 +401,98 @@ namespace GmGard.Controllers
             if (model == null)
             {
                 model = new UserRanking();
-                var exp = _udb.Set<RankTuple>().FromSqlRaw(@"Select u.username as Name, u.experience as Value, Rank() over 
-                    (Order by u.experience desc) as Ranking 
-                    from UserProfile as u");
+                
+                string currentUser = User.Identity.IsAuthenticated ? User.Identity.Name : null;
 
-                var sign = _udb.Set<RankTuple>().FromSqlRaw(@"Select u.username as Name, u.ConsecutiveSign as Value, Rank() over 
-                    (Order by u.ConsecutiveSign desc) as Ranking 
-                    from UserProfile as u");
+                // Experience ranking - top 10 + current user if needed
+                model.Exp = await _udb.Users
+                    .OrderByDescending(u => u.Experience)
+                    .Take(10)
+                    .Select((u, index) => new RankTuple 
+                    { 
+                        Name = u.UserName, 
+                        Value = u.Experience, 
+                        Ranking = index + 1 
+                    })
+                    .ToListAsync();
 
-                var blogs = _db.Set<RankTuple>().FromSqlRaw(@"with t as (select Author as Name, Count(BlogID) as Value 
-                    from Blogs group by Author) 
-                    select t.Name, t.Value, Rank() over (order by t.Value desc) as Ranking from t");
+                // Consecutive sign ranking - top 10
+                model.Sign = await _udb.Users
+                    .OrderByDescending(u => u.ConsecutiveSign)
+                    .Take(10)
+                    .Select((u, index) => new RankTuple 
+                    { 
+                        Name = u.UserName, 
+                        Value = u.ConsecutiveSign, 
+                        Ranking = index + 1 
+                    })
+                    .ToListAsync();
 
-                var posts = _db.Set<RankTuple>().FromSqlRaw(@"with t as(
-                 select nt.Name, sum(counts) as Value from
-                 ((
-	                select Author as Name, Count(PostID) as counts from posts
-	                group by Author
-                 ) union
-                 (
-	                select Author as Name, Count(ReplyID) as counts from replies
-	                group by Author
-                 )) as nt
-                 group by nt.Name
-                 ) select t.Name, t.Value, Rank() over (order by t.Value desc) as Ranking from t");
+                // Blog count ranking - top 10
+                model.Blog = await _db.Blogs
+                    .GroupBy(b => b.Author)
+                    .Select(g => new { Name = g.Key, Value = g.Count() })
+                    .OrderByDescending(g => g.Value)
+                    .Take(10)
+                    .Select((b, index) => new RankTuple 
+                    { 
+                        Name = b.Name, 
+                        Value = b.Value, 
+                        Ranking = index + 1 
+                    })
+                    .ToListAsync();
 
-                model.Exp = exp.Take(10).ToList();
-                model.Blog = blogs.Take(10).ToList();
-                model.Sign = sign.Take(10).ToList();
-                model.Post = posts.Take(10).ToList();
+                // Post + Reply count ranking - top 10
+                var postCounts = _db.Posts
+                    .GroupBy(p => p.Author)
+                    .Select(g => new { Name = g.Key, Count = g.Count() });
+                var replyCounts = _db.Replies
+                    .GroupBy(r => r.Author)
+                    .Select(g => new { Name = g.Key, Count = g.Count() });
+                model.Post = await postCounts
+                    .Concat(replyCounts)
+                    .GroupBy(x => x.Name)
+                    .Select(g => new { Name = g.Key, Value = g.Sum(x => x.Count) })
+                    .OrderByDescending(x => x.Value)
+                    .Take(10)
+                    .Select((p, index) => new RankTuple 
+                    { 
+                        Name = p.Name, 
+                        Value = p.Value, 
+                        Ranking = index + 1 
+                    })
+                    .ToListAsync();
+
                 if (User.Identity.IsAuthenticated)
                 {
-                    var myexp = exp.AsQueryable().SingleOrDefault(r => r.Name == User.Identity.Name);
-                    if (myexp != null)
-                        model.MyExp = new Tuple<int, long>(myexp.Value, myexp.Ranking);
-                    myexp = sign.SingleOrDefault(r => r.Name.ToLower() == User.Identity.Name.ToLower());
-                    if (myexp != null)
-                        model.MySign = new Tuple<int, long>(myexp.Value, myexp.Ranking);
+                    // Get current user's actual rankings
+                    var user = await _udb.Users.FirstOrDefaultAsync(u => u.UserName == currentUser);
+                    if (user != null)
+                    {
+                        var expRank = await _udb.Users.CountAsync(u => u.Experience > user.Experience) + 1;
+                        model.MyExp = new Tuple<int, long>(user.Experience, expRank);
 
-                    myexp = blogs.SingleOrDefault(r => r.Name.ToLower() == User.Identity.Name.ToLower());
-                    if (myexp != null)
-                        model.MyBlog = new Tuple<int, long>(myexp.Value, myexp.Ranking);
-                    myexp = posts.SingleOrDefault(r => r.Name.ToLower() == User.Identity.Name.ToLower());
-                    if (myexp != null)
-                        model.MyPost = new Tuple<int, long>(myexp.Value, myexp.Ranking);
+                        var signRank = await _udb.Users.CountAsync(u => u.ConsecutiveSign > user.ConsecutiveSign) + 1;
+                        model.MySign = new Tuple<int, long>(user.ConsecutiveSign, signRank);
+
+                        var blogCount = await _db.Blogs.CountAsync(b => b.Author == currentUser);
+                        var blogRank = await _db.Blogs.GroupBy(b => b.Author)
+                            .Where(g => g.Count() > blogCount)
+                            .CountAsync() + 1;
+                        model.MyBlog = new Tuple<int, long>(blogCount, blogRank);
+
+                        var postCount = await _db.Posts.CountAsync(p => p.Author == currentUser);
+                        var replyCount = await _db.Replies.CountAsync(r => r.Author == currentUser);
+                        var totalCount = postCount + replyCount;
+                        var postCounts2 = _db.Posts.GroupBy(p => p.Author).Select(g => new { Name = g.Key, Count = g.Count() });
+                        var replyCounts2 = _db.Replies.GroupBy(r => r.Author).Select(g => new { Name = g.Key, Count = g.Count() });
+                        var postRank = await postCounts2
+                            .Concat(replyCounts2)
+                            .GroupBy(x => x.Name)
+                            .Where(g => g.Sum(x => x.Count) > totalCount)
+                            .CountAsync() + 1;
+                        model.MyPost = new Tuple<int, long>(totalCount, postRank);
+                    }
                 }
                 model.rankdate = DateTime.Now;
                 _cache.Set(cachename, model, new TimeSpan(1, 0, 0));

@@ -4,7 +4,6 @@ using GmGard.ViewComponents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -52,10 +51,9 @@ namespace GmGard.Controllers
         [Route("Ad/{key}")]
         public ActionResult Details(
             [FromServices]ICompositeViewEngine compositeViewEngine, 
-            [FromServices]IActionContextAccessor actionContextAccessor, 
             string key)
         {
-            var result = compositeViewEngine.FindView(actionContextAccessor.ActionContext, key, false);
+            var result = compositeViewEngine.FindView(ControllerContext, key, false);
             if (result.Success)
             {
                 return View(key);

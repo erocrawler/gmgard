@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using GmGard.Models;
@@ -16,7 +15,6 @@ namespace GmGard.Controllers
             var exceptionHandler = HttpContext.Features.Get<IExceptionHandlerFeature>();
             if (exceptionHandler != null)
             {
-                var actionContext = HttpContext.RequestServices.GetService<IActionContextAccessor>();
                 var model = new ErrorContextModel { Exception = exceptionHandler.Error };
                 return View("Error", model);
             }

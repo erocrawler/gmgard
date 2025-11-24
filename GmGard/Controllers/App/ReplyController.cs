@@ -164,7 +164,7 @@ namespace GmGard.Controllers.App
             {
                 return BadRequest();
             }
-            var p = await _db.Posts.Include("Ratings").SingleOrDefaultAsync(pp => pp.PostId == id);
+            var p = await _db.Posts.Include(p => p.Ratings).SingleOrDefaultAsync(pp => pp.PostId == id);
             if (p == null)
             {
                 return NotFound();

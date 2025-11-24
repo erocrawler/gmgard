@@ -78,7 +78,7 @@ namespace GmGard.Models
         {
             BlogID = id;
             Author = author;
-            TagsInBlog = db.TagsInBlogs.Include("tag").Where(tib => tib.BlogID == id);
+            TagsInBlog = db.TagsInBlogs.Include(tib => tib.tag).Where(tib => tib.BlogID == id);
             TagHistories = db.TagHistories.Where(th => th.BlogID == id);
             NickNames = util.GetNickNames(TagsInBlog.Select(tib => tib.AddBy).Where(b => b != null));
             BlackListTagIDs = BlackListTags;

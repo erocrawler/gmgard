@@ -4,17 +4,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static GmGard.Models.UserQuest;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GmGard.Services
 {
     public class TitleService
     {
-        private readonly UsersContext _usersContext;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly List<TitleConfig> _titleConfigs;
-        public TitleService(UsersContext usersContext)
+        
+        public TitleService(IServiceScopeFactory scopeFactory)
         {
-            _usersContext = usersContext;
-            _titleConfigs = _usersContext.TitleConfigs.ToList();
+            _scopeFactory = scopeFactory;
+            // Load title configs once during initialization
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var usersContext = scope.ServiceProvider.GetRequiredService<UsersContext>();
+                _titleConfigs = usersContext.TitleConfigs.ToList();
+            }
         }
 
         public string GetTitleName(int titleId)

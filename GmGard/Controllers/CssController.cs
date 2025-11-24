@@ -1,7 +1,6 @@
 using GmGard.Models;
 using GmGard.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -16,15 +15,13 @@ namespace GmGard.Controllers
     {
         private BackgroundSetting _bgSetting;
         private ICompositeViewEngine _viewEngine;
-        private IActionContextAccessor _actionAccessor;
         private readonly ConstantUtil _constantUtil;
         private readonly TitleService _titleService;
 
-        public CssController(IOptionsSnapshot<BackgroundSetting> bgSetting, ICompositeViewEngine viewEngine, IActionContextAccessor actionAccessor, ConstantUtil constantUtil, TitleService titleService)
+        public CssController(IOptionsSnapshot<BackgroundSetting> bgSetting, ICompositeViewEngine viewEngine, ConstantUtil constantUtil, TitleService titleService)
         {
             _bgSetting = bgSetting.Value;
             _viewEngine = viewEngine;
-            _actionAccessor = actionAccessor;
             _constantUtil = constantUtil;
             _titleService = titleService;
         }
@@ -69,8 +66,8 @@ namespace GmGard.Controllers
 
             using (var sw = new StringWriter())
             {
-                ViewEngineResult viewResult = _viewEngine.FindView(_actionAccessor.ActionContext, viewName, true);
-                ViewContext viewContext = new ViewContext(_actionAccessor.ActionContext, viewResult.View, ViewData, TempData, sw, new HtmlHelperOptions());
+                ViewEngineResult viewResult = _viewEngine.FindView(ControllerContext, viewName, true);
+                ViewContext viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw, new HtmlHelperOptions());
 
                 await viewResult.View.RenderAsync(viewContext);
 

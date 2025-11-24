@@ -187,12 +187,12 @@ namespace GmGard.Controllers
                 ntopic.TopicTitle = topic.TopicTitle;
                 
                 if (topic.TopicImage != null)
-                {   //ValidateFileAttribute里已经检查过了
+                {   //ValidateFileAttribute里已经检查过。
                     ntopic.isLocalImg = true;
                     var imglist = await _uploadUtil.SaveImagesAsync(new IFormFile[] { topic.TopicImage });
                     if (imglist.Count < 1)
                     {
-                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请报告给管理员。");
                         return View(topic);
                     }
                     ntopic.ImagePath = imglist[0];
@@ -202,7 +202,7 @@ namespace GmGard.Controllers
                     string imgname = BlogHelper.getFirstImg(ntopic.Content);
                     if (imgname == null || imgname.Length < 5)
                     {
-                        ModelState.AddModelError("", "请添加预览图！（上传或在文中外链图片）");
+                        ModelState.AddModelError("", "请添加封面图：上传或在文中外链图片。");
                         return View(topic);
                     }
                     ntopic.ImagePath = imgname;
@@ -212,7 +212,7 @@ namespace GmGard.Controllers
                     var imglist = await _uploadUtil.SaveImagesAsync(new IFormFile[] { topic.TopicBanner }, false);
                     if (imglist.Count < 1)
                     {
-                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请报告给管理员。");
                         return View(topic);
                     }
                     ntopic.BannerPath = imglist[0];
@@ -263,7 +263,7 @@ namespace GmGard.Controllers
             int ret = TagUtil.CheckBlogTag(etopic.TagName, 1);
             if (ret != 0)
             {
-                ModelState.AddModelError("", ret > 0 ? "专题标签只能有1个" : "标签不得超过20个字符");
+                ModelState.AddModelError("", ret > 0 ? "专题栁E��只能朁E个" : "栁E��不得趁E��E0个字符");
             }
             else if (!_blogUtil.CheckAdmin())
             {
@@ -285,7 +285,7 @@ namespace GmGard.Controllers
                     var b = etopic.Blogs.SingleOrDefault(bb => bb.BlogID == bid);
                     if (b == null)
                     {
-                        ModelState.AddModelError("", "未找到ID编号为" + bid + "的资源");
+                        ModelState.AddModelError("", "未找到ID编号为" + bid + "的文章。");
                         return View(topic);
                     }
                     var blogintopic = new BlogsInTopic { blog = b, topic = topic, BlogOrder = i++ };
@@ -315,7 +315,7 @@ namespace GmGard.Controllers
                         var imglist = await _uploadUtil.SaveImagesAsync(new IFormFile[] { etopic.TopicImage }, true);
                         if (imglist.Count < 1)
                         {
-                            ModelState.AddModelError("", "保存图片时发生异常。请尝试转换图片格式后再次上传。如多次出错，请汇报给管理员。");
+                            ModelState.AddModelError("", "保存图片时发生异常。请尝试转换图片格式后再次上传。如多次出错，请报告给管理员。");
                             return View(etopic);
                         }
                         topic.ImagePath = imglist[0];
@@ -326,7 +326,7 @@ namespace GmGard.Controllers
                         string imgname = BlogHelper.getFirstImg(etopic.Content);
                         if (imgname == null || imgname.Length < 5)
                         {
-                            ModelState.AddModelError("", "请添加预览图！（上传或在文中外链图片）");
+                            ModelState.AddModelError("", "请添加封面图：上传或在文中外链图片。");
                             return View(etopic);
                         }
                         shouldDeleteOldImage = !etopic.IsLocalImg;
@@ -338,7 +338,7 @@ namespace GmGard.Controllers
                         var imglist = await _uploadUtil.SaveImagesAsync(new IFormFile[] { etopic.TopicBanner }, false);
                         if (imglist.Count < 1)
                         {
-                            ModelState.AddModelError("", "图片服务器上传出错，请尝试转换图片格式后再次上传。如多次出错，请汇报给管理员。");
+                            ModelState.AddModelError("", "图片服务器上传出错，请尝试转换图片格式后再次上传。如多次出错，请报告给管理员。");
                             return View(topic);
                         }
                         shouldDeleteOldBanner = true;

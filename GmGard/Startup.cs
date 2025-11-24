@@ -16,6 +16,7 @@ using Serilog;
 using System.IO;
 using FluentScheduler;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.WebEncoders;
 using System.Text.Encodings.Web;
@@ -25,6 +26,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using Microsoft.Extensions.Hosting;
 using Serilog.Filters;
+using Microsoft.AspNetCore.Http;
 
 namespace GmGard
 {
@@ -76,8 +78,26 @@ namespace GmGard
             services.AddMemoryCache();
             services.AddSession();
 
-            services.AddDbContext<BlogContext>(options => options.UseSqlServer(_dataDbConnectionString));
-            services.AddDbContext<UsersContext>(options => options.UseSqlServer(_userDbConnectionString));
+            // Determine database provider from connection string
+            var usePostgreSQL = _dataDbConnectionString.Contains("Host=") || _dataDbConnectionString.Contains("Server=") && _dataDbConnectionString.Contains("Username=");
+            
+            if (usePostgreSQL)
+            {
+                // Configure Npgsql to use timestamp without time zone globally
+                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+                
+                services.AddDbContext<BlogContext>(options => 
+                    options.UseNpgsql(_dataDbConnectionString, b => b.MigrationsAssembly("GmGard")));
+                services.AddDbContext<UsersContext>(options => 
+                    options.UseNpgsql(_userDbConnectionString, b => b.MigrationsAssembly("GmGard")));
+            }
+            else
+            {
+                services.AddDbContext<BlogContext>(options => 
+                    options.UseSqlServer(_dataDbConnectionString, b => b.MigrationsAssembly("GmGard")));
+                services.AddDbContext<UsersContext>(options => 
+                    options.UseSqlServer(_userDbConnectionString, b => b.MigrationsAssembly("GmGard")));
+            }
 
             services.AddIdentity<UserProfile, IdentityRole<int>>(options =>
             {
@@ -201,14 +221,17 @@ namespace GmGard
                 services.AddSingleton<ElasticSearchUpdateService>();
             }
             services.AddSingleton<EmailSender>();
-            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            services.AddHttpContextAccessor();
             services.AddScoped(provider =>
             {
                 var factory = provider.GetService<IUrlHelperFactory>();
-                var actionContext = provider.GetService<IActionContextAccessor>();
-                return factory.GetUrlHelper(actionContext.ActionContext);
+                var httpContextAccessor = provider.GetService<IHttpContextAccessor>();
+                var endpoint = httpContextAccessor.HttpContext.GetEndpoint();
+                var actionDescriptor = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor>() 
+                    ?? new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor();
+                var actionContext = new ActionContext(httpContextAccessor.HttpContext, httpContextAccessor.HttpContext.GetRouteData(), actionDescriptor);
+                return factory.GetUrlHelper(actionContext);
             });
-
             services.Configure<WebEncoderOptions>(options =>
             {
                 options.TextEncoderSettings = new TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All);
@@ -230,11 +253,15 @@ namespace GmGard
         {
             services.GetService<ElasticSearchUpdateService>();
             services.GetRequiredService<SchedulerService>();
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 //app.UseDatabaseErrorPage();
                 //app.UseBrowserLink();
+                
+                // Seed data in development environment only
+                SeedDevelopmentData(services).Wait();
             }
             else
             {
@@ -246,8 +273,8 @@ namespace GmGard
             app.UseStaticFiles(new StaticFileOptions {
                 ContentTypeProvider = ConfigureFileExtensionProvider(),
                 OnPrepareResponse = ctx => {
-                    ctx.Context.Response.Headers.Add("Access-Control-Allow-Origin", IsDev ? SiteConstant.DevAppHostOrigins : SiteConstant.AppHostOrigins);
-                    ctx.Context.Response.Headers.Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", IsDev ? SiteConstant.DevAppHostOrigins : SiteConstant.AppHostOrigins);
+                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
                 },
             });
 
@@ -329,6 +356,21 @@ namespace GmGard
                     template: "{controller=Home}/{action=Index}/{id?}");
         }
 
+        private async Task SeedDevelopmentData(IServiceProvider services)
+        {
+            using (var scope = services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                var usersContext = serviceProvider.GetRequiredService<UsersContext>();
+                var blogContext = serviceProvider.GetRequiredService<BlogContext>();
+                var userManager = serviceProvider.GetRequiredService<UserManager<UserProfile>>();
+                var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+                await DataSeeder.SeedUsersAsync(usersContext, userManager, roleManager);
+                DataSeeder.SeedBlog(blogContext);
+            }
+        }
+
         public Startup(IWebHostEnvironment env)
         {
             _basePath = env.ContentRootPath;
@@ -365,17 +407,20 @@ namespace GmGard
 
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            CreateHostBuilder(args).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            new WebHostBuilder()
-                .UseKestrel((opt) =>
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    opt.AllowSynchronousIO = true;
-                })
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .UseStartup<Startup>();
+                    webBuilder.UseKestrel((opt) =>
+                    {
+                        opt.AllowSynchronousIO = true;
+                    })
+                    .UseContentRoot(Directory.GetCurrentDirectory())
+                    .UseIISIntegration()
+                    .UseStartup<Startup>();
+                });
     }
 }

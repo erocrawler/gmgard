@@ -130,7 +130,7 @@ namespace GmGard.Controllers.App
         {
             if (string.IsNullOrWhiteSpace(category.CategoryName))
             {
-                return BadRequest(new { err = "请输入栏目名称" });
+                return BadRequest(new { err = "请输�E栏目名称" });
             }
             if (category.ParentCategoryID.HasValue)
             {
@@ -165,7 +165,7 @@ namespace GmGard.Controllers.App
             }
             if (cat.ParentCategoryID.HasValue)
             {
-                return BadRequest(new { err = "不可删除带有次级栏目的栏目" });
+                return BadRequest(new { err = "不可删除带有次级栏目皁E��目" });
             }
             if (cat.Blogs.Any())
             {

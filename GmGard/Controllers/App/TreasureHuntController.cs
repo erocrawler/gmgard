@@ -204,7 +204,7 @@ namespace GmGard.Controllers.App
                 {
                     if (_udb.TreasureHuntAttempts.Count(a => a.UserID == userData.User.Id && a.IsCorrect && a.TargetPuzzle == req.Id) != 0)
                     {
-                        return BadRequest(new { error = "本题已经回答过了。"});
+                        return BadRequest(new { error = "本题已经回答过。" });
                     }
                     rank = _udb.TreasureHuntAttempts
                         .Where(u => u.TargetPuzzle == req.Id && u.IsCorrect && !_udb.Set<IdentityUserRole<int>>().Where(r => r.RoleId == 1 || r.RoleId == 3).Select(r => r.UserId).Contains(u.UserID)) // 1 = Admin, 3 = Moderator

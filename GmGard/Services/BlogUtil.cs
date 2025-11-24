@@ -104,7 +104,7 @@ namespace GmGard.Services
                     }
                     isUserName = false;
                 }
-                var user = _udb.Users.Include("option").AsNoTracking().SingleOrDefault(u => (isUserName ? u.UserName : u.NickName) == noticeuser);
+                var user = _udb.Users.Include(u => u.option).AsNoTracking().SingleOrDefault(u => (isUserName ? u.UserName : u.NickName) == noticeuser);
                 if (user != null)
                 {
                     UserOption o = user.option;
@@ -206,8 +206,14 @@ namespace GmGard.Services
             if (auditTypes.Any(ba => ba == BlogAudit.Action.Approve || ba == BlogAudit.Action.Deny) && auditTypes.Any(ba => ba == BlogAudit.Action.VoteApprove || ba == BlogAudit.Action.VoteDeny))
             {
                     // If vote accuracy was affected by this blog, move all audits to BlogID = 0 to preserve them.
-                    await _db.Database.ExecuteSqlRawAsync(@"WITH maxv AS (SELECT max(BlogVersion) AS v FROM BlogAudits WHERE BlogID = 0)
-                        UPDATE BlogAudits SET BlogVersion = BlogVersion + ISNULL(maxv.v, 0), BlogID = 0 FROM BlogAudits, maxv WHERE BlogID = @id", new SqlParameter("@id", id));
+                    var maxVersion = await _db.BlogAudits.Where(ba => ba.BlogID == 0).MaxAsync(ba => (int?)ba.BlogVersion) ?? 0;
+                    var auditsToMove = await _db.BlogAudits.Where(ba => ba.BlogID == id).ToListAsync();
+                    foreach (var audit in auditsToMove)
+                    {
+                        audit.BlogVersion += maxVersion;
+                        audit.BlogID = 0;
+                    }
+                    await _db.SaveChangesAsync();
             }
             try
             {

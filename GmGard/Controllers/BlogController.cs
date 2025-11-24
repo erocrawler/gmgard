@@ -141,7 +141,7 @@ namespace GmGard.Controllers
                 if (result.HasError)
                 {
                     cache.TryRemove(cachekey, out var removed);
-                    throw new TimeoutException("查询搜索服务器失败，请刷新重试");
+                    throw new TimeoutException("查询搜索服务器失败，请刷新重试。");
                 }
             }
             else
@@ -176,7 +176,7 @@ namespace GmGard.Controllers
                 }
                 if (content == null || string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(content)))
                 {
-                    ModelState.AddModelError("", "内容不能为空或纯图片");
+                    ModelState.AddModelError("", "内容不能为空或纯图片。");
                     throw new BlogException();
                 }
                 if (!_catUtil.GetCategory(blog.CategoryID).LinkOptional)
@@ -215,7 +215,7 @@ namespace GmGard.Controllers
                         {
                             if (!file.ContentType.Contains("image"))
                             {
-                                ModelState.AddModelError("", "不接受的文件类型");
+                                ModelState.AddModelError("", "不接受的文件类型。");
                                 throw new BlogException();
                             }
                             else if (file.Length > 1048576 * 4)
@@ -237,7 +237,7 @@ namespace GmGard.Controllers
                     var imgname = BlogHelper.getFirstImg(content);
                     if (imgname == null || imgname.Length < 5)
                     {
-                        ModelState.AddModelError("", "请添加预览图！（上传或在文中外链图片）");
+                        ModelState.AddModelError("", "请添加封面图：上传或在文中外链图片。");
                         throw new BlogException();
                     }
                     imglist = new List<string>() { imgname };
@@ -250,12 +250,12 @@ namespace GmGard.Controllers
                     }
                     catch (Exception e)
                     {
-                        ModelState.AddModelError("", "保存图片时发生异常：(" + e.Message + ")。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "保存图片时发生异常（" + e.Message + ")。如多次出错，请报告给管理员。");
                         throw new BlogException(e.Message, e);
                     }
                     if (imglist.Count < 1)
                     {
-                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请报告给管理员。");
                         throw new BlogException();
                     }
                 }
@@ -265,7 +265,7 @@ namespace GmGard.Controllers
                     imgpath = string.Join(";", imglist);
                 }
                 bool approve = User.IsInRole("Administrator") || User.IsInRole("Writers") || User.IsInRole("Moderator");
-                // Replace 【】（） with []()
+                // Replace 【】（）！ with []()!
                 blog.BlogTitle = blog.BlogTitle.ToSingleByteCharacterString();
                 blog.ImagePath = imgpath;
                 content = BlogHelper.RemoveComments(content);
@@ -455,7 +455,7 @@ namespace GmGard.Controllers
             {
                 if (blog.BlogLinks == null)
                 {
-                    ModelState.AddModelError("", "链接地址不能为空");
+                    ModelState.AddModelError("", "链接地址不�E为空");
                     return View(blog);
                 }
                 else
@@ -463,14 +463,14 @@ namespace GmGard.Controllers
                     blog.BlogLinks = blog.BlogLinks.Where(b => !string.IsNullOrWhiteSpace(b.url)).ToArray();
                     if (!BlogHelper.checkBlogLinks(blog.BlogLinks))
                     {
-                        ModelState.AddModelError("", "链接地址不能为空，且不得包含javascript");
+                        ModelState.AddModelError("", "链接地址不�E为空�E�且不得包含javascript");
                         return View(blog);
                     }
                 }
             }
             if (blog.Content == null || string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(blog.Content)))
             {
-                ModelState.AddModelError("", "内容不能为空或纯图片");
+                ModelState.AddModelError("", "内容不能为空或纫图片。");
                 return View(blog);
             }
             if (!_blogUtil.CheckAdmin(includeAdManager: true))
@@ -507,7 +507,7 @@ namespace GmGard.Controllers
                     // foreach name in current imglist, if orignal imglist does not contain the name,it is not valid
                     if (!currentImglist.All(n => originalImglist.Contains(n)))
                     {
-                        ModelState.AddModelError("", "内部参数错误，请刷新重试");
+                        ModelState.AddModelError("", "内容参数错误，请刷新重试。");
                         return View(blog);
                     }
                     // foreach name in orignial imglist, if current imglist does not contain the name,delete it
@@ -525,7 +525,7 @@ namespace GmGard.Controllers
                         {
                             if (data.Length > 1048576 * 4 || !data.ContentType.Contains("image"))
                             {
-                                ModelState.AddModelError("", "单个文件不得超过4MB，且必须是图片");
+                                ModelState.AddModelError("", "单个文件不得超过4MB，且必须是图片。");
                                 return View(blog);
                             }
                             hasupload = true;
@@ -545,12 +545,12 @@ namespace GmGard.Controllers
                     }
                     catch (Exception e)
                     {
-                        ModelState.AddModelError("", "保存图片时发生异常：(" + e.Message + ")。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "保存图片时发生异常（" + e.Message + ")。如多次出错，请报告给管理员。");
                         return View(blog);
                     }
                     if (newlist.Count < 1)
                     {
-                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请汇报给管理员。");
+                        ModelState.AddModelError("", "图片服务器上传出错，请稍后再试。如多次出错，请报告给管理员。");
                         return View(blog);
                     }
                     int i = 0;
@@ -579,7 +579,7 @@ namespace GmGard.Controllers
                     string imgname = BlogHelper.getFirstImg(blog.Content);
                     if (imgname == null || imgname.Length < 5)
                     {
-                        ModelState.AddModelError("", "请添加预览图！（上传或外链图片）");
+                        ModelState.AddModelError("", "请添加封面图：上传或外链图片。");
                         blog.ImagePath = originalblog.ImagePath;
                         return View(blog);
                     }
@@ -603,7 +603,7 @@ namespace GmGard.Controllers
                 List<Tag> updatedTags = null;
                 try
                 {
-                    // Replace 【】（） with []()
+                    // Replace 【】（！Ewith []()
                     originalblog.BlogTitle = blog.BlogTitle.ToSingleByteCharacterString();
                     originalblog.Content = BlogHelper.RemoveComments(blog.Content);
                     originalblog.CategoryID = blog.CategoryID;
@@ -624,7 +624,7 @@ namespace GmGard.Controllers
                         int lastVersion = lastDecision == null ? 0 : lastDecision.BlogVersion;
                         _db.BlogAudits.RemoveRange(audits.Where(ba => ba.BlogVersion > lastVersion && (ba.AuditAction == BlogAudit.Action.VoteApprove || ba.AuditAction == BlogAudit.Action.VoteDeny)));
                     }
-                    updatedTags = _tagUtil.SetTagsForBlog(originalblog.BlogID, tags, originalblog.Author);
+                    updatedTags = await _tagUtil.SetTagsForBlog(originalblog.BlogID, tags, originalblog.Author);
                     originalblog.isHarmony = BlogHelper.BlogIsHarmony(_db, originalblog, HarmonySettings);
                     _db.SaveChanges();
                 }
@@ -757,14 +757,14 @@ namespace GmGard.Controllers
             var TagsToAdd = TagUtil.SplitTags(TagToAdd);
             if (TagsToAdd.Any(t => t.Length > 20))
             {
-                return Json(new { errmsg = "标签不得超过20字符" });
+                return Json(new { errmsg = "标签名不得超过20字符" });
             }
             else
             {
                 Blog b = _db.Blogs.Find(BlogID);
                 if (b == null || BlogID <= 0 || (b.option != null && b.option.LockTags))
                 {
-                    return Json(new { errmsg = "无效id，请刷新重试" });
+                    return Json(new { errmsg = "无效ID，请刷新重试。" });
                 }
                 var tibs = await _db.TagsInBlogs.Include(tib => tib.tag).Where(t => t.BlogID == BlogID).ToListAsync();
                 // Remove TagToAdd items from TagsToDel
@@ -776,7 +776,7 @@ namespace GmGard.Controllers
 
                 if (tibs.Any(tib => !tib.IsRemovable(b.Author, User.Identity.Name, _blogUtil.CheckAdmin(), HarmonySettings.BlacklistTags) && TagToDel.Contains(tib.TagID)))
                 {
-                    return Json(new { errmsg = "您不能删除作者添加的或黑名单标签" });
+                    return Json(new { errmsg = "您不能删除作者添加的或黑名单标签。" });
                 }
                 if (tibs.Count + TagsToAdd.Length - TagsToDel.Length > 10)
                 {
@@ -784,7 +784,7 @@ namespace GmGard.Controllers
                 }
                 else if (tibs.Count + TagsToAdd.Length - TagsToDel.Length < 1)
                 {
-                    return Json(new { errmsg = "请至少添加一个标签" });
+                    return Json(new { errmsg = "请至少添加一个标签。" });
                 }
                 List<Tag> AddedTags = _tagUtil.AddTagsForBlog(BlogID, TagsToAdd, User.Identity.Name);
                 _db.TagHistories.AddRange(TagsToDel.Select(tib => new TagHistory
@@ -880,7 +880,7 @@ namespace GmGard.Controllers
                 BlogPasswords = BlogPasswords.Where(b => !string.IsNullOrWhiteSpace(b.url)).ToArray();
                 if (BlogPasswords.Length > 0)
                 {
-                    blog.Content = blog.Content + string.Format("<p>{0:yyyy年MM月dd日 HH:mm} 补档：</p>", DateTime.Now);
+                    blog.Content = blog.Content + string.Format("<p>{0:yyyy年MM朁Ed日 HH:mm} 补档�E�E/p>", DateTime.Now);
                     blog.Content = BlogHelper.appendPassToContent(blog.Content, BlogPasswords);
                 }
             }

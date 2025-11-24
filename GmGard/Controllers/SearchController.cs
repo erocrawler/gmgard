@@ -47,7 +47,7 @@ namespace GmGard.Controllers
             {
                 return NotFound();
             }
-            await _db.Database.ExecuteSqlRawAsync("Update Tags Set TagVisit = TagVisit + 1 Where TagId = @id", new System.Data.SqlClient.SqlParameter("@id", tag.TagID));
+            await _db.Tags.Where(t => t.TagID == id).ExecuteUpdateAsync(t => t.SetProperty(p => p.TagVisit, p => p.TagVisit + 1));
             return RedirectToAction("List", "Blog", new { Tags = tag.TagName, sort, page });
         }
 

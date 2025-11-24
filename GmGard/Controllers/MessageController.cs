@@ -320,10 +320,18 @@ namespace GmGard.Controllers
                 switch (action)
                 {
                     case "del-all":
-                        await _udb.Database.ExecuteSqlRawAsync(
-                                @"Delete from Messages where IsSenderDelete='true' and Recipient=@user;
-                                  Delete from Messages where Recipient=@user and Sender=@user;
-                                  Update Messages set IsRecipientDelete='true' where Recipient=@user;", sqlUser);
+                        var msgsToDeleteInbox = await _udb.Messages
+                            .Where(m => (m.IsSenderDelete && m.Recipient == user) || (m.Recipient == user && m.Sender == user))
+                            .ToListAsync();
+                        _udb.Messages.RemoveRange(msgsToDeleteInbox);
+                        
+                        var msgsToMarkDeletedInbox = await _udb.Messages
+                            .Where(m => m.Recipient == user && !(m.IsSenderDelete && m.Recipient == user) && !(m.Recipient == user && m.Sender == user))
+                            .ToListAsync();
+                        foreach (var msg in msgsToMarkDeletedInbox)
+                        {
+                            msg.IsRecipientDelete = true;
+                        }
                         break;
 
                     case "del-sel":
@@ -348,7 +356,13 @@ namespace GmGard.Controllers
                         break;
 
                     case "read-all":
-                        await _udb.Database.ExecuteSqlRawAsync("Update Messages set IsRead='true' where Recipient=@user and IsRead='false'", sqlUser);
+                        var unreadMsgs = await _udb.Messages
+                            .Where(m => m.Recipient == user && !m.IsRead)
+                            .ToListAsync();
+                        foreach (var msg in unreadMsgs)
+                        {
+                            msg.IsRead = true;
+                        }
                         break;
                 }
                 await _udb.SaveChangesAsync();
@@ -359,10 +373,18 @@ namespace GmGard.Controllers
                 switch (action)
                 {
                     case "del-all":
-                        await _udb.Database.ExecuteSqlRawAsync(
-                                @"Delete from Messages where IsRecipientDelete='true' and Sender=@user;
-                                  Delete from Messages where Recipient=@user and Sender=@user;
-                                  Update Messages set IsSenderDelete='true' where Sender=@user;", sqlUser);
+                        var msgsToDeleteOutbox = await _udb.Messages
+                            .Where(m => (m.IsRecipientDelete && m.Sender == user) || (m.Recipient == user && m.Sender == user))
+                            .ToListAsync();
+                        _udb.Messages.RemoveRange(msgsToDeleteOutbox);
+                        
+                        var msgsToMarkDeletedOutbox = await _udb.Messages
+                            .Where(m => m.Sender == user && !(m.IsRecipientDelete && m.Sender == user) && !(m.Recipient == user && m.Sender == user))
+                            .ToListAsync();
+                        foreach (var msg in msgsToMarkDeletedOutbox)
+                        {
+                            msg.IsSenderDelete = true;
+                        }
                         break;
 
                     case "del-sel":
@@ -397,7 +419,7 @@ namespace GmGard.Controllers
                 }
                 string controller = itemType == ItemType.Topic ? "Topic" : "Blog";
                 string url = Url.Action("Details", controller, new { id = id }) + hashtag;
-                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址：<br><a href='" + url + "'>" + url + "</a>";
+                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址�E�Ebr><a href='" + url + "'>" + url + "</a>";
                 if (type == "rpt-author")
                 {
                     string author;
@@ -415,13 +437,13 @@ namespace GmGard.Controllers
                     {
                         return NotFound();
                     }
-                    _msgUtil.AddMsg(User.Identity.Name, author, "汇报投稿问题", content);
+                    _msgUtil.AddMsg(User.Identity.Name, author, "报告投稿问题", content);
                 }
                 else
                 {
                     _blogUtil.AddBlogPost(-1, User.Identity.Name, content);
                 }
-                return Json(new { msg = "已成功汇报" });
+                return Json(new { msg = "已成功报告。" });
             }
             return NotFound();
         }

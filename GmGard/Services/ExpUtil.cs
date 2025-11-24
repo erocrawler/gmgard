@@ -22,7 +22,7 @@ namespace GmGard.Services
             get {
                 if (_currentUser == null && HttpContext.User.Identity.IsAuthenticated)
                 {
-                    _currentUser = _udb.Users.AsNoTracking().Include("quest").SingleOrDefault(u => u.UserName == HttpContext.User.Identity.Name);
+                    _currentUser = _udb.Users.AsNoTracking().Include(u => u.quest).SingleOrDefault(u => u.UserName == HttpContext.User.Identity.Name);
                 }
                 return _currentUser;
             }
@@ -380,7 +380,7 @@ namespace GmGard.Services
         public bool setRateDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include("quest").SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;
@@ -409,7 +409,7 @@ namespace GmGard.Services
         public bool SetRatePostDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include("quest").SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;
@@ -470,7 +470,7 @@ namespace GmGard.Services
             {
                 var rank = blogs.ElementAt(i);
                 addExp(rank.Author, reward[i]);
-                var content = string.Format("恭喜！您的投稿 <a href='/gm{3}'>{4}</a> 今天在{0}上位居第{1}，特此奖励{2}点绅士度和棒棒糖！", type.Substring(0, 2), i + 1, reward[i], rank.BlogID, rank.BlogTitle);
+                var content = string.Format("恭喜！您的投稿 <a href='/gm{3}'>{4}</a> 今天在{0}上位屋的第{1}名，特此奖励{2}点经验度和棒棒糖！", type[..2], i + 1, reward[i], rank.BlogID, rank.BlogTitle);
                 _msgUtil.SendRankNotice(rank.Author, content);
                 _adminUtil.log("admin", type + "#" + (i + 1) + "(" + reward[i] + ")", rank.Author + "@gm" + rank.BlogID);
             }

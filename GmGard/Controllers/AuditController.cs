@@ -150,8 +150,8 @@ namespace GmGard.Controllers
             {
                 return Json(new { success = false });
             }
-            var blog = _db.Blogs.Include("blogAudits").SingleOrDefault(b => b.BlogID == id);
-            var user = _udb.Users.Include("auditor").Where(u => u.UserName == User.Identity.Name).Single();
+            var blog = _db.Blogs.Include(b => b.blogAudits).SingleOrDefault(b => b.BlogID == id);
+            var user = _udb.Users.Include(u => u.auditor).Where(u => u.UserName == User.Identity.Name).Single();
 
             if (blog == null || blog.isApproved != null)
             {
@@ -211,8 +211,8 @@ namespace GmGard.Controllers
             {
                 return NotFound();
             }
-            var blog = _db.Blogs.Include("blogAudits").SingleOrDefault(b => b.BlogID == id.Value);
-            var user = _udb.Users.Include("auditor").Where(u => u.UserName == User.Identity.Name).Single();
+            var blog = _db.Blogs.Include(b => b.blogAudits).SingleOrDefault(b => b.BlogID == id.Value);
+            var user = _udb.Users.Include(u => u.auditor).Where(u => u.UserName == User.Identity.Name).Single();
 
             if (blog == null)
             {
@@ -237,7 +237,7 @@ namespace GmGard.Controllers
         public ActionResult History(string name, int page = 1)
         {
             ViewBag.Auditor = _udb.Auditors.SingleOrDefault(u => u.User.UserName == User.Identity.Name) ?? new Auditor();
-            var query = _db.BlogAudits.Include("blog").Where(ba => ba.BlogID > 0 && ba.Auditor == name
+            var query = _db.BlogAudits.Include(ba => ba.blog).Where(ba => ba.BlogID > 0 && ba.Auditor == name
                                         && (ba.AuditAction == BlogAudit.Action.VoteApprove || ba.AuditAction == BlogAudit.Action.VoteDeny))
                                 .GroupJoin(_db.BlogAudits.Where(ba => ba.AuditAction == BlogAudit.Action.Approve || ba.AuditAction == BlogAudit.Action.Deny).DefaultIfEmpty(),
                                     la => new { la.BlogID, la.BlogVersion }, ba => new { ba.BlogID, ba.BlogVersion }, (la, ba) => new { Decision = ba, Vote = la })

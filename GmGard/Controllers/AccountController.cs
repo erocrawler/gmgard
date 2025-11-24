@@ -88,7 +88,7 @@ namespace GmGard.Controllers
                 {
                     if (await _userManager.IsInRoleAsync(user, "Banned"))
                     {
-                        ModelState.AddModelError("", "此账户已被封禁，如有疑问请联系管理员。");
+                        ModelState.AddModelError("", "此账户已被封禁。如有疑问请联系管理员。");
                         return View();
                     }
                     var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, false);
@@ -108,7 +108,7 @@ namespace GmGard.Controllers
                         return RedirectToAction(nameof(TwoFactorAuth), new { ReturnUrl = returnUrl });
                     }
                 }
-                // 如果我们进行到这一步时某个地方出错，则重新显示表单
+                // 如果我们进行到这一步时某个地方出错，则重新显示表单。
                 ModelState.AddModelError("", "提供的用户名或密码不正确。");
             }
 
@@ -204,7 +204,7 @@ namespace GmGard.Controllers
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "无效的应急密码");
+                ModelState.AddModelError(string.Empty, "无效的应急密码。");
                 return View(model);
             }
         }
@@ -280,7 +280,7 @@ namespace GmGard.Controllers
                     var questions = _registerSettings.RegisterQuestions;
                     if (model.RegisterQuestionIndex < 0 || model.RegisterQuestionIndex >= questions.Count)
                     {
-                        ModelState.AddModelError("RegisterAnswer", "请重新回答注册问题");
+                        ModelState.AddModelError("RegisterAnswer", "请重新回答注册问题。");
                         Random r = new Random();
                         model.RegisterQuestionIndex = r.Next(questions.Count);
                         return View(model);
@@ -306,7 +306,7 @@ namespace GmGard.Controllers
                 {
                     if (!Guid.TryParse(model.RegisterCode, out code) || !_db.UserCodes.Any(c => c.UsedBy == null && c.Code == code))
                     {
-                        ModelState.AddModelError("RegisterCode", "无效的邀请码");
+                        ModelState.AddModelError("RegisterCode", "无效的邀请码。");
                         return View(model);
                     }
                 }
@@ -350,7 +350,7 @@ namespace GmGard.Controllers
                 AddErrors(createResult);
             }
 
-            // 如果我们进行到这一步时某个地方出错，则重新显示表单
+            // 如果我们进行到这一步时某个地方出错，则重新显示表单。
             return View(model);
         }
 
@@ -384,7 +384,7 @@ namespace GmGard.Controllers
                 }
             }
 
-            // 如果我们进行到这一步时某个地方出错，则重新显示表单
+            // 如果我们进行到这一步时某个地方出错，则重新显示表单。
             return PartialView("_ChangePasswordPartial", model);
         }
 
@@ -435,9 +435,9 @@ namespace GmGard.Controllers
         }
 
         /// <summary>
-        /// 检查昵称的合法性。此方法由用户账户管理页面的ajax调用。。。
+        /// 检查昵称的合法性。此方法由用户账户管理页面的ajax调用。
         /// </summary>
-        /// <param name="name">输入昵称</param>
+        /// <param name="name">输入的昵称</param>
         /// <returns>json格式的结果</returns>
         [HttpPost]
         public JsonResult CheckNickName(string name)
@@ -454,9 +454,9 @@ namespace GmGard.Controllers
         }
 
         /// <summary>
-        /// 检查昵称是否已被使用。注意本方法由RegisterModel中的验证属性自动调用
+        /// 检查昵称是否已被使用。注意本方法由RegisterModel中的验证属性自动调用。
         /// </summary>
-        /// <param name="nickname">输入昵称</param>
+        /// <param name="nickname">输入的昵称</param>
         /// <returns>json格式的结果</returns>
         [AllowAnonymous]
         public JsonResult CheckNicknameUsed(string nickname)
@@ -464,7 +464,7 @@ namespace GmGard.Controllers
             nickname = Regex.Replace(nickname, @"\s+", string.Empty);
             if (_db.Users.Any(u => u.NickName == nickname))
             {
-                return Json("该昵称已注册");
+                return Json("该昵称已注册。");
             }
             else
                 return Json(true);
@@ -499,7 +499,7 @@ namespace GmGard.Controllers
         [HttpPost]
         public async Task<PartialViewResult> UserOptions(UserOption model)
         {
-            UserProfile user = await _db.Users.Include("option").SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            UserProfile user = await _db.Users.Include(u => u.option).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user.option == null)
             {
                 user.option = model;
@@ -552,7 +552,7 @@ namespace GmGard.Controllers
                     tagBlacklist = JsonConvert.SerializeObject(tags.Values.AsEnumerable());
                 }
             }
-            UserProfile user = _db.Users.Include("option").SingleOrDefault(u => u.UserName == User.Identity.Name);
+            UserProfile user = _db.Users.Include(u => u.option).SingleOrDefault(u => u.UserName == User.Identity.Name);
             if (user.option == null)
             {
                 user.option = new UserOption();
@@ -629,7 +629,7 @@ namespace GmGard.Controllers
                     var diff = DateTime.Now - lastpost.Value;
                     if (diff.TotalSeconds < 60)
                     {
-                        return Json(new { err = "请不要短时间内多次发送邮件！" });
+                        return Json(new { err = "请不要短时间内多次发送邮件。" });
                     }
                 }
                 UserProfile user = await _userManager.FindByEmailAsync(email);
@@ -653,7 +653,7 @@ namespace GmGard.Controllers
         {
             if (await _userManager.FindByNameAsync(username) != null)
             {
-                return Json("该用户名已注册");
+                return Json("该用户名已注册。");
             }
             else
                 return Json(true);
@@ -670,7 +670,7 @@ namespace GmGard.Controllers
                 {
                     return Json(false);
                 }
-                return Json("该邮箱已被注册");
+                return Json("该邮箱已被注册。");
             }
             else
                 return Json(true);
@@ -680,7 +680,7 @@ namespace GmGard.Controllers
         public async Task<ActionResult> Invite()
         {
             UserProfile user = await GetCurrentUserAsync();
-            var Codes = await _db.UserCodes.Include("UsedByUser").Where(c => c.UserId == user.Id).ToListAsync();
+            var Codes = await _db.UserCodes.Include(c => c.UsedByUser).Where(c => c.UserId == user.Id).ToListAsync();
             var lastBuy = Codes.Max(c => c.BuyDate);
             if (lastBuy.HasValue && (DateTime.Today - lastBuy.Value).Days <= RegisterSettingsModel.CodeCoolDownDays) {
                 ViewBag.CoolDown = lastBuy.Value.AddDays(RegisterSettingsModel.CodeCoolDownDays);
@@ -757,7 +757,7 @@ namespace GmGard.Controllers
             return Json(new { success = result.Succeeded, current = user.quest.PersonalBackground });
         }
 
-        #region 帮助程序
+        #region 帮助程庁E
 
         private ActionResult RedirectToLocal(string returnUrl)
         {

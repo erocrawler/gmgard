@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Services
@@ -28,16 +29,16 @@ namespace GmGard.Services
             DirtyBlogs = new ConcurrentDictionary<int, byte>();
             TopicVisits = new ConcurrentDictionary<int, AtomicLong>();
             DirtyTopics = new ConcurrentDictionary<int, byte>();
-            JobManager.AddJob(SaveVisits, schedule => schedule.ToRunEvery(15).Minutes());
+            JobManager.AddJob(() => SaveVisits().Wait(), schedule => schedule.ToRunEvery(15).Minutes());
         }
 
-        public void SaveVisits()
+        public async Task SaveVisits()
         {
-            SaveBlogVisit();
-            SaveTopicVisit();
+            await SaveBlogVisit();
+            await SaveTopicVisit();
         }
 
-        protected void SaveBlogVisit()
+        protected async Task SaveBlogVisit()
         {
             var IdPairs = new Dictionary<int, long>();
             foreach (var dirty in DirtyBlogs)
@@ -51,16 +52,19 @@ namespace GmGard.Services
             if (IdPairs.Count > 0)
             {
                 DirtyBlogs.Clear();
-                var ValueString = IdPairs.Select(v => string.Format("({0},{1})", v.Key, v.Value));
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    GetDB(scope).Database.ExecuteSqlRaw(
-                        @"UPDATE b SET BlogVisit = t.BlogVisit
-                    FROM Blogs b
-                    JOIN (
-	                    VALUES " + string.Join(",", ValueString) +
-                        ") t (id, BlogVisit) ON b.BlogID = t.id"
-                    );
+                    var db = GetDB(scope);
+                    var blogIds = IdPairs.Keys.ToList();
+                    var blogsToUpdate = await db.Blogs.Where(b => blogIds.Contains(b.BlogID)).ToListAsync();
+                    foreach (var blog in blogsToUpdate)
+                    {
+                        if (IdPairs.TryGetValue(blog.BlogID, out long newVisit))
+                        {
+                            blog.BlogVisit = newVisit;
+                        }
+                    }
+                    await db.SaveChangesAsync();
                     var updater = scope.ServiceProvider.GetService<ElasticSearchUpdateService>();
                     if (updater != null)
                     {
@@ -70,7 +74,7 @@ namespace GmGard.Services
             }
         }
 
-        protected void SaveTopicVisit()
+        protected async Task SaveTopicVisit()
         {
             var IdPairs = new Dictionary<int, long>();
             foreach (var dirty in DirtyTopics)
@@ -84,16 +88,19 @@ namespace GmGard.Services
             if (IdPairs.Count > 0)
             {
                 DirtyTopics.Clear();
-                var ValueString = IdPairs.Select(v => string.Format("({0},{1})", v.Key, v.Value));
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    GetDB(scope).Database.ExecuteSqlRaw(
-                        @"UPDATE b SET TopicVisit = t.TopicVisit
-                        FROM Topics b
-                        JOIN (
-	                        VALUES " + string.Join(",", ValueString) +
-                        ") t (id, TopicVisit) ON b.TopicID = t.id"
-                    );
+                    var db = GetDB(scope);
+                    var topicIds = IdPairs.Keys.ToList();
+                    var topicsToUpdate = await db.Topics.Where(t => topicIds.Contains(t.TopicID)).ToListAsync();
+                    foreach (var topic in topicsToUpdate)
+                    {
+                        if (IdPairs.TryGetValue(topic.TopicID, out long newVisit))
+                        {
+                            topic.TopicVisit = newVisit;
+                        }
+                    }
+                    await db.SaveChangesAsync();
                 }
             }
         }

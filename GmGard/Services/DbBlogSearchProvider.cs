@@ -105,7 +105,6 @@ namespace GmGard.Services
             if (!string.IsNullOrWhiteSpace(m.Title))
             {
                 var keywords = m.Title.Replace('(', ' ').Replace(')', ' ').Replace('"', ' ').Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
-                // var search = _db.ContainsSearchBlog(string.Join(m.TitleMatchAny ? " OR " : " AND ", keywords.Select(s => '"' + s + '"')));
                 var TitlePredicate = PredicateBuilder.New<Blog>(true);
                 if (!m.TitleMatchAny)
                 {
@@ -115,7 +114,6 @@ namespace GmGard.Services
                 {
                     TitlePredicate = TitlePredicate.And(keywords.Aggregate(PredicateBuilder.New<Blog>(false), (p, word) => p.Or(b => b.BlogTitle.Contains(word))));
                 }
-                // TitlePredicate = TitlePredicate.Or(b => search.Count(r => r.BlogID == b.BlogID) > 0);
                 predicate = predicate.And(TitlePredicate);
             }
             if (m.Harmony.HasValue)

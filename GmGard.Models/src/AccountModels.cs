@@ -136,6 +136,8 @@ namespace GmGard.Models
 
             var userGameData = modelBuilder.Entity<UserGameData>();
             userGameData
+                .HasKey(u => new { u.UserID, u.GameID });
+            userGameData
                 .HasOne(u => u.Game)
                 .WithMany()
                 .HasForeignKey(u => u.GameID)
@@ -146,8 +148,20 @@ namespace GmGard.Models
                 .HasForeignKey(u => new { u.UserID, u.GameID })
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<ScenarioChoice>()
+                .HasKey(sc => new { sc.ScenarioID, sc.NextScenarioID });
+
+            modelBuilder.Entity<UserVisitedScenario>()
+                .HasKey(uvs => new { uvs.UserID, uvs.GameID, uvs.ScenarioID, uvs.Attempt });
+
             modelBuilder.Entity<AuditExamSubmission>()
                 .HasKey(a => new { a.UserID, a.Version });
+
+            modelBuilder.Entity<GachaPool>()
+                .HasKey(gp => new { gp.Name, gp.ItemId });
+
+            modelBuilder.Entity<PunchInHistory>()
+                .HasKey(pih => new { pih.UserID, pih.TimeStamp });
         }
     }
 

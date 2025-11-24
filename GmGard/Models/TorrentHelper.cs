@@ -14,7 +14,7 @@ namespace GmGard.Models
                 {
                     announce[i] = t.AnnounceUrls[i][0];
                 }
-                string magnet = "magnet:?xt=urn:btih:" + t.InfoHash.ToHex();
+                string magnet = "magnet:?xt=urn:btih:" + t.InfoHashes.V1.ToHex();
                 if (!string.IsNullOrEmpty(announce[0]))
                 {
                     magnet += "&tr.0=" + announce[0];

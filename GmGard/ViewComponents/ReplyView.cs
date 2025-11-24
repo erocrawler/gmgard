@@ -30,7 +30,7 @@ namespace GmGard.ViewComponents
             ViewData["idtype"] = idtype;
             ViewData["itemid"] = itemid;
             ViewData["hottest"] = hottest;
-            var posts = _db.Posts.Include("replies").Where(p => p.ItemId == itemid && p.IdType == idtype);
+            var posts = _db.Posts.Include(p => p.Replies).Where(p => p.ItemId == itemid && p.IdType == idtype);
             if (!string.IsNullOrEmpty(name))
             {
                 posts = posts.Where(p => p.Author == name);

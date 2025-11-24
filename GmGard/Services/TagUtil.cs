@@ -69,10 +69,9 @@ namespace GmGard.Services
             return AddedTags;
         }
 
-        public List<Tag> SetTagsForBlog(int blogid, string[] tags, string user)
+        public async Task<List<Tag>> SetTagsForBlog(int blogid, string[] tags, string user)
         {
-            bool hasdelete = false;
-            var tagcurrent = _db.TagsInBlogs.Include("tag").Where(i => i.BlogID == blogid).ToList();
+            var tagcurrent = _db.TagsInBlogs.Include(i => i.tag).Where(i => i.BlogID == blogid).ToList();
             var tagtodel = tagcurrent.Where(a => !tags.Contains(a.tag.TagName, SqlStringComparer.Instance));
             var tagtoadd = tags.Except(tagcurrent.Select(a => a.tag.TagName), SqlStringComparer.Instance).ToList();
             var UpdatedTags = tagcurrent.Except(tagtodel).Select(tib => tib.tag).ToList();
@@ -80,7 +79,6 @@ namespace GmGard.Services
             {
                 _db.TagHistories.Add(new TagHistory { AddBy = tib.AddBy, BlogID = blogid, DeleteBy = user, TagName = tib.tag.TagName, Time = DateTime.Now });
                 _db.TagsInBlogs.Remove(tib);
-                hasdelete = true;
             }
             var ExistingTags = _db.Tags.Where(t => tagtoadd.Contains(t.TagName)).ToDictionary(t => t.TagName, SqlStringComparer.Instance);
             foreach (var tag in tagtoadd)
@@ -98,11 +96,7 @@ namespace GmGard.Services
                 _db.TagsInBlogs.Add(tib);
                 UpdatedTags.Add(tib.tag);
             }
-            _db.SaveChanges();
-            if (hasdelete)
-            {
-                _db.Database.ExecuteSqlRaw("Delete From Tags Where TagID not in ((Select TagID from TagsInBlogs) union (Select TagID from Topics))");
-            }
+            await _db.SaveChangesAsync();
             return UpdatedTags;
         }
     }

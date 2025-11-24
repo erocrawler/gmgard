@@ -4,20 +4,18 @@ using Microsoft.Extensions.Options;
 using GmGard.Models;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using System.Linq;
 
 namespace GmGard.Filters
 {
     public class AdminAccessHandler : AuthorizationHandler<AdminAccessRequirement>
     {
-        private readonly IActionContextAccessor _actionAccessor;
-        private ActionContext ActionContext => _actionAccessor.ActionContext;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AdminAccessHandler(IActionContextAccessor actionAccessor)
+        public AdminAccessHandler(IHttpContextAccessor httpContextAccessor)
         {
-            _actionAccessor = actionAccessor;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, AdminAccessRequirement requirement)
@@ -29,22 +27,28 @@ namespace GmGard.Filters
             }
             else if (context.User.Identity.IsAuthenticated)
             {
-                var action = ActionContext.RouteData.Values["Action"].ToString();
-                if (action == "Manage")
+                var httpContext = _httpContextAccessor.HttpContext;
+                var routeData = httpContext?.GetRouteData();
+                
+                if (routeData != null)
                 {
-                    var manageContext = "Data";
-                    if (ActionContext.RouteData.Values.ContainsKey("context"))
+                    var action = routeData.Values["Action"]?.ToString();
+                    if (action == "Manage")
                     {
-                        manageContext = ActionContext.RouteData.Values["context"].ToString();
+                        var manageContext = "Data";
+                        if (routeData.Values.ContainsKey("context"))
+                        {
+                            manageContext = routeData.Values["context"]?.ToString();
+                        }
+                        if (context.User.IsInRole("Moderator") && (new string[] { "Data", "Users" }).Contains(manageContext))
+                        {
+                            succeed = true;
+                        }
                     }
-                    if (context.User.IsInRole("Moderator") && (new string[] { "Data", "Users" }).Contains(manageContext))
+                    else if (context.User.IsInRole("Moderator") && (new string[] { "Log", "ManageRole", "ManageBan", "ManageExp" }).Contains(action))
                     {
                         succeed = true;
                     }
-                }
-                else if (context.User.IsInRole("Moderator") && (new string[] { "Log", "ManageRole", "ManageBan", "ManageExp" }).Contains(action))
-                {
-                    succeed = true;
                 }
             }
             if (succeed)

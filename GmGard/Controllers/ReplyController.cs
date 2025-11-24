@@ -6,7 +6,6 @@ using GmGard.ViewComponents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -34,7 +33,6 @@ namespace GmGard.Controllers
         private IWebHostEnvironment _env;
         private AppSettingsModel _appSettings;
         private ICompositeViewEngine _viewEngine;
-        private IActionContextAccessor _actionAccessor;
         private readonly HtmlSanitizerService _sanitizerService;
 
         public ReplyController(
@@ -49,7 +47,6 @@ namespace GmGard.Controllers
             IWebHostEnvironment env,
             IMemoryCache cache,
             ICompositeViewEngine viewEngine,
-            IActionContextAccessor actionAccessor,
             HtmlSanitizerService sanitizerService)
         {
             _appSettings = appSettings.Value;
@@ -63,7 +60,6 @@ namespace GmGard.Controllers
             _ratingUtil = ratingUtil;
             _msgUtil = msgUtil;
             _viewEngine = viewEngine;
-            _actionAccessor = actionAccessor;
             _sanitizerService = sanitizerService;
         }
 
@@ -313,7 +309,7 @@ namespace GmGard.Controllers
             {
                 return BadRequest();
             }
-            var p = await _db.Posts.Include("Ratings").SingleOrDefaultAsync(pp => pp.PostId == postid);
+            var p = await _db.Posts.Include(p => p.Ratings).SingleOrDefaultAsync(pp => pp.PostId == postid);
             if (p == null)
             {
                 return NotFound();
@@ -339,8 +335,8 @@ namespace GmGard.Controllers
 
             using (var sw = new StringWriter())
             {
-                ViewEngineResult viewResult = _viewEngine.FindView(_actionAccessor.ActionContext, viewName, false);
-                ViewContext viewContext = new ViewContext(_actionAccessor.ActionContext, viewResult.View, ViewData, TempData, sw, new HtmlHelperOptions());
+                ViewEngineResult viewResult = _viewEngine.FindView(ControllerContext, viewName, false);
+                ViewContext viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw, new HtmlHelperOptions());
 
                 await viewResult.View.RenderAsync(viewContext);
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace GmGard.Models
@@ -34,25 +35,32 @@ namespace GmGard.Models
             return query.Select(a => a.blog).Except(query.Where(a => Blacklisttags.Contains(a.tag) || blacklistCategories.Contains(a.blog.CategoryID)).Select(a => a.blog)).Distinct();
         }
 
-        public void UpdateDatabase()
+        public async Task UpdateDatabase()
         {
-            db.Database.ExecuteSqlRaw(string.Format(@"Update Blogs SET isHarmony = CASE WHEN BlogID IN (
-            SELECT
-                [Except1].[BlogID]
-
-                FROM  (SELECT
-                    [Extent1].[BlogID] AS [BlogID]
-                    FROM  [dbo].[Blogs] AS [Extent1]
-                    LEFT OUTER JOIN [dbo].[TagsInBlogs] AS [Extent2] ON [Extent1].[BlogID] = [Extent2].[BlogID]
-                    WHERE (1 = [Extent1].[isApproved]) AND (([Extent1].[CategoryID] IN ({0}) OR [Extent1].[BlogID] IN ({2})))
-                EXCEPT
-                    SELECT
-                    [Extent3].[BlogID] AS [BlogID]
-                    FROM  [dbo].[Blogs] AS [Extent3]
-                    INNER JOIN [dbo].[TagsInBlogs] AS [Extent4] ON [Extent3].[BlogID] = [Extent4].[BlogID]
-                    WHERE (1 = [Extent3].[isApproved]) AND ((CASE WHEN ([Extent3].[CategoryID] IN ({0})) THEN cast(1 as bit) ELSE cast(0 as bit) END) = 1) AND ([Extent4].[TagID] IN ({1}))) AS [Except1]
-		            )
-            THEN 1 ELSE 0 END", Whitelistcategories.Count() > 0 ? string.Join(",", Whitelistcategories) : "''", Blacklisttags.Count() > 0 ? string.Join(",", Blacklisttags) : "''", Whitelistids.Count() > 0 ? string.Join(",", Whitelistids) : "''"));
+            // Get blogs that should be marked as harmony (approved + in whitelist categories/IDs but NOT tagged with blacklist tags)
+            var approvedBlogs = db.Blogs.Where(b => b.isApproved == true);
+            
+            var whitelistedBlogs = approvedBlogs
+                .Where(b => Whitelistcategories.Contains(b.CategoryID) || Whitelistids.Contains(b.BlogID))
+                .Select(b => b.BlogID);
+            
+            var blacklistedBlogs = db.TagsInBlogs
+                .Where(t => Blacklisttags.Contains(t.TagID))
+                .Join(approvedBlogs.Where(b => Whitelistcategories.Contains(b.CategoryID)),
+                    t => t.BlogID,
+                    b => b.BlogID,
+                    (t, b) => b.BlogID)
+                .Distinct();
+            
+            var harmonyBlogIds = whitelistedBlogs.Except(blacklistedBlogs).ToList();
+            
+            // Update all blogs
+            var allBlogs = await db.Blogs.ToListAsync();
+            foreach (var blog in allBlogs)
+            {
+                blog.isHarmony = harmonyBlogIds.Contains(blog.BlogID);
+            }
+            await db.SaveChangesAsync();
         }
     }
 }

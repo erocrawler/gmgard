@@ -1,4 +1,4 @@
-﻿using GmGard.Models;
+using GmGard.Models;
 using System;
 using System.IO;
 using System.Linq;

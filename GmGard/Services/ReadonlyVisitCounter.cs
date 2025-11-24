@@ -24,10 +24,11 @@ namespace GmGard.Services
             TopicVisits = new ConcurrentDictionary<int, AtomicLong>();
         }
 
-        public void SaveVisits()
+        public Task SaveVisits()
         {
             SaveBlogVisit();
             SaveTopicVisit();
+            return Task.CompletedTask;
         }
 
         protected void SaveBlogVisit()

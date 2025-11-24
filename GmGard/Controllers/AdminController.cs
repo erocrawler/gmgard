@@ -194,7 +194,7 @@ namespace GmGard.Controllers
             switch (context)
             {
                 case "Category":
-                    model.AllHanGroup = _db.HanGroups.Include("members").ToList();
+                    model.AllHanGroup = _db.HanGroups.Include(h => h.members).ToList();
                     ViewBag.HgMsg = TempData["HgMsg"];
                     break;
 
@@ -258,7 +258,7 @@ namespace GmGard.Controllers
                 case "new":
                     if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(uri))
                     {
-                        TempData["HgMsg"] = "请输入名称和识别码";
+                        TempData["HgMsg"] = "请输入名称和识别码。";
                     }
                     else
                     {
@@ -268,7 +268,7 @@ namespace GmGard.Controllers
                         var errnames = string.Empty;
                         if (members != null)
                         {
-                            var names = members.Split(new char[] { ',', '，' }, StringSplitOptions.RemoveEmptyEntries);
+                            var names = members.Split(new char[] { ',', '\uff0c' }, StringSplitOptions.RemoveEmptyEntries);
                             g.members = new List<HanGroupMember>();
                             foreach (var n in names)
                             {
@@ -296,7 +296,7 @@ namespace GmGard.Controllers
                 case "edit":
                     if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(uri))
                     {
-                        TempData["HgMsg"] = "请输入名称和识别码";
+                        TempData["HgMsg"] = "请输入名称和识别码。";
                     }
                     else if (int.TryParse(id, out gid))
                     {
@@ -351,7 +351,7 @@ namespace GmGard.Controllers
                         }
                         else
                         {
-                            TempData["HgMsg"] = "不可删除非空汉化组";
+                            TempData["HgMsg"] = "不可删除非空汉化组。";
                         }
                     }
                     break;
@@ -372,21 +372,21 @@ namespace GmGard.Controllers
             {
                 if (!await TryAddRoleAsync(user, "Writers"))
                 {
-                    return "此人已是作者！";
+                    return "此人已是作者。";
                 }
             }
             else if (behaviour == "删除作者")
             {
                 if (!await TryRemoveRoleAsync(user, "Writers"))
                 {
-                    return "此人不是作者！";
+                    return "此人不是作者。";
                 }
             }
             else if (behaviour == "加入审核组")
             {
                 if (!await TryAddRoleAsync(user, "Auditor"))
                 {
-                    return "此人已是审核者！";
+                    return "此人已是审核者。";
                 }
             }
             else if (behaviour == "移除审核组")
@@ -437,7 +437,7 @@ namespace GmGard.Controllers
                 await _userManager.UpdateAsync(user);
                 msg = "添加成功";
             }
-            else if (behaviour == "删除管理员")
+            else if (behaviour == "删除管琁E��")
             {
                 if (admanager)
                 {
@@ -488,7 +488,11 @@ namespace GmGard.Controllers
                 }
                 if (deletecomment)
                 {
-                    _db.Database.ExecuteSqlRaw("delete from Posts where Author = @banname; delete from Replies where Author = @banname;", new SqlParameter("@banname", banname));
+                    var postsToDelete = await _db.Posts.Where(p => p.Author == banname).ToListAsync();
+                    _db.Posts.RemoveRange(postsToDelete);
+                    var repliesToDelete = await _db.Replies.Where(r => r.Author == banname).ToListAsync();
+                    _db.Replies.RemoveRange(repliesToDelete);
+                    await _db.SaveChangesAsync();
                 }
                 user.Level = 0;
                 await _userManager.AddToRoleAsync(user, "Banned");

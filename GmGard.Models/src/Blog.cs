@@ -42,30 +42,39 @@ namespace GmGard.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<RankedBlogId>().HasNoKey();
-            modelBuilder.HasDbFunction(typeof(BlogContext).GetMethod(nameof(FreeTextSearchBlog), new[] { typeof(string) }))
-                .HasName("FreeTextSearchBlog");
-            modelBuilder.HasDbFunction(typeof(BlogContext).GetMethod(nameof(ContainsSearchBlog), new[] { typeof(string) }))
-                .HasName("ContainsSearchBlog");
 
             modelBuilder.Entity<Blog>()
                         .HasOne(e => e.Category)
                         .WithMany(c => c.Blogs)
                         .HasForeignKey(e => e.CategoryID)
                         .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure primary key for BlogOption
+            modelBuilder.Entity<BlogOption>()
+                        .HasKey(bo => bo.BlogID);
+
+            // Configure composite keys
+            modelBuilder.Entity<BlogAudit>()
+                        .HasKey(ba => new { ba.BlogID, ba.Auditor, ba.BlogVersion });
+
+            modelBuilder.Entity<TagsInBlog>()
+                        .HasKey(tib => new { tib.BlogID, tib.TagID });
+
+            modelBuilder.Entity<BlogsInTopic>()
+                        .HasKey(bit => new { bit.TopicID, bit.BlogID });
+
+            modelBuilder.Entity<Favorite>()
+                        .HasKey(f => new { f.Username, f.BlogID });
+
+            modelBuilder.Entity<HistoryRanking>()
+                        .HasKey(hr => new { hr.RankDate, hr.BlogID, hr.RankType });
+
+            modelBuilder.Entity<HanGroupMember>()
+                        .HasKey(hgm => new { hgm.HanGroupID, hgm.Username });
+
+            modelBuilder.Entity<HanGroupBlog>()
+                        .HasKey(hgb => new { hgb.HanGroupID, hgb.BlogID });
         }
-
-        public IQueryable<RankedBlogId> FreeTextSearchBlog(string SearchTitle)
-            => FromExpression(() => FreeTextSearchBlog(SearchTitle));
-
-        public IQueryable<RankedBlogId> ContainsSearchBlog(string SearchTitle)
-            => FromExpression(() => ContainsSearchBlog(SearchTitle));
-    }
-
-    public class RankedBlogId
-    {
-        public int BlogID { get; set; }
-        public int SearchRank { get; set; }
     }
 
     public class Blog
@@ -115,6 +124,7 @@ namespace GmGard.Models
 
     public class BlogOption
     {
+        [Key, ForeignKey("blog")]
         public int BlogID { get; set; }
 
         public bool LockTags { get; set; }
