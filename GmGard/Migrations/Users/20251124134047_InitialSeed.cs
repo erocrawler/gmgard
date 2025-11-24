@@ -22,7 +22,7 @@ namespace GmGard.Migrations.Users
                     Action = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Target = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Reason = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    LogTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    LogTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -53,7 +53,7 @@ namespace GmGard.Migrations.Users
                     PicUserName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PicType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PicName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    PicDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    PicDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -114,7 +114,7 @@ namespace GmGard.Migrations.Users
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Sender = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     Recipient = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    MsgDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MsgDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     MsgContent = table.Column<string>(type: "text", nullable: false),
                     MsgTitle = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
@@ -133,8 +133,8 @@ namespace GmGard.Migrations.Users
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Title = table.Column<string>(type: "text", nullable: true),
-                    EventStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EventEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EventStart = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    EventEnd = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     RaffleCost = table.Column<int>(type: "integer", nullable: false),
                     Image = table.Column<string>(type: "text", nullable: true)
                 },
@@ -168,13 +168,13 @@ namespace GmGard.Migrations.Users
                     NickName = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     UserComment = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Email = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    LastLoginDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastLoginDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     LastLoginIP = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     Points = table.Column<int>(type: "integer", nullable: false),
                     Experience = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    LastSignDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastSignDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     ConsecutiveSign = table.Column<int>(type: "integer", nullable: false),
                     HistoryConsecutiveSign = table.Column<int>(type: "integer", nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
@@ -374,7 +374,7 @@ namespace GmGard.Migrations.Users
                     HasPassed = table.Column<bool>(type: "boolean", nullable: false),
                     Score = table.Column<decimal>(type: "numeric", nullable: false),
                     IsSubmitted = table.Column<bool>(type: "boolean", nullable: false),
-                    SubmitTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    SubmitTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -412,7 +412,7 @@ namespace GmGard.Migrations.Users
                 {
                     UserID = table.Column<int>(type: "integer", nullable: false),
                     FollowID = table.Column<int>(type: "integer", nullable: false),
-                    FollowTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    FollowTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -436,7 +436,7 @@ namespace GmGard.Migrations.Users
                 columns: table => new
                 {
                     UserID = table.Column<int>(type: "integer", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IsMakeup = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -459,7 +459,7 @@ namespace GmGard.Migrations.Users
                     UserID = table.Column<int>(type: "integer", nullable: false),
                     IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
                     TargetPuzzle = table.Column<int>(type: "integer", nullable: false),
-                    AttemptTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AttemptTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AttemptAnswer = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -480,7 +480,7 @@ namespace GmGard.Migrations.Users
                     Code = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     UsedBy = table.Column<int>(type: "integer", nullable: true),
-                    BuyDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    BuyDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -507,7 +507,7 @@ namespace GmGard.Migrations.Users
                     UserID = table.Column<int>(type: "integer", nullable: false),
                     ItemId = table.Column<int>(type: "integer", nullable: false),
                     PoolName = table.Column<int>(type: "integer", nullable: false),
-                    GachaTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    GachaTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -555,10 +555,10 @@ namespace GmGard.Migrations.Users
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    LastRateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LastPostDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LastBlogDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LastRatePostDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastRateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    LastPostDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    LastBlogDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    LastRatePostDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     PunchInTicket = table.Column<int>(type: "integer", nullable: false),
                     DayBlogCount = table.Column<int>(type: "integer", nullable: false),
                     WeekBlogCount = table.Column<int>(type: "integer", nullable: false),
@@ -597,7 +597,7 @@ namespace GmGard.Migrations.Users
                 {
                     RaffleID = table.Column<Guid>(type: "uuid", nullable: false),
                     UserID = table.Column<int>(type: "integer", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     ConfigId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -622,8 +622,8 @@ namespace GmGard.Migrations.Users
                 {
                     VoucherID = table.Column<Guid>(type: "uuid", nullable: false),
                     UserID = table.Column<int>(type: "integer", nullable: true),
-                    IssueTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UseTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IssueTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    UseTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     RedeemItem = table.Column<string>(type: "text", nullable: true),
                     RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
                     VoucherKind = table.Column<int>(type: "integer", nullable: false)

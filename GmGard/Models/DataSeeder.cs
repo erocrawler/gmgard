@@ -80,33 +80,19 @@ namespace GmGard.Models
             
             if (!context.Blogs.Any())
             {
-                GetBlogs().ForEach(p => context.Blogs.Add(p));
-                
                 // Add special system blogs with specific IDs
-                context.Blogs.Add(new Blog
-                {
-                    BlogID = 0,
-                    BlogTitle = "V0.01",
-                    Content = "版本历史",
-                    BlogDate = DateTime.Now,
-                    CategoryID = 1,
-                    Author = "admin",
-                    isApproved = false,
-                    BlogVisit = 0,
-                    IsLocalImg = false
-                });
-                context.Blogs.Add(new Blog
-                {
-                    BlogID = -1,
-                    BlogTitle = "举报消息",
-                    Content = "举报消息",
-                    BlogDate = DateTime.Now,
-                    CategoryID = 1,
-                    Author = "admin",
-                    isApproved = false,
-                    BlogVisit = 0,
-                    IsLocalImg = false
-                });
+            
+                // For PostgreSQL, insert directly with raw SQL to preserve explicit IDs
+                context.Database.ExecuteSqlRaw(@"
+                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""IsLocalImg"")
+                    VALUES (-1, '举报消息', '举报消息', NOW(), 1, 'admin', false, 0, false);
+                ");
+                context.Database.ExecuteSqlRaw(@"
+                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""IsLocalImg"")
+                    VALUES (0, 'V0.01', '版本历史', NOW(), 1, 'admin', false, 0, false);
+                ");
+                
+                GetBlogs().ForEach(p => context.Blogs.Add(p));
                 
                 context.SaveChanges();
                 

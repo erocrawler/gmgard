@@ -85,11 +85,13 @@ namespace GmGard.Services
                     if (DateTime.Today.Day != 1) // Show last month on day 1
                     {
                         var ranking1month = GetRankingSinceDate(db, sincemonth, DateTime.Today, HistoryRanking.Type.RankMonthly);
-                        db.HistoryRankings.RemoveRange(db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && EF.Functions.DateDiffMonth(h.RankDate, sincemonth) == 0));
+                        var nextMonth = sincemonth.AddMonths(1);
+                        db.HistoryRankings.RemoveRange(db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && h.RankDate >= sincemonth && h.RankDate < nextMonth));
                         db.HistoryRankings.AddRange(ranking1month);
                     }
 
-                    var rankings24h = db.Blogs.Where(b => !b.Category.DisableRanking && EF.Functions.DateDiffMinute(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true)
+                    var since24h = DateTime.Now.AddMinutes(-1440);
+                    var rankings24h = db.Blogs.Where(b => !b.Category.DisableRanking && b.BlogDate >= since24h && b.isApproved == true)
                         .OrderByDescending(r => r.Rating)
                         .ThenByDescending(r => r.BlogDate)
                         .Take(RankSize)
@@ -139,7 +141,7 @@ namespace GmGard.Services
 
         private IEnumerable<HistoryRanking> GetRankingSinceDate(BlogContext db, DateTime since, DateTime rankDate, HistoryRanking.Type type)
         {
-            return db.BlogRatings.Where(r => EF.Functions.DateDiffDay(since, r.ratetime) >= 0).GroupBy(r => r.BlogID)
+            return db.BlogRatings.Where(r => r.ratetime >= since).GroupBy(r => r.BlogID)
                 .Select(g => new { blogId = g.Key, rating = g.Sum(r => r.value) })
                 .Join(
                     db.Blogs.Where(b => b.isApproved == true && !b.Category.DisableRanking),
@@ -238,7 +240,8 @@ namespace GmGard.Services
             using (var scope = _scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<BlogContext>();
-                var rankings = db.Blogs.Where(b => EF.Functions.DateDiffMinute(b.BlogDate, DateTime.Now) < 1440 && b.isApproved == true && !b.Category.DisableRanking)
+                var since24h = DateTime.Now.AddMinutes(-1440);
+                var rankings = db.Blogs.Where(b => b.BlogDate >= since24h && b.isApproved == true && !b.Category.DisableRanking)
                         .Join(db.BlogRatings.GroupBy(r => r.BlogID).Select(g => new { blogId = g.Key, rating = g.Sum(r => r.value) })
                             , b => b.BlogID, r => r.blogId, (b, r) => new
                             {
@@ -296,7 +299,8 @@ namespace GmGard.Services
                 DateTime firstday = DateTime.Today.AddMonths(-1);
                 DateTime lastDay = new DateTime(firstday.Year, firstday.Month, DateTime.DaysInMonth(firstday.Year, firstday.Month));
                 var rankings = GetRankingSinceDate(db, firstday, lastDay, HistoryRanking.Type.RankMonthly);
-                db.HistoryRankings.RemoveRange(db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && EF.Functions.DateDiffMonth(h.RankDate, firstday) == 0));
+                var nextMonth = firstday.AddMonths(1);
+                db.HistoryRankings.RemoveRange(db.HistoryRankings.Where(h => h.RankType == HistoryRanking.Type.RankMonthly && h.RankDate >= firstday && h.RankDate < nextMonth));
                 db.HistoryRankings.AddRange(rankings);
                 db.SaveChanges();
                 // Remove any key at rankdate as we just updated.

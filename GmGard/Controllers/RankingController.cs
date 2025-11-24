@@ -83,7 +83,8 @@ namespace GmGard.Controllers
             var thisMonth = new DateTime(year, month, 1);
             var monthEndDate = thisMonth.AddMonths(1).AddDays(-1);
             var model = new MonthRanking();
-            var currentMonthData = _db.HistoryRankings.Where(h => EF.Functions.DateDiffMonth(h.RankDate, thisMonth) == 0 && EF.Functions.DateDiffYear(h.RankDate, thisMonth) == 0)
+            var nextMonth = thisMonth.AddMonths(1);
+            var currentMonthData = _db.HistoryRankings.Where(h => h.RankDate >= thisMonth && h.RankDate < nextMonth)
                 .Select(h => new { HistoryRanking = h, PostCount = _db.Posts.Count(p => p.ItemId == h.BlogID && p.IdType == ItemType.Blog), Deleted = !_db.Blogs.Any(b => b.BlogID == h.BlogID) })
                 .ToList();
             var name2nick = _blogUtil.GetNickNames(currentMonthData.Select(r => r.HistoryRanking.Author));

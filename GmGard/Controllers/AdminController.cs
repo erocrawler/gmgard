@@ -228,8 +228,11 @@ namespace GmGard.Controllers
                     model.harmonyblogcount = _db.Blogs.Count(b => b.isHarmony);
                     model.auditcount = _db.Blogs.Where(b => b.isApproved == null && b.BlogID > 0).Count();
                     model.bannedusercount = (await _userManager.GetUsersInRoleAsync("Banned")).Count;
-                    model.todaynewitem = _db.Blogs.Where(b => EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) == 0).Count();
-                    model.yesterdaynewitem = _db.Blogs.Where(b => EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) == 1).Count();
+                    var today = DateTime.Today;
+                    var tomorrow = today.AddDays(1);
+                    model.todaynewitem = _db.Blogs.Where(b => b.BlogDate >= today && b.BlogDate < tomorrow).Count();
+                    var yesterday = today.AddDays(-1);
+                    model.yesterdaynewitem = _db.Blogs.Where(b => b.BlogDate >= yesterday && b.BlogDate < today).Count();
                     model.totalauditcount = _db.Blogs.Count();
                     model.totalusercount = _udb.Users.Count();
                     ViewBag.AdminLogs = GetLog(1);

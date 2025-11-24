@@ -33,7 +33,8 @@ namespace GmGard.ViewComponents
             if (model == null)
             {
                 model = new Dictionary<int, HeaderDisplay>(categories.Count);
-                var counts = _db.Blogs.Where(b => b.isApproved == true && EF.Functions.DateDiffDay(b.BlogDate, DateTime.Now) <= 1)
+                var twoDaysAgo = DateTime.Now.AddDays(-1);
+                var counts = _db.Blogs.Where(b => b.isApproved == true && b.BlogDate >= twoDaysAgo)
                     .GroupBy(b => b.CategoryID)
                     .Select(b => new { CategoryID = b.Key, newItems = b.Count() })
                     .ToList();

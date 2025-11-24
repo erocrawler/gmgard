@@ -54,7 +54,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("AdID");
 
-                    b.ToTable("Advertisments", (string)null);
+                    b.ToTable("Advertisments");
                 });
 
             modelBuilder.Entity("GmGard.Models.Answer", b =>
@@ -78,7 +78,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
@@ -90,7 +90,7 @@ namespace GmGard.Migrations
                     b.HasIndex("BountyId1")
                         .IsUnique();
 
-                    b.ToTable("Answers", (string)null);
+                    b.ToTable("Answers");
                 });
 
             modelBuilder.Entity("GmGard.Models.Blog", b =>
@@ -107,7 +107,7 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("BlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("BlogTitle")
                         .IsRequired()
@@ -148,7 +148,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("CategoryID");
 
-                    b.ToTable("Blogs", (string)null);
+                    b.ToTable("Blogs");
                 });
 
             modelBuilder.Entity("GmGard.Models.BlogAudit", b =>
@@ -170,14 +170,14 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("AuditDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .HasColumnType("text");
 
                     b.HasKey("BlogID", "Auditor", "BlogVersion");
 
-                    b.ToTable("BlogAudits", (string)null);
+                    b.ToTable("BlogAudits");
                 });
 
             modelBuilder.Entity("GmGard.Models.BlogOption", b =>
@@ -203,7 +203,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("BlogID");
 
-                    b.ToTable("BlogOptions", (string)null);
+                    b.ToTable("BlogOptions");
                 });
 
             modelBuilder.Entity("GmGard.Models.BlogRating", b =>
@@ -223,7 +223,7 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("ratetime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("value")
                         .HasColumnType("integer");
@@ -234,7 +234,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Ratings", (string)null);
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("GmGard.Models.BlogsInTopic", b =>
@@ -254,7 +254,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("BlogID");
 
-                    b.ToTable("BlogsInTopics", (string)null);
+                    b.ToTable("BlogsInTopics");
                 });
 
             modelBuilder.Entity("GmGard.Models.Bounty", b =>
@@ -272,7 +272,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImageUrls")
                         .HasColumnType("text");
@@ -294,7 +294,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("BountyId");
 
-                    b.ToTable("Bounties", (string)null);
+                    b.ToTable("Bounties");
                 });
 
             modelBuilder.Entity("GmGard.Models.Category", b =>
@@ -333,7 +333,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("ParentCategoryID");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("GmGard.Models.Favorite", b =>
@@ -347,13 +347,13 @@ namespace GmGard.Migrations
                         .HasColumnOrder(2);
 
                     b.Property<DateTime>("AddDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Username", "BlogID");
 
                     b.HasIndex("BlogID");
 
-                    b.ToTable("Favorites", (string)null);
+                    b.ToTable("Favorites");
                 });
 
             modelBuilder.Entity("GmGard.Models.HanGroup", b =>
@@ -382,7 +382,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("HanGroupID");
 
-                    b.ToTable("HanGroups", (string)null);
+                    b.ToTable("HanGroups");
                 });
 
             modelBuilder.Entity("GmGard.Models.HanGroupBlog", b =>
@@ -399,7 +399,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("BlogID");
 
-                    b.ToTable("HanGroupBlogs", (string)null);
+                    b.ToTable("HanGroupBlogs");
                 });
 
             modelBuilder.Entity("GmGard.Models.HanGroupMember", b =>
@@ -418,13 +418,13 @@ namespace GmGard.Migrations
 
                     b.HasKey("HanGroupID", "Username");
 
-                    b.ToTable("HanGroupMembers", (string)null);
+                    b.ToTable("HanGroupMembers");
                 });
 
             modelBuilder.Entity("GmGard.Models.HistoryRanking", b =>
                 {
                     b.Property<DateTime>("RankDate")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnOrder(1);
 
                     b.Property<int>("BlogID")
@@ -439,7 +439,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("BlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("BlogThumb")
                         .HasColumnType("text");
@@ -458,7 +458,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("RankDate", "BlogID", "RankType");
 
-                    b.ToTable("HistoryRankings", (string)null);
+                    b.ToTable("HistoryRankings");
                 });
 
             modelBuilder.Entity("GmGard.Models.Post", b =>
@@ -485,14 +485,14 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("PostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
                     b.HasKey("PostId");
 
-                    b.ToTable("Posts", (string)null);
+                    b.ToTable("Posts");
                 });
 
             modelBuilder.Entity("GmGard.Models.PostRating", b =>
@@ -515,7 +515,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostRatings", (string)null);
+                    b.ToTable("PostRatings");
                 });
 
             modelBuilder.Entity("GmGard.Models.Reply", b =>
@@ -539,13 +539,13 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("ReplyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("ReplyId");
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Replies", (string)null);
+                    b.ToTable("Replies");
                 });
 
             modelBuilder.Entity("GmGard.Models.Tag", b =>
@@ -566,7 +566,7 @@ namespace GmGard.Migrations
 
                     b.HasKey("TagID");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("GmGard.Models.TagHistory", b =>
@@ -593,13 +593,13 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("Time")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("HistoryID");
 
                     b.HasIndex("BlogID");
 
-                    b.ToTable("TagHistories", (string)null);
+                    b.ToTable("TagHistories");
                 });
 
             modelBuilder.Entity("GmGard.Models.TagsInBlog", b =>
@@ -620,7 +620,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("TagID");
 
-                    b.ToTable("TagsInBlogs", (string)null);
+                    b.ToTable("TagsInBlogs");
                 });
 
             modelBuilder.Entity("GmGard.Models.Topic", b =>
@@ -648,7 +648,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImagePath")
                         .HasMaxLength(512)
@@ -666,7 +666,7 @@ namespace GmGard.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("isLocalImg")
                         .HasColumnType("boolean");
@@ -677,7 +677,7 @@ namespace GmGard.Migrations
 
                     b.HasIndex("TagID");
 
-                    b.ToTable("Topics", (string)null);
+                    b.ToTable("Topics");
                 });
 
             modelBuilder.Entity("GmGard.Models.Answer", b =>

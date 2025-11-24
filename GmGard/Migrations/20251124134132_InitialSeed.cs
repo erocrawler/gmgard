@@ -40,7 +40,7 @@ namespace GmGard.Migrations
                     Content = table.Column<string>(type: "text", nullable: true),
                     Author = table.Column<string>(type: "text", nullable: true),
                     ImageUrls = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     Prize = table.Column<int>(type: "integer", nullable: false),
                     IsAccepted = table.Column<bool>(type: "boolean", nullable: false),
@@ -95,7 +95,7 @@ namespace GmGard.Migrations
                 name: "HistoryRankings",
                 columns: table => new
                 {
-                    RankDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RankDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     BlogID = table.Column<int>(type: "integer", nullable: false),
                     RankType = table.Column<int>(type: "integer", nullable: false),
                     Rating = table.Column<int>(type: "integer", nullable: false),
@@ -104,7 +104,7 @@ namespace GmGard.Migrations
                     BlogVisit = table.Column<long>(type: "bigint", nullable: false),
                     PostCount = table.Column<int>(type: "integer", nullable: false),
                     Author = table.Column<string>(type: "text", nullable: true),
-                    BlogDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    BlogDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,7 +117,7 @@ namespace GmGard.Migrations
                 {
                     PostId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PostDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PostDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Author = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     Content = table.Column<string>(type: "text", maxLength: 2147483647, nullable: false),
                     IdType = table.Column<int>(type: "integer", nullable: false),
@@ -153,7 +153,7 @@ namespace GmGard.Migrations
                     Author = table.Column<string>(type: "text", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: true),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     BountyId1 = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -182,7 +182,7 @@ namespace GmGard.Migrations
                     Content = table.Column<string>(type: "text", maxLength: 2147483647, nullable: false),
                     ImagePath = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     IsLocalImg = table.Column<bool>(type: "boolean", nullable: false),
-                    BlogDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BlogDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CategoryID = table.Column<int>(type: "integer", nullable: false),
                     Author = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     isApproved = table.Column<bool>(type: "boolean", nullable: true),
@@ -247,7 +247,7 @@ namespace GmGard.Migrations
                 {
                     ReplyId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ReplyDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ReplyDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Author = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     Content = table.Column<string>(type: "text", maxLength: 2147483647, nullable: false),
                     PostId = table.Column<int>(type: "integer", nullable: false)
@@ -274,8 +274,8 @@ namespace GmGard.Migrations
                     ImagePath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     BannerPath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     isLocalImg = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    UpdateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Author = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     TopicVisit = table.Column<long>(type: "bigint", nullable: false),
                     CategoryID = table.Column<int>(type: "integer", nullable: false),
@@ -305,7 +305,7 @@ namespace GmGard.Migrations
                     BlogID = table.Column<int>(type: "integer", nullable: false),
                     Auditor = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     BlogVersion = table.Column<int>(type: "integer", nullable: false),
-                    AuditDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AuditDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AuditAction = table.Column<int>(type: "integer", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: true)
                 },
@@ -348,7 +348,7 @@ namespace GmGard.Migrations
                 {
                     Username = table.Column<string>(type: "text", nullable: false),
                     BlogID = table.Column<int>(type: "integer", nullable: false),
-                    AddDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    AddDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -393,7 +393,7 @@ namespace GmGard.Migrations
                     BlogID = table.Column<int>(type: "integer", nullable: false),
                     value = table.Column<int>(type: "integer", nullable: false),
                     credential = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ratetime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ratetime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     PostId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -419,7 +419,7 @@ namespace GmGard.Migrations
                     HistoryID = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BlogID = table.Column<int>(type: "integer", nullable: false),
-                    Time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Time = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     TagName = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     AddBy = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     DeleteBy = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true)

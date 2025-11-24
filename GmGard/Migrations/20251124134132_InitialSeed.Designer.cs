@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GmGard.Migrations
 {
     [DbContext(typeof(BlogContext))]
-    [Migration("20251124114626_InitialSeed")]
+    [Migration("20251124134132_InitialSeed")]
     partial class InitialSeed
     {
         /// <inheritdoc />
@@ -81,7 +81,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
@@ -110,7 +110,7 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("BlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("BlogTitle")
                         .IsRequired()
@@ -173,7 +173,7 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("AuditDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .HasColumnType("text");
@@ -226,7 +226,7 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("ratetime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("value")
                         .HasColumnType("integer");
@@ -275,7 +275,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImageUrls")
                         .HasColumnType("text");
@@ -350,7 +350,7 @@ namespace GmGard.Migrations
                         .HasColumnOrder(2);
 
                     b.Property<DateTime>("AddDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Username", "BlogID");
 
@@ -427,7 +427,7 @@ namespace GmGard.Migrations
             modelBuilder.Entity("GmGard.Models.HistoryRanking", b =>
                 {
                     b.Property<DateTime>("RankDate")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnOrder(1);
 
                     b.Property<int>("BlogID")
@@ -442,7 +442,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("BlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("BlogThumb")
                         .HasColumnType("text");
@@ -488,7 +488,7 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("PostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
@@ -542,7 +542,7 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("ReplyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("ReplyId");
 
@@ -596,7 +596,7 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("Time")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("HistoryID");
 
@@ -651,7 +651,7 @@ namespace GmGard.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImagePath")
                         .HasMaxLength(512)
@@ -669,7 +669,7 @@ namespace GmGard.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("isLocalImg")
                         .HasColumnType("boolean");

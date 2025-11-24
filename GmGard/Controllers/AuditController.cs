@@ -117,10 +117,21 @@ namespace GmGard.Controllers
             return (setting.JoinAuditorLevel > 0 && UserLevel >= setting.JoinAuditorLevel) || _blogUtil.CheckAdmin(true);
         }
 
-        private IQueryable<BlogAudit> LatestAudits(BlogContext db) =>
-            db.BlogAudits.GroupBy(b => b.BlogID).SelectMany(bg => bg.Where(ba => ba.BlogVersion >
-                bg.Where(bm => bm.AuditAction == BlogAudit.Action.Approve || bm.AuditAction == BlogAudit.Action.Deny)
-                    .DefaultIfEmpty().Max(bm => bm == null ? 0 : bm.BlogVersion)));
+        private IEnumerable<BlogAudit> LatestAudits(BlogContext db)
+        {
+            // Get the max version for each blog where action is Approve or Deny
+            var maxVersions = db.BlogAudits
+                .Where(ba => ba.AuditAction == BlogAudit.Action.Approve || ba.AuditAction == BlogAudit.Action.Deny)
+                .GroupBy(ba => ba.BlogID)
+                .Select(g => new { BlogID = g.Key, MaxVersion = g.Max(ba => ba.BlogVersion) })
+                .ToList();
+            
+            var maxVersionDict = maxVersions.ToDictionary(x => x.BlogID, x => x.MaxVersion);
+            
+            // Get all audits where version is greater than the max approve/deny version for that blog
+            return db.BlogAudits.ToList()
+                .Where(ba => !maxVersionDict.ContainsKey(ba.BlogID) || ba.BlogVersion > maxVersionDict[ba.BlogID]);
+        }
 
         public async Task<ActionResult> Index(int page = 1)
         {
@@ -130,10 +141,21 @@ namespace GmGard.Controllers
                 return RedirectToAction("Join");
             }
             ViewBag.Auditor = user.auditor ?? new Auditor();
+            
+            var latestAudits = LatestAudits(_db).Where(ba => ba.Auditor == User.Identity.Name).ToList();
+            var latestAuditBlogIds = latestAudits.Select(ba => ba.BlogID).ToHashSet();
+            
             var query = _db.Blogs.Where(b => b.isApproved == null && b.BlogID > 0)
-                .GroupJoin(LatestAudits(_db).Where(ba => ba.Auditor == User.Identity.Name), b => b.BlogID, ba => ba.BlogID, (b, ba) => new { blog = b, audits = ba })
-                .SelectMany(a => a.audits.DefaultIfEmpty(), (a, ba) => new AuditModel { blog = a.blog, audit = ba })
-                .OrderBy(b => b.blog.BlogDate);
+                .ToList()
+                .Select(b => new AuditModel 
+                { 
+                    blog = b, 
+                    audit = latestAuditBlogIds.Contains(b.BlogID) 
+                        ? latestAudits.FirstOrDefault(ba => ba.BlogID == b.BlogID) 
+                        : null 
+                })
+                .OrderBy(b => b.blog.BlogDate)
+                .AsQueryable();
 
             Func<object, ActionResult> Result = View;
             if (Request.IsAjaxRequest())
@@ -329,7 +351,9 @@ namespace GmGard.Controllers
             }
             else
             {
-                ViewBag.CurrentVoteCount = LatestAudits(_db).Count(ba => query.Any(b => b.BlogID == ba.BlogID));
+                // Get blog IDs from query to avoid correlated subquery
+                var blogIds = query.Select(b => b.BlogID).ToList();
+                ViewBag.CurrentVoteCount = LatestAudits(_db).Count(ba => blogIds.Contains(ba.BlogID));
                 ViewBag.TotalVoteCount = _db.BlogAudits.Where(ba => ba.AuditAction == BlogAudit.Action.VoteApprove || ba.AuditAction == BlogAudit.Action.VoteDeny).Count();
                 ViewBag.AverageAccuracy = _udb.Auditors.DefaultIfEmpty().Average(a => a == null ? 0 : (a.AuditCount > 0 ? a.CorrectCount / (float)a.AuditCount : 0));
             }

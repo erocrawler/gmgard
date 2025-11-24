@@ -195,7 +195,8 @@ namespace GmGard.Controllers.App
                 return Json(Enumerable.Empty<PunchInHistory>());
             }
             var user = _udb.Users.SingleOrDefault(u => u.UserName == User.Identity.Name);
-            var currentMonthData = _udb.PunchInHistories.Where(h => h.User.UserName == User.Identity.Name && EF.Functions.DateDiffMonth(h.TimeStamp, thisMonth) == 0 && EF.Functions.DateDiffYear(h.TimeStamp, thisMonth) == 0);
+            var nextMonth = thisMonth.AddMonths(1);
+            var currentMonthData = _udb.PunchInHistories.Where(h => h.User.UserName == User.Identity.Name && h.TimeStamp >= thisMonth && h.TimeStamp < nextMonth);
             var response = new PunchInHistoryResponse {
                 PunchIns = currentMonthData.Select(u => new PunchInHistoryResponse.PunchIn { TimeStamp = u.TimeStamp, IsMakeUp = u.IsMakeup }).ToList(),
                 MinSignDate = user.CreateDate > minDate ? user.CreateDate : minDate,

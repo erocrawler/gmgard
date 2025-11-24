@@ -37,9 +37,21 @@ namespace GmGard.ViewComponents
             var latestRanking = await _cache.GetOrCreateAsync("~RankSidebar", async e =>
             {
                 e.AbsoluteExpirationRelativeToNow = _cacheInterval;
-                var latestData = await _db.HistoryRankings.AsNoTracking().Where(g => g.RankType != HistoryRanking.Type.RankDaily).GroupBy(g => g.RankType).SelectMany(g => g.OrderByDescending(d => d.RankDate).Take(5))
-                    .Select(h => new { HistoryRanking = h, Deleted = !_db.Blogs.Any(b => b.BlogID == h.BlogID) })
+                // Load all non-daily rankings from database
+                var allRankings = await _db.HistoryRankings.AsNoTracking()
+                    .Where(g => g.RankType != HistoryRanking.Type.RankDaily)
                     .ToListAsync();
+                
+                // Group and take top 5 of each type in memory
+                var latestData = allRankings
+                    .GroupBy(g => g.RankType)
+                    .SelectMany(g => g.OrderByDescending(d => d.RankDate).Take(5))
+                    .Select(h => new { 
+                        HistoryRanking = h, 
+                        Deleted = !_db.Blogs.Any(b => b.BlogID == h.BlogID) 
+                    })
+                    .ToList();
+                    
                 var name2nick = _blogUtil.GetNickNames(latestData.Select(r => r.HistoryRanking.Author));
                 return latestData.Where(a => !a.Deleted).Select(h => new RankingDisplay
                 {

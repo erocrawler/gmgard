@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GmGard.Migrations.Users
 {
     [DbContext(typeof(UsersContext))]
-    [Migration("20251124121055_InitialSeed")]
+    [Migration("20251124134047_InitialSeed")]
     partial class InitialSeed
     {
         /// <inheritdoc />
@@ -42,7 +42,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("LogTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(100)
@@ -84,7 +84,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("SubmitTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("UserID", "Version");
 
@@ -138,7 +138,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnOrder(2);
 
                     b.Property<DateTime>("FollowTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("UserID", "FollowID");
 
@@ -292,7 +292,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("text");
 
                     b.Property<DateTime>("MsgDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("MsgTitle")
                         .HasMaxLength(80)
@@ -322,7 +322,7 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PicID"));
 
                     b.Property<DateTime>("PicDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PicName")
                         .IsRequired()
@@ -351,7 +351,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnOrder(0);
 
                     b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnOrder(1);
 
                     b.Property<bool>("IsMakeup")
@@ -371,10 +371,10 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EventEnd")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("EventStart")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Image")
                         .HasColumnType("text");
@@ -447,7 +447,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("text");
 
                     b.Property<DateTime>("AttemptTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
@@ -472,7 +472,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("BuyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("UsedBy")
                         .HasColumnType("integer");
@@ -498,7 +498,7 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("GachaId"));
 
                     b.Property<DateTime>("GachaTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ItemId")
                         .HasColumnType("integer");
@@ -598,7 +598,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -615,14 +615,14 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("LastLoginDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("LastLoginIP")
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
                     b.Property<DateTime>("LastSignDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -720,16 +720,16 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastBlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastPostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastRateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastRatePostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PersonalBackground")
                         .HasColumnType("text");
@@ -769,7 +769,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
@@ -818,7 +818,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("IssueTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("RedeemItem")
                         .HasColumnType("text");
@@ -829,7 +829,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("bytea");
 
                     b.Property<DateTime?>("UseTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("UserID")
                         .HasColumnType("integer");

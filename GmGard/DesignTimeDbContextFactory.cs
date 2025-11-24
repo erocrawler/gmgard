@@ -10,6 +10,7 @@ namespace GmGard
     {
         public BlogContext CreateDbContext(string[] args)
         {
+            System.AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
@@ -39,6 +40,7 @@ namespace GmGard
     {
         public UsersContext CreateDbContext(string[] args)
         {
+            System.AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")

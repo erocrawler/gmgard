@@ -183,10 +183,11 @@ namespace GmGard.Services
             if (c == null)
             {
                 // 0 = Suggestions, -1 = Report
-                var specialBlogs = _db.Posts.Where(p => (p.ItemId == 0 || p.ItemId == -1) && p.IdType == ItemType.Blog && EF.Functions.DateDiffDay(p.PostDate, DateTime.Now) < 1);
+                var yesterday = DateTime.Now.AddDays(-1);
+                var specialBlogs = _db.Posts.Where(p => (p.ItemId == 0 || p.ItemId == -1) && p.IdType == ItemType.Blog && p.PostDate >= yesterday);
                 c1 = specialBlogs.Count(p => p.ItemId == 0);
                 c2 = specialBlogs.Count(p => p.ItemId == -1);
-                c3 = _udb.Messages.Count(p => p.Recipient == "admin" && EF.Functions.DateDiffDay(p.MsgDate, DateTime.Now) < 1);
+                c3 = _udb.Messages.Count(p => p.Recipient == "admin" && p.MsgDate >= yesterday);
                 c = string.Format("{0}/{1}/{2}", c1, c2, c3);
                 _cache.Set<string>("NewSuggestionCount", c, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) });
             }

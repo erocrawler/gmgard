@@ -370,8 +370,10 @@ namespace GmGard.Controllers.App
                 return BadRequest();
             }
             var user = await _userManager.GetUserAsync(User);
+            var today = DateTime.Today;
+            var tomorrow = today.AddDays(1);
             var todayDrawCount = await _udb.UserVouchers
-                .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && EF.Functions.DateDiffDay(v.IssueTime, DateTime.Today) == 0)
+                .Where(v => v.UserID == user.Id && v.VoucherKind == UserVoucher.Kind.WheelA && v.IssueTime >= today && v.IssueTime < tomorrow)
                 .CountAsync();
             if (todayDrawCount >= 3 && !User.IsInRole("AdManager") && !User.IsInRole("Administrator"))
             {

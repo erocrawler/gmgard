@@ -39,7 +39,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("LogTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(100)
@@ -51,7 +51,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("LogID");
 
-                    b.ToTable("AdminLogs", (string)null);
+                    b.ToTable("AdminLogs");
                 });
 
             modelBuilder.Entity("GmGard.Models.AuditExamSubmission", b =>
@@ -81,11 +81,11 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("SubmitTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("UserID", "Version");
 
-                    b.ToTable("AuditExamSubmissions", (string)null);
+                    b.ToTable("AuditExamSubmissions");
                 });
 
             modelBuilder.Entity("GmGard.Models.Auditor", b =>
@@ -101,7 +101,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("UserID");
 
-                    b.ToTable("Auditors", (string)null);
+                    b.ToTable("Auditors");
                 });
 
             modelBuilder.Entity("GmGard.Models.ExperienceTable", b =>
@@ -121,7 +121,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("Level");
 
-                    b.ToTable("ExpTable", (string)null);
+                    b.ToTable("ExpTable");
                 });
 
             modelBuilder.Entity("GmGard.Models.Follow", b =>
@@ -135,13 +135,13 @@ namespace GmGard.Migrations.Users
                         .HasColumnOrder(2);
 
                     b.Property<DateTime>("FollowTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("UserID", "FollowID");
 
                     b.HasIndex("FollowID");
 
-                    b.ToTable("Follows", (string)null);
+                    b.ToTable("Follows");
                 });
 
             modelBuilder.Entity("GmGard.Models.GachaItem", b =>
@@ -170,7 +170,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("Id");
 
-                    b.ToTable("GachaItems", (string)null);
+                    b.ToTable("GachaItems");
                 });
 
             modelBuilder.Entity("GmGard.Models.GachaPool", b =>
@@ -190,7 +190,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("GachaPools", (string)null);
+                    b.ToTable("GachaPools");
                 });
 
             modelBuilder.Entity("GmGard.Models.GachaTitleConditionConfig", b =>
@@ -214,7 +214,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("TitleID");
 
-                    b.ToTable("GachaTitleConditionConfigs", (string)null);
+                    b.ToTable("GachaTitleConditionConfigs");
                 });
 
             modelBuilder.Entity("GmGard.Models.Game", b =>
@@ -236,7 +236,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("GameID");
 
-                    b.ToTable("Games", (string)null);
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("GmGard.Models.GameScenario", b =>
@@ -264,7 +264,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("GameID");
 
-                    b.ToTable("GameScenarios", (string)null);
+                    b.ToTable("GameScenarios");
                 });
 
             modelBuilder.Entity("GmGard.Models.Message", b =>
@@ -289,7 +289,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("text");
 
                     b.Property<DateTime>("MsgDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("MsgTitle")
                         .HasMaxLength(80)
@@ -307,7 +307,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("MsgId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("GmGard.Models.Pictures", b =>
@@ -319,7 +319,7 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PicID"));
 
                     b.Property<DateTime>("PicDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PicName")
                         .IsRequired()
@@ -338,7 +338,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("PicID");
 
-                    b.ToTable("Avatars", (string)null);
+                    b.ToTable("Avatars");
                 });
 
             modelBuilder.Entity("GmGard.Models.PunchInHistory", b =>
@@ -348,7 +348,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnOrder(0);
 
                     b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnOrder(1);
 
                     b.Property<bool>("IsMakeup")
@@ -356,7 +356,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("UserID", "TimeStamp");
 
-                    b.ToTable("PunchInHistories", (string)null);
+                    b.ToTable("PunchInHistories");
                 });
 
             modelBuilder.Entity("GmGard.Models.RaffleConfig", b =>
@@ -368,10 +368,10 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EventEnd")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("EventStart")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Image")
                         .HasColumnType("text");
@@ -384,7 +384,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("Id");
 
-                    b.ToTable("RaffleConfigs", (string)null);
+                    b.ToTable("RaffleConfigs");
                 });
 
             modelBuilder.Entity("GmGard.Models.ScenarioChoice", b =>
@@ -407,7 +407,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("NextScenarioID");
 
-                    b.ToTable("ScenarioChoices", (string)null);
+                    b.ToTable("ScenarioChoices");
                 });
 
             modelBuilder.Entity("GmGard.Models.TitleConfig", b =>
@@ -429,7 +429,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("TitleID");
 
-                    b.ToTable("TitleConfigs", (string)null);
+                    b.ToTable("TitleConfigs");
                 });
 
             modelBuilder.Entity("GmGard.Models.TreasureHuntAttempt", b =>
@@ -444,7 +444,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("text");
 
                     b.Property<DateTime>("AttemptTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
@@ -459,7 +459,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("TreasureHuntAttempts", (string)null);
+                    b.ToTable("TreasureHuntAttempts");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserCode", b =>
@@ -469,7 +469,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("BuyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("UsedBy")
                         .HasColumnType("integer");
@@ -483,7 +483,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserCodes", (string)null);
+                    b.ToTable("UserCodes");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserGacha", b =>
@@ -495,7 +495,7 @@ namespace GmGard.Migrations.Users
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("GachaId"));
 
                     b.Property<DateTime>("GachaTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ItemId")
                         .HasColumnType("integer");
@@ -512,7 +512,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("UserGachas", (string)null);
+                    b.ToTable("UserGachas");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserGameData", b =>
@@ -540,7 +540,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("GameID");
 
-                    b.ToTable("UserGameDatas", (string)null);
+                    b.ToTable("UserGameDatas");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserOption", b =>
@@ -572,7 +572,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("UserId");
 
-                    b.ToTable("UserOptions", (string)null);
+                    b.ToTable("UserOptions");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserProfile", b =>
@@ -595,7 +595,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -612,14 +612,14 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("LastLoginDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("LastLoginIP")
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
                     b.Property<DateTime>("LastSignDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -717,16 +717,16 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastBlogDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastPostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastRateDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastRatePostDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PersonalBackground")
                         .HasColumnType("text");
@@ -753,7 +753,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("Title");
 
-                    b.ToTable("UserQuests", (string)null);
+                    b.ToTable("UserQuests");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserRaffle", b =>
@@ -766,7 +766,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
@@ -777,7 +777,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("UserRaffles", (string)null);
+                    b.ToTable("UserRaffles");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserVisitedScenario", b =>
@@ -805,7 +805,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("ScenarioID");
 
-                    b.ToTable("UserVisitedScenarios", (string)null);
+                    b.ToTable("UserVisitedScenarios");
                 });
 
             modelBuilder.Entity("GmGard.Models.UserVoucher", b =>
@@ -815,7 +815,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("IssueTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("RedeemItem")
                         .HasColumnType("text");
@@ -826,7 +826,7 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("bytea");
 
                     b.Property<DateTime?>("UseTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("UserID")
                         .HasColumnType("integer");
@@ -838,7 +838,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("UserVouchers", (string)null);
+                    b.ToTable("UserVouchers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>

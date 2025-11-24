@@ -170,22 +170,44 @@ namespace GmGard.Controllers
                 {
                     _cache.Set(CacheService.HomePageCacheKey, cache, new MemoryCacheEntryOptions() { Priority = CacheItemPriority.NeverRemove });
                 }
+                
+                // Get paged blogs first
+                var skipCount = pageNumber == 1 ? 0 : (pageNumber - 1) * pagesize;
+                var pagedBlogs = query.Skip(skipCount).Take(pagesize).ToList();
+                var blogIds = pagedBlogs.Select(b => b.BlogID).ToList();
+                
+                // Load all tags for these blogs in a single query
                 var harmonysettings = _appSettings.HarmonySettings;
+                Dictionary<int, List<Tag>> tagsByBlogId;
+                
                 if (!isHarmony || harmonysettings.WhitelistTags == null)
                 {
-                    model = query.Select(b => new BlogDisplay {
-                        blog = b,
-                        tag = _db.TagsInBlogs.Where(t => t.BlogID == b.BlogID).Select(t => t.tag)
-                    }).ToPagedList(pageNumber, pagesize, itemCount);
+                    tagsByBlogId = _db.TagsInBlogs
+                        .Where(t => blogIds.Contains(t.BlogID))
+                        .Select(t => new { t.BlogID, t.tag })
+                        .ToList()
+                        .GroupBy(t => t.BlogID)
+                        .ToDictionary(g => g.Key, g => g.Select(x => x.tag).ToList());
                 }
                 else
                 {
-                    model = query.Select(b => new BlogDisplay {
-                        blog = b,
-                        tag = _db.TagsInBlogs.Where(t => t.BlogID == b.BlogID 
-                            && !harmonysettings.WhitelistTags.Contains(t.TagID)).Select(t => t.tag)
-                    }).ToPagedList(pageNumber, pagesize, itemCount);
+                    tagsByBlogId = _db.TagsInBlogs
+                        .Where(t => blogIds.Contains(t.BlogID) && !harmonysettings.WhitelistTags.Contains(t.TagID))
+                        .Select(t => new { t.BlogID, t.tag })
+                        .ToList()
+                        .GroupBy(t => t.BlogID)
+                        .ToDictionary(g => g.Key, g => g.Select(x => x.tag).ToList());
                 }
+                
+                // Combine blogs with their tags
+                var blogDisplays = pagedBlogs.Select(b => new BlogDisplay
+                {
+                    blog = b,
+                    tag = tagsByBlogId.ContainsKey(b.BlogID) ? tagsByBlogId[b.BlogID] : new List<Tag>()
+                }).ToList();
+                
+                model = new X.PagedList.StaticPagedList<BlogDisplay>(blogDisplays, pageNumber, pagesize, itemCount);
+                
                 if (cache != null)
                 {
                     cache.TryAdd(cachekey, model);
