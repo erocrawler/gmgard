@@ -71,9 +71,6 @@ namespace GmGard.Migrations
                     b.Property<int>("BountyId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("BountyId1")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
@@ -86,9 +83,6 @@ namespace GmGard.Migrations
                     b.HasKey("AnswerId");
 
                     b.HasIndex("BountyId");
-
-                    b.HasIndex("BountyId1")
-                        .IsUnique();
 
                     b.ToTable("Answers");
                 });
@@ -130,7 +124,8 @@ namespace GmGard.Migrations
                         .HasColumnType("character varying(1024)");
 
                     b.Property<bool>("IsLocalImg")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("isLocalImg");
 
                     b.Property<string>("Links")
                         .HasColumnType("text");
@@ -265,6 +260,10 @@ namespace GmGard.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BountyId"));
 
+                    b.Property<int?>("AcceptedAnswerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("AcceptedAnswer_AnswerId");
+
                     b.Property<string>("Author")
                         .HasColumnType("text");
 
@@ -293,6 +292,8 @@ namespace GmGard.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("BountyId");
+
+                    b.HasIndex("AcceptedAnswerId");
 
                     b.ToTable("Bounties");
                 });
@@ -688,10 +689,6 @@ namespace GmGard.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GmGard.Models.Bounty", null)
-                        .WithOne("AcceptedAnswer")
-                        .HasForeignKey("GmGard.Models.Answer", "BountyId1");
-
                     b.Navigation("Bounty");
                 });
 
@@ -762,6 +759,15 @@ namespace GmGard.Migrations
                     b.Navigation("blog");
 
                     b.Navigation("topic");
+                });
+
+            modelBuilder.Entity("GmGard.Models.Bounty", b =>
+                {
+                    b.HasOne("GmGard.Models.Answer", "AcceptedAnswer")
+                        .WithMany()
+                        .HasForeignKey("AcceptedAnswerId");
+
+                    b.Navigation("AcceptedAnswer");
                 });
 
             modelBuilder.Entity("GmGard.Models.Category", b =>
@@ -892,8 +898,6 @@ namespace GmGard.Migrations
 
             modelBuilder.Entity("GmGard.Models.Bounty", b =>
                 {
-                    b.Navigation("AcceptedAnswer");
-
                     b.Navigation("Answers");
                 });
 

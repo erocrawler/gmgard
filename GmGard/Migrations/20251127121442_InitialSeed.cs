@@ -31,27 +31,6 @@ namespace GmGard.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Bounties",
-                columns: table => new
-                {
-                    BountyId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: true),
-                    Content = table.Column<string>(type: "text", nullable: true),
-                    Author = table.Column<string>(type: "text", nullable: true),
-                    ImageUrls = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    Prize = table.Column<int>(type: "integer", nullable: false),
-                    IsAccepted = table.Column<bool>(type: "boolean", nullable: false),
-                    ViewCount = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Bounties", x => x.BountyId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -144,35 +123,6 @@ namespace GmGard.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Answers",
-                columns: table => new
-                {
-                    AnswerId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BountyId = table.Column<int>(type: "integer", nullable: false),
-                    Author = table.Column<string>(type: "text", nullable: true),
-                    Content = table.Column<string>(type: "text", nullable: true),
-                    ImageUrl = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    BountyId1 = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Answers", x => x.AnswerId);
-                    table.ForeignKey(
-                        name: "FK_Answers_Bounties_BountyId",
-                        column: x => x.BountyId,
-                        principalTable: "Bounties",
-                        principalColumn: "BountyId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Answers_Bounties_BountyId1",
-                        column: x => x.BountyId1,
-                        principalTable: "Bounties",
-                        principalColumn: "BountyId");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Blogs",
                 columns: table => new
                 {
@@ -181,7 +131,7 @@ namespace GmGard.Migrations
                     BlogTitle = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     Content = table.Column<string>(type: "text", maxLength: 2147483647, nullable: false),
                     ImagePath = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
-                    IsLocalImg = table.Column<bool>(type: "boolean", nullable: false),
+                    isLocalImg = table.Column<bool>(type: "boolean", nullable: false),
                     BlogDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CategoryID = table.Column<int>(type: "integer", nullable: false),
                     Author = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
@@ -485,16 +435,54 @@ namespace GmGard.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Answers",
+                columns: table => new
+                {
+                    AnswerId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BountyId = table.Column<int>(type: "integer", nullable: false),
+                    Author = table.Column<string>(type: "text", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Answers", x => x.AnswerId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Bounties",
+                columns: table => new
+                {
+                    BountyId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: true),
+                    Author = table.Column<string>(type: "text", nullable: true),
+                    ImageUrls = table.Column<string>(type: "text", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    Prize = table.Column<int>(type: "integer", nullable: false),
+                    IsAccepted = table.Column<bool>(type: "boolean", nullable: false),
+                    ViewCount = table.Column<int>(type: "integer", nullable: false),
+                    AcceptedAnswer_AnswerId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Bounties", x => x.BountyId);
+                    table.ForeignKey(
+                        name: "FK_Bounties_Answers_AcceptedAnswer_AnswerId",
+                        column: x => x.AcceptedAnswer_AnswerId,
+                        principalTable: "Answers",
+                        principalColumn: "AnswerId");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Answers_BountyId",
                 table: "Answers",
                 column: "BountyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Answers_BountyId1",
-                table: "Answers",
-                column: "BountyId1",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blogs_CategoryID",
@@ -505,6 +493,11 @@ namespace GmGard.Migrations
                 name: "IX_BlogsInTopics_BlogID",
                 table: "BlogsInTopics",
                 column: "BlogID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bounties_AcceptedAnswer_AnswerId",
+                table: "Bounties",
+                column: "AcceptedAnswer_AnswerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_ParentCategoryID",
@@ -560,16 +553,25 @@ namespace GmGard.Migrations
                 name: "IX_Topics_TagID",
                 table: "Topics",
                 column: "TagID");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Answers_Bounties_BountyId",
+                table: "Answers",
+                column: "BountyId",
+                principalTable: "Bounties",
+                principalColumn: "BountyId",
+                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Advertisments");
+            migrationBuilder.DropForeignKey(
+                name: "FK_Answers_Bounties_BountyId",
+                table: "Answers");
 
             migrationBuilder.DropTable(
-                name: "Answers");
+                name: "Advertisments");
 
             migrationBuilder.DropTable(
                 name: "BlogAudits");
@@ -608,9 +610,6 @@ namespace GmGard.Migrations
                 name: "TagsInBlogs");
 
             migrationBuilder.DropTable(
-                name: "Bounties");
-
-            migrationBuilder.DropTable(
                 name: "Topics");
 
             migrationBuilder.DropTable(
@@ -627,6 +626,12 @@ namespace GmGard.Migrations
 
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Bounties");
+
+            migrationBuilder.DropTable(
+                name: "Answers");
         }
     }
 }

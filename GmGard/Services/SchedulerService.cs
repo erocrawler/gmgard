@@ -63,10 +63,10 @@ namespace GmGard.Services
         private void InitSchedule()
         {
             RankingScheduler();
-            Schedule(new Action(RssTask)).ToRunNow().AndEvery(1).Hours();
-            Schedule(new Action(DailyRewardTask)).ToRunEvery(1).Days().At(20, 00);
-            Schedule(new Action(WeeklyRewardTask)).ToRunEvery(0).Weeks().On(DayOfWeek.Monday).At(0, 1);
-            Schedule(new Action(MonthlyRewardTask)).ToRunEvery(1).Months().On(1).At(0, 1);
+            Schedule(new Action(RssTask)).NonReentrant().ToRunNow().AndEvery(1).Hours();
+            Schedule(new Action(DailyRewardTask)).NonReentrant().ToRunEvery(1).Days().At(20, 00);
+            Schedule(new Action(WeeklyRewardTask)).NonReentrant().ToRunEvery(0).Weeks().On(DayOfWeek.Monday).At(0, 1);
+            Schedule(new Action(MonthlyRewardTask)).NonReentrant().ToRunEvery(1).Months().On(1).At(0, 1);
         }
 
         private void RankingScheduler()
@@ -136,7 +136,7 @@ namespace GmGard.Services
                     db.SaveChanges();
                 }
             });
-            Schedule(timertask).WithName(RankingTask).ToRunEvery(UpdateInterval).Minutes();
+            Schedule(timertask).WithName(RankingTask).NonReentrant().ToRunEvery(UpdateInterval).Minutes();
         }
 
         private IEnumerable<HistoryRanking> GetRankingSinceDate(BlogContext db, DateTime since, DateTime rankDate, HistoryRanking.Type type)
@@ -204,7 +204,13 @@ namespace GmGard.Services
             using (var scope = _scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<BlogContext>();
-                var blogs = db.Blogs.Where(b => b.isApproved == true).OrderByDescending(b => b.BlogDate).Take(20);
+                // Materialize results before iterating to avoid nested queries on the same connection
+                var blogs = db.Blogs
+                    .AsNoTracking()
+                    .Where(b => b.isApproved == true)
+                    .OrderByDescending(b => b.BlogDate)
+                    .Take(20)
+                    .ToList();
                 var categoryUtil = scope.ServiceProvider.GetRequiredService<CategoryUtil>();
                 foreach (var blog in blogs)
                 {

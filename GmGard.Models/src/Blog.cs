@@ -92,6 +92,7 @@ namespace GmGard.Models
         public string ImagePath { get; set; }
 
         // If true, the image files in ImagePath is owned by this blog.
+        [Column("isLocalImg")]
         public bool IsLocalImg { get; set; }
 
         [Display(Name = "日期")]

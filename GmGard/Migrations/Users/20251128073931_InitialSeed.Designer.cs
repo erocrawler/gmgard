@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GmGard.Migrations.Users
 {
     [DbContext(typeof(UsersContext))]
-    [Migration("20251124134047_InitialSeed")]
+    [Migration("20251128073931_InitialSeed")]
     partial class InitialSeed
     {
         /// <inheritdoc />
@@ -124,7 +124,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("Level");
 
-                    b.ToTable("ExpTable");
+                    b.ToTable("ExperienceTables", (string)null);
                 });
 
             modelBuilder.Entity("GmGard.Models.Follow", b =>
@@ -341,7 +341,7 @@ namespace GmGard.Migrations.Users
 
                     b.HasKey("PicID");
 
-                    b.ToTable("Avatars");
+                    b.ToTable("Pictures", (string)null);
                 });
 
             modelBuilder.Entity("GmGard.Models.PunchInHistory", b =>
@@ -766,7 +766,8 @@ namespace GmGard.Migrations.Users
                         .HasColumnType("uuid");
 
                     b.Property<int?>("ConfigId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("Config_Id");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp without time zone");

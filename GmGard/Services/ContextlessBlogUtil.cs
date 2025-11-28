@@ -82,12 +82,16 @@ namespace GmGard.Services
 
         public string GetUserDesc(string username)
         {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return string.Empty;
+            }
             username = username.ToLower();
             string desc = _cache.Get<string>("desc" + username);
             if (desc == null)
             {
-                var p = _udb.Users.FirstOrDefault(u => u.UserName == username);
-                desc = p.UserComment ?? string.Empty;
+                var p = _udb.Users.AsNoTracking().FirstOrDefault(u => u.UserName == username);
+                desc = p?.UserComment ?? string.Empty;
                 _cache.Set("desc" + username, desc);
             }
             return desc;

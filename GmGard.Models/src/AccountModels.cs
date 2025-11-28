@@ -162,6 +162,9 @@ namespace GmGard.Models
 
             modelBuilder.Entity<PunchInHistory>()
                 .HasKey(pih => new { pih.UserID, pih.TimeStamp });
+
+            modelBuilder.Entity<ExperienceTable>().ToTable("ExperienceTables");
+            modelBuilder.Entity<Pictures>().ToTable("Pictures");
         }
     }
 
@@ -624,6 +627,10 @@ namespace GmGard.Models
         public DateTime TimeStamp { get; set; }
 
         public virtual UserProfile User { get; set; }
+        
+        [ForeignKey("Config"), Column("Config_Id")]
+        public int? ConfigId { get; set; }
+        
         public virtual RaffleConfig Config { get; set; }
     }
 

@@ -45,23 +45,7 @@ namespace GmGard.Migrations.Users
                 });
 
             migrationBuilder.CreateTable(
-                name: "Avatars",
-                columns: table => new
-                {
-                    PicID = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PicUserName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PicType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PicName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    PicDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Avatars", x => x.PicID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExpTable",
+                name: "ExperienceTables",
                 columns: table => new
                 {
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -71,7 +55,7 @@ namespace GmGard.Migrations.Users
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExpTable", x => x.Level);
+                    table.PrimaryKey("PK_ExperienceTables", x => x.Level);
                 });
 
             migrationBuilder.CreateTable(
@@ -124,6 +108,22 @@ namespace GmGard.Migrations.Users
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Messages", x => x.MsgId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Pictures",
+                columns: table => new
+                {
+                    PicID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PicUserName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PicType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PicName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    PicDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pictures", x => x.PicID);
                 });
 
             migrationBuilder.CreateTable(
@@ -598,14 +598,14 @@ namespace GmGard.Migrations.Users
                     RaffleID = table.Column<Guid>(type: "uuid", nullable: false),
                     UserID = table.Column<int>(type: "integer", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    ConfigId = table.Column<int>(type: "integer", nullable: true)
+                    Config_Id = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UserRaffles", x => x.RaffleID);
                     table.ForeignKey(
-                        name: "FK_UserRaffles_RaffleConfigs_ConfigId",
-                        column: x => x.ConfigId,
+                        name: "FK_UserRaffles_RaffleConfigs_Config_Id",
+                        column: x => x.Config_Id,
                         principalTable: "RaffleConfigs",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -846,9 +846,9 @@ namespace GmGard.Migrations.Users
                 column: "Title");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserRaffles_ConfigId",
+                name: "IX_UserRaffles_Config_Id",
                 table: "UserRaffles",
-                column: "ConfigId");
+                column: "Config_Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRaffles_UserID",
@@ -894,10 +894,7 @@ namespace GmGard.Migrations.Users
                 name: "Auditors");
 
             migrationBuilder.DropTable(
-                name: "Avatars");
-
-            migrationBuilder.DropTable(
-                name: "ExpTable");
+                name: "ExperienceTables");
 
             migrationBuilder.DropTable(
                 name: "Follows");
@@ -910,6 +907,9 @@ namespace GmGard.Migrations.Users
 
             migrationBuilder.DropTable(
                 name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "Pictures");
 
             migrationBuilder.DropTable(
                 name: "PunchInHistories");

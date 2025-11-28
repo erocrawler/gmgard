@@ -22,6 +22,10 @@ namespace GmGard.Models
         public bool IsAccepted { get; set; }
         public int ViewCount { get; set; }
 
+        [Column("AcceptedAnswer_AnswerId")]
+        public int? AcceptedAnswerId { get; set; }
+
+        [ForeignKey("AcceptedAnswerId")]
         public virtual Answer AcceptedAnswer { get; set; }
 
         [InverseProperty("Bounty")]
