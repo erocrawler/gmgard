@@ -22,7 +22,7 @@ namespace GmGard.Services
             get {
                 if (_currentUser == null && HttpContext.User.Identity.IsAuthenticated)
                 {
-                    _currentUser = _udb.Users.AsNoTracking().Include(u => u.quest).SingleOrDefault(u => u.UserName == HttpContext.User.Identity.Name);
+                    _currentUser = _udb.Users.AsNoTracking().Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == HttpContext.User.Identity.Name.ToLower());
                 }
                 return _currentUser;
             }
@@ -85,7 +85,11 @@ namespace GmGard.Services
             if (table == null)
             {
                 table = _udb.ExpTable.ToList();
-                _cache.Set(ExpTableKey, table);
+                _cache.Set(ExpTableKey, table, new MemoryCacheEntryOptions 
+                { 
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24),
+                    Priority = CacheItemPriority.High
+                });
             }
             return table;
         }
@@ -107,8 +111,12 @@ namespace GmGard.Services
             int? lvl = _cache.Get<int?>(LevelCacheKey + username);
             if (lvl.HasValue)
                 return lvl.Value;
-            lvl = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName == username)?.Level;
-            _cache.Set(LevelCacheKey + username, lvl);
+            lvl = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName.ToLower() == username.ToLower())?.Level;
+            _cache.Set(LevelCacheKey + username, lvl, new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
             return lvl.HasValue ? lvl.Value : -1;
         }
 
@@ -131,7 +139,7 @@ namespace GmGard.Services
                 lvl = level.Value;
                 return;
             }
-            var user = _udb.Users.SingleOrDefault(u => u.UserName == username);
+            var user = _udb.Users.SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
             if (user == null)
             {
                 return;
@@ -144,8 +152,16 @@ namespace GmGard.Services
             }
             lvl = user.Level;
             level = lvl;
-            _cache.Set(LevelCacheKey + username, level);
-            _cache.Set(ExpCacheKey + username, new Tuple<int, int>(expCurrent, expNext));
+            _cache.Set(LevelCacheKey + username, level, new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
+            _cache.Set(ExpCacheKey + username, new Tuple<int, int>(expCurrent, expNext), new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
         }
 
         public int getUserPoints(string username)
@@ -154,19 +170,23 @@ namespace GmGard.Services
             int? points = _cache.Get<int?>(PointsCacheKey + username);
             if (points == null)
             {
-                var user = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName == username);
+                var user = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
                 if (user == null)
                     return 0;
 
                 points = user.Points;
-                _cache.Set(PointsCacheKey + username, points);
+                _cache.Set(PointsCacheKey + username, points, new MemoryCacheEntryOptions 
+                { 
+                    SlidingExpiration = TimeSpan.FromMinutes(30),
+                    Priority = CacheItemPriority.Normal
+                });
             }
             return points.Value;
         }
 
         public void addExp(string username, int expCount)
         {
-            var user = _udb.Users.Single(u => u.UserName == username);
+            var user = _udb.Users.Single(u => u.UserName.ToLower() == username.ToLower());
             addExp(user, expCount);
             _udb.SaveChanges();
         }
@@ -186,24 +206,40 @@ namespace GmGard.Services
                 }
             }
             var username = user.UserName.ToLower();
-            _cache.Set(LevelCacheKey + username, user.Level);
-            _cache.Set(ExpCacheKey + username, new Tuple<int, int>(expCur, expNext));
+            _cache.Set(LevelCacheKey + username, user.Level, new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
+            _cache.Set(ExpCacheKey + username, new Tuple<int, int>(expCur, expNext), new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
 
             //Also add point
             user.Points += expCount;
-            _cache.Set<int?>(PointsCacheKey + username, user.Points);
+            _cache.Set<int?>(PointsCacheKey + username, user.Points, new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
             return;
         }
 
         public void AddPoint(UserProfile user, int point)
         {
             user.Points += point;
-            _cache.Set<int?>(PointsCacheKey + user.UserName.ToLower(), user.Points);
+            _cache.Set<int?>(PointsCacheKey + user.UserName.ToLower(), user.Points, new MemoryCacheEntryOptions 
+            { 
+                SlidingExpiration = TimeSpan.FromMinutes(30),
+                Priority = CacheItemPriority.Normal
+            });
         }
 
         public async Task addPointAsync(string username, int pCount)
         {
-            var user = await _udb.Users.SingleAsync(u => u.UserName == username);
+            var user = await _udb.Users.SingleAsync(u => u.UserName.ToLower() == username.ToLower());
             AddPoint(user, pCount);
             await _udb.SaveChangesAsync();
         }
@@ -211,7 +247,7 @@ namespace GmGard.Services
         public async Task<Tuple<bool, int>> trySpendPointAsync(string username, int pCount)
         {
             username = username.ToLower();
-            var user = await _udb.Users.SingleAsync(u => u.UserName == username);
+            var user = await _udb.Users.SingleAsync(u => u.UserName.ToLower() == username);
             int remain = user.Points;
             if (user.Points >= pCount)
             {
@@ -380,7 +416,7 @@ namespace GmGard.Services
         public bool setRateDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
             if (profile == null)
             {
                 return false;
@@ -409,7 +445,7 @@ namespace GmGard.Services
         public bool SetRatePostDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
             if (profile == null)
             {
                 return false;
@@ -438,7 +474,7 @@ namespace GmGard.Services
         public bool setPostDateAddExp(string username)
         {
             bool isNewPost = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
             if (profile == null)
             {
                 return false;

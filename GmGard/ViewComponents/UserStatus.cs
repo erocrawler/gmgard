@@ -29,15 +29,15 @@ namespace GmGard.ViewComponents
                 }
                 UserName = User.Identity.Name;
             }
-            var userprofile = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName == UserName);
+            var userprofile = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName.ToLower() == UserName.ToLower());
             if (userprofile == null)
             {
                 return Content(string.Empty);
             }
-            ViewBag.UserBlogs = _db.Blogs.Count(b => b.Author == userprofile.UserName);
+            ViewBag.UserBlogs = _db.Blogs.Count(b => b.Author.ToLower() == userprofile.UserName.ToLower());
             ViewBag.UserFollows = _udb.Follows.Count(f => f.UserID == userprofile.Id);
             ViewBag.UserFans = _udb.Follows.Count(f => f.FollowID == userprofile.Id);
-            ViewBag.UserFavorites = _db.Favorites.Count(f => f.Username == userprofile.UserName);
+            ViewBag.UserFavorites = _db.Favorites.Count(f => f.Username.ToLower() == userprofile.UserName.ToLower());
             return View(userprofile);
         }
     }

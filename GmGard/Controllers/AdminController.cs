@@ -303,7 +303,7 @@ namespace GmGard.Controllers
                     }
                     else if (int.TryParse(id, out gid))
                     {
-                        g = _db.HanGroups.Find(gid);
+                        g = _db.HanGroups.Include(h => h.members).SingleOrDefault(h => h.HanGroupID == gid);
                         g.Title = title;
                         g.GroupUri = uri;
                         var errnames = string.Empty;
@@ -345,7 +345,7 @@ namespace GmGard.Controllers
                 case "del":
                     if (int.TryParse(id, out gid))
                     {
-                        g = _db.HanGroups.Find(gid);
+                        g = _db.HanGroups.Include(h => h.blogs).SingleOrDefault(h => h.HanGroupID == gid);
                         if (g.blogs == null || g.blogs.Count == 0)
                         {
                             _db.HanGroups.Remove(g);

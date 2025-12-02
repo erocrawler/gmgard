@@ -288,7 +288,7 @@ namespace GmGard.Controllers
         [HttpPost]
         public ActionResult CheckUsername(string Recipient)
         {
-            if (_udb.Users.Any(u => u.UserName == Recipient))
+            if (_udb.Users.Any(u => u.UserName.ToLower() == Recipient.ToLower()))
             {
                 return Json(true);
             }

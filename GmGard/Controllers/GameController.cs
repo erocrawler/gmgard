@@ -30,7 +30,7 @@ namespace GmGard.Controllers
         [HttpGet]
         public async Task<JsonResult> Data()
         {
-            var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             if (user.quest == null)
             {
                 user.quest = new UserQuest();
@@ -57,7 +57,7 @@ namespace GmGard.Controllers
         [HttpPut]
         public async Task<JsonResult> Reset()
         {
-            var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             if (user.quest == null)
             {
                 user.quest = new UserQuest();
@@ -184,7 +184,7 @@ namespace GmGard.Controllers
 
         private Task<UserQuest> GetQuestAsync(bool includeUser = false) =>
             (includeUser ? (_udb.UserQuests.Include(u => u.user)) : (IQueryable<UserQuest>)_udb.UserQuests)
-                .SingleOrDefaultAsync(u => u.user.UserName == User.Identity.Name);
+                .SingleOrDefaultAsync(u => u.user.UserName.ToLower() == User.Identity.Name.ToLower());
 
         private async Task<Dictionary<string, int>> GetProfessionStatsAsync()
         {

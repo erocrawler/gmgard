@@ -139,7 +139,7 @@ namespace GmGard.Services
             }
             var db = context.HttpContext.RequestServices.GetService<UsersContext>();
             var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
-            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == author);
+            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == author.ToLower());
             expUtil.addExp(user, _appSettings.ExpAddOnPass);
             if (user.quest == null)
             {
@@ -207,7 +207,7 @@ namespace GmGard.Services
             }
             var db = context.HttpContext.RequestServices.GetService<UsersContext>();
             var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
-            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == author);
+            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == author.ToLower());
             expUtil.addExp(user, -_appSettings.ExpAddOnPass);
             if (user.quest == null || user.quest.LastBlogDate == null)
             {

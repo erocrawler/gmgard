@@ -31,7 +31,7 @@ namespace GmGard.Services
             }
             else if (nick == null)
             {
-                nick = _udb.Users.Where(u => u.UserName == user).Select(u => u.NickName).SingleOrDefault();
+                nick = _udb.Users.Where(u => u.UserName.ToLower() == user).Select(u => u.NickName).SingleOrDefault();
                 _cache.Set("nick" + user, nick ?? string.Empty);
             }
             return nick;
@@ -56,13 +56,18 @@ namespace GmGard.Services
             }
             if (uncached.Count > 0)
             {
-                var name2nick = _udb.Users.Where(u => uncached.Contains(u.UserName)).ToDictionary(u => u.UserName.ToLower(), u => u.NickName);
+                var uncachedLower = uncached.Select(n => n.ToLower()).ToList();
+                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName.ToLower())).ToDictionary(u => u.UserName.ToLower(), u => u.NickName);
                 foreach (var name in uncached)
                 {
                     string nick;
                     name2nick.TryGetValue(name.ToLower(), out nick);
                     nick = nick ?? string.Empty;
-                    _cache.Set("nick" + name.ToLower(), nick);
+                    _cache.Set("nick" + name.ToLower(), nick, new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
+                    { 
+                        SlidingExpiration = TimeSpan.FromMinutes(20),
+                        Priority = Microsoft.Extensions.Caching.Memory.CacheItemPriority.Normal
+                    });
                     result.Add(name, nick == string.Empty ? name : nick);
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using GmGard.Models;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,12 +14,14 @@ namespace GmGard.Services
         private UsersContext _udb;
         private IMemoryCache _cache;
         private TitleService _titleService;
+        private ILogger<TitleNickNameProvider> _logger;
 
-        public TitleNickNameProvider(IMemoryCache cache, UsersContext udb, TitleService titleService)
+        public TitleNickNameProvider(IMemoryCache cache, UsersContext udb, TitleService titleService, ILogger<TitleNickNameProvider> logger)
         {
             _udb = udb;
             _cache = cache;
             _titleService = titleService;
+            _logger = logger;
         }
 
         public string GetNickName(string user)
@@ -29,19 +32,24 @@ namespace GmGard.Services
             }
             user = user.ToLower();
             string nick = _cache.Get<string>("nick" + user);
+            
             if (nick == string.Empty)
             {
                 nick = user;
             }
             else if (nick == null)
             {
-                var result = _udb.Users.Where(u => u.UserName == user).Select(u => new {
+                _logger.LogDebug("Cache miss for user: {User}", user);
+                var result = _udb.Users.Where(u => u.UserName.ToLower() == user).Select(u => new {
+                    u.UserName,
                     u.NickName,
                     Title = u.quest == null ? new int?() : u.quest.Title
                 }).SingleOrDefault();
-                nick = result == null ? string.Empty : BuildNickName(result.Title, result.NickName, user);
+                
+                nick = result == null ? string.Empty : BuildNickName(result.Title, result.NickName, result.UserName);
                 _cache.Set("nick" + user, nick);
             }
+            
             return nick;
         }
 
@@ -64,8 +72,10 @@ namespace GmGard.Services
             }
             if (uncached.Count > 0)
             {
-                var name2nick = _udb.Users.Where(u => uncached.Contains(u.UserName))
+                var uncachedLower = uncached.Select(n => n.ToLower()).ToList();
+                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName.ToLower()))
                     .ToDictionary(u => u.UserName.ToLower(), u => new {
+                        u.UserName,
                         u.NickName,
                         Title = u.quest == null ? new int?() : u.quest.Title
                     });
@@ -76,9 +86,13 @@ namespace GmGard.Services
                     if (name2nick.ContainsKey(key))
                     {
                         var r = name2nick[key];
-                        nick = BuildNickName(r.Title, r.NickName, name);
+                        nick = BuildNickName(r.Title, r.NickName, r.UserName);
                     }
-                    _cache.Set("nick" + key, nick);
+                    _cache.Set("nick" + key, nick, new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
+                    { 
+                        SlidingExpiration = TimeSpan.FromMinutes(20),
+                        Priority = Microsoft.Extensions.Caching.Memory.CacheItemPriority.Normal
+                    });
                     result.Add(name, nick == string.Empty ? name : nick);
                 }
             }
@@ -87,7 +101,15 @@ namespace GmGard.Services
 
         public void UpdateNickNameCache(UserProfile user)
         {
-            _cache.Set("nick" + user.UserName.ToLower(), BuildNickName(user.quest?.Title, user.NickName, user.UserName));
+            var nick = BuildNickName(user.quest?.Title, user.NickName, user.UserName);
+            _logger.LogInformation("Updated nickname cache for {Username}", user.UserName);
+            
+            _cache.Set("nick" + user.UserName.ToLower(), nick, 
+                new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
+                { 
+                    SlidingExpiration = TimeSpan.FromMinutes(20),
+                    Priority = Microsoft.Extensions.Caching.Memory.CacheItemPriority.Normal
+                });
         }
 
         private string BuildNickName(int? title, string nickname, string username)
@@ -99,12 +121,15 @@ namespace GmGard.Services
             StringBuilder sb = new();
             if (title.HasValue && title > 0)
             {
-                sb.AppendFormat("[{0}] ", _titleService.GetTitleName(title.Value));
+                var titleName = _titleService.GetTitleName(title.Value);
+                sb.AppendFormat("[{0}] ", titleName);
             }
+            
             if (string.IsNullOrEmpty(nickname))
             {
                 nickname = username;
             }
+            
             sb.Append(nickname);
             return sb.ToString();
         }

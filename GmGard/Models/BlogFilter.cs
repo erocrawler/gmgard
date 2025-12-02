@@ -26,13 +26,30 @@ namespace GmGard.Models
 
         public IQueryable<Blog> Filter(IQueryable<Blog> blogquery)
         {
-            var query = blogquery.GroupJoin(db.TagsInBlogs, b => b.BlogID, t => t.BlogID, (b, t) => new { blog = b, tag = t }).SelectMany(bt => bt.tag.DefaultIfEmpty(), (b, t) => new { blog = b.blog, tag = t.TagID });
-            if (Whitelistcategories.Count() != 0)
-            {
-                query = query.Where(a => Whitelistcategories.Contains(a.blog.CategoryID) || Whitelistids.Contains(a.blog.BlogID));
-            }
             var blacklistCategories = BlacklistCategories.Except(Whitelistcategories);
-            return query.Select(a => a.blog).Except(query.Where(a => Blacklisttags.Contains(a.tag) || blacklistCategories.Contains(a.blog.CategoryID)).Select(a => a.blog)).Distinct();
+            
+            // Start with the base query
+            var query = blogquery;
+            
+            // Apply whitelist filter if specified
+            if (Whitelistcategories.Any())
+            {
+                query = query.Where(b => Whitelistcategories.Contains(b.CategoryID) || Whitelistids.Contains(b.BlogID));
+            }
+
+            if (blacklistCategories.Any()) 
+            {
+                // Filter out blogs in blacklisted categories
+                query = query.Where(b => !blacklistCategories.Contains(b.CategoryID));
+            }
+            
+            if (Blacklisttags.Any())
+            {
+                // Filter out blogs that have ANY blacklisted tag using subquery
+                query = query.Where(b => !db.TagsInBlogs.Any(t => t.BlogID == b.BlogID && Blacklisttags.Contains(t.TagID)));
+            }
+            
+            return query;
         }
 
         public async Task UpdateDatabase()

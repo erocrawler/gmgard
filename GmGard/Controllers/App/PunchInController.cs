@@ -67,7 +67,7 @@ namespace GmGard.Controllers.App
         [HttpGet]
         public async Task<ActionResult> Cost(DateTime date)
         {
-            var cost = await _udb.Users.Where(u => u.UserName == User.Identity.Name).Select(u => new PunchInCost { CurrentPoints = u.Points, Tickets = u.quest == null ? 0 : u.quest.PunchInTicket }).SingleOrDefaultAsync();
+            var cost = await _udb.Users.Where(u => u.UserName.ToLower() == User.Identity.Name.ToLower()).Select(u => new PunchInCost { CurrentPoints = u.Points, Tickets = u.quest == null ? 0 : u.quest.PunchInTicket }).SingleOrDefaultAsync();
             cost.Cost = MakeUpCost(date);
             return Json(cost);
         }
@@ -75,7 +75,7 @@ namespace GmGard.Controllers.App
         [HttpPost]
         public async Task<ActionResult> Do([FromBody]PunchInRequest request)
         {
-            var user = await _udb.Users.Include(u => u.PunchIns).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            var user = await _udb.Users.Include(u => u.PunchIns).Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             var d = request.Date.GetValueOrDefault(DateTime.Now);
             if (d.Date > DateTime.Today || d.Date < ExpUtil.FirstSignHistoryDate || d.Date < user.CreateDate.Date)
             {
@@ -194,9 +194,9 @@ namespace GmGard.Controllers.App
             {
                 return Json(Enumerable.Empty<PunchInHistory>());
             }
-            var user = _udb.Users.SingleOrDefault(u => u.UserName == User.Identity.Name);
+            var user = _udb.Users.SingleOrDefault(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             var nextMonth = thisMonth.AddMonths(1);
-            var currentMonthData = _udb.PunchInHistories.Where(h => h.User.UserName == User.Identity.Name && h.TimeStamp >= thisMonth && h.TimeStamp < nextMonth);
+            var currentMonthData = _udb.PunchInHistories.Where(h => h.User.UserName.ToLower() == User.Identity.Name.ToLower() && h.TimeStamp >= thisMonth && h.TimeStamp < nextMonth);
             var response = new PunchInHistoryResponse {
                 PunchIns = currentMonthData.Select(u => new PunchInHistoryResponse.PunchIn { TimeStamp = u.TimeStamp, IsMakeUp = u.IsMakeup }).ToList(),
                 MinSignDate = user.CreateDate > minDate ? user.CreateDate : minDate,

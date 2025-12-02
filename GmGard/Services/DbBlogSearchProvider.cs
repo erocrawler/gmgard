@@ -26,7 +26,8 @@ namespace GmGard.Services
             var predicate = PredicateBuilder.New<Blog>(true);
             if (!string.IsNullOrWhiteSpace(m.FavUser))
             {
-                predicate = predicate.And(b => _db.Favorites.Where(f => f.Username == m.FavUser).Any(f => f.BlogID == b.BlogID));
+                var favUserLower = m.FavUser.ToLower();
+                predicate = predicate.And(b => _db.Favorites.Where(f => f.Username.ToLower() == favUserLower).Any(f => f.BlogID == b.BlogID));
             }
             // If searching by title, include isApproved == null
             if (!string.IsNullOrWhiteSpace(m.Title))
@@ -120,7 +121,9 @@ namespace GmGard.Services
             {
                 predicate = predicate.And(b => b.isHarmony == m.Harmony.Value);
             }
-            result.Blogs = await BlogHelper.getSortedQuery(_db, _db.Blogs.AsExpandable().Where(predicate), m.Sort).ToPagedListAsync(pageNumber, pageSize);
+            // Don't use AsExpandable() here - it breaks EF Core's IAsyncQueryProvider
+            // The predicate built with PredicateBuilder works fine with EF Core directly
+            result.Blogs = await BlogHelper.getSortedQuery(_db, _db.Blogs.Where(predicate), m.Sort).ToPagedListAsync(pageNumber, pageSize);
             return result;
         }
     }

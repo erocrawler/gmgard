@@ -134,7 +134,7 @@ namespace GmGard.Models
                         BEGIN
                             UPDATE ""Blogs""
                             SET ""Rating"" = COALESCE((
-                                SELECT SUM(""Value"")
+                                SELECT SUM(""value"")
                                 FROM ""Ratings""
                                 WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"")
                             ), 0)
@@ -162,7 +162,7 @@ namespace GmGard.Models
                         BEGIN
                             UPDATE ""Blogs""
                             SET ""Rating"" = COALESCE((
-                                SELECT SUM(""Value"")
+                                SELECT SUM(""value"")
                                 FROM ""PostRatings""
                                 WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"")
                             ), 0)

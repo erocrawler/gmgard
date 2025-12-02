@@ -359,7 +359,7 @@ namespace GmGard.Controllers
         public async Task<ActionResult> Manage(ManageMessageId? message)
         {
             ViewBag.ReturnUrl = Url.Action("Manage");
-            var user = await GetCurrentUserAsync();
+            var user = await _db.Users.Include(u => u.quest).Include(u => u.option).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             ViewBag.HpSettings = GetHpSettings();
             return View(user);
         }
@@ -732,8 +732,8 @@ namespace GmGard.Controllers
             {
                 return Json(new { success = false });
             }
-            var user = await GetCurrentUserAsync();
-            if (user.quest == null || !user.quest.HasTitle(title.Value))
+            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            if (user == null || user.quest == null || !user.quest.HasTitle(title.Value))
             {
                 return Json(new { success = false });
             }
@@ -746,9 +746,13 @@ namespace GmGard.Controllers
         [HttpPost]
         public async Task<JsonResult> ChangeBackground([FromServices]TitleService titleService, string name)
         {
-            var user = await GetCurrentUserAsync();
+            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            if (user == null || user.quest == null)
+            {
+                return Json(new { success = false });
+            }
             var possibleBgs = titleService.AllUserTitles(user.quest).Where(t => !string.IsNullOrEmpty(t.TitleImage)).SelectMany(t => t.TitleImage.Split(';')).ToHashSet();
-            if (user.quest == null || !string.IsNullOrEmpty(name) && !possibleBgs.Contains(name))
+            if (!string.IsNullOrEmpty(name) && !possibleBgs.Contains(name))
             {
                 return Json(new { success = false });
             }

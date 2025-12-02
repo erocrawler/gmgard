@@ -100,7 +100,7 @@ namespace GmGard.Controllers
         {
             if (!User.Identity.IsAuthenticated)
                 return new List<HanGroup>();
-            return _db.HanGroupMembers.Where(h => h.Username == User.Identity.Name).Select(h => h.hangroup).ToList();
+            return _db.HanGroupMembers.Where(h => h.Username.ToLower() == User.Identity.Name.ToLower()).Select(h => h.hangroup).ToList();
         }
 
         public async Task<ActionResult> List([FromServices]ISearchProvider searchProvider, int? id, SearchModel search, int page = 1)
@@ -200,7 +200,7 @@ namespace GmGard.Controllers
                 {
                     content = sanitizerService.Sanitize(content);
                 }
-                if (blog.HanGroupID.HasValue && !_db.HanGroupMembers.Any(h => h.Username == User.Identity.Name && h.HanGroupID == blog.HanGroupID))
+                if (blog.HanGroupID.HasValue && !_db.HanGroupMembers.Any(h => h.Username.ToLower() == User.Identity.Name.ToLower() && h.HanGroupID == blog.HanGroupID))
                 {
                     ModelState.AddModelError("", "汉化组ID无效，请刷新重试。");
                     throw new BlogException();
@@ -372,7 +372,7 @@ namespace GmGard.Controllers
         [Authorize(Roles = "Administrator, Moderator")]
         public async Task<ActionResult> AdminDelete(int id, string MsgContent, bool sendmsg = false, bool unapprove = false)
         {
-            Blog b = _db.Blogs.Find(id);
+            Blog b = _db.Blogs.Where(b => b.BlogID == id).FirstOrDefault();
             if (b != null)
             {
                 if (unapprove)
@@ -431,7 +431,7 @@ namespace GmGard.Controllers
         [Authorize]
         public ActionResult Edit(int id)
         {
-            Blog blog = _db.Blogs.Find(id);
+            Blog blog = _db.Blogs.Where(b => b.BlogID == id).FirstOrDefault();
             if (blog == null)
             {
                 return NotFound();
@@ -479,7 +479,7 @@ namespace GmGard.Controllers
             }
             if (ModelState.IsValid)
             {
-                Blog originalblog = _db.Blogs.Find(id);
+                Blog originalblog = _db.Blogs.Include(b => b.option).SingleOrDefault(b => b.BlogID == id);
                 bool hasupload = false;
                 List<string> dellist = null;
                 List<string> newlist = null;
@@ -761,7 +761,7 @@ namespace GmGard.Controllers
             }
             else
             {
-                Blog b = _db.Blogs.Find(BlogID);
+                Blog b = _db.Blogs.Include(b => b.option).SingleOrDefault(b => b.BlogID == BlogID);
                 if (b == null || BlogID <= 0 || (b.option != null && b.option.LockTags))
                 {
                     return Json(new { errmsg = "无效ID，请刷新重试。" });

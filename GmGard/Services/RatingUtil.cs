@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 
 namespace GmGard.Services
 {
@@ -14,6 +15,7 @@ namespace GmGard.Services
     {
         private AppSettingsModel _appSettings;
         private IHttpContextAccessor _contextAccessor;
+        private ILogger<RatingUtil> _logger;
 
         private HttpContext Context => _contextAccessor.HttpContext;
         private bool RateWithAccount => "A".Equals(_appSettings.RateCredentialType);
@@ -21,10 +23,11 @@ namespace GmGard.Services
         private void TriggerRateBlog(BlogRating r) => OnRateBlog?.Invoke(this, new RateEventArgs(r, Context));
         public static event EventHandler<RateEventArgs> OnRateBlog;
 
-        public RatingUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IOptions<AppSettingsModel> settings, IHttpContextAccessor contextAccessor) : base(db, udb, cache)
+        public RatingUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IOptions<AppSettingsModel> settings, IHttpContextAccessor contextAccessor, ILogger<RatingUtil> logger) : base(db, udb, cache)
         {
             _appSettings = settings.Value;
             _contextAccessor = contextAccessor;
+            _logger = logger;
         }
 
         public static readonly Dictionary<int, int> RatingValue = new Dictionary<int, int>()
@@ -82,12 +85,18 @@ namespace GmGard.Services
             return rating;
         }
 
-        public static void PrepareRatings(IMemoryCache cache, BlogContext db, IEnumerable<int> blogs)
+        public static void PrepareRatings(IMemoryCache cache, BlogContext db, IEnumerable<int> blogs, ILogger logger = null)
         {
             var ids = new HashSet<int>(blogs);
+            logger?.LogInformation("PrepareRatings called with {Count} blog IDs: [{Ids}]", ids.Count, string.Join(", ", ids));
+            
             var result = new Dictionary<int, int>(ids.Count());
             var ratingCache = cache.Get<ConcurrentDictionary<int, BlogRatingDisplay>>("Rating~") ?? new ConcurrentDictionary<int, BlogRatingDisplay>();
-            var uncached = ids.Where(i => !ratingCache.ContainsKey(i));
+            logger?.LogInformation("Rating cache contains {CachedCount} entries", ratingCache.Count);
+            
+            var uncached = ids.Where(i => !ratingCache.ContainsKey(i)).ToList();
+            logger?.LogInformation("Found {UncachedCount} uncached blog IDs: [{UncachedIds}]", uncached.Count, string.Join(", ", uncached));
+            
             if (uncached.Count() > 0)
             {
                 var rates = db.BlogRatings.Where(r => uncached.Contains(r.BlogID))
@@ -100,23 +109,32 @@ namespace GmGard.Services
                         CountByRating = r.GroupBy(br => br.value).ToDictionary(v => v.Key, v => v.Count())
                     })
                     .ToDictionary(r => r.BlogId);
+                
+                logger?.LogInformation("Loaded {LoadedCount} ratings from database", rates.Count);
+                
                 foreach (var id in uncached)
                 {
                     BlogRatingDisplay br;
                     if (!rates.TryGetValue(id, out br))
                     {
                         br = new BlogRatingDisplay { BlogId = id };
+                        logger?.LogInformation("Blog {BlogId} has no ratings, creating empty entry", id);
+                    }
+                    else
+                    {
+                        logger?.LogInformation("Blog {BlogId} has {RatingCount} rating values", id, br.Total);
                     }
                     ratingCache.TryAdd(id, br);
                 }
+                logger?.LogInformation("Added {Count} entries to rating cache", uncached.Count);
             }
             cache.Set("Rating~", ratingCache, new MemoryCacheEntryOptions { Priority = CacheItemPriority.High });
-
+            logger?.LogInformation("Rating cache updated, total entries: {TotalCount}", ratingCache.Count);
         }
 
         public void PrepareRatings(IEnumerable<int> blogs)
         {
-            PrepareRatings(_cache, _db, blogs);
+            PrepareRatings(_cache, _db, blogs, _logger);
         }
 
         public UsersRating GetUsersRating(int blogid)

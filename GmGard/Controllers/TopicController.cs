@@ -129,7 +129,7 @@ namespace GmGard.Controllers
             }
             var model = new TopicDisplay();
             model.topic = topic;
-            model.blogs = _db.BlogsInTopics.Where(t => t.TopicID == topic.TopicID).OrderBy(t => t.BlogOrder).Select(t => t.blog).ToList();
+            model.blogs = _db.BlogsInTopics.Include(t => t.blog).Where(t => t.TopicID == topic.TopicID).OrderBy(t => t.BlogOrder).Select(t => t.blog).ToList();
             topic.TopicVisit = _visitCounter.GetTopicVisit(topic.TopicID, true);
             string referrer = Request.Headers[HeaderNames.Referer];
             if (referrer != null && (referrer.IndexOf("Create", StringComparison.OrdinalIgnoreCase) > 0 || referrer.IndexOf("Edit", StringComparison.OrdinalIgnoreCase) > 0))
@@ -240,7 +240,7 @@ namespace GmGard.Controllers
         [Authorize(Roles = "Writers,Administrator,Moderator")]
         public ActionResult Edit(int id = 0)
         {
-            Topic topic = _db.Topics.Find(id);
+            Topic topic = _db.Topics.Include(t => t.tag).SingleOrDefault(t => t.TopicID == id);
             if (topic == null)
             {
                 return NotFound();
@@ -271,7 +271,7 @@ namespace GmGard.Controllers
             }
             else if (ModelState.IsValid)
             {
-                var topic = _db.Topics.Find(id);
+                var topic = _db.Topics.Include(t => t.tag).SingleOrDefault(t => t.TopicID == id);
                 bool uploadsaved = false;
                 bool bannersaved = false;
                 var blogcurrent = _db.BlogsInTopics.Where(bi => bi.TopicID == id).ToList();

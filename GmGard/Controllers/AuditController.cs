@@ -106,7 +106,7 @@ namespace GmGard.Controllers
             }
         }
 
-        private bool HasPassedExam() => _udb.AuditExamSubmissions.Any(a => a.User.UserName == User.Identity.Name && a.IsSubmitted && a.HasPassed);
+        private bool HasPassedExam() => _udb.AuditExamSubmissions.Any(a => a.User.UserName.ToLower() == User.Identity.Name.ToLower() && a.IsSubmitted && a.HasPassed);
 
         private bool CanJoinAuditor(int UserLevel) {
             if (!HasPassedExam())
@@ -135,7 +135,7 @@ namespace GmGard.Controllers
 
         public async Task<ActionResult> Index(int page = 1)
         {
-            var user = _udb.Users.Include(u => u.auditor).SingleOrDefault(u => u.UserName == User.Identity.Name);
+            var user = _udb.Users.Include(u => u.auditor).SingleOrDefault(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
             if (!await _userManager.IsInRoleAsync(user, "Auditor"))
             {
                 return RedirectToAction("Join");

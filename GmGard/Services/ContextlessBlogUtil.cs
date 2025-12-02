@@ -68,7 +68,7 @@ namespace GmGard.Services
             UserOption useroption = _cache.Get<UserOption>("useroption" + user);
             if (useroption == null)
             {
-                useroption = _udb.UserOptions.AsNoTracking().SingleOrDefault(u => u.user.UserName == user) ?? new UserOption();
+                useroption = _udb.UserOptions.AsNoTracking().SingleOrDefault(u => u.user.UserName.ToLower() == user) ?? new UserOption();
                 _cache.Set("useroption" + user, useroption);
             }
             return option(useroption);
@@ -90,7 +90,7 @@ namespace GmGard.Services
             string desc = _cache.Get<string>("desc" + username);
             if (desc == null)
             {
-                var p = _udb.Users.AsNoTracking().FirstOrDefault(u => u.UserName == username);
+                var p = _udb.Users.AsNoTracking().FirstOrDefault(u => u.UserName.ToLower() == username);
                 desc = p?.UserComment ?? string.Empty;
                 _cache.Set("desc" + username, desc);
             }
@@ -103,7 +103,7 @@ namespace GmGard.Services
             var count = _cache.Get<int?>("favcount" + username);
             if (count == null)
             {
-                count = _db.Favorites.Count(f => f.Username == username);
+                count = _db.Favorites.Count(f => f.Username.ToLower() == username);
                 _cache.Set("favcount" + username, count);
             }
             return count.Value;
@@ -175,7 +175,11 @@ namespace GmGard.Services
             if (c == null)
             {
                 c = _db.Blogs.Count(b => b.isApproved == null && b.BlogID > 0);
-                _cache.Set("UnapproveCount", c, TimeSpan.FromMinutes(10));
+                _cache.Set("UnapproveCount", c, new MemoryCacheEntryOptions 
+                { 
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                    Priority = CacheItemPriority.Normal
+                });
             }
             return c.Value;
         }

@@ -15,7 +15,7 @@ namespace GmGard.Filters
                 return;
             var db = filterContext.HttpContext.RequestServices.GetService<BlogContext>();
             var id = (int)filterContext.ActionArguments["id"];
-            var memberExist = db.HanGroupMembers.Any(m => m.HanGroupID == id && m.Username == filterContext.HttpContext.User.Identity.Name);
+            var memberExist = db.HanGroupMembers.Any(m => m.HanGroupID == id && m.Username.ToLower() == filterContext.HttpContext.User.Identity.Name.ToLower());
             if (memberExist)
             {
                 return;

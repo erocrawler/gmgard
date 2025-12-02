@@ -85,7 +85,7 @@ namespace GmGard.Services
                 PostId = id,
                 ReplyDate = DateTime.Now
             };
-            Post p = _db.Posts.Find(id);
+            Post p = _db.Posts.Include(p => p.Replies).SingleOrDefault(p => p.PostId == id);
             if (p != null)
             {
                 bool isTopic = p.IdType == ItemType.Topic;
@@ -334,7 +334,7 @@ namespace GmGard.Services
                         blog = b,
                         tag = tib.Select(t => t.tag),
                         Option = b.option,
-                        IsFavorite = _db.Favorites.Count(f => f.Username == HttpContext.User.Identity.Name && f.BlogID == id) > 0,
+                        IsFavorite = _db.Favorites.Count(f => f.Username.ToLower() == HttpContext.User.Identity.Name.ToLower() && f.BlogID == id) > 0,
                         Category = b.Category
                     });
                 bd = query.SingleOrDefault();

@@ -304,17 +304,17 @@ namespace GmGard.Controllers
                 return PartialView(view + "Partial", model);
             }
 
-            UserProfile p = await _udb.Users.Include(u => u.quest).Include(u => u.auditor).AsNoTracking().SingleOrDefaultAsync(u => u.UserName == name);
+            UserProfile p = await _udb.Users.Include(u => u.quest).Include(u => u.auditor).AsNoTracking().SingleOrDefaultAsync(u => u.UserName.ToLower() == name.ToLower());
             if (p == null)
             {
                 return NotFound();
             }
             UserInfoModel userInfo = new()
             {
-                UserBlogs = await _db.Blogs.CountAsync(b => b.Author == name),
-                UserPosts = await _db.Posts.CountAsync(b => b.Author == p.UserName),
+                UserBlogs = await _db.Blogs.CountAsync(b => b.Author.ToLower() == name.ToLower()),
+                UserPosts = await _db.Posts.CountAsync(b => b.Author.ToLower() == p.UserName.ToLower()),
                 UserFans = await _udb.Follows.CountAsync(f => f.FollowID == p.Id),
-                UserFavorites = await _db.Favorites.CountAsync(f => f.Username == p.UserName),
+                UserFavorites = await _db.Favorites.CountAsync(f => f.Username.ToLower() == p.UserName.ToLower()),
                 UserFollows = await _udb.Follows.CountAsync(f => f.UserID == p.Id),
                 UserRoles = await _userManager.GetRolesAsync(p),
                 SearchResult = result,
@@ -488,7 +488,7 @@ namespace GmGard.Controllers
                 if (User.Identity.IsAuthenticated)
                 {
                     // Get current user's actual rankings
-                    var user = await _udb.Users.FirstOrDefaultAsync(u => u.UserName == currentUser);
+                    var user = await _udb.Users.FirstOrDefaultAsync(u => u.UserName.ToLower() == currentUser.ToLower());
                     if (user != null)
                     {
                         var expRank = await _udb.Users.CountAsync(u => u.Experience > user.Experience) + 1;
@@ -497,7 +497,7 @@ namespace GmGard.Controllers
                         var signRank = await _udb.Users.CountAsync(u => u.ConsecutiveSign > user.ConsecutiveSign) + 1;
                         model.MySign = new Tuple<int, long>(user.ConsecutiveSign, signRank);
 
-                        var blogCount = await _db.Blogs.CountAsync(b => b.Author == currentUser);
+                        var blogCount = await _db.Blogs.CountAsync(b => b.Author.ToLower() == currentUser.ToLower());
                         var blogRank = await _db.Blogs.GroupBy(b => b.Author)
                             .Where(g => g.Count() > blogCount)
                             .CountAsync() + 1;

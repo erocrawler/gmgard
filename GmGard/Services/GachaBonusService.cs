@@ -32,7 +32,7 @@ namespace GmGard.Services
 
         public async Task<List<string>> HandleForItemsAsync(IEnumerable<GachaItem> items)
         {
-            var user = await db_.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == context_.User.Identity.Name);
+            var user = await db_.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == context_.User.Identity.Name.ToLower());
             if (user.quest == null)
             {
                 user.quest = new UserQuest { UserId = user.Id };
@@ -100,7 +100,7 @@ namespace GmGard.Services
 
         public async Task<List<string>> GetProgressForUserAsync()
         {
-            var user = await db_.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == context_.User.Identity.Name);
+            var user = await db_.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == context_.User.Identity.Name.ToLower());
             if (user.quest == null)
             {
                 return new List<string>();

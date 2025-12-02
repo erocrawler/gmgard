@@ -107,7 +107,7 @@ namespace GmGard.Controllers.App
 
         private Task<bool> UserExists(string user)
         {
-            return _udb.Users.AnyAsync(u => u.UserName == user);
+            return _udb.Users.AnyAsync(u => u.UserName.ToLower() == user.ToLower());
         }
 
         [HttpPost]

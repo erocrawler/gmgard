@@ -64,7 +64,11 @@ namespace GmGard.ViewComponents
                 {
                     CalculateTotalItems(main.category);
                 }
-                _cache.Set("HomeHeader", model, TimeSpan.FromMinutes(10));
+                _cache.Set("HomeHeader", model, new MemoryCacheEntryOptions 
+                { 
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                    Priority = CacheItemPriority.Normal
+                });
             }
             if (_appSetting.Value.HarmonySettings.Harmony && !User.Identity.IsAuthenticated)
             {
