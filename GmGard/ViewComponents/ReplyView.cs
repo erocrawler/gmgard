@@ -50,7 +50,7 @@ namespace GmGard.ViewComponents
                     query = query.OrderByDescending(p => p.post.PostDate);
                 }
                 var paged = await query.ToPagedListAsync(pagenum, ReplyPageSize);
-                model = new X.PagedList.StaticPagedList<Post>(paged.Select(a => a.post), paged.GetMetaData());
+                model = new X.PagedList.StaticPagedList<Post>(paged.Select(a => a.post), paged.PageNumber, paged.PageSize, paged.TotalItemCount);
                 IDictionary<int, BlogRating> ratings = paged.Where(q => q.blograting != null).ToDictionary(q => q.post.PostId, q => q.blograting);
                 ViewBag.ratings = ratings;
             }

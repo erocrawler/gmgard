@@ -222,7 +222,7 @@ namespace GmGard.Controllers.App
                         Rating = c.blograting == null ? new int?() : c.blograting.value,
                     }).ToArray() : new Comment[0],
                     userRatings.ContainsKey(bd.blog.BlogID) ? userRatings[bd.blog.BlogID] : new int?());
-            }), blogs.GetMetaData());
+            }), blogs.PageNumber, blogs.PageSize, blogs.TotalItemCount);
             return new Paged<BlogDetails>(items);
         }
         
@@ -458,7 +458,7 @@ namespace GmGard.Controllers.App
             }
             return Json(ToPaged(new X.PagedList.StaticPagedList<BlogDetailDisplay>(
                 (await details.ToListAsync()).OrderBy(b => blogids.IndexOf(b.blog.BlogID)),
-                blogs.Blogs.GetMetaData())));
+                blogs.Blogs.PageNumber, blogs.Blogs.PageSize, blogs.Blogs.TotalItemCount)));
         }
     }
 }

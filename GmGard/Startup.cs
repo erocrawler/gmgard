@@ -38,7 +38,6 @@ namespace GmGard
         {
             var builder = services.AddMvc(option =>
             {
-                option.EnableEndpointRouting = false;
                 option.CacheProfiles.Add("Never", new CacheProfile
                 {
                     Location = ResponseCacheLocation.None,
@@ -278,11 +277,70 @@ namespace GmGard
                 },
             });
 
+            app.UseRouting();
+
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseSession();
 
-            app.UseMvc(RouteConfig);
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute("Avatar", "Avatar/{name?}",
+                    defaults: new { controller = "Avatar", action = "Show" }
+                );
+                endpoints.MapControllerRoute("Rss", "Rss/{*id}",
+                    defaults: new { controller = "Rss", action = "Index" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "UserInfo",
+                    pattern: "User/{name?}",
+                    defaults: new { controller = "Home", action = "UserInfo" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "Follows",
+                    pattern: "Follow/{action}/{name?}",
+                    defaults: new { controller = "Follow", action = "Index" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "Favorite",
+                    pattern: "Favorite/{name?}",
+                    defaults: new { controller = "Home", action = "Favorite" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "UserRank",
+                    pattern: "Rank",
+                    defaults: new { controller = "Home", action = "UserRanking" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "AdminManage",
+                    pattern: "Admin/Manage/{context?}",
+                    defaults: new { controller = "Admin", action = "Manage" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "Upload",
+                    pattern: "Upload/{*img}",
+                    defaults: new { controller = "Upload", action = "Index" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "HanGroups",
+                    pattern: "H/{name}",
+                    defaults: new { controller = "Han", action = "Index" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "Topics",
+                    pattern: "gmt{id:decimal}",
+                    defaults: new { controller = "Topic", action = "Details" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "Blogs",
+                    pattern: "gm{id:decimal}",
+                    defaults: new { controller = "Blog", action = "Details" }
+                );
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
         }
 
         private IConfigurationRoot ConfigFromDataFile(string datafile)
@@ -296,64 +354,6 @@ namespace GmGard
             provider.Mappings[".ks"] = "text/plain";
             provider.Mappings[".tjs"] = "text/plain";
             return provider;
-        }
-
-        private void RouteConfig(IRouteBuilder routes)
-        {
-            routes.MapRoute("Avatar", "Avatar/{name?}",
-                defaults: new { controller = "Avatar", action = "Show" }
-            );
-            routes.MapRoute("Rss", "Rss/{*id}",
-                defaults: new { controller = "Rss", action = "Index" }
-            );
-            routes.MapRoute(
-                name: "UserInfo",
-                template: "User/{name?}",
-                defaults: new { controller = "Home", action = "UserInfo" }
-            );
-            routes.MapRoute(
-                name: "Follows",
-                template: "Follow/{action}/{name?}",
-                defaults: new { controller = "Follow", action = "Index" }
-            );
-            routes.MapRoute(
-                name: "Favorite",
-                template: "Favorite/{name?}",
-                defaults: new { controller = "Home", action = "Favorite" }
-            );
-            routes.MapRoute(
-                name: "UserRank",
-                template: "Rank",
-                defaults: new { controller = "Home", action = "UserRanking" }
-            );
-            routes.MapRoute(
-                name: "AdminManage",
-                template: "Admin/Manage/{context?}",
-                defaults: new { controller = "Admin", action = "Manage" }
-            );
-            routes.MapRoute(
-                name: "Upload",
-                template: "Upload/{*img}",
-                defaults: new { controller = "Upload", action = "Index" }
-            );
-            routes.MapRoute(
-                name: "HanGroups",
-                template: "H/{name}",
-                defaults: new { controller = "Han", action = "Index" }
-            );
-            routes.MapRoute(
-                name: "Topics",
-                template: "gmt{id:decimal}",
-                defaults: new { controller = "Topic", action = "Details" }
-            );
-            routes.MapRoute(
-                name: "Blogs",
-                template: "gm{id:decimal}",
-                defaults: new { controller = "Blog", action = "Details" }
-            );
-            routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
         }
 
         private async Task SeedDevelopmentData(IServiceProvider services)

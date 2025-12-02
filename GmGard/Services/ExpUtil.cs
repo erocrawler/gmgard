@@ -438,7 +438,7 @@ namespace GmGard.Services
         public bool setPostDateAddExp(string username)
         {
             bool isNewPost = true;
-            var profile = _udb.Users.SingleOrDefault(u => u.UserName == username);
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;

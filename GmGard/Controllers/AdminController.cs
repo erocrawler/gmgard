@@ -713,7 +713,7 @@ namespace GmGard.Controllers
         //}
 
         [HttpPost, ValidateAntiForgeryToken]
-        public ActionResult ManageSettings(AppSettingsModel appsettings)
+        public async Task<ActionResult> ManageSettings(AppSettingsModel appsettings)
         {
             var filter = new BlogFilter(_db);
             if (appsettings.HarmonySettings == null)
@@ -723,7 +723,7 @@ namespace GmGard.Controllers
             filter.Blacklisttags = appsettings.HarmonySettings.BlacklistTags;
             filter.Whitelistcategories = appsettings.HarmonySettings.WhitelistCategories;
             filter.Whitelistids = appsettings.HarmonySettings.WhitelistIds;
-            filter.UpdateDatabase();
+            await filter.UpdateDatabase();
 
             string result = Newtonsoft.Json.JsonConvert.SerializeObject(new { ApplicationSettings = appsettings }, Newtonsoft.Json.Formatting.Indented);
             string path = Path.Combine(_env.ContentRootPath, "appsettings.override.json");

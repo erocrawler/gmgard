@@ -66,7 +66,7 @@ namespace GmGard.Controllers.App
                     Title = b.BlogTitle,
                     CreateDate = b.BlogDate,
                     Url = Url.Action("Details", "Blog", new { Area = "", id = b.BlogID }, Request.Scheme),
-            }), blogs.Blogs.GetMetaData());
+            }), blogs.Blogs.PageNumber, blogs.Blogs.PageSize, blogs.Blogs.TotalItemCount);
             return Json(new Paged<BlogPreview>(items));
         }
         

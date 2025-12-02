@@ -36,9 +36,10 @@ namespace GmGard.Filters
                 return;
             }
             var db = filterContext.HttpContext.RequestServices.GetService<BlogContext>();
-            bool isHarmony = db.Blogs.Where(b => b.BlogID == id).Select(b => b.isHarmony).DefaultIfEmpty(true).SingleOrDefault();
-            cache.Set<bool?>("blogauth" + idstr, isHarmony, new TimeSpan(0, 10, 0));
-            if (isHarmony)
+            bool? isHarmony = db.Blogs.Where(b => b.BlogID == id).Select(b => (bool?)b.isHarmony).SingleOrDefault();
+            bool harmonyValue = isHarmony ?? true;
+            cache.Set<bool?>("blogauth" + idstr, harmonyValue, new TimeSpan(0, 10, 0));
+            if (harmonyValue)
             {
                 return;
             }

@@ -46,7 +46,7 @@ namespace GmGard.Controllers
             if (model.grouplist == null)
             {
                 model.grouplist = _db.HanGroups.GroupJoin(_db.HanGroupBlogs, hg => hg.HanGroupID, hgb => hgb.HanGroupID, (hg, hgb) => new { hangroup = hg, blogs = hgb })
-                    .SelectMany(hghgb => hghgb.blogs.DefaultIfEmpty(), (hg, hgb) => new { hangroup = hg.hangroup, BlogDate = hgb.blog.BlogDate })
+                    .SelectMany(hghgb => hghgb.blogs.DefaultIfEmpty(), (hg, hgb) => new { hangroup = hg.hangroup, BlogDate = hgb != null ? hgb.blog.BlogDate : DateTime.MinValue })
                     .GroupBy(hgb => hgb.hangroup).OrderByDescending(hgb => hgb.Max(b => b.BlogDate))
                     .Select(hb => new BlogLink { name = hb.Key.Title, url = hb.Key.GroupUri }).ToList();
                 _cache.Set(CacheService.HanGroupListCacheKey, model.grouplist, TimeSpan.FromMinutes(10));
@@ -55,7 +55,7 @@ namespace GmGard.Controllers
             {
                 name = model.grouplist.First().url;
             }
-            model.hangroup = _db.HanGroups.Include(h => h.blogs).SingleOrDefault(h => h.GroupUri == name);
+            model.hangroup = _db.HanGroups.Include(h => h.blogs).ThenInclude(b => b.blog).Include(h => h.members).SingleOrDefault(h => h.GroupUri == name);
             if (model.hangroup == null)
             {
                 return NotFound();

@@ -78,7 +78,7 @@ namespace GmGard.Controllers.App
                     d.QuickText = txt;
                 }
                 return d;
-            }), messages.GetMetaData()));
+            }), messages.PageNumber, messages.PageSize, messages.TotalItemCount));
         }
 
         public async Task<JsonResult> Inbox(int pagenum = 1, bool unreadOnly = false, bool reportOnly = false)

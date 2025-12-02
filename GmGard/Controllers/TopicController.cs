@@ -134,7 +134,7 @@ namespace GmGard.Controllers
             string referrer = Request.Headers[HeaderNames.Referer];
             if (referrer != null && (referrer.IndexOf("Create", StringComparison.OrdinalIgnoreCase) > 0 || referrer.IndexOf("Edit", StringComparison.OrdinalIgnoreCase) > 0))
             {
-                Response.Headers.Add("X-XSS-Protection", "0");
+                Response.Headers.XXSSProtection = "0";
             }
             return View(model);
         }
