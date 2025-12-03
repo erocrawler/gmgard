@@ -166,26 +166,34 @@ namespace GmGard.Controllers
             var bannedUserIds = _udb.UserRoles
                 .Where(ur => _udb.Roles.Any(r => r.Name == "Banned" && r.Id == ur.RoleId))
                 .Select(ur => ur.UserId);
-            var banned = await _udb.Users
+            
+            var bannedUsers = await _udb.Users
                 .AsNoTracking()
                 .Where(u => bannedUserIds.Contains(u.Id))
-                .Join(
-                    _udb.AdminLogs
-                        .Where(l => l.Action == "封禁")
-                        .GroupBy(l => l.Target)
-                        .Select(g => g.OrderByDescending(gl => gl.LogTime).FirstOrDefault()),
-                    user => user.UserName,
-                    log => log.Target,
-                    (user, log) => new { User = user, Reason = log.Reason, Time = log.LogTime }
-                )
                 .ToListAsync();
-            return banned.Select(a =>
-            {
-                var u = a.User;
-                u.LastLoginDate = a.Time;
-                u.UserComment = a.Reason;
-                return u;
-            }).OrderByDescending(u => u.LastLoginDate).ToList();
+            
+            var latestBanLogs = await _udb.AdminLogs
+                .Where(l => l.Action == "封禁")
+                .ToListAsync();
+            
+            var latestBanLogsGrouped = latestBanLogs
+                .GroupBy(l => l.Target)
+                .Select(g => g.OrderByDescending(gl => gl.LogTime).First())
+                .ToDictionary(l => l.Target);
+            
+            var banned = bannedUsers
+                .Where(user => latestBanLogsGrouped.ContainsKey(user.UserName))
+                .Select(user =>
+                {
+                    var log = latestBanLogsGrouped[user.UserName];
+                    user.LastLoginDate = log.LogTime;
+                    user.UserComment = log.Reason;
+                    return user;
+                })
+                .OrderByDescending(u => u.LastLoginDate)
+                .ToList();
+            
+            return banned;
         }
 
         public async Task<ActionResult> Manage(string context)

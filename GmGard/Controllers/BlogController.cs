@@ -880,7 +880,7 @@ namespace GmGard.Controllers
                 BlogPasswords = BlogPasswords.Where(b => !string.IsNullOrWhiteSpace(b.url)).ToArray();
                 if (BlogPasswords.Length > 0)
                 {
-                    blog.Content = blog.Content + string.Format("<p>{0:yyyy年MM朁Ed日 HH:mm} 补档�E�E/p>", DateTime.Now);
+                    blog.Content = blog.Content + string.Format("<p>{0:yyyy年MM月dd日 HH:mm} 补档：</p>", DateTime.Now);
                     blog.Content = BlogHelper.appendPassToContent(blog.Content, BlogPasswords);
                 }
             }

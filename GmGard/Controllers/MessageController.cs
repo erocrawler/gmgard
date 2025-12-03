@@ -419,7 +419,7 @@ namespace GmGard.Controllers
                 }
                 string controller = itemType == ItemType.Topic ? "Topic" : "Blog";
                 string url = Url.Action("Details", controller, new { id = id }) + hashtag;
-                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址�E�Ebr><a href='" + url + "'>" + url + "</a>";
+                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址：<br><a href='" + url + "'>" + url + "</a>";
                 if (type == "rpt-author")
                 {
                     string author;

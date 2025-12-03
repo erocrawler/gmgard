@@ -4,6 +4,7 @@ using GmGard.Models;
 using GmGard.Filters;
 using GmGard.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,9 @@ namespace GmGard
                 })
                 .AddSessionStateTempDataProvider();
 
+            // Add Blazor WebAssembly services
+            services.AddRazorPages();
+
             if (IsDev)
             {
                 builder.AddRazorRuntimeCompilation();
@@ -76,6 +80,10 @@ namespace GmGard
 
             services.AddMemoryCache();
             services.AddSession();
+
+            // Configure Data Protection to persist keys
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(_basePath, "App_Data", "DataProtection-Keys")));
 
             // Determine database provider from connection string
             var usePostgreSQL = _dataDbConnectionString.Contains("Host=") || _dataDbConnectionString.Contains("Server=") && _dataDbConnectionString.Contains("Username=");
@@ -110,6 +118,8 @@ namespace GmGard
                 .AddEntityFrameworkStores<UsersContext>()
                 .AddErrorDescriber<GmIdentityErrorDescriber>()
                 .AddDefaultTokenProviders();
+
+            services.AddScoped<UserManager<UserProfile>, UserManager>();
 
             services.ConfigureApplicationCookie(options =>
             {
@@ -260,7 +270,7 @@ namespace GmGard
                 //app.UseBrowserLink();
                 
                 // Seed data in development environment only
-                SeedDevelopmentData(services).Wait();
+                // SeedDevelopmentData(services).Wait();
             }
             else
             {
@@ -277,7 +287,12 @@ namespace GmGard
                 },
             });
 
+            // Enable Blazor WebAssembly static files
+            app.UseBlazorFrameworkFiles();
+
             app.UseRouting();
+
+            app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -340,6 +355,9 @@ namespace GmGard
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                
+                // Map Blazor app to /app route
+                endpoints.MapFallbackToFile("/app/{*path:nonfile}", "index.html");
             });
         }
 
