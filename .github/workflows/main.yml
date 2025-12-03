@@ -1,0 +1,88 @@
+name: Deploy .NET App (Rsync)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ---------------------------------------------------
+    # 1. BUILD PHASE
+    # ---------------------------------------------------
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.x
+
+    - name: Publish Application
+      run: |
+        dotnet publish ./GmGard/GmGard.csproj \
+        -c Release \
+        -r linux-x64 \
+        --self-contained true \
+        -o ./publish
+
+    # ---------------------------------------------------
+    # 2. SETUP SSH AGENT
+    # This loads your Secret Key so 'ssh' and 'rsync' work
+    # ---------------------------------------------------
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+    - name: Add Known Hosts
+      # This prevents the "Are you sure you want to connect?" prompt from breaking the script
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+    # ---------------------------------------------------
+    # 3. DEPLOYMENT (All in one script)
+    # ---------------------------------------------------
+    - name: Deploy via Rsync
+      run: |
+        # --- Variables ---
+        USER=${{ secrets.VPS_USERNAME }}
+        HOST=${{ secrets.VPS_HOST }}
+        TARGET=${{ secrets.TARGET_DIR }}
+        
+        # Source file in Repo (The .bak version)
+        LOCAL_MAINT_FILE="GmGard/app_offline.bak.htm"
+        # Destination on Server (Renamed to .htm so Nginx sees it)
+        REMOTE_MAINT_FILE="/var/www/maintenance/app_offline.htm"
+
+        # --- Execution ---
+        
+        echo ">>> 1. Enable Maintenance Mode"
+        # We upload the .bak file but save it as .htm on the server
+        scp $LOCAL_MAINT_FILE $USER@$HOST:$REMOTE_MAINT_FILE
+
+        echo ">>> 2. Stop Service"
+        ssh $USER@$HOST "sudo systemctl stop gmgard.service"
+
+        echo ">>> 3. Sync Files (RSYNC)"
+        # --delete: Removes old DLLs on server that are not in the new build
+        rsync -avz --delete ./publish/ $USER@$HOST:$TARGET/
+
+        echo ">>> 4. Start Service"
+        ssh $USER@$HOST "
+           # Fix permissions
+           sudo chmod +x $TARGET/GmGard && \
+           sudo chown -R www-data:www-data $TARGET && \
+           
+           # Start App
+           sudo systemctl start gmgard.service
+        "
+        
+        echo ">>> 5. Wait for Boot"
+        sleep 5
+
+        echo ">>> 6. Disable Maintenance Mode"
+        ssh $USER@$HOST "rm $REMOTE_MAINT_FILE"
