@@ -309,24 +309,43 @@ namespace GmGard.Controllers
             {
                 return BadRequest();
             }
-            var p = await _db.Posts.Include(p => p.Ratings).SingleOrDefaultAsync(pp => pp.PostId == postid);
-            if (p == null)
+            
+            // Verify the post exists
+            if (!await _db.Posts.AnyAsync(p => p.PostId == postid))
             {
                 return NotFound();
             }
-            var rating = p.Ratings.SingleOrDefault(r => r.Rater.Equals(User.Identity.Name, StringComparison.OrdinalIgnoreCase));
+            
+            // Query the rating directly from database to avoid stale data from navigation property
+            var rating = await _db.PostRatings
+                .SingleOrDefaultAsync(r => r.PostId == postid && r.Rater.ToLower() == User.Identity.Name.ToLower());
+            
             if (rating == null)
             {
-                rating = new PostRating { PostId = postid, Rater = User.Identity.Name, RatingID = Guid.NewGuid() };
-                p.Ratings.Add(rating);
+                rating = new PostRating 
+                { 
+                    PostId = postid, 
+                    Rater = User.Identity.Name, 
+                    RatingID = Guid.NewGuid(), 
+                    Value = value 
+                };
+                _db.PostRatings.Add(rating);
+                await _db.SaveChangesAsync();
+                TriggerRatePost(rating);
             }
-            if (rating.Value != value)
+            else if (rating.Value != value)
             {
                 rating.Value = value;
                 await _db.SaveChangesAsync();
                 TriggerRatePost(rating);
             }
-            return Json(new { value = p.Ratings.Sum(r => r.Value) });
+            
+            // Calculate the sum from database
+            var totalValue = await _db.PostRatings
+                .Where(r => r.PostId == postid)
+                .SumAsync(r => r.Value);
+            
+            return Json(new { value = totalValue });
         }
 
         protected async Task<string> RenderPartail(string viewName, object model)

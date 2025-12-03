@@ -160,13 +160,13 @@ namespace GmGard.Models
                         CREATE OR REPLACE FUNCTION update_post_rating()
                         RETURNS TRIGGER AS $$
                         BEGIN
-                            UPDATE ""Blogs""
+                            UPDATE ""Posts""
                             SET ""Rating"" = COALESCE((
-                                SELECT SUM(""value"")
+                                SELECT SUM(""Value"")
                                 FROM ""PostRatings""
-                                WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"")
+                                WHERE ""PostId"" = COALESCE(NEW.""PostId"", OLD.""PostId"")
                             ), 0)
-                            WHERE ""BlogID"" = COALESCE(NEW.""BlogID"", OLD.""BlogID"");
+                            WHERE ""PostId"" = COALESCE(NEW.""PostId"", OLD.""PostId"");
                             RETURN NULL;
                         END;
                         $$ LANGUAGE plpgsql;
@@ -213,6 +213,7 @@ namespace GmGard.Models
                         END
                     ");
 
+                    // PostRating_trigger is not needed - PostRatings are for Post entities, not Blogs
                     context.Database.ExecuteSqlRaw(@"
                         IF NOT EXISTS (SELECT * FROM sys.triggers WHERE name = 'PostRating_trigger')
                         BEGIN
@@ -222,18 +223,18 @@ namespace GmGard.Models
                                 AFTER INSERT, UPDATE, DELETE
                                 AS
                                 BEGIN
-                                    UPDATE b
-                                    SET b.Rating = (
-                                        SELECT ISNULL(SUM(postratings.value), 0) 
+                                    UPDATE p
+                                    SET p.Rating = (
+                                        SELECT ISNULL(SUM(PostRatings.[Value]), 0) 
                                         FROM PostRatings 
-                                        WHERE BlogID = i.BlogID
+                                        WHERE PostID = i.PostID
                                     )
-                                    FROM dbo.Blogs AS b 
+                                    FROM dbo.Posts AS p 
                                     INNER JOIN (
-                                        SELECT BlogID FROM inserted 
+                                        SELECT PostID FROM inserted 
                                         UNION 
-                                        SELECT BlogID FROM deleted
-                                    ) AS i ON i.BlogID = b.BlogID
+                                        SELECT PostID FROM deleted
+                                    ) AS i ON i.PostID = p.PostID
                                 END
                             ')
                         END

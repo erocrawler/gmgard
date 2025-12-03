@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using System;
+using System.Configuration;
 using System.IO;
 
 namespace GmGardMigrations
@@ -11,9 +12,15 @@ namespace GmGardMigrations
         public UsersContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<UsersContext>();
-            // Use a default connection string for migration generation
-            var connectionString = "Server=(localdb)\\mssqllocaldb;Database=GmGardUser;Trusted_Connection=True;MultipleActiveResultSets=true";
-            optionsBuilder.UseSqlServer(connectionString);
+            
+            // Read connection string from App.config
+            var connectionString = ConfigurationManager.ConnectionStrings["GmGardUser"]?.ConnectionString;
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string 'GmGardUser' not found in App.config");
+            }
+            
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new UsersContext(optionsBuilder.Options);
         }
@@ -24,9 +31,15 @@ namespace GmGardMigrations
         public BlogContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<BlogContext>();
-            // Use a default connection string for migration generation
-            var connectionString = "Server=(localdb)\\mssqllocaldb;Database=GmGardData;Trusted_Connection=True;MultipleActiveResultSets=true";
-            optionsBuilder.UseSqlServer(connectionString);
+            
+            // Read connection string from App.config
+            var connectionString = ConfigurationManager.ConnectionStrings["GmGardData"]?.ConnectionString;
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string 'GmGardData' not found in App.config");
+            }
+            
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new BlogContext(optionsBuilder.Options);
         }

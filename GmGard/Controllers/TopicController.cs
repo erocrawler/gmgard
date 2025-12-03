@@ -120,16 +120,18 @@ namespace GmGard.Controllers
         //
         // GET: /Topic/Details/5
 
-        public ActionResult Details(int id = 0)
+        public async Task<ActionResult> Details(int id = 0)
         {
-            Topic topic = _db.Topics.Find(id);
+            Topic topic = await _db.Topics.Include(t => t.tag).SingleOrDefaultAsync(t => t.TopicID == id);
             if (topic == null)
             {
                 return NotFound();
             }
-            var model = new TopicDisplay();
-            model.topic = topic;
-            model.blogs = _db.BlogsInTopics.Include(t => t.blog).Where(t => t.TopicID == topic.TopicID).OrderBy(t => t.BlogOrder).Select(t => t.blog).ToList();
+            var model = new TopicDisplay
+            {
+                topic = topic,
+                blogs = await _db.BlogsInTopics.Include(t => t.blog).Where(t => t.TopicID == topic.TopicID).OrderBy(t => t.BlogOrder).Select(t => t.blog).ToListAsync()
+            };
             topic.TopicVisit = _visitCounter.GetTopicVisit(topic.TopicID, true);
             string referrer = Request.Headers[HeaderNames.Referer];
             if (referrer != null && (referrer.IndexOf("Create", StringComparison.OrdinalIgnoreCase) > 0 || referrer.IndexOf("Edit", StringComparison.OrdinalIgnoreCase) > 0))
@@ -263,7 +265,7 @@ namespace GmGard.Controllers
             int ret = TagUtil.CheckBlogTag(etopic.TagName, 1);
             if (ret != 0)
             {
-                ModelState.AddModelError("", ret > 0 ? "专题栁E��只能朁E个" : "栁E��不得趁E��E0个字符");
+                ModelState.AddModelError("", ret > 0 ? "专题标签只能有1个" : "标签不得超过20个字符");
             }
             else if (!_blogUtil.CheckAdmin())
             {
