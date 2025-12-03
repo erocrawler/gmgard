@@ -2,7 +2,7 @@ name: Deploy .NET App (Rsync)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "github" ]
   workflow_dispatch:
 
 jobs:
@@ -69,7 +69,15 @@ jobs:
 
         echo ">>> 3. Sync Files (RSYNC)"
         # --delete: Removes old DLLs on server that are not in the new build
-        rsync -avz --delete ./publish/ $USER@$HOST:$TARGET/
+        rsync -avz --delete \
+          --exclude 'appsettings.Production.json' \
+          --exclude 'appsettings.override.json' \
+          --exclude 'appsettings.json' \
+          --exclude 'wwwroot/' \
+          --exclude 'App_Data/' \
+          --exclude 'Log/' \
+          --exclude 'logs/' \
+          ./publish/ $USER@$HOST:$TARGET/
 
         echo ">>> 4. Start Service"
         ssh $USER@$HOST "
