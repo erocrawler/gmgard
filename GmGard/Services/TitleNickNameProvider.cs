@@ -30,7 +30,6 @@ namespace GmGard.Services
             {
                 return string.Empty;
             }
-            user = user.ToLower();
             string nick = _cache.Get<string>("nick" + user);
             
             if (nick == string.Empty)
@@ -40,7 +39,7 @@ namespace GmGard.Services
             else if (nick == null)
             {
                 _logger.LogDebug("Cache miss for user: {User}", user);
-                var result = _udb.Users.Where(u => u.UserName.ToLower() == user).Select(u => new {
+                var result = _udb.Users.Where(u => u.UserName == user).Select(u => new {
                     u.UserName,
                     u.NickName,
                     Title = u.quest == null ? new int?() : u.quest.Title
@@ -60,7 +59,7 @@ namespace GmGard.Services
             var uncached = new List<string>();
             foreach (var n in names)
             {
-                string cached = _cache.Get<string>("nick" + n.ToLower());
+                string cached = _cache.Get<string>("nick" + n);
                 if (cached != null)
                 {
                     result.Add(n, cached == string.Empty ? n : cached);
@@ -72,16 +71,16 @@ namespace GmGard.Services
             }
             if (uncached.Count > 0)
             {
-                var uncachedLower = uncached.Select(n => n.ToLower()).ToList();
-                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName.ToLower()))
-                    .ToDictionary(u => u.UserName.ToLower(), u => new {
+                var uncachedLower = uncached.ToList();
+                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName))
+                    .ToDictionary(u => u.UserName, u => new {
                         u.UserName,
                         u.NickName,
                         Title = u.quest == null ? new int?() : u.quest.Title
                     });
                 foreach (var name in uncached)
                 {
-                    var key = name.ToLower();
+                    var key = name;
                     string nick = string.Empty;
                     if (name2nick.ContainsKey(key))
                     {
@@ -104,7 +103,7 @@ namespace GmGard.Services
             var nick = BuildNickName(user.quest?.Title, user.NickName, user.UserName);
             _logger.LogInformation("Updated nickname cache for {Username}", user.UserName);
             
-            _cache.Set("nick" + user.UserName.ToLower(), nick, 
+            _cache.Set("nick" + user.UserName, nick, 
                 new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
                 { 
                     SlidingExpiration = TimeSpan.FromMinutes(20),

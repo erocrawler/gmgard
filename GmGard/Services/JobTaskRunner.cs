@@ -131,7 +131,7 @@ namespace GmGard.Services
                 blogAudit.AuditDate = DateTime.Now;
                 blogAudit.Reason = args.Reason;
                 var currentStat = latestAudits.Where(ba => ba.AuditAction == BlogAudit.Action.VoteApprove || ba.AuditAction == BlogAudit.Action.VoteDeny)
-                    .ToDictionary(la => la.Auditor.ToLower(), la => (la.AuditAction == BlogAudit.Action.VoteApprove && args.Action == BlogAudit.Action.Approve)
+                    .ToDictionary(la => la.Auditor, la => (la.AuditAction == BlogAudit.Action.VoteApprove && args.Action == BlogAudit.Action.Approve)
                                                         || (la.AuditAction == BlogAudit.Action.VoteDeny && args.Action == BlogAudit.Action.Deny));
                 var latestAuditors = currentStat.Keys;
                 if (latestAuditors.Count > 0)
@@ -145,21 +145,21 @@ namespace GmGard.Services
                                             Auditor = v.Auditor,
                                             Correct = (v.AuditAction == BlogAudit.Action.VoteApprove && d.Decision.AuditAction == BlogAudit.Action.Approve)
                                                     || (v.AuditAction == BlogAudit.Action.VoteDeny && d.Decision.AuditAction == BlogAudit.Action.Deny)
-                                        }).GroupBy(v => v.Auditor).ToDictionary(g => g.Key.ToLower(), g => new { CorrectCount = g.Count(d => d.Correct), Total = g.Count() });
+                                        }).GroupBy(v => v.Auditor).ToDictionary(g => g.Key, g => new { CorrectCount = g.Count(d => d.Correct), Total = g.Count() }, StringComparer.OrdinalIgnoreCase);
                     var usersToUpdate = stats.Keys.Concat(currentStat.Keys);
                     var updates = udb.Auditors.Where(a => usersToUpdate.Contains(a.User.UserName)).Select(a => new { a.User.UserName, Auditor = a });
                     foreach (var update in updates)
                     {
                         int total = 0, correctcount = 0;
-                        if (stats.ContainsKey(update.UserName.ToLower()))
+                        if (stats.ContainsKey(update.UserName))
                         {
-                            var stat = stats[update.UserName.ToLower()];
+                            var stat = stats[update.UserName];
                             total = stat.Total;
                             correctcount = stat.CorrectCount;
                         }
 
                         update.Auditor.AuditCount = total + 1;
-                        update.Auditor.CorrectCount = correctcount + (currentStat[update.UserName.ToLower()] ? 1 : 0);
+                        update.Auditor.CorrectCount = correctcount + (currentStat[update.UserName] ? 1 : 0);
                     }
                 }
                 await Task.WhenAll(udb.SaveChangesAsync(), db.SaveChangesAsync());

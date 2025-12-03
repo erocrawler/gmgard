@@ -51,7 +51,7 @@ namespace GmGard.Services
         public List<Tag> AddTagsForBlog(int blogid, string[] tags, string addby)
         {
             List<Tag> AddedTags = new List<Tag>();
-            var tagDict = _db.Tags.Where(tt => tags.Contains(tt.TagName)).ToDictionary(t => t.TagName.ToLower(), Extensions.SqlStringComparer.Instance);
+            var tagDict = _db.Tags.Where(tt => tags.Contains(tt.TagName)).ToDictionary(t => t.TagName, Extensions.SqlStringComparer.Instance);
             foreach (string tag in tags)
             {
                 Tag t;

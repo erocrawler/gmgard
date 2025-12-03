@@ -535,7 +535,6 @@ namespace GmGard.Controllers
             {
                 return "请输入用户名";
             }
-            username = username.ToLower();
             if (!new EmailAddressAttribute().IsValid(newEmail))
             {
                 return "新邮箱无效";
@@ -569,7 +568,6 @@ namespace GmGard.Controllers
             {
                 return "请输入用户名";
             }
-            expname = expname.ToLower();
             string msg = string.Empty;
             int exp = 0;
             int pts = 0;

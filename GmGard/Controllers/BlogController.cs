@@ -100,7 +100,7 @@ namespace GmGard.Controllers
         {
             if (!User.Identity.IsAuthenticated)
                 return new List<HanGroup>();
-            return _db.HanGroupMembers.Where(h => h.Username.ToLower() == User.Identity.Name.ToLower()).Select(h => h.hangroup).ToList();
+            return _db.HanGroupMembers.Where(h => h.Username == User.Identity.Name).Select(h => h.hangroup).ToList();
         }
 
         public async Task<ActionResult> List([FromServices]ISearchProvider searchProvider, int? id, SearchModel search, int page = 1)
@@ -200,7 +200,7 @@ namespace GmGard.Controllers
                 {
                     content = sanitizerService.Sanitize(content);
                 }
-                if (blog.HanGroupID.HasValue && !_db.HanGroupMembers.Any(h => h.Username.ToLower() == User.Identity.Name.ToLower() && h.HanGroupID == blog.HanGroupID))
+                if (blog.HanGroupID.HasValue && !_db.HanGroupMembers.Any(h => h.Username == User.Identity.Name && h.HanGroupID == blog.HanGroupID))
                 {
                     ModelState.AddModelError("", "汉化组ID无效，请刷新重试。");
                     throw new BlogException();
@@ -673,7 +673,7 @@ namespace GmGard.Controllers
                 };
                 _db.Favorites.Add(fav);
                 _db.SaveChanges();
-                _cache.Remove("favcount" + User.Identity.Name.ToLower());
+                _cache.Remove("favcount" + User.Identity.Name);
                 _cache.Set(CacheService.GetIsFavCacheKey(id, User.Identity.Name), true);
             }
             return new EmptyResult();
@@ -687,7 +687,7 @@ namespace GmGard.Controllers
             {
                 _db.Favorites.Remove(fav);
                 await _db.SaveChangesAsync();
-                _cache.Remove("favcount" + User.Identity.Name.ToLower());
+                _cache.Remove("favcount" + User.Identity.Name);
                 _cache.Set(CacheService.GetIsFavCacheKey(id, User.Identity.Name), false);
             }
             return new EmptyResult();

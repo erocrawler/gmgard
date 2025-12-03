@@ -64,11 +64,10 @@ namespace GmGard.Services
 
         public T GetUserOption<T>(string user, Func<UserOption, T> option)
         {
-            user = user.ToLower();
             UserOption useroption = _cache.Get<UserOption>("useroption" + user);
             if (useroption == null)
             {
-                useroption = _udb.UserOptions.AsNoTracking().SingleOrDefault(u => u.user.UserName.ToLower() == user) ?? new UserOption();
+                useroption = _udb.UserOptions.AsNoTracking().SingleOrDefault(u => u.user.UserName == user) ?? new UserOption();
                 _cache.Set("useroption" + user, useroption);
             }
             return option(useroption);
@@ -76,7 +75,6 @@ namespace GmGard.Services
 
         public void CacheUserOption(UserOption currentoption, string user)
         {
-            user = user.ToLower();
             _cache.Set("useroption" + user, currentoption);
         }
 
@@ -86,11 +84,10 @@ namespace GmGard.Services
             {
                 return string.Empty;
             }
-            username = username.ToLower();
             string desc = _cache.Get<string>("desc" + username);
             if (desc == null)
             {
-                var p = _udb.Users.AsNoTracking().FirstOrDefault(u => u.UserName.ToLower() == username);
+                var p = _udb.Users.AsNoTracking().FirstOrDefault(u => u.UserName == username);
                 desc = p?.UserComment ?? string.Empty;
                 _cache.Set("desc" + username, desc);
             }
@@ -99,11 +96,10 @@ namespace GmGard.Services
 
         public int GetFavCount(string username)
         {
-            username = username.ToLower();
             var count = _cache.Get<int?>("favcount" + username);
             if (count == null)
             {
-                count = _db.Favorites.Count(f => f.Username.ToLower() == username);
+                count = _db.Favorites.Count(f => f.Username == username);
                 _cache.Set("favcount" + username, count);
             }
             return count.Value;

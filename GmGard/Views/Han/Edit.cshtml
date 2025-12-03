@@ -2,8 +2,8 @@
 
 @{
     ViewBag.Title = "汉化组管理";
-    string[] admins = Model.Admins.ToLower().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-    bool isadmin = User.IsInRole("Administrator") || admins.Contains(User.Identity.Name.ToLower());
+    string[] admins = Model.Admins.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+    bool isadmin = User.IsInRole("Administrator") || admins.Contains(User.Identity.Name, StringComparer.OrdinalIgnoreCase);
 }
 
 <h2>汉化组管理</h2>
@@ -182,7 +182,7 @@
             });
             var tags = $('#memberdiv .tm-tag');
             for (var i = 0; i < tags.length; i++)
-                if (tags.eq(i).children('span').text().toLowerCase() === '@User.Identity.Name.ToLower()') {
+                if (tags.eq(i).children('span').text().toLowerCase() === '@User.Identity.Name'.toLowerCase()) {
                     tags.eq(i).addClass('tm-tag-inverse').tooltip({ title: "这是你自己！" }).children('a').remove();
                     break;
                 }

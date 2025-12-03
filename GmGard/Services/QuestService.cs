@@ -65,12 +65,12 @@ namespace GmGard.Services
                 return;
             }
             var User = context.User;
-            if (User.Identity.IsAuthenticated && _cache.Get<bool?>(ExpUtil.HasRatedPostCacheKey + User.Identity.Name.ToLower()) != true)
+            if (User.Identity.IsAuthenticated && _cache.Get<bool?>(ExpUtil.HasRatedPostCacheKey + User.Identity.Name) != true)
             {
                 var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
                 if (expUtil.SetRatePostDateAddExp(User.Identity.Name))
                 {
-                    _cache.Set(ExpUtil.HasRatedPostCacheKey + User.Identity.Name.ToLower(), true, DateTime.Today.AddDays(1));
+                    _cache.Set(ExpUtil.HasRatedPostCacheKey + User.Identity.Name, true, DateTime.Today.AddDays(1));
                 }
             }
         }
@@ -81,7 +81,7 @@ namespace GmGard.Services
             var Session = context.HttpContext.Session;
             var User = context.User;
             DateTime? lastpost = Session.GetDateTime("LastPostTime");
-            if (!(lastpost.HasValue && (lastpost.Value.Date - DateTime.Today).Days == 0) || _cache.Get<bool?>(ExpUtil.HasPostedCacheKey + User.Identity.Name.ToLower()) != true) //no need to check db.
+            if (!(lastpost.HasValue && (lastpost.Value.Date - DateTime.Today).Days == 0) || _cache.Get<bool?>(ExpUtil.HasPostedCacheKey + User.Identity.Name) != true) //no need to check db.
             {
                 var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
                 if (expUtil.setPostDateAddExp(User.Identity.Name))
@@ -94,7 +94,7 @@ namespace GmGard.Services
                     {
                         context.HttpContext.Items["QuestMsg"] = firstReplyNotice;
                     }
-                    _cache.Set(ExpUtil.HasPostedCacheKey + User.Identity.Name.ToLower(), true, DateTime.Today.AddDays(1));
+                    _cache.Set(ExpUtil.HasPostedCacheKey + User.Identity.Name, true, DateTime.Today.AddDays(1));
                 }
             }
         }
@@ -105,13 +105,13 @@ namespace GmGard.Services
             var Session = context.HttpContext.Session;
             var User = context.User;
             DateTime? lastpost = Session.GetDateTime("LastPostTime");
-            if (!(lastpost.HasValue && (lastpost.Value.Date - DateTime.Today).Days == 0) || _cache.Get<bool?>(ExpUtil.HasPostedCacheKey + User.Identity.Name.ToLower()) != true) //no need to check db.
+            if (!(lastpost.HasValue && (lastpost.Value.Date - DateTime.Today).Days == 0) || _cache.Get<bool?>(ExpUtil.HasPostedCacheKey + User.Identity.Name) != true) //no need to check db.
             {
                 var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
                 if (expUtil.setPostDateAddExp(User.Identity.Name))
                 {
                     context.HttpContext.Items["QuestMsg"] = firstReplyNotice;
-                    _cache.Set(ExpUtil.HasPostedCacheKey + User.Identity.Name.ToLower(), true, DateTime.Today.AddDays(1));
+                    _cache.Set(ExpUtil.HasPostedCacheKey + User.Identity.Name, true, DateTime.Today.AddDays(1));
                 }
             }
         }
@@ -139,7 +139,7 @@ namespace GmGard.Services
             }
             var db = context.HttpContext.RequestServices.GetService<UsersContext>();
             var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
-            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == author.ToLower());
+            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == author);
             expUtil.addExp(user, _appSettings.ExpAddOnPass);
             if (user.quest == null)
             {
@@ -162,7 +162,7 @@ namespace GmGard.Services
             {
                 user.quest.WeekBlogCount = 1;
             }
-            _cache.Set(ExpUtil.WeekBloggedCacheKey + author.ToLower(), user.quest.WeekBlogCount, DateTime.Today.AddDays(1));
+            _cache.Set(ExpUtil.WeekBloggedCacheKey + author, user.quest.WeekBlogCount, DateTime.Today.AddDays(1));
             if (user.quest.LastBlogDate.HasValue && user.quest.LastBlogDate.Value.Date == DateTime.Today)
             {
                 if (user.quest.DayBlogCount < dayBlogCount)
@@ -179,7 +179,7 @@ namespace GmGard.Services
                 user.quest.DayBlogCount = 1;
                 expUtil.addExp(user, firstBlogExp);
             }
-            _cache.Set(ExpUtil.HasBloggedCacheKey + author.ToLower(), user.quest.DayBlogCount, DateTime.Today.AddDays(1));
+            _cache.Set(ExpUtil.HasBloggedCacheKey + author, user.quest.DayBlogCount, DateTime.Today.AddDays(1));
             user.quest.LastBlogDate = DateTime.Today;
             db.SaveChanges();
         }
@@ -207,7 +207,7 @@ namespace GmGard.Services
             }
             var db = context.HttpContext.RequestServices.GetService<UsersContext>();
             var expUtil = context.HttpContext.RequestServices.GetService<ExpUtil>();
-            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == author.ToLower());
+            var user = db.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == author);
             expUtil.addExp(user, -_appSettings.ExpAddOnPass);
             if (user.quest == null || user.quest.LastBlogDate == null)
             {
@@ -233,21 +233,21 @@ namespace GmGard.Services
                     }
                 }
                 db.SaveChanges();
-                _cache.Set(ExpUtil.HasBloggedCacheKey + author.ToLower(), user.quest.DayBlogCount, DateTime.Today.AddDays(1));
-                _cache.Set(ExpUtil.WeekBloggedCacheKey + author.ToLower(), user.quest.WeekBlogCount, DateTime.Today.AddDays(1));
+                _cache.Set(ExpUtil.HasBloggedCacheKey + author, user.quest.DayBlogCount, DateTime.Today.AddDays(1));
+                _cache.Set(ExpUtil.WeekBloggedCacheKey + author, user.quest.WeekBlogCount, DateTime.Today.AddDays(1));
             }
         }
 
         private void OnRateBlog(object sender, RateEventArgs r)
         {
             var User = r.Context.User;
-            if (User.Identity.IsAuthenticated && _cache.Get<bool?>(ExpUtil.HasRatedCacheKey + User.Identity.Name.ToLower()) != true)
+            if (User.Identity.IsAuthenticated && _cache.Get<bool?>(ExpUtil.HasRatedCacheKey + User.Identity.Name) != true)
             {
                 var expUtil = r.Context.RequestServices.GetService<ExpUtil>();
                 if (expUtil.setRateDateAddExp(User.Identity.Name))
                 {
                     r.Context.Items["QuestMsg"] = firstRateNotice;
-                    _cache.Set(ExpUtil.HasRatedCacheKey + User.Identity.Name.ToLower(), true, DateTime.Today.AddDays(1));
+                    _cache.Set(ExpUtil.HasRatedCacheKey + User.Identity.Name, true, DateTime.Today.AddDays(1));
                 }
             }
         }

@@ -1,5 +1,6 @@
 using GmGard.Services;
 using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
@@ -31,13 +32,13 @@ namespace GmGard.Models
             var title = string.Empty;
             var url = string.Empty;
             var nodes = html.DocumentNode.SelectNodes("//a/@data-mention");
-            var parsedNodes = new Dictionary<string, List<HtmlNode>>(); 
+            var parsedNodes = new Dictionary<string, List<HtmlNode>>(StringComparer.OrdinalIgnoreCase); 
             if (nodes != null)
             {
                 foreach (var node in nodes)
                 {
                     var name = HtmlEntity.DeEntitize(node.InnerText);
-                    name = name.TrimStart(new char[] { '@', ' ' }).ToLower();
+                    name = name.TrimStart(new char[] { '@', ' ' });
                     if (parsedNodes.ContainsKey(name))
                     {
                         parsedNodes[name].Add(node);
@@ -52,7 +53,7 @@ namespace GmGard.Models
             var profiles = udb.Users.AsNoTracking().Where(u => parsedNames.Contains(u.NickName)).ToList();
             foreach (var profile in profiles)
             {
-                foreach (var node in parsedNodes[profile.NickName.ToLower()]) {
+                foreach (var node in parsedNodes[profile.NickName]) {
                     node.SetAttributeValue("href", "/User/" + profile.UserName);
                     node.Attributes.Remove("data-mention");
                 }

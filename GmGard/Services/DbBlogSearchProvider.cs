@@ -26,8 +26,8 @@ namespace GmGard.Services
             var predicate = PredicateBuilder.New<Blog>(true);
             if (!string.IsNullOrWhiteSpace(m.FavUser))
             {
-                var favUserLower = m.FavUser.ToLower();
-                predicate = predicate.And(b => _db.Favorites.Where(f => f.Username.ToLower() == favUserLower).Any(f => f.BlogID == b.BlogID));
+                var favUserLower = m.FavUser;
+                predicate = predicate.And(b => _db.Favorites.Where(f => f.Username == favUserLower).Any(f => f.BlogID == b.BlogID));
             }
             // If searching by title, include isApproved == null
             if (!string.IsNullOrWhiteSpace(m.Title))
@@ -79,21 +79,21 @@ namespace GmGard.Services
                 if (!m.TagsMatchAny)
                 {
                     tagsInBlog = tags.Aggregate(_db.TagsInBlogs.AsExpandable(), (r, name) => r.Join(
-                        _db.TagsInBlogs.Where(tt => tt.tag.TagName.ToLower().Contains(name.ToLower())),
+                        _db.TagsInBlogs.Where(tt => tt.tag.TagName.Contains(name)),
                         rr => rr.BlogID, t => t.BlogID, (rr, t) => rr));
                 }
                 else
                 {
                     tagsInBlog = tags.Aggregate(_db.TagsInBlogs.AsExpandable().Where(_ => false), (r, name) => r.Union(
-                        _db.TagsInBlogs.AsExpandable().Where(tt => tt.tag.TagName.ToLower().Contains(name.ToLower()))).Distinct());
+                        _db.TagsInBlogs.AsExpandable().Where(tt => tt.tag.TagName.Contains(name))).Distinct());
                 }
                 var tagResult = await tagsInBlog.Select(tib => new { blogid = tib.BlogID, tag = tib.tag }).Distinct().ToListAsync();
                 if (!m.TagsMatchAny)
                 {
                     result.TagsSearched = tagResult.Where(tib =>
                         tags.Any(name =>
-                            tib.tag.TagName.ToSingleByteCharacterString().ToLower().Contains(
-                                name.ToSingleByteCharacterString().ToLower())))
+                            tib.tag.TagName.ToSingleByteCharacterString().Contains(
+                                name.ToSingleByteCharacterString())))
                         .Select(tib => tib.tag).Distinct();
                 }
                 else

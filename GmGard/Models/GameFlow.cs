@@ -301,7 +301,7 @@ namespace GmGard.Models
             }
             User.Profession = profession;
             User.AddTitle((int)profession);
-            string key = profession.ToString().ToLower();
+            string key = profession.ToString();
             _professionStats.TryGetValue(key, out int count);
             _professionStats[key] = count + 1;
             return true;

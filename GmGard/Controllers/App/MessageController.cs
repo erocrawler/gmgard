@@ -107,7 +107,7 @@ namespace GmGard.Controllers.App
 
         private Task<bool> UserExists(string user)
         {
-            return _udb.Users.AnyAsync(u => u.UserName.ToLower() == user.ToLower());
+            return _udb.Users.AnyAsync(u => u.UserName == user);
         }
 
         [HttpPost]
@@ -126,7 +126,7 @@ namespace GmGard.Controllers.App
             message.Sender = User.Identity.Name;
             _udb.Messages.Add(message);
             await _udb.SaveChangesAsync();
-            _cache.Remove("unreadmsg" + message.Recipient.ToLower());
+            _cache.Remove("unreadmsg" + message.Recipient);
             return Ok();
         }
 
@@ -144,7 +144,7 @@ namespace GmGard.Controllers.App
             }
             if (!m.IsRead)
             {
-                _cache.Remove("unreadmsg" + m.Recipient.ToLower());
+                _cache.Remove("unreadmsg" + m.Recipient);
             }
             DeleteMessage(m);
             await _udb.SaveChangesAsync();
@@ -166,7 +166,7 @@ namespace GmGard.Controllers.App
             {
                 m.IsRead = true;
                 await _udb.SaveChangesAsync();
-                _cache.Remove("unreadmsg" + User.Identity.Name.ToLower());
+                _cache.Remove("unreadmsg" + User.Identity.Name);
             }
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(m.MsgContent);
@@ -249,7 +249,7 @@ namespace GmGard.Controllers.App
                     break;
             }
             await _udb.SaveChangesAsync();
-            _cache.Remove("unreadmsg" + User.Identity.Name.ToLower());
+            _cache.Remove("unreadmsg" + User.Identity.Name);
             return Ok();
         }
     }

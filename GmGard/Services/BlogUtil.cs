@@ -334,7 +334,7 @@ namespace GmGard.Services
                         blog = b,
                         tag = tib.Select(t => t.tag),
                         Option = b.option,
-                        IsFavorite = _db.Favorites.Count(f => f.Username.ToLower() == HttpContext.User.Identity.Name.ToLower() && f.BlogID == id) > 0,
+                        IsFavorite = _db.Favorites.Count(f => f.Username == HttpContext.User.Identity.Name && f.BlogID == id) > 0,
                         Category = b.Category
                     });
                 bd = query.SingleOrDefault();

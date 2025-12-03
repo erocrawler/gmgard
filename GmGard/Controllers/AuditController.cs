@@ -106,7 +106,7 @@ namespace GmGard.Controllers
             }
         }
 
-        private bool HasPassedExam() => _udb.AuditExamSubmissions.Any(a => a.User.UserName.ToLower() == User.Identity.Name.ToLower() && a.IsSubmitted && a.HasPassed);
+        private bool HasPassedExam() => _udb.AuditExamSubmissions.Any(a => a.User.UserName == User.Identity.Name && a.IsSubmitted && a.HasPassed);
 
         private bool CanJoinAuditor(int UserLevel) {
             if (!HasPassedExam())
@@ -135,7 +135,7 @@ namespace GmGard.Controllers
 
         public async Task<ActionResult> Index(int page = 1)
         {
-            var user = _udb.Users.Include(u => u.auditor).SingleOrDefault(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            var user = _udb.Users.Include(u => u.auditor).SingleOrDefault(u => u.UserName == User.Identity.Name);
             if (!await _userManager.IsInRoleAsync(user, "Auditor"))
             {
                 return RedirectToAction("Join");
@@ -203,9 +203,9 @@ namespace GmGard.Controllers
             var setting = _dataSettings;
             var latestAudits = blog.blogAudits.Where(b => b.BlogVersion == version).ToList();
             var latestAuditAuthors = latestAudits.Select(ba => ba.Auditor);
-            var auditors = _udb.Auditors.Include(a => a.User).Where(a => latestAuditAuthors.Contains(a.User.UserName)).ToDictionary(a => a.User.UserName.ToLower());
+            var auditors = _udb.Auditors.Include(a => a.User).Where(a => latestAuditAuthors.Contains(a.User.UserName)).ToDictionary(a => a.User.UserName, StringComparer.OrdinalIgnoreCase);
             bool needRefresh = false;
-            float denyScore = latestAudits.Where(b => b.AuditAction == BlogAudit.Action.VoteDeny).Aggregate(0F, (score, ba) => score + auditors[ba.Auditor.ToLower()].Accuracy);
+            float denyScore = latestAudits.Where(b => b.AuditAction == BlogAudit.Action.VoteDeny).Aggregate(0F, (score, ba) => score + auditors[ba.Auditor].Accuracy);
             if (denyScore >= setting.BlogDenyThreshold && setting.BlogDenyThreshold > 0)
             {
                 DenyBlog(blog, "admin", true, latestAudits.Aggregate(new StringBuilder("投稿未通过审核。审核组给出的原因：<br>"),
@@ -214,7 +214,7 @@ namespace GmGard.Controllers
             }
             else
             {
-                float approveScore = latestAudits.Where(b => b.AuditAction == BlogAudit.Action.VoteApprove).Aggregate(0F, (score, ba) => score + auditors[ba.Auditor.ToLower()].Accuracy);
+                float approveScore = latestAudits.Where(b => b.AuditAction == BlogAudit.Action.VoteApprove).Aggregate(0F, (score, ba) => score + auditors[ba.Auditor].Accuracy);
                 if (approveScore >= setting.BlogApproveThreshold && setting.BlogApproveThreshold > 0)
                 {
                     ApproveBlog(blog, "admin", blog.Rating == 0);

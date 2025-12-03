@@ -22,7 +22,7 @@ namespace GmGard.Services
             get {
                 if (_currentUser == null && HttpContext.User.Identity.IsAuthenticated)
                 {
-                    _currentUser = _udb.Users.AsNoTracking().Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == HttpContext.User.Identity.Name.ToLower());
+                    _currentUser = _udb.Users.AsNoTracking().Include(u => u.quest).SingleOrDefault(u => u.UserName == HttpContext.User.Identity.Name);
                 }
                 return _currentUser;
             }
@@ -71,7 +71,7 @@ namespace GmGard.Services
             if (exp != null)
             {
                 lvl = exp.Level;
-                var username = user.UserName.ToLower();
+                var username = user.UserName;
                 _cache.Remove(LevelCacheKey + username);
                 _cache.Remove(ExpCacheKey + username);
             }
@@ -107,11 +107,10 @@ namespace GmGard.Services
             {
                 return -1;
             }
-            username = username.ToLower();
             int? lvl = _cache.Get<int?>(LevelCacheKey + username);
             if (lvl.HasValue)
                 return lvl.Value;
-            lvl = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName.ToLower() == username.ToLower())?.Level;
+            lvl = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName == username)?.Level;
             _cache.Set(LevelCacheKey + username, lvl, new MemoryCacheEntryOptions 
             { 
                 SlidingExpiration = TimeSpan.FromMinutes(30),
@@ -129,7 +128,6 @@ namespace GmGard.Services
             {
                 return;
             }
-            username = username.ToLower();
             int? level = _cache.Get<int?>(LevelCacheKey + username);
             Tuple<int, int> exptuple = _cache.Get<Tuple<int, int>>(ExpCacheKey + username);
             if (level.HasValue && exptuple != null)
@@ -139,7 +137,7 @@ namespace GmGard.Services
                 lvl = level.Value;
                 return;
             }
-            var user = _udb.Users.SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
+            var user = _udb.Users.SingleOrDefault(u => u.UserName == username);
             if (user == null)
             {
                 return;
@@ -166,11 +164,10 @@ namespace GmGard.Services
 
         public int getUserPoints(string username)
         {
-            username = username.ToLower();
             int? points = _cache.Get<int?>(PointsCacheKey + username);
             if (points == null)
             {
-                var user = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
+                var user = _udb.Users.AsNoTracking().SingleOrDefault(u => u.UserName == username);
                 if (user == null)
                     return 0;
 
@@ -186,7 +183,7 @@ namespace GmGard.Services
 
         public void addExp(string username, int expCount)
         {
-            var user = _udb.Users.Single(u => u.UserName.ToLower() == username.ToLower());
+            var user = _udb.Users.Single(u => u.UserName == username);
             addExp(user, expCount);
             _udb.SaveChanges();
         }
@@ -205,7 +202,7 @@ namespace GmGard.Services
                     expNext = exp.ExperienceEnd - exp.ExperienceStart + 1;
                 }
             }
-            var username = user.UserName.ToLower();
+            var username = user.UserName;
             _cache.Set(LevelCacheKey + username, user.Level, new MemoryCacheEntryOptions 
             { 
                 SlidingExpiration = TimeSpan.FromMinutes(30),
@@ -230,7 +227,7 @@ namespace GmGard.Services
         public void AddPoint(UserProfile user, int point)
         {
             user.Points += point;
-            _cache.Set<int?>(PointsCacheKey + user.UserName.ToLower(), user.Points, new MemoryCacheEntryOptions 
+            _cache.Set<int?>(PointsCacheKey + user.UserName, user.Points, new MemoryCacheEntryOptions 
             { 
                 SlidingExpiration = TimeSpan.FromMinutes(30),
                 Priority = CacheItemPriority.Normal
@@ -239,20 +236,19 @@ namespace GmGard.Services
 
         public async Task addPointAsync(string username, int pCount)
         {
-            var user = await _udb.Users.SingleAsync(u => u.UserName.ToLower() == username.ToLower());
+            var user = await _udb.Users.SingleAsync(u => u.UserName == username);
             AddPoint(user, pCount);
             await _udb.SaveChangesAsync();
         }
 
-        public async Task<Tuple<bool, int>> trySpendPointAsync(string username, int pCount)
+        public async Task<Tuple<bool, int>> trySpendPointAsync(string username, int amount)
         {
-            username = username.ToLower();
-            var user = await _udb.Users.SingleAsync(u => u.UserName.ToLower() == username);
+            var user = await _udb.Users.SingleAsync(u => u.UserName == username);
             int remain = user.Points;
-            if (user.Points >= pCount)
+            if (user.Points >= amount)
             {
-                await addPointAsync(username, -pCount);
-                remain -= pCount;
+                await addPointAsync(username, -amount);
+                remain -= amount;
             }
             else
             {
@@ -268,7 +264,7 @@ namespace GmGard.Services
             {
                 return false;
             }
-            string username = HttpContext.User.Identity.Name.ToLower();
+            string username = HttpContext.User.Identity.Name;
             var signday = _cache.Get<int?>(SignCacheKey + username);
             if (signday.HasValue)
             {
@@ -296,7 +292,7 @@ namespace GmGard.Services
 
         public bool HasRated()
         {
-            string username = HttpContext.User.Identity.Name.ToLower();
+            string username = HttpContext.User.Identity.Name;
             bool? result = _cache.Get<bool?>(HasRatedCacheKey + username);
             if (result.HasValue)
                 return result.Value;
@@ -313,7 +309,7 @@ namespace GmGard.Services
 
         public bool HasPosted()
         {
-            string username = HttpContext.User.Identity.Name.ToLower();
+            string username = HttpContext.User.Identity.Name;
             bool? result = _cache.Get<bool?>(HasPostedCacheKey + username);
             if (result.HasValue)
                 return result.Value;
@@ -330,7 +326,7 @@ namespace GmGard.Services
 
         public int HasBlogged()
         {
-            string username = HttpContext.User.Identity.Name.ToLower();
+            string username = HttpContext.User.Identity.Name;
             var result = _cache.Get<int?>(HasBloggedCacheKey + username);
             if (result.HasValue)
                 return result.Value;
@@ -345,8 +341,8 @@ namespace GmGard.Services
 
         public int WeekBlogged()
         {
-            string username = HttpContext.User.Identity.Name.ToLower();
-            var result = _cache.Get<int?>(WeekBloggedCacheKey + username);
+            string username = HttpContext.User.Identity.Name;
+            int? result = _cache.Get<int?>(WeekBloggedCacheKey + username);
             if (result.HasValue)
                 return result.Value;
             var quest = CurrentUser?.quest;
@@ -360,7 +356,7 @@ namespace GmGard.Services
 
         public bool HasRatedPost()
         {
-            string username = HttpContext.User.Identity.Name.ToLower();
+            string username = HttpContext.User.Identity.Name;
             bool? result = _cache.Get<bool?>(HasRatedPostCacheKey + username);
             if (result.HasValue)
                 return result.Value;
@@ -416,7 +412,7 @@ namespace GmGard.Services
         public bool setRateDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;
@@ -445,7 +441,7 @@ namespace GmGard.Services
         public bool SetRatePostDateAddExp(string username)
         {
             bool isNewRate = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;
@@ -474,7 +470,7 @@ namespace GmGard.Services
         public bool setPostDateAddExp(string username)
         {
             bool isNewPost = true;
-            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName.ToLower() == username.ToLower());
+            var profile = _udb.Users.Include(u => u.quest).SingleOrDefault(u => u.UserName == username);
             if (profile == null)
             {
                 return false;

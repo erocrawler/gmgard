@@ -32,7 +32,7 @@ namespace GmGard.Services
                 m.IsSenderDelete = true;
             }
             _udb.Messages.Add(m);
-            _cache.Remove("unreadmsg" + m.Recipient.ToLower());
+            _cache.Remove("unreadmsg" + m.Recipient);
             _udb.SaveChanges();
         }
 
@@ -48,12 +48,11 @@ namespace GmGard.Services
                 return;
             }
             _taskQueue.QueueBackgroundWorkItem(Job.CreateJob(new SendNoticeArgs { Actor = actor, Content = content, NoticeUser = noticeuser, Type = type, Url = url }));
-            _cache.Remove("unreadmsg" + noticeuser.ToLower());
+            _cache.Remove("unreadmsg" + noticeuser);
         }
 
         public string GetUnreadMsg(string name, bool fromcache = true)
         {
-            name = name.ToLower();
             int? count = _cache.Get<int?>("unreadmsg" + name);
             if (!count.HasValue || !fromcache)
             {

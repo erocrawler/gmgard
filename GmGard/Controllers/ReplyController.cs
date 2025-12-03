@@ -318,7 +318,7 @@ namespace GmGard.Controllers
             
             // Query the rating directly from database to avoid stale data from navigation property
             var rating = await _db.PostRatings
-                .SingleOrDefaultAsync(r => r.PostId == postid && r.Rater.ToLower() == User.Identity.Name.ToLower());
+                .SingleOrDefaultAsync(r => r.PostId == postid && r.Rater == User.Identity.Name);
             
             if (rating == null)
             {

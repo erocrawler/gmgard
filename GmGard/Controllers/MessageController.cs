@@ -87,7 +87,7 @@ namespace GmGard.Controllers
                 message.Sender = User.Identity.Name;
                 _udb.Messages.Add(message);
                 _udb.SaveChanges();
-                _cache.Remove("unreadmsg" + message.Recipient.ToLower());
+                _cache.Remove("unreadmsg" + message.Recipient);
                 TempData["DisplayTab"] = "outbox";
                 return RedirectToAction("Index");
             }
@@ -115,7 +115,7 @@ namespace GmGard.Controllers
                     unread--;
                     _udb.SaveChanges();
                 }
-                _cache.Set("unreadmsg" + username.ToLower(), unread);
+                _cache.Set("unreadmsg" + username, unread);
                 return Json(new
                 {
                     MsgId = message.MsgId,
@@ -249,7 +249,7 @@ namespace GmGard.Controllers
                     }
                     break;
             }
-            _cache.Remove("unreadmsg" + User.Identity.Name.ToLower());
+            _cache.Remove("unreadmsg" + User.Identity.Name);
             return new EmptyResult();
         }
 
@@ -281,14 +281,14 @@ namespace GmGard.Controllers
             }
             if (save)
                 _udb.SaveChanges();
-            _cache.Remove("unreadmsg" + username.ToLower());
+            _cache.Remove("unreadmsg" + username);
             return isrecipient;
         }
 
         [HttpPost]
         public ActionResult CheckUsername(string Recipient)
         {
-            if (_udb.Users.Any(u => u.UserName.ToLower() == Recipient.ToLower()))
+            if (_udb.Users.Any(u => u.UserName == Recipient))
             {
                 return Json(true);
             }
@@ -366,7 +366,7 @@ namespace GmGard.Controllers
                         break;
                 }
                 await _udb.SaveChangesAsync();
-                _cache.Set("unreadmsg" + user.ToLower(), await _udb.Messages.CountAsync(m => m.Recipient == user && !m.IsRead && !m.IsRecipientDelete));
+                _cache.Set("unreadmsg" + user, await _udb.Messages.CountAsync(m => m.Recipient == user && !m.IsRead && !m.IsRecipientDelete));
             }
             else if (pos == "outbox")
             {

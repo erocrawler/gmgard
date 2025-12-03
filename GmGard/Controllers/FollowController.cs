@@ -28,7 +28,7 @@ namespace GmGard.Controllers
 
         public ActionResult Index(int page = 1)
         {
-            var userprofile = _udb.Users.Include(u => u.follows).ThenInclude(f => f.follow).SingleOrDefault(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            var userprofile = _udb.Users.Include(u => u.follows).ThenInclude(f => f.follow).SingleOrDefault(u => u.UserName == User.Identity.Name);
             var followedNames = userprofile.follows.Select(u => u.follow.UserName);
             var query = _db.Blogs.Where(b => followedNames.Contains(b.Author) && b.isApproved == true).OrderByDescending(b => b.BlogDate);
 
@@ -43,18 +43,17 @@ namespace GmGard.Controllers
         [HttpPost]
         public JsonResult Follow(string name)
         {
-            name = name.ToLower();
-            if (name == User.Identity.Name)
+            if (name.Equals(User.Identity.Name, StringComparison.OrdinalIgnoreCase))
             {
                 return Json(new { success = false, error = "not self" });
             }
-            var profiles = _udb.Users.Where(u => u.UserName.ToLower() == name || u.UserName.ToLower() == User.Identity.Name.ToLower()).ToDictionary(u => u.UserName.ToLower());
+            var profiles = _udb.Users.Where(u => u.UserName == name || u.UserName == User.Identity.Name).ToDictionary(u => u.UserName);
             if (!profiles.ContainsKey(name))
             {
                 return Json(new { success = false, error = "not found" });
             }
             var followprofile = profiles[name];
-            var userprofile = profiles[User.Identity.Name.ToLower()];
+            var userprofile = profiles[User.Identity.Name];
             if (_udb.Follows.Find(userprofile.Id, followprofile.Id) == null)
             {
                 _udb.Entry(new Follow { FollowID = followprofile.Id, UserID = userprofile.Id, FollowTime = DateTime.Now }).State = EntityState.Added;
@@ -66,14 +65,13 @@ namespace GmGard.Controllers
         [HttpPost]
         public JsonResult UnFollow(string name)
         {
-            name = name.ToLower();
-            var profiles = _udb.Users.Where(u => u.UserName.ToLower() == name || u.UserName.ToLower() == User.Identity.Name.ToLower()).ToDictionary(u => u.UserName.ToLower());
+            var profiles = _udb.Users.Where(u => u.UserName == name || u.UserName == User.Identity.Name).ToDictionary(u => u.UserName);
             if (!profiles.ContainsKey(name))
             {
                 return Json(new { success = false, error = "not found" });
             }
             var followprofile = profiles[name];
-            var userprofile = profiles[User.Identity.Name.ToLower()];
+            var userprofile = profiles[User.Identity.Name];
             var entity = _udb.Follows.Find(userprofile.Id, followprofile.Id);
             if (entity != null)
             {
@@ -94,7 +92,7 @@ namespace GmGard.Controllers
                 }
                 name = User.Identity.Name;
             }
-            var userprofile = _udb.Users.SingleOrDefault(u => u.UserName.ToLower() == name.ToLower());
+            var userprofile = _udb.Users.SingleOrDefault(u => u.UserName == name);
             if (userprofile == null)
             {
                 return RedirectToAction("Index", "Home");
@@ -133,7 +131,7 @@ namespace GmGard.Controllers
         [HttpGet]
         public PartialViewResult Suggestions()
         {
-            var TopUsers = _udb.Users.Where(u => _udb.Users.FirstOrDefault(uu => uu.UserName.ToLower() == User.Identity.Name.ToLower()).follows.Count(f => f.FollowID == u.Id) == 0 && u.UserName.ToLower() != User.Identity.Name.ToLower())
+            var TopUsers = _udb.Users.Where(u => _udb.Users.FirstOrDefault(uu => uu.UserName == User.Identity.Name).follows.Count(f => f.FollowID == u.Id) == 0 && u.UserName != User.Identity.Name)
                             .OrderByDescending(u => u.Experience).Take(18).ToList();
             return PartialView(TopUsers);
         }
@@ -141,7 +139,7 @@ namespace GmGard.Controllers
         [HttpPost]
         public JsonResult Suggestions(int[] userid)
         {
-            var uid = _udb.Users.AsNoTracking().Where(u => u.UserName.ToLower() == User.Identity.Name.ToLower()).Select(u => u.Id).Single();
+            var uid = _udb.Users.AsNoTracking().Where(u => u.UserName == User.Identity.Name).Select(u => u.Id).Single();
             foreach (var id in userid)
             {
                 if (id == uid)
@@ -171,7 +169,7 @@ namespace GmGard.Controllers
             {
                 return new JsonResult(null);
             }
-            var follows = _udb.Follows.Where(f => f.user.UserName.ToLower() == User.Identity.Name.ToLower() && names.Contains(f.follow.UserName)).Select(f => f.follow.UserName).ToList();
+            var follows = _udb.Follows.Where(f => f.user.UserName == User.Identity.Name && names.Contains(f.follow.UserName)).Select(f => f.follow.UserName).ToList();
             var result = names.ToDictionary(n => n, n => follows.Contains(n), StringComparer.OrdinalIgnoreCase);
             return Json(result);
         }

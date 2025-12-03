@@ -23,7 +23,6 @@ namespace GmGard.Services
             {
                 return string.Empty;
             }
-            user = user.ToLower();
             string nick = _cache.Get<string>("nick" + user);
             if (nick == string.Empty)
             {
@@ -31,7 +30,7 @@ namespace GmGard.Services
             }
             else if (nick == null)
             {
-                nick = _udb.Users.Where(u => u.UserName.ToLower() == user).Select(u => u.NickName).SingleOrDefault();
+                nick = _udb.Users.Where(u => u.UserName == user).Select(u => u.NickName).SingleOrDefault();
                 _cache.Set("nick" + user, nick ?? string.Empty);
             }
             return nick;
@@ -44,7 +43,7 @@ namespace GmGard.Services
             var uncached = new List<string>();
             foreach (var n in names)
             {
-                string cached = _cache.Get<string>("nick" + n.ToLower());
+                string cached = _cache.Get<string>("nick" + n);
                 if (cached != null)
                 {
                     result.Add(n, cached == string.Empty ? n : cached);
@@ -56,14 +55,14 @@ namespace GmGard.Services
             }
             if (uncached.Count > 0)
             {
-                var uncachedLower = uncached.Select(n => n.ToLower()).ToList();
-                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName.ToLower())).ToDictionary(u => u.UserName.ToLower(), u => u.NickName);
+                var uncachedLower = uncached.ToList();
+                var name2nick = _udb.Users.Where(u => uncachedLower.Contains(u.UserName)).ToDictionary(u => u.UserName, u => u.NickName, StringComparer.OrdinalIgnoreCase);
                 foreach (var name in uncached)
                 {
                     string nick;
-                    name2nick.TryGetValue(name.ToLower(), out nick);
+                    name2nick.TryGetValue(name, out nick);
                     nick = nick ?? string.Empty;
-                    _cache.Set("nick" + name.ToLower(), nick, new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
+                    _cache.Set("nick" + name, nick, new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions 
                     { 
                         SlidingExpiration = TimeSpan.FromMinutes(20),
                         Priority = Microsoft.Extensions.Caching.Memory.CacheItemPriority.Normal
@@ -76,7 +75,7 @@ namespace GmGard.Services
 
         public void UpdateNickNameCache(UserProfile user)
         {
-            _cache.Set("nick" + user.UserName.ToLower(), user.NickName);
+            _cache.Set("nick" + user.UserName, user.NickName);
         }
     }
 }

@@ -359,7 +359,7 @@ namespace GmGard.Controllers
         public async Task<ActionResult> Manage(ManageMessageId? message)
         {
             ViewBag.ReturnUrl = Url.Action("Manage");
-            var user = await _db.Users.Include(u => u.quest).Include(u => u.option).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            var user = await _db.Users.Include(u => u.quest).Include(u => u.option).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             ViewBag.HpSettings = GetHpSettings();
             return View(user);
         }
@@ -428,7 +428,7 @@ namespace GmGard.Controllers
             {
                 user.UserComment = comment;
                 _db.SaveChanges();
-                _cache.Set("desc" + user.UserName.ToLower(), comment);
+                _cache.Set("desc" + user.UserName, comment);
                 success = true;
             }
             return Json(new { success = success });
@@ -541,8 +541,8 @@ namespace GmGard.Controllers
                 var taglist = TagUtil.SplitTags(model.BlacklistTagNames);
                 if (taglist != null && taglist.Length > 0)
                 {
-                    var tags = await _bdb.Tags.Where(t => taglist.Contains(t.TagName)).ToDictionaryAsync(t => t.TagName.ToLower(), t => t.TagID);
-                    var notfound = taglist.Where(n => !tags.ContainsKey(n.ToLower()));
+                    var tags = await _bdb.Tags.Where(t => taglist.Contains(t.TagName)).ToDictionaryAsync(t => t.TagName, t => t.TagID);
+                    var notfound = taglist.Where(n => !tags.ContainsKey(n));
                     if (notfound.Any())
                     {
                         ViewBag.NotFoundTags = string.Join(",", notfound);
@@ -732,7 +732,7 @@ namespace GmGard.Controllers
             {
                 return Json(new { success = false });
             }
-            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user == null || user.quest == null || !user.quest.HasTitle(title.Value))
             {
                 return Json(new { success = false });
@@ -746,7 +746,7 @@ namespace GmGard.Controllers
         [HttpPost]
         public async Task<JsonResult> ChangeBackground([FromServices]TitleService titleService, string name)
         {
-            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName.ToLower() == User.Identity.Name.ToLower());
+            var user = await _db.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user == null || user.quest == null)
             {
                 return Json(new { success = false });

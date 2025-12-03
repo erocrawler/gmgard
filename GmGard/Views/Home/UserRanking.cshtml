@@ -5,7 +5,7 @@
     bool contain = false;
     string name = null;
     if(User.Identity.IsAuthenticated){
-        name = User.Identity.Name.ToLower();
+        name = User.Identity.Name;
     }
     var nickNames = blogUtil.GetNickNames(Model.Exp.Select(u => u.Name).Concat(Model.Blog.Select(u => u.Name)).Concat(Model.Post.Select(u => u.Name)).Concat(Model.Sign.Select(u => u.Name)));
     var userNick = blogUtil.GetNickName(name);
@@ -25,7 +25,7 @@
         @{
             foreach (var item in Model.Exp)
             {
-                <div class="row-fluid @if(item.Name.ToLower() == name){
+                <div class="row-fluid @if(item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)){
                     contain = true; <text>glow</text>
                                       }">
                     <div class="span4">
@@ -67,7 +67,7 @@
         @{
             foreach (var item in Model.Sign)
             {
-                <div class="row-fluid @if(item.Name.ToLower() == name){
+                <div class="row-fluid @if(item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)){
                     contain = true; <text>glow</text>
                                       }">
                     <div class="span4">
@@ -111,7 +111,7 @@
         @{
             foreach (var item in Model.Blog)
             {
-                <div class="row-fluid @if(item.Name.ToLower() == name){
+                <div class="row-fluid @if(item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)){
                     contain = true; <text>glow</text>
                                       }">
                     <div class="span4">
@@ -153,7 +153,7 @@
         @{
             foreach (var item in Model.Post)
             {
-                <div class="row-fluid @if(item.Name.ToLower() == name){
+                <div class="row-fluid @if(item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)){
                     contain = true; <text>glow</text>
                                       }">
                     <div class="span4">

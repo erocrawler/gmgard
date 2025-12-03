@@ -35,9 +35,9 @@ namespace GmGard.Services
             return PageNumber.ToString() + (IsHarmony ? 'T' : (hideHarmony ? 'H' : 'F')).ToString() + categoryIds;
         }
 
-        public static string GetAvatarCacheKey(string Username) => $"~Avatar{Username.ToLower()}";
+        public static string GetAvatarCacheKey(string Username) => $"~Avatar{Username}";
 
-        public static string GetIsFavCacheKey(int Id, string Username) => $"~fav~{Id}~{Username.ToLower()}";
+        public static string GetIsFavCacheKey(int Id, string Username) => $"~fav~{Id}~{Username}";
 
         public static string GetBlogFirstLineKey(int id) => $"~BFL~{id}";
 
