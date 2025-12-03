@@ -1,0 +1,12 @@
+{
+  "name": "gmgard-client",
+  "version": "1.0.0",
+  "description": "Blazor WebAssembly client with Tailwind CSS",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css",
+    "watch:css": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

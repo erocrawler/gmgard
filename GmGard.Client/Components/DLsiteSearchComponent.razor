@@ -1,0 +1,110 @@
+@using GmGard.Client.Services
+@using GmGard.Client.Models
+@inject DLsiteSearchService DLsiteSearch
+
+<div class="mt-4">
+    @if (isSearching)
+    {
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span class="ml-3 text-gray-600">搜索中...</span>
+        </div>
+    }
+    else if (searchResults.Any())
+    {
+        <div class="space-y-3">
+            <h3 class="font-semibold text-gray-700">找到 @searchResults.Count 个DLsite作品：</h3>
+            @foreach (var item in searchResults)
+            {
+                <a href="@item.Url" target="_blank" 
+                   class="block p-4 border border-gray-200 rounded-md hover:border-primary hover:shadow-md transition">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
+                                    @item.RjCode
+                                </span>
+                                <h4 class="font-medium text-gray-900">@item.Title</h4>
+                            </div>
+                            <div class="mt-2 text-sm text-gray-600">
+                                <a href="@item.CircleUrl" target="_blank" class="hover:text-primary">
+                                    @item.Circle
+                                </a>
+                            </div>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="text-sm text-gray-600 mt-2 line-clamp-2">@item.Description</p>
+                            }
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else if (notFound && !string.IsNullOrEmpty(Title) && Title.Length >= 2)
+    {
+        <p class="text-gray-500 text-center py-8">未找到相关DLsite作品</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    private List<DLsite> searchResults = new();
+    private bool isSearching = false;
+    private bool notFound = false;
+    private string lastSearchTitle = "";
+    private System.Threading.Timer? debounceTimer;
+
+    protected override void OnParametersSet()
+    {
+        if (Title != lastSearchTitle)
+        {
+            lastSearchTitle = Title;
+            notFound = false;
+            DebounceSearch();
+        }
+    }
+
+    private void DebounceSearch()
+    {
+        debounceTimer?.Dispose();
+        debounceTimer = new System.Threading.Timer(async _ => await PerformSearch(), null, 500, Timeout.Infinite);
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(Title) || Title.Length < 2)
+        {
+            searchResults.Clear();
+            notFound = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        isSearching = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            searchResults = await DLsiteSearch.SearchAsync(Title);
+            notFound = searchResults.Count == 0;
+        }
+        catch
+        {
+            searchResults.Clear();
+            notFound = false;
+        }
+        finally
+        {
+            isSearching = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}

@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGardMigrations", "GmGardM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGard.Models", "GmGard.Models\GmGard.Models.csproj", "{176A9945-C9A7-45A6-BF18-5B41E6E8556F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGard.Client", "GmGard.Client\GmGard.Client.csproj", "{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}"
+EndProject
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "GmApps", "GmApps\", "{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}"
 	ProjectSection(WebsiteProperties) = preProject
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.8"
@@ -56,6 +58,12 @@ Global
 		{176A9945-C9A7-45A6-BF18-5B41E6E8556F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{176A9945-C9A7-45A6-BF18-5B41E6E8556F}.Staging|Any CPU.ActiveCfg = Staging|Any CPU
 		{176A9945-C9A7-45A6-BF18-5B41E6E8556F}.Staging|Any CPU.Build.0 = Staging|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Staging|Any CPU.ActiveCfg = Release|Any CPU
+		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Staging|Any CPU.Build.0 = Release|Any CPU
 		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Release|Any CPU.ActiveCfg = Debug|Any CPU

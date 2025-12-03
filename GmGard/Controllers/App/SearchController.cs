@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using GmGard.Models;
 using GmGard.Services;
 using GmGard.Models.App;
+using GmGard.Client.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;

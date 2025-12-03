@@ -1,0 +1,28 @@
+@page "/app/punch-in"
+
+<PageTitle>绅士签到</PageTitle>
+
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">绅士签到</h1>
+    
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="text-center mb-6">
+            <p class="text-gray-600 mb-4">每日签到可获得奖励</p>
+            <button class="bg-primary text-white px-8 py-3 rounded-md hover:bg-primary-dark transition text-lg font-semibold">
+                立即签到
+            </button>
+        </div>
+        
+        <div class="border-t pt-6">
+            <h2 class="text-xl font-semibold mb-4">签到记录</h2>
+            <div class="grid grid-cols-7 gap-2">
+                @for (int i = 1; i <= 30; i++)
+                {
+                    <div class="aspect-square bg-gray-100 rounded flex items-center justify-center text-sm">
+                        @i
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

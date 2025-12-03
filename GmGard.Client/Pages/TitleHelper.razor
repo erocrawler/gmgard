@@ -1,0 +1,152 @@
+@page "/app/title-helper"
+@page "/app/title-helper/{CategoryId:int}"
+@using GmGard.Client.Data
+@using GmGard.Client.Services
+@using GmGard.Client.Models
+@inject BlogSearchService BlogSearch
+@inject DLsiteSearchService DLsiteSearch
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>标题助手</PageTitle>
+
+<div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <!-- Category Selection Card -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="relative">
+                <button @onclick="ToggleCategoryMenu" 
+                        class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                    <span>分类</span>
+                </button>
+                
+                @if (showCategoryMenu)
+                {
+                    <div class="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10 max-h-96 overflow-y-auto border border-gray-200">
+                        @foreach (var cat in categories)
+                        {
+                            <button @onclick="() => SelectCategory(cat)" 
+                                    class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+                                @cat.Name
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+            
+            <h2 class="text-xl font-semibold">
+                @if (selectedCategory != null)
+                {
+                    @selectedCategory.Name
+                }
+                else
+                {
+                    <span class="text-gray-400">请选择分类</span>
+                }
+            </h2>
+        </div>
+
+        @if (selectedCategory != null && !string.IsNullOrEmpty(selectedCategory.Comment))
+        {
+            <div class="flex items-start space-x-2 p-4 bg-blue-50 rounded-md">
+                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap">@selectedCategory.Comment</p>
+            </div>
+        }
+
+        @if (selectedCategory?.Fields.Count > 0)
+        {
+            <div class="mt-6">
+                <CategoryFieldsComponent Category="@selectedCategory" OnTitleChange="@UpdateTitle" />
+            </div>
+        }
+    </div>
+
+    <!-- Title Display and Actions Card -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4">标题</h2>
+        
+        <div class="flex space-x-2 mb-4">
+            <input @bind="generatedTitle" @bind:event="oninput"
+                   class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                   placeholder="生成的标题将显示在这里..." />
+            <button @onclick="CopyTitle" 
+                    class="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition">
+                复制
+            </button>
+        </div>
+
+        <!-- Search Mode Toggle -->
+        <div class="flex space-x-2 mb-4">
+            <button @onclick="() => { searchMode = false; StateHasChanged(); }"
+                    class="@(searchMode ? "bg-gray-200 text-gray-700" : "bg-primary text-white") px-4 py-2 rounded-md transition">
+                投稿搜索
+            </button>
+            <button @onclick="() => { searchMode = true; StateHasChanged(); }"
+                    class="@(!searchMode ? "bg-gray-200 text-gray-700" : "bg-primary text-white") px-4 py-2 rounded-md transition">
+                RJ号搜索
+            </button>
+        </div>
+
+        <!-- Search Results -->
+        @if (searchMode)
+        {
+            <DLsiteSearchComponent Title="@generatedTitle" />
+        }
+        else
+        {
+            <BlogSearchComponent Title="@generatedTitle" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int? CategoryId { get; set; }
+
+    private List<TitleCategory> categories = new();
+    private TitleCategory? selectedCategory;
+    private string generatedTitle = "";
+    private bool showCategoryMenu = false;
+    private bool searchMode = false;
+
+    protected override void OnInitialized()
+    {
+        categories = CategoryData.GetAllCategories();
+        
+        if (CategoryId.HasValue)
+        {
+            selectedCategory = categories.FirstOrDefault(c => c.Id == CategoryId.Value);
+        }
+    }
+
+    private void SelectCategory(TitleCategory category)
+    {
+        selectedCategory = category;
+        showCategoryMenu = false;
+        Navigation.NavigateTo($"/app/title-helper/{category.Id}");
+    }
+
+    private void ToggleCategoryMenu()
+    {
+        showCategoryMenu = !showCategoryMenu;
+    }
+
+    private void UpdateTitle(string title)
+    {
+        generatedTitle = title;
+    }
+
+    private async Task CopyTitle()
+    {
+        if (!string.IsNullOrWhiteSpace(generatedTitle))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedTitle);
+        }
+    }
+}

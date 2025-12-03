@@ -1,0 +1,100 @@
+@using GmGard.Client.Services
+@using GmGard.Client.Models
+@inject BlogSearchService BlogSearch
+
+<div class="mt-4">
+    @if (isSearching)
+    {
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span class="ml-3 text-gray-600">搜索中...</span>
+        </div>
+    }
+    else if (searchResults.Any())
+    {
+        <div class="space-y-3">
+            <h3 class="font-semibold text-gray-700">找到 @searchResults.Count 个相关投稿：</h3>
+            @foreach (var blog in searchResults)
+            {
+                <a href="@blog.Url" target="_blank" 
+                   class="block p-4 border border-gray-200 rounded-md hover:border-primary hover:shadow-md transition">
+                    <div class="flex items-start space-x-4">
+                        @if (!string.IsNullOrEmpty(blog.ThumbUrl))
+                        {
+                            <img src="@blog.ThumbUrl" alt="" class="w-20 h-20 object-cover rounded flex-shrink-0" />
+                        }
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-gray-900 truncate">@blog.Title</h4>
+                            <p class="text-sm text-gray-600 mt-1 line-clamp-2">@blog.Brief</p>
+                            <div class="flex items-center mt-2 text-xs text-gray-500 space-x-4">
+                                <span>@blog.Author?.Name</span>
+                                <span>@blog.CreateDate.ToString("yyyy-MM-dd")</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Title) && Title.Length >= 5)
+    {
+        <p class="text-gray-500 text-center py-8">未找到相关投稿</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    private List<BlogPreview> searchResults = new();
+    private bool isSearching = false;
+    private string lastSearchTitle = "";
+    private System.Threading.Timer? debounceTimer;
+
+    protected override void OnParametersSet()
+    {
+        if (Title != lastSearchTitle)
+        {
+            lastSearchTitle = Title;
+            DebounceSearch();
+        }
+    }
+
+    private void DebounceSearch()
+    {
+        debounceTimer?.Dispose();
+        debounceTimer = new System.Threading.Timer(async _ => await PerformSearch(), null, 300, Timeout.Infinite);
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(Title) || Title.Length < 5)
+        {
+            searchResults.Clear();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        isSearching = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            searchResults = await BlogSearch.SearchAsync(Title);
+        }
+        catch
+        {
+            searchResults.Clear();
+        }
+        finally
+        {
+            isSearching = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}
