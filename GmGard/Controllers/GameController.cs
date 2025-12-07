@@ -33,7 +33,7 @@ namespace GmGard.Controllers
             var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user.quest == null)
             {
-                user.quest = new UserQuest();
+                user.quest = new UserQuest { UserId = user.Id };
                 await _udb.SaveChangesAsync();
             }
             var desc = new GameChoiceDescriptor(user.quest);
@@ -60,7 +60,7 @@ namespace GmGard.Controllers
             var user = await _udb.Users.Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user.quest == null)
             {
-                user.quest = new UserQuest();
+                user.quest = new UserQuest { UserId = user.Id };
             }
             user.quest.Progress = 0;
             user.quest.Profession = UserQuest.UserProfession.None;

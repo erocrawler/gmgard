@@ -287,8 +287,9 @@ namespace GmGard
                 },
             });
 
-            // Enable Blazor WebAssembly static files
-            app.UseBlazorFrameworkFiles();
+            // Enable Blazor WebAssembly static files at /app path
+            app.UseBlazorFrameworkFiles("/app");
+            app.UseStaticFiles();
 
             app.UseRouting();
 

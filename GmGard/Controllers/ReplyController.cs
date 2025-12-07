@@ -271,6 +271,14 @@ namespace GmGard.Controllers
                 _adminUtil.log(User.Identity.Name, "deletepost", _blogUtil.GetPostLink(post));
             }
             TriggerDeletePost(post);
+            
+            // Remove foreign key references from BlogRatings (Ratings table) before deleting the post
+            var blogRatingsWithPostId = _db.BlogRatings.Where(r => r.PostId == id);
+            foreach (var rating in blogRatingsWithPostId)
+            {
+                rating.PostId = null;
+            }
+            
             _db.Posts.Remove(post);
             _db.SaveChanges();
             return Json(true);

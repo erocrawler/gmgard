@@ -78,6 +78,10 @@ jobs:
           --exclude 'Log/' \
           --exclude 'logs/' \
           ./publish/ $USER@$HOST:$TARGET/
+        rsync -avz \
+          --exclude 'Images/' \
+          --exclude 'rss.xml' \
+          ./publish/wwwroot/ $USER@$HOST:$TARGET/wwwroot/
 
         echo ">>> 4. Start Service"
         ssh $USER@$HOST "

@@ -143,7 +143,7 @@ namespace GmGard.Services
             expUtil.addExp(user, _appSettings.ExpAddOnPass);
             if (user.quest == null)
             {
-                user.quest = new UserQuest();
+                user.quest = new UserQuest { UserId = user.Id };
             }
 
             if (user.quest.LastBlogDate.HasValue && DateTime.Today.isSameWeek(user.quest.LastBlogDate.Value))
