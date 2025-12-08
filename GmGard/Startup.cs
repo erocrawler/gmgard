@@ -30,6 +30,8 @@ using Microsoft.Extensions.Hosting;
 using Serilog.Filters;
 using Microsoft.AspNetCore.Http;
 using OpenIddict.Abstractions;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace GmGard
 {
@@ -150,13 +152,62 @@ namespace GmGard
 
                     options.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow();
 
-                    // Use development certificates in dev, production certs should be configured via environment
+                    // Load signing certificate based on environment
                     if (IsDev)
                     {
                         options.AddDevelopmentEncryptionCertificate()
                                .AddDevelopmentSigningCertificate();
                     }
-                    // In production, certificates must be configured via appsettings or environment variables
+                    else
+                    {
+                        // Production: Load signing certificate from file or Key Vault
+                        var signingCertPath = Path.Combine(_basePath, "App_Data", "Certificates", "signing-cert.pfx");
+                        var encryptionCertPath = Path.Combine(_basePath, "App_Data", "Certificates", "encryption-cert.pfx");
+                        
+                        // Read cert password from appsettings or environment variable (environment variable takes precedence)
+                        var certPassword = Environment.GetEnvironmentVariable("OPENIDDICT_CERT_PASSWORD") 
+                            ?? Configuration.GetSection("ApplicationSettings").GetValue<string>("OpenIddict:CertificatePassword") 
+                            ?? "";
+
+                        if (File.Exists(signingCertPath))
+                        {
+                            try
+                            {
+                                Log.Information("Loading OpenIddict signing certificate from {Path}", signingCertPath);
+                                var signingCert = X509CertificateLoader.LoadPkcs12FromFile(signingCertPath, certPassword);
+                                options.AddSigningCertificate(signingCert);
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(ex, "Failed to load OpenIddict signing certificate from {Path}", signingCertPath);
+                                throw;
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"OpenIddict signing certificate not found at {signingCertPath}. " +
+                                "For production, generate certificates with: generate-certificates.ps1 in GmGardMigrations project");
+                        }
+
+                        if (File.Exists(encryptionCertPath))
+                        {
+                            try
+                            {
+                                Log.Information("Loading OpenIddict encryption certificate from {Path}", encryptionCertPath);
+                                var encryptionCert = X509CertificateLoader.LoadPkcs12FromFile(encryptionCertPath, certPassword);
+                                options.AddEncryptionCertificate(encryptionCert);
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(ex, "Failed to load OpenIddict encryption certificate from {Path}", encryptionCertPath);
+                                throw;
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"OpenIddict encryption certificate not found at {encryptionCertPath}");
+                        }
+                    }
 
                     options.UseAspNetCore()
                            .EnableAuthorizationEndpointPassthrough()
