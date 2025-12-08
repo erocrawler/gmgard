@@ -3,7 +3,6 @@
 
 var gulp = require("gulp"),
     merge = require('merge-stream'),
-  rimraf = require("rimraf"),
   concat = require("gulp-concat"),
   cssmin = require("gulp-clean-css"),
   rename = require('gulp-rename'),
@@ -49,18 +48,24 @@ paths.datepickerDest = paths.webroot + "Scripts/datepicker.min.js";
 
 paths.tagManager = paths.webroot + "Scripts/tagmanager.js";
 
-function cleanJs(cb) {
-  async.parallel([
-    (c) => { rimraf(paths.combineJsDest, c); },
-    (c) => { rimraf(paths.combineCanvasJsDest, c); },
-    (c) => { rimraf(paths.jqueryDest, c); },
-    (c) => { rimraf(paths.jqueryValDest, c); },
-    (c) => { rimraf(paths.datepickerDest, c); }
-  ], cb);
+function cleanJs(done) {
+  var fs = require('fs');
+  [paths.combineJsDest, paths.combineCanvasJsDest, paths.jqueryDest, paths.jqueryValDest, paths.datepickerDest]
+    .forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
+  done();
 }
 
-function cleanCss(cb) {
-  rimraf(paths.minCss, cb);
+function cleanCss(done) {
+  var fs = require('fs');
+  var path = require('path');
+  var glob = require('glob');
+  // Exclude messenger.min.css (pre-minified library file with no source)
+  glob.sync(paths.minCss).forEach(file => { 
+    if (fs.existsSync(file) && !file.includes('messenger.min.css')) {
+      fs.unlinkSync(file);
+    }
+  });
+  done();
 }
 
 gulp.task("clean:js", cleanJs);
@@ -69,36 +74,61 @@ gulp.task("clean:css", cleanCss);
 
 gulp.task("clean", gulp.parallel(cleanJs, cleanCss));
 
-function minJs() {
-  var combineJs = gulp.src([paths.combineJs, "!" + paths.minJs, "!" + paths.tagManager], { base: "." })
-    .pipe(concat(paths.combineJsDest))
-    .pipe(uglify())
-    .pipe(gulp.dest("."));
-  var minTagJs = gulp.src([paths.tagManager], { base: "." })
-    .pipe(uglify())
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest("."));
-  var combineCanvasJs = gulp.src([paths.combineCanvasJs, "!" + paths.combineCanvasJsDest], { base: "." })
-    .pipe(concat(paths.combineCanvasJsDest))
-    .pipe(uglify())
-    .pipe(gulp.dest("."));
-  var jquery = gulp.src([paths.jquerysrc]).pipe(gulp.dest(paths.jsPath));
-  var jqueryVal = gulp.src(paths.jqueryvalidation).pipe(concat(paths.jqueryValDest)).pipe(gulp.dest('.'));
-  var datepicker = gulp.src(paths.datepicker).pipe(concat(paths.datepickerDest)).pipe(gulp.dest('.'));
-  return merge(combineJs, combineCanvasJs, minTagJs, jquery, jqueryVal, datepicker);
+function minJsSite() {
+  return gulp.src([paths.combineJs, "!" + paths.minJs, "!" + paths.tagManager], { allowEmpty: true })
+    .pipe(concat('site.min.js'))
+    .pipe(uglify().on('error', function(e) { console.error('Uglify error:', e); this.emit('end'); }))
+    .pipe(gulp.dest(paths.jsPath));
 }
 
-function minCss() {
-  return merge(
-    gulp.src([paths.css, "!" + paths.minCss])
-      .pipe(cssmin())
-      .pipe(rename({ suffix: '.min' }))
-      .pipe(gulp.dest(paths.webroot + "Content/")),
-    gulp.src(paths.datepickerCss)
-      .pipe(concat(paths.datepickerCssDest))
-      .pipe(cssmin())
-      .pipe(gulp.dest('.')));
+function minJsTag() {
+  return gulp.src([paths.tagManager], { base: ".", allowEmpty: true })
+    .pipe(uglify().on('error', function(e) { console.error('Uglify error:', e); this.emit('end'); }))
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(gulp.dest("."));
 }
+
+function minJsCanvas() {
+  return gulp.src([paths.combineCanvasJs, "!" + paths.combineCanvasJsDest], { allowEmpty: true })
+    .pipe(concat('min.js'))
+    .pipe(uglify().on('error', function(e) { console.error('Uglify error:', e); this.emit('end'); }))
+    .pipe(gulp.dest(paths.jsPath + 'canvas/'));
+}
+
+function minJsJquery() {
+  return gulp.src([paths.jquerysrc], { allowEmpty: true })
+    .pipe(gulp.dest(paths.jsPath));
+}
+
+function minJsJqueryVal() {
+  return gulp.src(paths.jqueryvalidation, { allowEmpty: true })
+    .pipe(concat('jquery.validation.min.js'))
+    .pipe(gulp.dest(paths.jsPath));
+}
+
+function minJsDatepicker() {
+  return gulp.src(paths.datepicker, { allowEmpty: true })
+    .pipe(concat('datepicker.min.js'))
+    .pipe(gulp.dest(paths.jsPath));
+}
+
+const minJs = gulp.parallel(minJsSite, minJsTag, minJsCanvas, minJsJquery, minJsJqueryVal, minJsDatepicker);
+
+function minCssContent() {
+  return gulp.src([paths.css, "!" + paths.minCss])
+    .pipe(cssmin())
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(gulp.dest(paths.webroot + "Content/"));
+}
+
+function minCssDatepicker() {
+  return gulp.src(paths.datepickerCss)
+    .pipe(concat(paths.datepickerCssDest))
+    .pipe(cssmin())
+    .pipe(gulp.dest('.'));
+}
+
+const minCss = gulp.parallel(minCssContent, minCssDatepicker);
 
 gulp.task("min:js", minJs);
 

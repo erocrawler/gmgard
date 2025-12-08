@@ -1,15 +1,18 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using OpenIddict.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace GmGard.Models
 {
     public static class DataSeeder
     {
-        public static async Task SeedUsersAsync(UsersContext context, UserManager<UserProfile> userManager, RoleManager<IdentityRole<int>> roleManager)
+        public static async Task SeedUsersAsync(UsersContext context, UserManager<UserProfile> userManager, RoleManager<IdentityRole<int>> roleManager, IOpenIddictApplicationManager applicationManager = null, IOptions<SiteConfig> siteConfig = null)
         {
             // Init Roles
             var roles = new[] { "Administrator", "Writers", "Moderator", "Banned", "AdManager", "Auditor" };
@@ -47,6 +50,16 @@ namespace GmGard.Models
                 }
             }
 
+            // Init TitleConfig
+            if (!context.TitleConfigs.Any())
+            {
+                // Add default title with ID 0 using raw SQL to bypass auto-increment
+                await context.Database.ExecuteSqlRawAsync(
+                    "INSERT INTO \"TitleConfigs\" (\"TitleID\", \"TitleName\", \"TitleDescription\", \"TitleImage\") VALUES (0, '', '无称号', NULL)");
+                // Set sequence to start from 1 for future inserts
+                await context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"TitleConfigs_TitleID_seq\" RESTART WITH 1");
+            }
+
             // Init ExpTable
             if (!context.ExpTable.Any())
             {
@@ -59,6 +72,44 @@ namespace GmGard.Models
                 GetExpTableSample().ForEach(e => context.ExpTable.Add(e));
                 
                 await context.SaveChangesAsync();
+            }
+
+            // Init OAuth Clients
+            if (applicationManager != null && siteConfig != null)
+            {
+                await SeedOAuthClientsAsync(applicationManager, siteConfig.Value);
+            }
+        }
+
+        private static async Task SeedOAuthClientsAsync(IOpenIddictApplicationManager applicationManager, SiteConfig config)
+        {
+            // Check if GmAnimato client already exists
+            if (await applicationManager.FindByClientIdAsync(config.OAuth.DefaultClientId) == null)
+            {
+                await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+                {
+                    ClientId = config.OAuth.DefaultClientId,
+                    ClientSecret = config.OAuth.DefaultClientSecret,
+                    DisplayName = "GmAnimato",
+                    RedirectUris = { new Uri(config.OAuth.DefaultRedirectUri) },
+                    Permissions =
+                    {
+                        Permissions.Endpoints.Authorization,
+                        Permissions.Endpoints.Token,
+                        Permissions.GrantTypes.AuthorizationCode,
+                        Permissions.GrantTypes.RefreshToken,
+                        Permissions.ResponseTypes.Code,
+                        Permissions.Scopes.Email,
+                        Permissions.Scopes.Profile,
+                        Permissions.Scopes.Roles,
+                        "scp:openid"
+                    },
+                    Requirements =
+                    {
+                        Requirements.Features.ProofKeyForCodeExchange
+                    },
+                    ClientType = ClientTypes.Confidential
+                });
             }
         }
 
@@ -84,12 +135,12 @@ namespace GmGard.Models
             
                 // For PostgreSQL, insert directly with raw SQL to preserve explicit IDs
                 context.Database.ExecuteSqlRaw(@"
-                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""IsLocalImg"")
-                    VALUES (-1, '举报消息', '举报消息', NOW(), 1, 'admin', false, 0, false);
+                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""isLocalImg"", ""isHarmony"")
+                    VALUES (-1, '举报消息', '举报消息', NOW(), 1, 'admin', false, 0, false, false);
                 ");
                 context.Database.ExecuteSqlRaw(@"
-                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""IsLocalImg"")
-                    VALUES (0, 'V0.01', '版本历史', NOW(), 1, 'admin', false, 0, false);
+                    INSERT INTO ""Blogs"" (""BlogID"", ""BlogTitle"", ""Content"", ""BlogDate"", ""CategoryID"", ""Author"", ""isApproved"", ""BlogVisit"", ""isLocalImg"", ""isHarmony"")
+                    VALUES (0, 'V0.01', '版本历史', NOW(), 1, 'admin', false, 0, false, false);
                 ");
                 
                 GetBlogs().ForEach(p => context.Blogs.Add(p));

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using GmGard.Models;
+using Microsoft.AspNetCore;
 
 namespace GmGard.Controllers
 {
@@ -28,6 +29,11 @@ namespace GmGard.Controllers
                 return View("NotFound");
             }
             Response.StatusCode = id;
+            var response = HttpContext.GetOpenIddictClientResponse();
+            if (response is not null)
+            {
+                return Content(response.Error + ": " + response.ErrorDescription);
+            }
             if (id >= 500 && id <= 599)
             {
                 return PhysicalFile(System.IO.Path.Combine(env.WebRootPath, 500 + ".html"), "text/html");

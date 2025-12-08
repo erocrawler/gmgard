@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore;
 
 namespace GmGard.Models
 {
@@ -165,6 +166,9 @@ namespace GmGard.Models
 
             modelBuilder.Entity<ExperienceTable>().ToTable("ExperienceTables");
             modelBuilder.Entity<Pictures>().ToTable("Pictures");
+
+            // Configure OpenIddict entities to use UsersContext
+            modelBuilder.UseOpenIddict();
         }
     }
 

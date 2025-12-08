@@ -1,115 +1,61 @@
 using Microsoft.AspNetCore.Hosting;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 
 namespace GmGard.Models
 {
-    public static class SiteConstant
+    using System.IO;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    public class SiteInfo
     {
-        public class SiteInfo
-        {
-            public string Name { get; set; }
-            public string Host { get; set; }
-            public string StaticHost { get; set; }
-            public string Desc { get; set; }
-            public string Logo { get; set; }
-            public string Title { get; set; }
-            public string AppHost { get; set; }
-        }
-        public static readonly SiteInfo DefaultSite = new()
-        {
-            Name = "紳士の庭",
-            Host = "gmgard.com",
-            Desc = "gmgard.com♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
-            Logo = "//static.gmgard.com/Images/sinsi2.png",
-            Title = "GMgard",
-            StaticHost = "static.gmgard.com",
-            AppHost = "app.gmgard.com",
-        };
-        public static readonly SiteInfo HggardSite = new()
-        {
-            Name = "北紳の庭",
-            Host = "hggard.com",
-            Desc = "hggard.com♢北紳の庭♢ 二次元资源分享交流平台",
-            Logo = "//static.hggard.com/Images/hopo.png",
-            StaticHost = "static.hggard.com",
-            Title = "HGgard",
-            AppHost = "app.hggard.com",
-        };
-        public static readonly SiteInfo GmGardMoeSite = new()
-        {
-            Name = "紳士の庭",
-            Host = "gmgard.moe",
-            Desc = "gmgard.moe♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
-            Logo = "//static.gmgard.moe/Images/sinsi2.png",
-            StaticHost = "static.gmgard.moe",
-            Title = "GMgard",
-            AppHost = "app.gmgard.moe",
-        };
-        public static readonly SiteInfo LzoneMoeSite = new()
-        {
-            Name = "紳士の庭",
-            Host = "lzone.moe",
-            Desc = "lzone.moe♢L娘の庭♢ L娘的二次元资源分享交流平台",
-            Logo = "//static.lzone.moe/Images/lzone2.png",
-            StaticHost = "static.lzone.moe",
-            Title = "Lzone",
-            AppHost = "app.lzone.moe",
-        };
-        public static readonly SiteInfo DevSite = new()
-        {
-            Name = "紳士の庭（DEV版）",
-            Host = "localhost:59144",
-            Desc = "gmgard.com♢紳士の庭♢ 绅士们的二次元资源分享交流平台",
-            Logo = "//static.gmgard.com/Images/sinsi2.png",
-            Title = "GMgard",
-            StaticHost = "static.gmgard.com",
-            AppHost = "localhost:4200",
-        };
-        public static readonly IDictionary<string, SiteInfo> Sites = new Dictionary<string, SiteInfo>()
-        {
-            { DefaultSite.Host, DefaultSite },
-            { HggardSite.Host, HggardSite },
-            { GmGardMoeSite.Host, GmGardMoeSite },
-            { LzoneMoeSite.Host, LzoneMoeSite },
-        };
-        public static readonly string[] AppHostOrigins = new[] { 
-            "http://app.gmgard.com", 
-            "https://app.gmgard.com", 
-            "http://app.hggard.com", 
-            "https://app.hggard.com",
-            "http://app.gmgard.moe",
-            "https://app.gmgard.moe",
-            "http://app.lzone.moe",
-            "https://app.lzone.moe",
-        };
-        public static readonly string[] DevAppHostOrigins = new[] { "http://localhost:4200" };
-        public static readonly string[] SmileyPaths = { 
-            "gmgard.us/smiley",
-            "gmgard.com/smiley", 
-            "hggard.com/smiley",
-            "gmgard.moe/smiley",
-            "lzone.moe/smiley",
-        };
+        public string Name { get; set; }
+        public string Host { get; set; }
+        public string StaticHost { get; set; }
+        public string Desc { get; set; }
+        public string Logo { get; set; }
+        public string Title { get; set; }
+        public string AppHost { get; set; }
+    }
+    public class OAuthConfig
+    {
+        public string DefaultClientId { get; set; }
+        public string DefaultClientSecret { get; set; }
+        public string DefaultRedirectUri { get; set; }
+        public string[] Scopes { get; set; }
+    }
+    public class SiteConfig
+    {
+        public List<SiteInfo> Sites { get; set; }
+        public SiteInfo DevSite { get; set; }
+        public string[] AppHostOrigins { get; set; }
+        public string[] DevAppHostOrigins { get; set; }
+        public string[] SmileyPaths { get; set; }
+        public OAuthConfig OAuth { get; set; }
     }
 
     public class ConstantUtil
     {
-        private IHttpContextAccessor _contextAccessor;
-        private SiteConstant.SiteInfo _currentSite;
+        private readonly IHttpContextAccessor _contextAccessor;
+        private readonly SiteConfig _config;
+        private SiteInfo _currentSite;
 
-        public ConstantUtil(IHttpContextAccessor contextAccessor, IWebHostEnvironment env)
+        public ConstantUtil(IHttpContextAccessor contextAccessor, IWebHostEnvironment env, IOptions<SiteConfig> config)
         {
             _contextAccessor = contextAccessor;
+            _config = config.Value;
             if (env.IsDevelopment())
             {
-                _currentSite = SiteConstant.DevSite;
+                _currentSite = _config.DevSite;
             }
-            else if (!SiteConstant.Sites.TryGetValue(_contextAccessor.HttpContext.Request.Host.Host, out _currentSite))
+            else
             {
-                _currentSite = SiteConstant.DefaultSite;
+                var host = _contextAccessor.HttpContext.Request.Host.Host;
+                _currentSite = _config.Sites.FirstOrDefault(s => s.Host == host) ?? _config.Sites.FirstOrDefault(s => s.Host == "gmgard.com");
             }
         }
 

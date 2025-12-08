@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "授权确认 - Authorization";
+}
+
+<div class="container" style="max-width: 600px; margin-top: 50px;">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-shield-alt"></i> 授权请求 / Authorization Request
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>@Model.ApplicationName</strong> 请求访问您的账户信息
+            </div>
+
+            <h5>请求的权限 / Requested Permissions:</h5>
+            <ul class="list-group mb-4">
+                @if (Model.Scope.Contains("openid"))
+                {
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>基本身份信息</strong> - 验证您的身份
+                    </li>
+                }
+                @if (Model.Scope.Contains("profile"))
+                {
+                    <li class="list-group-item">
+                        <i class="fas fa-user"></i>
+                        <strong>个人资料</strong> - 用户名、昵称、等级、积分
+                    </li>
+                }
+                @if (Model.Scope.Contains("email"))
+                {
+                    <li class="list-group-item">
+                        <i class="fas fa-envelope"></i>
+                        <strong>电子邮箱</strong> - 您的注册邮箱地址
+                    </li>
+                }
+                @if (Model.Scope.Contains("roles"))
+                {
+                    <li class="list-group-item">
+                        <i class="fas fa-id-badge"></i>
+                        <strong>角色信息</strong> - 您的账户权限和角色
+                    </li>
+                }
+            </ul>
+
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>注意:</strong> 授权后，该应用将能够访问上述信息。您可以随时在账户设置中撤销此授权。
+            </div>
+
+            <form method="post" asp-controller="Authorization" asp-action="Accept">
+                @Html.AntiForgeryToken()
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" name="submit.Accept" value="Accept" class="btn btn-primary btn-lg">
+                        <i class="fas fa-check"></i> 授权 / Authorize
+                    </button>
+                    <button type="submit" name="submit.Deny" value="Deny" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> 拒绝 / Deny
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-muted text-center">
+            <small>
+                <i class="fas fa-lock"></i> 您的信息将通过安全连接传输
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+    .list-group-item i {
+        margin-right: 10px;
+    }
+</style>

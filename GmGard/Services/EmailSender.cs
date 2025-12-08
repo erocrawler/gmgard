@@ -30,27 +30,33 @@ namespace GmGard.Services
         private readonly ILogger _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IHostEnvironment _env;
+        private readonly SiteConfig _siteConfig;
 
-        public EmailSender(IOptions<EmailSettings> config, ILoggerFactory logger, IHttpContextAccessor httpContextAccessor, IHostEnvironment env)
+        public EmailSender(IOptions<EmailSettings> config, ILoggerFactory logger, IHttpContextAccessor httpContextAccessor, IHostEnvironment env, IOptions<SiteConfig> siteConfig)
         {
             _settings = config.Value;
             _logger = logger.CreateLogger<EmailSender>();
             _httpContextAccessor = httpContextAccessor;
             _env = env;
+            _siteConfig = siteConfig.Value;
         }
 
         private string GetSiteHost()
         {
             if (_env.IsDevelopment())
             {
-                return SiteConstant.DevSite.Host;
+                return _siteConfig.DevSite.Host;
             }
             var host = _httpContextAccessor.HttpContext?.Request.Host.Host;
-            if (host != null && SiteConstant.Sites.TryGetValue(host, out var site))
+            if (host != null)
             {
-                return site.Host;
+                var site = _siteConfig.Sites.FirstOrDefault(s => s.Host == host);
+                if (site != null)
+                {
+                    return site.Host;
+                }
             }
-            return SiteConstant.DefaultSite.Host;
+            return "gmgard.com";
         }
 
         public Task SendPWEmailForUserAsync(UserProfile user, string reseturl)

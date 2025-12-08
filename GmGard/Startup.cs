@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using GmGard.Models;
 using GmGard.Filters;
 using GmGard.Services;
@@ -28,6 +29,7 @@ using System;
 using Microsoft.Extensions.Hosting;
 using Serilog.Filters;
 using Microsoft.AspNetCore.Http;
+using OpenIddict.Abstractions;
 
 namespace GmGard
 {
@@ -67,6 +69,13 @@ namespace GmGard
 
             services.AddOptions();
 
+            // Configure forwarded headers for nginx proxy (X-Forwarded-Proto, X-Forwarded-For)
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
+                options.KnownProxies.Clear();
+            });
+
             services.AddSingleton(Configuration);
             services.Configure<AppSettingsModel>(Configuration.GetSection("ApplicationSettings"));
             services.Configure<EmailSender.EmailSettings>(Configuration.GetSection("EmailSettings"));
@@ -77,6 +86,8 @@ namespace GmGard
             services.Configure<BackgroundSetting>(ConfigFromDataFile("App_Data/BackgroundSetting.json"));
             services.Configure<Models.App.AuditExamConfig>(ConfigFromDataFile("App_Data/AuditExam.json"));
             services.Configure<Models.App.WheelConfig>(ConfigFromDataFile("App_Data/WheelConfig.json"));
+            var siteConfig = ConfigFromDataFile("App_Data/SiteConfig.json");
+            services.Configure<SiteConfig>(siteConfig);
 
             services.AddMemoryCache();
             services.AddSession();
@@ -119,6 +130,45 @@ namespace GmGard
                 .AddErrorDescriber<GmIdentityErrorDescriber>()
                 .AddDefaultTokenProviders();
 
+            // OpenIddict server configuration for OAuth/OIDC
+            services.AddOpenIddict()
+                .AddCore(options =>
+                {
+                    options.UseEntityFrameworkCore().UseDbContext<UsersContext>();
+                })
+                .AddServer(options =>
+                {
+                    options.SetAuthorizationEndpointUris("/connect/authorize")
+                           .SetTokenEndpointUris("/connect/token")
+                           .SetUserInfoEndpointUris("/connect/userinfo");
+
+                    options.RegisterScopes(
+                        OpenIddict.Abstractions.OpenIddictConstants.Scopes.Email,
+                        OpenIddict.Abstractions.OpenIddictConstants.Scopes.Profile,
+                        OpenIddict.Abstractions.OpenIddictConstants.Scopes.Roles,
+                        "openid");
+
+                    options.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow();
+
+                    // Use development certificates in dev, production certs should be configured via environment
+                    if (IsDev)
+                    {
+                        options.AddDevelopmentEncryptionCertificate()
+                               .AddDevelopmentSigningCertificate();
+                    }
+                    // In production, certificates must be configured via appsettings or environment variables
+
+                    options.UseAspNetCore()
+                           .EnableAuthorizationEndpointPassthrough()
+                           .EnableTokenEndpointPassthrough()
+                           .EnableUserInfoEndpointPassthrough();
+                })
+                .AddValidation(options =>
+                {
+                    options.UseLocalServer();
+                    options.UseAspNetCore();
+                });
+
             services.AddScoped<UserManager<UserProfile>, UserManager>();
 
             services.ConfigureApplicationCookie(options =>
@@ -149,7 +199,7 @@ namespace GmGard
             services.AddCors(option =>
             {
                 option.AddPolicy("GmAppOrigin",
-                    builder => builder.WithOrigins(IsDev ? SiteConstant.DevAppHostOrigins : SiteConstant.AppHostOrigins)
+                    builder => builder.WithOrigins(IsDev ? siteConfig.GetSection("DevAppHostOrigins").Get<string[]>() : siteConfig.GetSection("AppHostOrigins").Get<string[]>())
                                       .AllowAnyHeader()
                                       .AllowCredentials()
                                       .AllowAnyMethod());
@@ -270,7 +320,7 @@ namespace GmGard
                 //app.UseBrowserLink();
                 
                 // Seed data in development environment only
-                // SeedDevelopmentData(services).Wait();
+                SeedDevelopmentData(services).Wait();
             }
             else
             {
@@ -279,10 +329,14 @@ namespace GmGard
 
             app.UseStatusCodePagesWithReExecute("/Error/Index/{0}");
             
+            // Use forwarded headers from nginx proxy
+            app.UseForwardedHeaders();
+            
+            var siteConfig = app.ApplicationServices.GetRequiredService<IOptions<SiteConfig>>().Value;
             app.UseStaticFiles(new StaticFileOptions {
                 ContentTypeProvider = ConfigureFileExtensionProvider(),
                 OnPrepareResponse = ctx => {
-                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", IsDev ? SiteConstant.DevAppHostOrigins : SiteConstant.AppHostOrigins);
+                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", IsDev ? siteConfig.DevAppHostOrigins[0] : siteConfig.AppHostOrigins[0]);
                     ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
                 },
             });
@@ -302,6 +356,9 @@ namespace GmGard
 
             app.UseEndpoints(endpoints =>
             {
+                // Map OpenIddict and other attribute-routed controllers first (required for OAuth/OIDC)
+                endpoints.MapControllers();
+                
                 endpoints.MapControllerRoute("Avatar", "Avatar/{name?}",
                     defaults: new { controller = "Avatar", action = "Show" }
                 );
@@ -384,8 +441,10 @@ namespace GmGard
                 var blogContext = serviceProvider.GetRequiredService<BlogContext>();
                 var userManager = serviceProvider.GetRequiredService<UserManager<UserProfile>>();
                 var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+                var applicationManager = serviceProvider.GetService<IOpenIddictApplicationManager>();
+                var siteConfig = serviceProvider.GetService<IOptions<SiteConfig>>();
 
-                await DataSeeder.SeedUsersAsync(usersContext, userManager, roleManager);
+                await DataSeeder.SeedUsersAsync(usersContext, userManager, roleManager, applicationManager, siteConfig);
                 DataSeeder.SeedBlog(blogContext);
             }
         }

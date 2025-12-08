@@ -139,7 +139,7 @@ namespace GmGard.Models
         }
 
         //get first img from content
-        public static string getFirstImg(string content)
+        public static string getFirstImg(string content, SiteConfig siteConfig = null)
         {
             string result = null;
             HtmlDocument doc = new HtmlDocument();
@@ -150,7 +150,7 @@ namespace GmGard.Models
                 foreach (var node in nodes)
                 {
                     var src = node.GetAttributeValue("src", string.Empty);
-                    if (!string.IsNullOrWhiteSpace(src) && !SiteConstant.SmileyPaths.Any(p => src.Contains(p)))
+                    if (!string.IsNullOrWhiteSpace(src) && (siteConfig == null || !siteConfig.SmileyPaths.Any(p => src.Contains(p))))
                     {
                         result = src;
                         break;
