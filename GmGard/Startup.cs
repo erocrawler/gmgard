@@ -174,7 +174,13 @@ namespace GmGard
                             try
                             {
                                 Log.Information("Loading OpenIddict signing certificate from {Path}", signingCertPath);
-                                var signingCert = X509CertificateLoader.LoadPkcs12FromFile(signingCertPath, certPassword);
+                                
+                                // Load certificate with exportable private key flag for Linux compatibility
+                                var signingCert = X509CertificateLoader.LoadPkcs12FromFile(
+                                    signingCertPath, 
+                                    certPassword,
+                                    X509KeyStorageFlags.Exportable);
+                                
                                 options.AddSigningCertificate(signingCert);
                             }
                             catch (Exception ex)
@@ -194,7 +200,13 @@ namespace GmGard
                             try
                             {
                                 Log.Information("Loading OpenIddict encryption certificate from {Path}", encryptionCertPath);
-                                var encryptionCert = X509CertificateLoader.LoadPkcs12FromFile(encryptionCertPath, certPassword);
+                                
+                                // Load certificate with exportable private key flag for Linux compatibility
+                                var encryptionCert = X509CertificateLoader.LoadPkcs12FromFile(
+                                    encryptionCertPath, 
+                                    certPassword,
+                                    X509KeyStorageFlags.Exportable);
+                                
                                 options.AddEncryptionCertificate(encryptionCert);
                             }
                             catch (Exception ex)

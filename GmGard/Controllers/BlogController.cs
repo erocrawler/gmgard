@@ -143,6 +143,11 @@ namespace GmGard.Controllers
                     cache.TryRemove(cachekey, out var removed);
                     throw new TimeoutException("查询搜索服务器失败，请刷新重试。");
                 }
+                else if (result.Blogs.Count <= 0 && page == 1)
+                {
+                    // Do not cache empty result.
+                    cache.TryRemove(cachekey, out var removed);
+                }
             }
             else
             {
