@@ -75,7 +75,7 @@ namespace GmGard.Models
             }
 
             // Init OAuth Clients
-            if (applicationManager != null && siteConfig != null)
+            if (applicationManager != null && siteConfig != null && siteConfig.Value.OAuth != null)
             {
                 await SeedOAuthClientsAsync(applicationManager, siteConfig.Value);
             }

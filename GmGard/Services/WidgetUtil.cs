@@ -29,9 +29,10 @@ namespace GmGard.Services
             var notice = _dataSettings.chuncaiNotice ?? "欢迎来到绅士之庭~";
             var defaultccs = "蛤蛤蛤蛤";
             var defaultface = 1;
-            var action = routedata["action"].ToString();
-            var controller = routedata["controller"].ToString();
-            if (action.Equals("Details", StringComparison.OrdinalIgnoreCase) &&
+            var action = routedata.ContainsKey("action") ? routedata["action"]?.ToString() : null;
+            var controller = routedata.ContainsKey("controller") ? routedata["controller"]?.ToString() : null;
+            if (action != null && controller != null && 
+                action.Equals("Details", StringComparison.OrdinalIgnoreCase) &&
                 controller.Equals("Blog", StringComparison.OrdinalIgnoreCase)) //资源
             {
                 var Rating = _ratingUtil.GetRating(routedata["id"].ToString());
@@ -57,38 +58,38 @@ namespace GmGard.Services
                     }
                 }
             }
-            else if (action.Equals("List", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("List", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "有木有找到好资源？";
             }
-            else if (action.Equals("Create", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("Create", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "要投稿么？记得给图片打码哦~~~~度娘直接全部复制到“链接地址”栏即可！";
                 defaultface = 2;
             }
-            else if (action.Equals("Register", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("Register", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "欢迎注册~~~";
                 defaultface = 2;
             }
-            else if (action.Equals("Login", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("Login", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "欢迎主人登录~~~";
                 defaultface = 2;
             }
-            else if (action.Equals("Index", StringComparison.OrdinalIgnoreCase) && controller.Equals("Home", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && controller != null && action.Equals("Index", StringComparison.OrdinalIgnoreCase) && controller.Equals("Home", StringComparison.OrdinalIgnoreCase))
                 defaultccs = notice.ToString();
-            else if (controller.Equals("Message", StringComparison.OrdinalIgnoreCase))
+            else if (controller != null && controller.Equals("Message", StringComparison.OrdinalIgnoreCase))
             {
                 var unread = _msgUtil.GetUnreadMsg(Context.User.Identity.Name);
                 if (unread != null)
                     defaultccs = "你有" + unread + "条消息未读哦~";
             }
-            else if (action.Equals("Suggestions", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("Suggestions", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "欢迎主人对本站提任何建议~";
             }
-            else if (action.Equals("Donate", StringComparison.OrdinalIgnoreCase))
+            else if (action != null && action.Equals("Donate", StringComparison.OrdinalIgnoreCase))
             {
                 defaultccs = "土豪我们交个朋友吧~~";
                 defaultface = 4;

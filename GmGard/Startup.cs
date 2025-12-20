@@ -262,10 +262,21 @@ namespace GmGard
             services.AddCors(option =>
             {
                 option.AddPolicy("GmAppOrigin",
-                    builder => builder.WithOrigins(IsDev ? siteConfig.GetSection("DevAppHostOrigins").Get<string[]>() : siteConfig.GetSection("AppHostOrigins").Get<string[]>())
-                                      .AllowAnyHeader()
-                                      .AllowCredentials()
-                                      .AllowAnyMethod());
+                    builder =>
+                    {
+                        var origins = IsDev 
+                            ? siteConfig.GetSection("DevAppHostOrigins").Get<string[]>() 
+                            : siteConfig.GetSection("AppHostOrigins").Get<string[]>();
+                        
+                        if (origins != null && origins.Length > 0)
+                        {
+                            builder.WithOrigins(origins);
+                        }
+                        
+                        builder.AllowAnyHeader()
+                               .AllowCredentials()
+                               .AllowAnyMethod();
+                    });
             });
 
             services.AddAntiforgery(a => a.HeaderName = "X-CSRF-TOKEN");

@@ -23,6 +23,10 @@
             @foreach (var audit in Model)
             {
                 var blog = audit.blog;
+                if (blog == null)
+                {
+                    continue;
+                }
                 var categories = catUtil.GetParentCategories(blog.CategoryID);
                 categories.Add(blog.CategoryID);
                 string iconClass = "";

@@ -281,7 +281,7 @@ namespace GmGard.Controllers
         [Authorize(Roles = "Administrator, Moderator")]
         public ActionResult AdminHistory(int id = 0, int page = 1)
         {
-            var query = _db.BlogAudits.Where(b => b.BlogID > 0 && b.AuditAction != BlogAudit.Action.None);
+            var query = _db.BlogAudits.Include(b => b.blog).Where(b => b.BlogID > 0 && b.AuditAction != BlogAudit.Action.None);
             if (id > 0)
             {
                 ViewBag.BlogID = id;
