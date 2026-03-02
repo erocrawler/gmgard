@@ -174,22 +174,6 @@
     </form>
 </div>
 
-<div id="manage-email">
-    <form asp-action="ManageEmail" asp-antiforgery="true" data-ajax="true" data-ajax-failure="displayerror" data-ajax-mode="replace" data-ajax-update="#emailmsg" method="post">
-        <fieldset>
-            <legend style="display: block">更改邮箱</legend>
-            <label>用户名</label>
-            <input id="expname" name="username" placeholder="用户名称" type="text" maxlength="20" data-val="true" data-val-required="请输入名字" />
-            <label>旧邮箱</label>
-            <input name="oldEmail" type="email" data-val="true" class="span3" />
-            <label>新邮箱</label>
-            <input name="newEmail" type="email" data-val="true" class="span3" />
-            <input type="submit" class="btn" value="修改" /><br />
-            <h4 data-valmsg-for="emailmsg" data-valmsg-replace="true"></h4>
-            <h4 class="text-info" id="emailmsg"></h4>
-        </fieldset>
-    </form>
-</div>
 <script>
     $(function () { $('#manageexpdiv input[type="number"]').tooltip(); })
 </script>

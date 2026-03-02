@@ -164,8 +164,15 @@
                 <partial name="_ChangeAvatarPartial" />
             </div>
         </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#changeemaildiv"><h3>邮箱设置</h3></a>
+            </div>
+            <div class="accordion-body collapse" id="changeemaildiv">
+                <partial name="_ChangeEmailPartial" model="Model.Email" />
+            </div>
+        </div>
     </div>
-<p>由于盗号问题频发，如需更改邮箱，<a asp-action="Msg" asp-controller="Home" asp-route-name="admin">请联系管理员</a>。</p>
 
 @section scripts {
     <style>

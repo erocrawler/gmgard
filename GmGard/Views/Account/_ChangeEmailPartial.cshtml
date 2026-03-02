@@ -4,7 +4,8 @@
     <span id="email-update-message"></span>
     <fieldset>
         <legend>“更改邮箱”表单</legend>
-        <input data-val="true" data-val-regex="无效的电子邮箱" data-val-regex-pattern="^[a-z0-9_\+-]+(\.[a-z0-9_\+-]+)*@@[a-z0-9]+(\.[a-z0-9]+)*\.([a-z]{2,4})$" data-val-required="请输入电子邮箱。" id="email" name="email" type="text" value="@Model">
+        <input data-val="true" data-val-required="请输入当前邮箱。" id="oldEmail" name="oldEmail" type="text" placeholder="输入当前邮箱" />
+        <br /><input data-val="true" data-val-regex="无效的电子邮箱" data-val-regex-pattern="^[a-z0-9_\+-]+(\.[a-z0-9_\+-]+)*@@[a-z0-9]+(\.[a-z0-9]+)*\.([a-z]{2,4})$" data-val-required="请输入新邮箱。" id="email" name="email" type="text" placeholder="输入新邮箱">
         <br /><input data-val="true" data-val-required="请输入当前密码。" type="password" name="password" id="emailpassword" placeholder="输入当前密码" />
         <input type="submit" class="btn butnfix" value="更改" /><br />
         <span class="field-validation-valid" data-valmsg-for="email" data-valmsg-replace="true"></span><br />
@@ -21,8 +22,9 @@
                 var $message = $('#email-update-message').attr('class', 'text-error').text('出错了，请刷新重试');
                 if (result.err == 'pass') {
                     $message.text('密码输入有误，请重试');
-                }
-                else if (result.err == 'email') {
+                } else if (result.err == 'oldEmail') {
+                    $message.text('当前邮箱输入有误，请重试');
+                } else if (result.err == 'email') {
                     $message.text('邮箱已被注册');
                 }
             }

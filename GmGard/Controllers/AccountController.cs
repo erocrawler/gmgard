@@ -389,6 +389,38 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeEmail(string oldEmail, string email, string password)
+        {
+            var user = await GetCurrentUserAsync();
+
+            if (!string.Equals(user.Email, oldEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(new { success = false, err = "oldEmail" });
+            }
+
+            if (!await _userManager.CheckPasswordAsync(user, password))
+            {
+                return Json(new { success = false, err = "pass" });
+            }
+
+            var existing = await _userManager.FindByEmailAsync(email);
+            if (existing != null)
+            {
+                return Json(new { success = false, err = "email" });
+            }
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, email);
+            var result = await _userManager.ChangeEmailAsync(user, email, token);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true });
+            }
+
+            return Json(new { success = false, err = "error" });
+        }
+
+        [HttpPost]
         public ActionResult ChangeAvatar(string avatardata, string filetype, string x, string y, string w, string h, string op)
         {
             byte[] b = Convert.FromBase64String(avatardata);
