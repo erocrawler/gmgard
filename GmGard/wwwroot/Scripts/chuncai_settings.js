@@ -12,11 +12,11 @@
     ["来调教我吧！", "2"]
     ],
     imgs: [
-       '//static.gmgard.com/Images/Chuncai/0.gif',
-       '//static.gmgard.com/Images/Chuncai/1.gif',
-       '//static.gmgard.com/Images/Chuncai/2.gif',
-       '//static.gmgard.com/Images/Chuncai/3.gif',
-       '//static.gmgard.com/Images/Chuncai/4.png'
+       '/Images/Chuncai/0.gif',
+       '/Images/Chuncai/1.gif',
+       '/Images/Chuncai/2.gif',
+       '/Images/Chuncai/3.gif',
+       '/Images/Chuncai/4.png'
        ]
 })
 if (window.location.host.indexOf("hggard.com") >= 0) {

@@ -55,7 +55,7 @@
                     updatepage(view);
                     $('html, body').animate({ scrollTop: $(option.destination).offset().top - 200 }, 'fast');
                 });
-                $(option.pager).append('<img src="//static.gmgard.com/Images/loading2.gif"></img>');
+                $(option.pager).append('<img src="/Images/loading2.gif"></img>');
                 $('.pager a').addClass('disabled').removeAttr('href').off('click');
                 $('.pager input').prop('disabled', true);
             }

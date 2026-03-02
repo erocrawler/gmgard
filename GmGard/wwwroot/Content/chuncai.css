@@ -91,7 +91,7 @@
 {
 	width: 200px;
 	height: 30px;
-	background: url("//static.gmgard.com/Images/ccloading.gif") no-repeat center center;
+	background: url("/Images/ccloading.gif") no-repeat center center;
 	display: none;
 }
 
