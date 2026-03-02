@@ -46,12 +46,19 @@ namespace GmGard.Services
 
         public async Task<Stream> GetObjectAsync(string filepath)
         {
-            var resp = await client.GetObjectAsync(new GetObjectRequest
+            try
             {
-                BucketName = bucketName,
-                Key = filepath,
-            });
-            return resp.ResponseStream;
+                var resp = await client.GetObjectAsync(new GetObjectRequest
+                {
+                    BucketName = bucketName,
+                    Key = filepath,
+                });
+                return resp.ResponseStream;
+            }
+            catch (AmazonS3Exception)
+            {
+                return null; // Match legacy behavior - return null when file not found
+            }
         }
 
         public async Task<bool> PutObjectAsync(string filepath, string contentType, Stream data)

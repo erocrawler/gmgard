@@ -15,7 +15,7 @@ namespace GmGard.TagHelpers
     [HtmlTargetElement(Attributes = "data-img-href")]
     public class ImgUrlRewriteTagHelper : TagHelper
     {
-        private readonly string[] TargetPaths = new[] { "//static.gmgard.us/", "//static.gmgard.com" };
+        private readonly string[] TargetPaths = new[] { "//static.gmgard.us/", "//static.gmgard.com/" };
 
 
         public override int Order => 99;

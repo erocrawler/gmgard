@@ -33,49 +33,50 @@ namespace GmGard.Services
         // Save Images and Thumbs!
         public async Task<List<string>> SaveImagesAsync(IEnumerable<IFormFile> BlogImage, bool savethumb = true)
         {
-            string imgname = string.Empty;
-            var imglist = new List<string>();
-            var tasks = new List<Task<bool>>();
-            var tmplist = new List<string>();
-            foreach (var file in BlogImage)
-            {
-                if (file != null)
-                {
-                    var filename = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.ToString();
-                    filename = filename.Trim('"');// FileName returns "fileName.ext"(with double quotes)
+            var files = BlogImage.Where(f => f != null).ToList();
 
-                    imgname = GenerateImageName(filename);
-                    using (var stream = file.OpenReadStream())
-                    {
-                        using var img = Image.Load(stream);
-                        img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
-                        var ms = new MemoryStream();
-                        img.SaveAsJpeg(ms);
-                        tasks.Add(_client.PutObjectAsync(imgname, "image/jpeg", ms).ContinueWith(t => { ms.Dispose(); return t.Result; }));
-                        imglist.Add("//" + _client.BucketName + "/" + imgname);
-                        if (tmplist.Count == 0 && savethumb)
-                        {
-                            img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
-                            var nms = new MemoryStream();
-                            img.SaveAsJpeg(nms);
-                            tasks.Add(_client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), "image/jpeg", nms)
-                                .ContinueWith(t => { nms.Dispose(); return t.Result; }));
-                        }
-                    }
-                    tmplist.Add(imgname);
-                }
-            }
-            await Task.WhenAll(tasks);
-            foreach (var task in tasks)
+            // Process all images in parallel
+            var tasks = files.Select((file, index) => ProcessImageAsync(file, index == 0 && savethumb));
+            var results = await Task.WhenAll(tasks);
+
+            var imgnames = results.Select(r => r.imgname).ToList();
+            var imglist = imgnames.Select(n => "//" + _client.BucketName + "/" + n).ToList();
+
+            if (results.Any(r => !r.success))
             {
-                if (!task.IsCompleted || !task.Result)
-                {
-                    await _client.DeleteObjectsAsync(tmplist);
-                    imglist.RemoveRange(0, imglist.Count);
-                    break;
-                }
+                await _client.DeleteObjectsAsync(imgnames);
+                return new List<string>();
             }
+
             return imglist;
+        }
+
+        private async Task<(string imgname, bool success)> ProcessImageAsync(IFormFile file, bool saveThumb)
+        {
+            var filename = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.ToString().Trim('"');
+            var imgname = GenerateImageName(filename);
+
+            using var stream = file.OpenReadStream();
+            using var img = await Image.LoadAsync(stream);
+
+            img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 2400)));
+
+            using var ms = new MemoryStream();
+            await img.SaveAsJpegAsync(ms);
+            ms.Position = 0;
+            var mainUpload = _client.PutObjectAsync(imgname, "image/jpeg", ms);
+
+            if (saveThumb)
+            {
+                img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
+                using var nms = new MemoryStream();
+                await img.SaveAsJpegAsync(nms);
+                nms.Position = 0;
+                var results = await Task.WhenAll(mainUpload, _client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), "image/jpeg", nms));
+                return (imgname, results.All(r => r));
+            }
+
+            return (imgname, await mainUpload);
         }
 
         public string GenerateImageName(string filename = null)
@@ -99,7 +100,8 @@ namespace GmGard.Services
                 img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
                 using (var ms = new MemoryStream())
                 {
-                    img.SaveAsJpeg(ms);
+                    await img.SaveAsJpegAsync(ms);
+                    ms.Position = 0; // Reset position for upload
                     return await _client.PutObjectAsync(imgname, "image/jpeg", ms);
                 }
             }
@@ -146,7 +148,8 @@ namespace GmGard.Services
                         img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 150)));
                         using (var nms = new MemoryStream())
                         {
-                            img.SaveAsJpeg(nms);
+                            await img.SaveAsJpegAsync(nms);
+                            nms.Position = 0; // Reset position for upload
                             await _client.PutObjectAsync(imgname.Replace("/upload/", "/thumbs/"), "image/jpeg", nms);
                         }
                     }
