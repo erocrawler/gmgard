@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elasticsearch.Net;
 using GmGard.Models;
 using Nest;
 using Microsoft.Extensions.Logging;
@@ -93,7 +94,8 @@ namespace GmGard.Services
             {
                 var conn = new ConnectionSettings(new Uri(settings.Value.EndPoint))
                     .DefaultIndex("blogs")
-                    .BasicAuthentication(settings.Value.UserName, settings.Value.Password);
+                    .BasicAuthentication(settings.Value.UserName, settings.Value.Password)
+                    .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
                 if (env.IsDevelopment())
                 {
                     var logger = serviceProvider.GetRequiredService<ILoggerFactory>();

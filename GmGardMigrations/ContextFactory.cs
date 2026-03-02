@@ -1,6 +1,7 @@
 ﻿using GmGard.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Npgsql;
 using System;
 using System.Configuration;
 using System.IO;
@@ -38,8 +39,14 @@ namespace GmGardMigrations
             {
                 throw new InvalidOperationException("Connection string 'GmGardData' not found in App.config");
             }
-            
-            optionsBuilder.UseNpgsql(connectionString);
+
+            var csb = new NpgsqlConnectionStringBuilder(connectionString)
+            {
+                Timeout = 300,        // connection-open timeout in seconds
+                CommandTimeout = 600, // command execution timeout in seconds
+                KeepAlive = 30,       // send keepalive every 30s to prevent idle drop
+            };
+            optionsBuilder.UseNpgsql(csb.ToString());
 
             return new BlogContext(optionsBuilder.Options);
         }

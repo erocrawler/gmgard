@@ -1,4 +1,6 @@
-﻿using GmGard.Models;
+﻿using Elasticsearch.Net;
+using GmGard.Models;
+using Microsoft.EntityFrameworkCore;
 using Nest;
 using System;
 using System.Collections.Generic;
@@ -64,39 +66,52 @@ namespace GmGardMigrations.OneOffTasks
 
             public IEnumerable<BlogIndexed> GetBlogs(int skip, int size)
             {
-                return Blogs.Where(b => b.BlogID > LAST_BLOG_ID).OrderBy(b => b.BlogID).Skip(skip).Take(size)
-                        .GroupJoin(db.Posts.Where(p => p.IdType == GmGard.Models.ItemType.Blog), b => b.BlogID, p => p.PostId, (b, p) => new { blog = b, post = p.Count() })
-                        .GroupJoin(db.TagsInBlogs.DefaultIfEmpty(),
-                            b => b.blog.BlogID,
-                            tib => tib.BlogID,
-                            (b, tib) => new
-                            {
-                                b.blog,
-                                tag = tib.Select(t => t.tag),
-                                b.post,
-                            }).ToList()
-                            .Select(b => new BlogIndexed
-                            {
-                                Id = b.blog.BlogID,
-                                Title = b.blog.BlogTitle,
-                                Content = b.blog.Content,
-                                Tags = b.tag.Select(t => t.TagName),
-                                CreateDate = b.blog.BlogDate,
-                                CategoryId = b.blog.CategoryID,
-                                Author = b.blog.Author,
-                                IsHarmony = b.blog.isHarmony,
-                                IsApproved = b.blog.isApproved,
-                                BlogVisit = b.blog.BlogVisit,
-                                PostCount = b.post,
-                                Rating = b.blog.Rating ?? 0,
-                                ImagePath = b.blog.ImagePath,
-                                IsLocalImg = b.blog.IsLocalImg,
-                            });
+                var blogs = Blogs.Where(b => b.BlogID > LAST_BLOG_ID).OrderBy(b => b.BlogID).Skip(skip).Take(size)
+                    .Select(b => new
+                    {
+                        b.BlogID,
+                        b.BlogTitle,
+                        b.Content,
+                        b.BlogDate,
+                        b.CategoryID,
+                        b.Author,
+                        b.isHarmony,
+                        b.isApproved,
+                        b.BlogVisit,
+                        b.Rating,
+                        b.ImagePath,
+                        b.IsLocalImg,
+                        PostCount = db.Posts.Count(p => p.IdType == GmGard.Models.ItemType.Blog && p.ItemId == b.BlogID),
+                    }).ToList();
+                var blogIds = blogs.Select(b => b.BlogID).ToList();
+                var tags = db.TagsInBlogs
+                    .Where(tib => blogIds.Contains(tib.BlogID))
+                    .Select(tib => new { tib.BlogID, tib.tag.TagName })
+                    .ToList()
+                    .GroupBy(tib => tib.BlogID)
+                    .ToDictionary(g => g.Key, g => g.Select(t => t.TagName).ToList());
+                return blogs.Select(b => new BlogIndexed
+                {
+                    Id = b.BlogID,
+                    Title = b.BlogTitle,
+                    Content = b.Content,
+                    Tags = tags.TryGetValue(b.BlogID, out var t) ? t : Enumerable.Empty<string>(),
+                    CreateDate = b.BlogDate,
+                    CategoryId = b.CategoryID,
+                    Author = b.Author,
+                    IsHarmony = b.isHarmony,
+                    IsApproved = b.isApproved,
+                    BlogVisit = b.BlogVisit,
+                    PostCount = b.PostCount,
+                    Rating = b.Rating ?? 0,
+                    ImagePath = b.ImagePath,
+                    IsLocalImg = b.IsLocalImg,
+                });
             }
         }
 
         const int LAST_BLOG_ID = 0;
-        const int BATCH_SIZE = 10000;
+        const int BATCH_SIZE = 5000;
         
 
         private static void UpdateBlogs(BlogProvider blogProvider, ElasticClient client)
@@ -147,7 +162,8 @@ namespace GmGardMigrations.OneOffTasks
 
         public static void Run(string endpoint, string username, string password, bool create = false, IEnumerable<int> categoryIds = null)
         {
-            var settings = new ConnectionSettings(new Uri(endpoint)).DefaultIndex("blogs").BasicAuthentication(username, password);
+            var settings = new ConnectionSettings(new Uri(endpoint)).DefaultIndex("blogs").BasicAuthentication(username, password)
+                .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
             var client = new ElasticClient(settings);
             if (create)
             {
@@ -168,7 +184,8 @@ namespace GmGardMigrations.OneOffTasks
                             .Normalizers(n => n.Custom("lowercase", cn => cn.Filters("lowercase") )))));
                 if (!resp.IsValid)
                 {
-                    Console.WriteLine("error creating index");
+                    Console.WriteLine("error creating index:");
+                    Console.WriteLine(resp.DebugInformation);
                     return;
                 }
             }
