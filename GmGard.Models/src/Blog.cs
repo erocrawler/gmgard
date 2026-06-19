@@ -74,6 +74,12 @@ namespace GmGard.Models
 
             modelBuilder.Entity<HanGroupBlog>()
                         .HasKey(hgb => new { hgb.HanGroupID, hgb.BlogID });
+
+            modelBuilder.Entity<BlogRating>()
+                        .HasOne(r => r.post)
+                        .WithMany()
+                        .HasForeignKey(r => r.PostId)
+                        .OnDelete(DeleteBehavior.Cascade);
         }
     }
 
