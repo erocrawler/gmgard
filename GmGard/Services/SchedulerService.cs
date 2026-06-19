@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GmGard.Services
 {
-    public class SchedulerService : Registry
+    public class SchedulerService
     {
         public SchedulerService(IServiceScopeFactory scopeFactory, IWebHostEnvironment env, IMemoryCache cache, IOptions<AppSettingsModel> appsetting, ILoggerFactory logger)
         {
@@ -23,25 +23,33 @@ namespace GmGard.Services
             _cache = cache;
             _appSettings = appsetting.Value;
             _logger = logger.CreateLogger<SchedulerService>();
-            
-            InitSchedule();
 
             Controllers.AdminController.OnSettingsChanged += OnAppSettingsChanged;
-            JobManager.JobException += OnJobException;
         }
 
-        private void OnJobException(JobExceptionInfo obj)
+        public void Start()
         {
-            _logger.LogError(obj.Exception, "Error running job {Name}: {Message}", obj.Name, obj.Exception.Message);
+            _schedules = InitSchedule();
+            _schedules.Start();
+        }
+
+        private void WireExceptionLogging(Schedule schedule)
+        {
+            schedule.JobEnded += (_, ea) =>
+            {
+                if (ea.Exception != null)
+                    _logger.LogError(ea.Exception, "Error running scheduled job: {Message}", ea.Exception.Message);
+            };
         }
 
         private void OnAppSettingsChanged(object sender, SettingsEventArgs e)
         {
             if (e.AppModel != null)
             {
-                JobManager.RemoveJob(RankingTask);
+                _rankingSchedule?.Stop();
                 _appSettings = e.AppModel;
-                RankingScheduler();
+                _rankingSchedule = CreateRankingSchedule();
+                _rankingSchedule.Start();
             }
         }
 
@@ -50,6 +58,8 @@ namespace GmGard.Services
         private readonly IMemoryCache _cache;
         private IWebHostEnvironment _env;
         private AppSettingsModel _appSettings;
+        private Schedule[] _schedules;
+        private Schedule _rankingSchedule;
 
         private int UpdateInterval => _appSettings.UpdateInterval;
         private List<int> DailyReward => _appSettings.DailyReward;
@@ -58,18 +68,21 @@ namespace GmGard.Services
         private int RankSize => _appSettings.RankingSize;
         private string filepath => Path.Combine(_env.WebRootPath, "rss.xml");
 
-        private const string RankingTask = "RankingTask";
-
-        private void InitSchedule()
+        private Schedule[] InitSchedule()
         {
-            RankingScheduler();
-            Schedule(new Action(RssTask)).NonReentrant().ToRunNow().AndEvery(1).Hours();
-            Schedule(new Action(DailyRewardTask)).NonReentrant().ToRunEvery(1).Days().At(20, 00);
-            Schedule(new Action(WeeklyRewardTask)).NonReentrant().ToRunEvery(0).Weeks().On(DayOfWeek.Monday).At(0, 1);
-            Schedule(new Action(MonthlyRewardTask)).NonReentrant().ToRunEvery(1).Months().On(1).At(0, 1);
+            _rankingSchedule = CreateRankingSchedule();
+            var rss = new Schedule(RssTask, run => run.Now().AndEvery(1).Hours());
+            var daily = new Schedule(DailyRewardTask, "0 20 * * *");
+            var weekly = new Schedule(WeeklyRewardTask, "1 0 * * 1");
+            var monthly = new Schedule(MonthlyRewardTask, "1 0 1 * *");
+            WireExceptionLogging(rss);
+            WireExceptionLogging(daily);
+            WireExceptionLogging(weekly);
+            WireExceptionLogging(monthly);
+            return [_rankingSchedule, rss, daily, weekly, monthly];
         }
 
-        private void RankingScheduler()
+        private Schedule CreateRankingSchedule()
         {
             Action timertask = new Action(() =>
             {
@@ -136,7 +149,9 @@ namespace GmGard.Services
                     db.SaveChanges();
                 }
             });
-            Schedule(timertask).WithName(RankingTask).NonReentrant().ToRunEvery(UpdateInterval).Minutes();
+            var s = new Schedule(timertask, run => run.Every(UpdateInterval).Minutes());
+            WireExceptionLogging(s);
+            return s;
         }
 
         private IEnumerable<HistoryRanking> GetRankingSinceDate(BlogContext db, DateTime since, DateTime rankDate, HistoryRanking.Type type)

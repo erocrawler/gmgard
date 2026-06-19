@@ -5,18 +5,35 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <StaticWebAssetBasePath>app</StaticWebAssetBasePath>
+    <StaticWebAssetFingerprintingEnabled>true</StaticWebAssetFingerprintingEnabled>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.9" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.9" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Remove="package.json" />
     <Content Remove="package-lock.json" />
   </ItemGroup>
+
+  <Target Name="NpmInstallAndBuild" BeforeTargets="Build">
+    <Exec Command="npm install" />
+    <Exec Command="npm run build:css" />
+  </Target>
+
+  <Target Name="AddCssHashToBust" AfterTargets="NpmInstallAndBuild">
+    <PropertyGroup>
+      <CssFilePath>$(MSBuildProjectDirectory)\wwwroot\css\app.min.css</CssFilePath>
+      <IndexHtmlPath>$(MSBuildProjectDirectory)\wwwroot\index.html</IndexHtmlPath>
+      <ScriptPath>$(MSBuildProjectDirectory)\update-css-hash.ps1</ScriptPath>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ScriptPath)&quot; -CssFilePath &quot;$(CssFilePath)&quot; -IndexHtmlPath &quot;$(IndexHtmlPath)&quot;" />
+  </Target>
 
 </Project>

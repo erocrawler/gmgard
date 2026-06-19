@@ -18,6 +18,7 @@ namespace GmGard.Services
         private ConcurrentDictionary<int, byte> DirtyBlogs;
         private ConcurrentDictionary<int, AtomicLong> TopicVisits;
         private ConcurrentDictionary<int, byte> DirtyTopics;
+        private readonly Schedule _saveSchedule;
         private IServiceScopeFactory _scopeFactory;
 
         private BlogContext GetDB(IServiceScope scope) => scope.ServiceProvider.GetService<BlogContext>();
@@ -29,7 +30,8 @@ namespace GmGard.Services
             DirtyBlogs = new ConcurrentDictionary<int, byte>();
             TopicVisits = new ConcurrentDictionary<int, AtomicLong>();
             DirtyTopics = new ConcurrentDictionary<int, byte>();
-            JobManager.AddJob(() => SaveVisits().Wait(), schedule => schedule.ToRunEvery(15).Minutes());
+            _saveSchedule = new Schedule(() => SaveVisits().Wait(), run => run.Every(15).Minutes());
+            _saveSchedule.Start();
         }
 
         public async Task SaveVisits()

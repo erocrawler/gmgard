@@ -100,22 +100,22 @@ namespace GmGard
 
             // Determine database provider from connection string
             var usePostgreSQL = _dataDbConnectionString.Contains("Host=") || _dataDbConnectionString.Contains("Server=") && _dataDbConnectionString.Contains("Username=");
-            
+
             if (usePostgreSQL)
             {
                 // Configure Npgsql to use timestamp without time zone globally
                 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-                
-                services.AddDbContext<BlogContext>(options => 
+
+                services.AddDbContext<BlogContext>(options =>
                     options.UseNpgsql(_dataDbConnectionString, b => b.MigrationsAssembly("GmGard")));
-                services.AddDbContext<UsersContext>(options => 
+                services.AddDbContext<UsersContext>(options =>
                     options.UseNpgsql(_userDbConnectionString, b => b.MigrationsAssembly("GmGard")));
             }
             else
             {
-                services.AddDbContext<BlogContext>(options => 
+                services.AddDbContext<BlogContext>(options =>
                     options.UseSqlServer(_dataDbConnectionString, b => b.MigrationsAssembly("GmGard")));
-                services.AddDbContext<UsersContext>(options => 
+                services.AddDbContext<UsersContext>(options =>
                     options.UseSqlServer(_userDbConnectionString, b => b.MigrationsAssembly("GmGard")));
             }
 
@@ -292,7 +292,7 @@ namespace GmGard
                     provider.GetRequiredService<IMemoryCache>(),
                     provider.GetRequiredService<IOptions<AppSettingsModel>>(),
                     provider.GetRequiredService<ILoggerFactory>());
-                JobManager.Initialize(scheduler);
+                scheduler.Start();
                 return scheduler;
             });
             services.AddScoped<JobTaskRunner>();
@@ -300,12 +300,14 @@ namespace GmGard
             services.AddHostedService<BackgroundJobService>();
             services.AddSingleton<QuestService>();
             services.AddSingleton<TitleService>();
-            services.AddSingleton<IVisitCounter>(s => 
+            services.AddSingleton<IVisitCounter>(s =>
             {
-                if (_env.IsStaging()) {
+                if (_env.IsStaging())
+                {
                     return new ReadonlyVisitCounter(s.GetRequiredService<IServiceScopeFactory>());
                 }
-                else {
+                else
+                {
                     return new VisitCounter(s.GetRequiredService<IServiceScopeFactory>());
                 }
             });
@@ -360,7 +362,7 @@ namespace GmGard
                 var factory = provider.GetService<IUrlHelperFactory>();
                 var httpContextAccessor = provider.GetService<IHttpContextAccessor>();
                 var endpoint = httpContextAccessor.HttpContext.GetEndpoint();
-                var actionDescriptor = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor>() 
+                var actionDescriptor = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor>()
                     ?? new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor();
                 var actionContext = new ActionContext(httpContextAccessor.HttpContext, httpContextAccessor.HttpContext.GetRouteData(), actionDescriptor);
                 return factory.GetUrlHelper(actionContext);
@@ -370,7 +372,8 @@ namespace GmGard
                 options.TextEncoderSettings = new TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All);
             });
 
-            services.AddLogging(builder => {
+            services.AddLogging(builder =>
+            {
                 if (IsDev)
                 {
                     builder.AddConsole();
