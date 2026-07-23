@@ -1,0 +1,19 @@
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        // If already authenticated (e.g. auth state resolved after navigation),
+        // don't redirect — let the user through.
+        if (AuthService.IsAuthenticatedCached == true)
+        {
+            return;
+        }
+
+        // Remember where the user was trying to go, then redirect to login.
+        var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        AuthService.RedirectUrl = returnUrl;
+        Navigation.NavigateTo("login");
+    }
+}

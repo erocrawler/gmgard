@@ -1,5 +1,6 @@
-@page "/app/title-helper"
-@page "/app/title-helper/{CategoryId:int}"
+@page "/title-helper"
+@page "/title-helper/{CategoryId:int}"
+@attribute [Authorize]
 @using GmGard.Client.Data
 @using GmGard.Client.Services
 @using GmGard.Client.Models
@@ -129,7 +130,7 @@
     {
         selectedCategory = category;
         showCategoryMenu = false;
-        Navigation.NavigateTo($"/app/title-helper/{category.Id}");
+        Navigation.NavigateTo($"title-helper/{category.Id}");
     }
 
     private void ToggleCategoryMenu()

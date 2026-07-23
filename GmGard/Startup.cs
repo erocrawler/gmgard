@@ -11,14 +11,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Serilog;
 using System.IO;
 using FluentScheduler;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.WebEncoders;
 using System.Text.Encodings.Web;
@@ -30,7 +28,6 @@ using Microsoft.Extensions.Hosting;
 using Serilog.Filters;
 using Microsoft.AspNetCore.Http;
 using OpenIddict.Abstractions;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace GmGard
@@ -61,9 +58,7 @@ namespace GmGard
                 })
                 .AddSessionStateTempDataProvider();
 
-            // Add Blazor WebAssembly services
-            services.AddRazorPages();
-
+            services.AddRazorComponents().AddInteractiveWebAssemblyComponents();
             if (IsDev)
             {
                 builder.AddRazorRuntimeCompilation();
@@ -163,10 +158,10 @@ namespace GmGard
                         // Production: Load signing certificate from file or Key Vault
                         var signingCertPath = Path.Combine(_basePath, "App_Data", "Certificates", "signing-cert.pfx");
                         var encryptionCertPath = Path.Combine(_basePath, "App_Data", "Certificates", "encryption-cert.pfx");
-                        
+
                         // Read cert password from appsettings or environment variable (environment variable takes precedence)
-                        var certPassword = Environment.GetEnvironmentVariable("OPENIDDICT_CERT_PASSWORD") 
-                            ?? Configuration.GetSection("ApplicationSettings").GetValue<string>("OpenIddict:CertificatePassword") 
+                        var certPassword = Environment.GetEnvironmentVariable("OPENIDDICT_CERT_PASSWORD")
+                            ?? Configuration.GetSection("ApplicationSettings").GetValue<string>("OpenIddict:CertificatePassword")
                             ?? "";
 
                         if (File.Exists(signingCertPath))
@@ -174,13 +169,13 @@ namespace GmGard
                             try
                             {
                                 Log.Information("Loading OpenIddict signing certificate from {Path}", signingCertPath);
-                                
+
                                 // Load certificate with exportable private key flag for Linux compatibility
                                 var signingCert = X509CertificateLoader.LoadPkcs12FromFile(
-                                    signingCertPath, 
+                                    signingCertPath,
                                     certPassword,
                                     X509KeyStorageFlags.Exportable);
-                                
+
                                 options.AddSigningCertificate(signingCert);
                             }
                             catch (Exception ex)
@@ -200,13 +195,13 @@ namespace GmGard
                             try
                             {
                                 Log.Information("Loading OpenIddict encryption certificate from {Path}", encryptionCertPath);
-                                
+
                                 // Load certificate with exportable private key flag for Linux compatibility
                                 var encryptionCert = X509CertificateLoader.LoadPkcs12FromFile(
-                                    encryptionCertPath, 
+                                    encryptionCertPath,
                                     certPassword,
                                     X509KeyStorageFlags.Exportable);
-                                
+
                                 options.AddEncryptionCertificate(encryptionCert);
                             }
                             catch (Exception ex)
@@ -264,22 +259,20 @@ namespace GmGard
                 option.AddPolicy("GmAppOrigin",
                     builder =>
                     {
-                        var origins = IsDev 
-                            ? siteConfig.GetSection("DevAppHostOrigins").Get<string[]>() 
+                        var origins = IsDev
+                            ? siteConfig.GetSection("DevAppHostOrigins").Get<string[]>()
                             : siteConfig.GetSection("AppHostOrigins").Get<string[]>();
-                        
+
                         if (origins != null && origins.Length > 0)
                         {
                             builder.WithOrigins(origins);
                         }
-                        
+
                         builder.AllowAnyHeader()
                                .AllowCredentials()
                                .AllowAnyMethod();
                     });
             });
-
-            services.AddAntiforgery(a => a.HeaderName = "X-CSRF-TOKEN");
 
             services.AddSingleton<IAuthorizationHandler, HarmonyHandler>();
             services.AddSingleton<IAuthorizationHandler, AdminAccessHandler>();
@@ -389,13 +382,14 @@ namespace GmGard
         {
             services.GetService<ElasticSearchUpdateService>();
             services.GetRequiredService<SchedulerService>();
-            
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseWebAssemblyDebugging();
                 //app.UseDatabaseErrorPage();
                 //app.UseBrowserLink();
-                
+
                 // Seed data in development environment only
                 SeedDevelopmentData(services).Wait();
             }
@@ -405,29 +399,28 @@ namespace GmGard
             }
 
             app.UseStatusCodePagesWithReExecute("/Error/Index/{0}");
-            
+
             // Use forwarded headers from nginx proxy
             app.UseForwardedHeaders();
-            
+
             var siteConfig = app.ApplicationServices.GetRequiredService<IOptions<SiteConfig>>().Value;
-            app.UseStaticFiles(new StaticFileOptions {
+            app.UseBlazorFrameworkFiles("/app");
+            app.UseStaticFiles(new StaticFileOptions
+            {
                 ContentTypeProvider = ConfigureFileExtensionProvider(),
-                OnPrepareResponse = ctx => {
+                OnPrepareResponse = ctx =>
+                {
                     ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", IsDev ? siteConfig.DevAppHostOrigins[0] : siteConfig.AppHostOrigins[0]);
                     ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
                 },
             });
-
-            // Enable Blazor WebAssembly static files at /app path
-            app.UseBlazorFrameworkFiles("/app");
-            app.UseStaticFiles();
-
             app.UseRouting();
 
             app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseAntiforgery();
 
             app.UseSession();
 
@@ -435,7 +428,7 @@ namespace GmGard
             {
                 // Map OpenIddict and other attribute-routed controllers first (required for OAuth/OIDC)
                 endpoints.MapControllers();
-                
+
                 endpoints.MapControllerRoute("Avatar", "Avatar/{name?}",
                     defaults: new { controller = "Avatar", action = "Show" }
                 );
@@ -490,9 +483,11 @@ namespace GmGard
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+                var appGroup = endpoints.MapGroup("/app");
+                appGroup.MapStaticAssets("GmGard.staticwebassets.endpoints.json");
                 
-                // Map Blazor app to /app route
-                endpoints.MapFallbackToFile("/app/{*path:nonfile}", "index.html");
+                endpoints.MapFallbackToFile("/app/{*path:nonfile}", "app/index.html");
             });
         }
 

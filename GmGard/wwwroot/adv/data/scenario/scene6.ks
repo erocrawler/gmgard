@@ -655,7 +655,7 @@ L娘一把把你推到了凭空出现的床上。[p]
 
 但是还是感觉失去了什么啊。[p]
 
-[bg  time="3000"  method="crossfade"  storage="R12~UB0~}AMY9YVOG6RQXYB.jpg"  ]
+[bg  time="3000"  method="crossfade"  storage="R12~UB0~_AMY9YVOG6RQXYB.jpg"  ]
 [chara_show  name="L娘"  time="1000"  wait="true"  left="329"  top="156"  width="245"  height="240"  reflect="false"  ]
 #L娘
 “辛苦了。作为回报，我会给你3000棒棒糖。等活动结束了，记得查收。”[p]

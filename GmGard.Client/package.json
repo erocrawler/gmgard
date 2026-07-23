@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Blazor WebAssembly client with Tailwind CSS",
   "scripts": {
-    "build:css": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css",
-    "watch:css": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
+    "build:css": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css",
+    "watch:css": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.0"
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/cli": "^4.1.0",
+    "daisyui": "^5.5.0"
   }
 }

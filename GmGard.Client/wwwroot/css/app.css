@@ -1,6 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark;
+}
+
+/* Scan razor/html/cshtml files for used classes */
+@source "../../**/*.{razor,html,cshtml}";
+@source "../../../GmGard/Views/**/*.cshtml";
+
+/* Custom colors not covered by DaisyUI's theme */
+@theme {
+  --color-primary-dark: #053967;
+}
 
 #app {
     position: relative;

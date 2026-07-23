@@ -1,52 +1,117 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">绅士应用</a>
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="navbar bg-base-100 shadow-lg">
+    <div class="navbar-start">
+        <a class="btn btn-ghost text-xl" href="">绅士应用</a>
+    </div>
+    <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+            <li>
+                <NavLink href="title-helper" class="rounded-none">标题助手</NavLink>
+            </li>
+            <li>
+                <NavLink href="gacha" class="rounded-none">绅士抽奖</NavLink>
+            </li>
+            <li>
+                <NavLink href="wheel" class="rounded-none">绅士转盘</NavLink>
+            </li>
+            <li>
+                <NavLink href="punch-in" class="rounded-none">绅士签到</NavLink>
+            </li>
+            <li>
+                <NavLink href="game" class="rounded-none">绅士冒险</NavLink>
+            </li>
+            <li>
+                <NavLink href="bounty" class="rounded-none">绅士求物板</NavLink>
+            </li>
+            <li>
+                <NavLink href="message" class="rounded-none">消息中心</NavLink>
+            </li>
+        </ul>
+    </div>
+    <div class="navbar-end">
+        @* User menu (desktop) *@
+        <AuthorizeView>
+            <Authorized>
+                <div class="dropdown dropdown-end hidden lg:block">
+                    <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                        <div class="w-10 rounded-full ring ring-base-300">
+                            <img src="@avatarUrl" alt="avatar" />
+                        </div>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                        <li class="menu-title">
+                            <span>@context.User.Identity?.Name</span>
+                        </li>
+                        <li><a @onclick="Logout" class="text-error">退出登录</a></li>
+                    </ul>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <a href="login" class="btn btn-primary btn-sm hidden lg:flex">登录</a>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        @* Mobile menu toggle *@
+        <div class="lg:hidden">
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost btn-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </label>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li>
+                        <NavLink href="title-helper">标题助手</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="gacha">绅士抽奖</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="wheel">绅士转盘</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="punch-in">绅士签到</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="game">绅士冒险</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="bounty">绅士求物板</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="message">消息中心</NavLink>
+                    </li>
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="menu-title"><span>@context.User.Identity?.Name</span></li>
+                            <li><a @onclick="Logout" class="text-error">退出登录</a></li>
+                        </Authorized>
+                        <NotAuthorized>
+                            <li><NavLink href="login">登录</NavLink></li>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@code {
+    private string avatarUrl = "";
 
-<div class="nav-scrollable">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> 首页
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/title-helper">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> 标题助手
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/gacha">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 绅士抽奖
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/wheel">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 绅士转盘
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/punch-in">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 绅士签到
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/game">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 绅士冒险
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/bounty">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 绅士求物板
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/app/message">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 消息中心
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetUserAsync();
+        if (user != null)
+        {
+            avatarUrl = user.Avatar;
+        }
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("login");
+    }
+}

@@ -1,0 +1,150 @@
+@page "/login"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>登录</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
+    <div class="card bg-base-100 shadow-xl w-full max-w-md">
+        <div class="card-body">
+            <h1 class="text-2xl font-bold text-center mb-6">登录</h1>
+
+            @if (errorMessage != null)
+            {
+                <div class="alert alert-error mb-4">
+                    <span>@errorMessage</span>
+                </div>
+            }
+
+            <div class="flex flex-col gap-3">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">用户名</legend>
+                    <input class="input input-bordered w-full" type="text"
+                           autocomplete="username" placeholder="用户名"
+                           @bind="username" @bind:event="oninput" />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">密码</legend>
+                    <input class="input input-bordered w-full" type="password"
+                           autocomplete="current-password" placeholder="密码"
+                           @bind="password" @bind:event="oninput"
+                           @onkeypress="OnPasswordKeyPress" />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">验证码</legend>
+                    <div class="flex gap-2 items-center">
+                        <img src="@captchaSrc" alt="验证码" class="h-10 rounded cursor-pointer border border-base-300"
+                             title="点击刷新验证码" @onclick="RefreshCaptcha" />
+                        <input class="input input-bordered flex-1" type="text"
+                               inputmode="numeric" placeholder="等于多少？"
+                               @bind="captcha" @bind:event="oninput"
+                               @onkeypress="OnPasswordKeyPress" />
+                    </div>
+                </fieldset>
+
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" @bind="rememberMe" />
+                    <span class="label-text">记住我</span>
+                </label>
+
+                <button class="btn btn-primary w-full" @onclick="SubmitLogin" disabled="@submitting">
+                    @if (submitting)
+                    {
+                        <span class="loading loading-spinner loading-sm"></span>
+                    }
+                    登录
+                </button>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/" class="link link-hover text-sm text-base-content/60">返回主站</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string captcha = "";
+    private bool rememberMe;
+    private bool submitting;
+    private string? errorMessage;
+    private string captchaSrc = "";
+
+    protected override void OnInitialized()
+    {
+        // Build captcha URL with cache-busting timestamp so it refreshes each visit.
+        RefreshCaptchaSrc();
+    }
+
+    private void RefreshCaptchaSrc()
+    {
+        captchaSrc = $"../Captcha/CaptchaImage?t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+    }
+
+    private void RefreshCaptcha()
+    {
+        RefreshCaptchaSrc();
+        captcha = "";
+    }
+
+    private async Task OnPasswordKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SubmitLogin();
+        }
+    }
+
+    private async Task SubmitLogin()
+    {
+        if (submitting) return;
+
+        errorMessage = null;
+        submitting = true;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(new LoginRequest
+            {
+                UserName = username,
+                Password = password,
+                RememberMe = rememberMe,
+                Captcha = captcha,
+            });
+
+            if (result.Success && !result.Require2fa)
+            {
+                AuthService.NavigateAfterLogin();
+                return;
+            }
+
+            if (result.Require2fa)
+            {
+                // 2FA not yet implemented in the Blazor client.
+                errorMessage = "此账户已启用两步验证，暂不支持在此登录。";
+            }
+            else if (result.Errors.Count > 0)
+            {
+                errorMessage = string.Join("；", result.Errors);
+            }
+            else
+            {
+                errorMessage = "登录失败，请重试。";
+            }
+        }
+        catch
+        {
+            errorMessage = "登录请求失败，请检查网络连接。";
+        }
+        finally
+        {
+            // Captcha is single-use; refresh it for the next attempt.
+            RefreshCaptcha();
+            submitting = false;
+        }
+    }
+}
