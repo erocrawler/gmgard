@@ -10,17 +10,19 @@ public class TitleHelperService
 
     static Func<string, string> MakeFormatter(CategoryField f)
     {
-        // FormatType: Bracket [x], RoundBracket (x), None x, Space " x ", By "(by x)", Custom "[提取动画]" or "(by {0})"
-        return f.FormatType switch
+        var ft = f.FormatType ?? "Bracket";
+        return ft switch
         {
             "Bracket" => v => $"[{v}]",
             "RoundBracket" => v => $"({v})",
             "Space" => v => $" {v} ",
             "By" => v => $"(by {v})",
             "None" => v => v,
-            "Custom" => string.IsNullOrEmpty(f.FormatTemplate) ? (string v) => $"[{v}]" :
-                        f.FormatTemplate!.Contains("{0}") ? (string v) => string.Format(f.FormatTemplate!, v) :
-                        (string _) => f.FormatTemplate!,
+            "Custom" => string.IsNullOrEmpty(f.FormatTemplate)
+                ? (Func<string, string>)(v => $"[{v}]")
+                : f.FormatTemplate!.Contains("{0}")
+                    ? v => string.Format(f.FormatTemplate!, v)
+                    : _ => f.FormatTemplate!,
             _ => v => $"[{v}]"
         };
     }

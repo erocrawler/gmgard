@@ -1,0 +1,179 @@
+@page "/admin/title-categories"
+@attribute [Authorize(Roles = "Administrator,Moderator")]
+@using GmGard.Client.Models
+@inject TitleHelperService TitleService
+@inject HttpClient Http
+
+<PageTitle>标题助手分类管理</PageTitle>
+
+<div class="max-w-6xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">绅士管理</h1>
+    <div class="tabs tabs-boxed w-fit flex-wrap">
+        <a href="admin/registration" class="tab">注册码管理</a>
+        <a href="admin/category" class="tab">栏目管理</a>
+        <a href="admin/raffle" class="tab">抽奖管理</a>
+        <a href="admin/title-categories" class="tab tab-active">标题助手</a>
+    </div>
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-10"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else
+    {
+        <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-wrap gap-2 items-center">
+                <span class="text-sm opacity-70">@categories.Count 个分类</span>
+                <div class="flex gap-2 items-center">
+                    <select class="select select-sm select-bordered min-w-[220px]" value="@(selected?.Id.ToString() ?? "")" @onchange="OnCategorySelected">
+                        <option value="">-- 选择分类 --</option>
+                        @foreach (var cat in categories.OrderBy(c => c.Id))
+                        {
+                            <option value="@cat.Id">[@cat.Id] @cat.Name (@cat.Fields.Count)</option>
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-outline" @onclick="AddNew">+ 新建</button>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-ghost" @onclick="Reload">重新加载</button>
+                <button class="btn btn-sm btn-primary" @onclick="SaveAll" disabled="@saving">
+                    @if (saving) { <span class="loading loading-spinner loading-xs"></span> } 保存全部
+                </button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert @(saveOk ? "alert-success" : "alert-error") py-2 text-sm">@message</div>
+        }
+
+        @if (selected != null)
+        {
+            <div class="card bg-base-100 shadow">
+                    <div class="card-body space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="form-control">
+                                <span class="label label-text text-xs">Id</span>
+                                <input class="input input-sm input-bordered" type="number" @bind="selected.Id" />
+                            </label>
+                            <label class="form-control">
+                                <span class="label label-text text-xs">名称</span>
+                                <input class="input input-sm input-bordered" @bind="selected.Name" />
+                            </label>
+                        </div>
+                        <label class="form-control">
+                            <span class="label label-text text-xs">说明 (comment)</span>
+                            <textarea class="textarea textarea-bordered textarea-sm min-h-[80px]" @bind="selected.Comment"></textarea>
+                        </label>
+
+                        <div class="divider my-1">字段 (@selected.Fields.Count)</div>
+
+                        @foreach (var f in selected.Fields)
+                        {
+                            <div class="border rounded p-3 space-y-2 bg-base-50">
+                                <div class="flex gap-2">
+                                    <input class="input input-xs input-bordered flex-1" placeholder="字段名" @bind="f.Name" />
+                                    <label class="flex items-center gap-1 text-xs cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" @bind="f.Required" /> 必填</label>
+                                    <label class="flex items-center gap-1 text-xs cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" @bind="f.Fixed" /> 固定</label>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select class="select select-xs select-bordered" @bind="f.FormatType">
+                                        @foreach (var (val, label) in formatTypes)
+                                        {
+                                            <option value="@val">@label</option>
+                                        }
+                                    </select>
+                                    <input class="input input-xs input-bordered" placeholder="Template: [提取动画] or (by {0})" @bind="f.FormatTemplate" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input class="input input-xs input-bordered" placeholder="Default 值" @bind="f.Default" />
+                                    <input class="input input-xs input-bordered" placeholder="Hint 提示" @bind="f.Hint" />
+                                </div>
+                                <div class="flex justify-end">
+                                    <button class="btn btn-xs btn-ghost text-error" @onclick="() => RemoveField(f)">删除字段</button>
+                                </div>
+                            </div>
+                        }
+                        <div class="flex gap-2">
+                            <button class="btn btn-xs btn-outline" @onclick="AddField">+ 字段</button>
+                            <button class="btn btn-xs btn-error btn-outline ml-auto" @onclick="DeleteCategory">删除分类</button>
+                        </div>
+                    </div>
+                </div>
+            }
+    }
+</div>
+
+@code {
+    List<TitleCategory> categories = new();
+    TitleCategory? selected;
+    bool loading = true;
+    bool saving = false;
+    string message = "";
+    bool saveOk = false;
+
+    (string Value, string Label)[] formatTypes = new[]
+    {
+        ("Bracket", "Bracket [x]"),
+        ("RoundBracket", "RoundBracket (x)"),
+        ("Space", "Space ' x '"),
+        ("By", "By (by x)"),
+        ("None", "None raw"),
+        ("Custom", "Custom template"),
+    };
+
+    protected override async Task OnInitializedAsync() => await Reload();
+
+    async Task Reload()
+    {
+        loading = true;
+        try
+        {
+            categories = await TitleService.GetCategoriesAsync();
+            if (selected != null) selected = categories.FirstOrDefault(c => c.Id == selected.Id) ?? categories.FirstOrDefault();
+            else selected = categories.FirstOrDefault();
+        }
+        catch (Exception ex) { message = $"加载失败: {ex.Message}"; saveOk = false; }
+        finally { loading = false; }
+    }
+
+    void OnCategorySelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+            selected = categories.FirstOrDefault(c => c.Id == id);
+    }
+
+    void Select(TitleCategory c) => selected = c;
+
+    void AddNew()
+    {
+        var nextId = categories.Any() ? categories.Max(c => c.Id) + 1 : 10;
+        var cat = new TitleCategory { Id = nextId, Name = "新分类", Comment = "", Fields = new() };
+        categories.Add(cat);
+        selected = cat;
+    }
+
+    void DeleteCategory()
+    {
+        if (selected == null) return;
+        categories.Remove(selected);
+        selected = categories.FirstOrDefault();
+    }
+
+    void AddField() => selected?.Fields.Add(new CategoryField { Name = "新字段", FormatType = "Bracket" });
+    void RemoveField(CategoryField f) => selected?.Fields.Remove(f);
+
+    async Task SaveAll()
+    {
+        saving = true; message = "";
+        try
+        {
+            await TitleService.SaveAllAsync(categories);
+            message = $"已保存 {categories.Count} 个分类";
+            saveOk = true;
+        }
+        catch (Exception ex) { message = $"保存失败: {ex.Message}"; saveOk = false; }
+        finally { saving = false; }
+    }
+}
