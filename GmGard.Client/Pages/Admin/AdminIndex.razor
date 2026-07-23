@@ -1,0 +1,158 @@
+@page "/admin"
+@page "/admin/registration"
+@attribute [Authorize(Roles = "Administrator,Moderator")]
+@inject AdminService AdminService
+
+<PageTitle>管理 - 注册码</PageTitle>
+
+<div class="max-w-4xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">绅士管理</h1>
+
+    <div class="tabs tabs-boxed w-fit">
+        <a href="admin/registration" class="tab tab-active">注册码管理</a>
+        <a href="admin/category" class="tab">栏目管理</a>
+        <a href="admin/raffle" class="tab">抽奖管理</a>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body gap-4">
+            <div class="flex gap-2 items-end">
+                <fieldset class="fieldset flex-1">
+                    <legend class="fieldset-legend">模式</legend>
+                    <select class="select select-bordered select-sm w-32" @bind="searchMode">
+                        <option value="byUser">按用户</option>
+                        <option value="byCode">按邀请码</option>
+                    </select>
+                </fieldset>
+                @if (searchMode == "byUser")
+                {
+                    <fieldset class="fieldset flex-1">
+                        <legend class="fieldset-legend">用户名</legend>
+                        <input class="input input-sm input-bordered w-full" @bind="username" placeholder="用户名" @onkeypress="OnKey" />
+                    </fieldset>
+                }
+                else
+                {
+                    <fieldset class="fieldset flex-1">
+                        <legend class="fieldset-legend">邀请码</legend>
+                        <input class="input input-sm input-bordered w-full" @bind="code" placeholder="GUID" @onkeypress="OnKey" />
+                    </fieldset>
+                }
+                <button class="btn btn-primary btn-sm" @onclick="Search" disabled="@loading">
+                    @if (loading) { <span class="loading loading-spinner loading-xs"></span> }
+                    查询
+                </button>
+            </div>
+
+            @if (result != null)
+            {
+                <div class="divider my-1"></div>
+                <div class="space-y-2">
+                    <div class="flex gap-2 text-sm">
+                        <span>用户：<strong>@result.User.UserName</strong></span>
+                        @if (result.InvitedBy != null)
+                        {
+                            <span>邀请人：@result.InvitedBy.UserName</span>
+                        }
+                    </div>
+
+                    @if (result.Codes.Count == 0)
+                    {
+                        <p class="text-sm text-base-content/50">无邀请码</p>
+                    }
+                    else
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="table table-sm">
+                                <thead><tr><th>邀请码</th><th>使用者</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    @foreach (var c in result.Codes)
+                                    {
+                                        <tr>
+                                            <td class="font-mono text-xs">@c.Code</td>
+                                            <td>@(c.UsedBy?.UserName ?? "未使用")</td>
+                                            <td>
+                                                @if (c.UsedBy == null)
+                                                {
+                                                    <button class="btn btn-error btn-xs" @onclick="() => ConfirmDelete(c.Code)">删除</button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div class="alert @(isError ? "alert-error" : "alert-success") text-sm"><span>@message</span></div>
+            }
+
+            @if (showDeleteConfirm)
+            {
+                <div class="modal modal-open">
+                    <div class="modal-box">
+                        <h3 class="font-bold">确认删除邀请码 @pendingDeleteCode</h3>
+                        <fieldset class="fieldset mt-3">
+                            <legend class="fieldset-legend">删除原因</legend>
+                            <input class="input w-full" @bind="deleteReason" placeholder="原因（可选）" />
+                        </fieldset>
+                        <label class="label cursor-pointer justify-start gap-2 mt-2">
+                            <input type="checkbox" class="checkbox checkbox-sm" @bind="deleteNotice" />
+                            <span class="label-text">发送通知给用户</span>
+                        </label>
+                        <div class="modal-action">
+                            <button class="btn btn-ghost" @onclick="() => showDeleteConfirm = false">取消</button>
+                            <button class="btn btn-error" @onclick="DoDelete">确认删除</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    string searchMode = "byUser";
+    string username = "";
+    string code = "";
+    bool loading = false;
+    InvitationCodeResponse? result;
+    string? message;
+    bool isError;
+    bool showDeleteConfirm = false;
+    string pendingDeleteCode = "";
+    string deleteReason = "";
+    bool deleteNotice = false;
+
+    async Task OnKey(KeyboardEventArgs e) { if (e.Key == "Enter") await Search(); }
+
+    async Task Search()
+    {
+        loading = true;
+        message = null;
+        result = null;
+        StateHasChanged();
+        var req = searchMode == "byCode" ? new InvitationCodeRequest { Code = code } : new InvitationCodeRequest { UserName = username };
+        result = await AdminService.GetInvitationCodeAsync(req);
+        loading = false;
+        if (result == null) { message = "未找到或请求失败"; isError = true; }
+    }
+
+    void ConfirmDelete(string c) { pendingDeleteCode = c; showDeleteConfirm = true; }
+
+    async Task DoDelete()
+    {
+        showDeleteConfirm = false;
+        var ok = await AdminService.DeleteInvitationCodeAsync(pendingDeleteCode, deleteReason, deleteNotice);
+        if (ok)
+        {
+            if (result != null) result.Codes = result.Codes.Where(x => x.Code != pendingDeleteCode).ToList();
+            message = "已删除"; isError = false;
+        }
+        else { message = "删除失败"; isError = true; }
+    }
+}

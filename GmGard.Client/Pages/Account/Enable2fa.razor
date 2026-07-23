@@ -1,0 +1,135 @@
+@page "/account/enable2fa"
+@attribute [Authorize]
+@inject AccountService AccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>启用两步验证</PageTitle>
+
+<div class="max-w-2xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">启用两步验证</h1>
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (sharedKey != null)
+    {
+        <div class="card bg-base-100 shadow">
+            <div class="card-body gap-4">
+                <p class="text-sm">使用验证器APP扫描下方二维码，或手动输入秘钥：</p>
+
+                <div class="flex justify-center">
+                    <canvas @ref="qrCanvas"></canvas>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs text-base-content/50">秘钥 / 恢复URI</span>
+                    <div class="flex gap-2">
+                        <input class="input input-bordered flex-1 text-xs" readonly value="@sharedKey.SharedKey" />
+                        <button class="btn btn-ghost btn-sm" @onclick="() => CopyText(sharedKey.SharedKey)">复制</button>
+                    </div>
+                    <span class="text-xs break-all text-base-content/50">@sharedKey.AuthenticatorUri</span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-error text-sm"><span>@error</span></div>
+                }
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">验证码（来自验证器APP）</legend>
+                    <div class="flex gap-2">
+                        <input class="input flex-1" placeholder="6位数字" @bind="code" @bind:event="oninput" @onkeypress="OnKey" />
+                        <button class="btn btn-primary" @onclick="Verify" disabled="@verifying">
+                            @if (verifying) { <span class="loading loading-spinner loading-xs"></span> }
+                            验证并启用
+                        </button>
+                    </div>
+                </fieldset>
+
+                @if (recoveryCodes != null)
+                {
+                    <div class="modal modal-open">
+                        <div class="modal-box max-w-lg">
+                            <h3 class="font-bold text-lg mb-3">应急密码（请妥善保存）</h3>
+                            <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1">
+                                @foreach (var c in recoveryCodes) { <div>@c</div> }
+                            </div>
+                            <div class="modal-action">
+                                <button class="btn btn-primary" @onclick="GoTo2Fa">已保存，返回</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-error"><span>加载失败，请刷新重试。</span></div>
+    }
+</div>
+
+@code {
+    TwoFactorAuthSharedKey? sharedKey;
+    bool loading = true;
+    bool verifying = false;
+    string code = "";
+    string? error;
+    string[]? recoveryCodes;
+    ElementReference qrCanvas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sharedKey = await AccountService.Get2FaKeysAsync();
+        loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (sharedKey != null && !string.IsNullOrEmpty(sharedKey.AuthenticatorUri))
+        {
+            try
+            {
+                // Generate QR via simple JS: we have no qrcode npm yet, so use API via IJSRuntime to render text qr via external lib if available.
+                // Fallback: try to use QRCode library if loaded, else just show uri text.
+                await JS.InvokeVoidAsync("eval", $"if(window.QRCode){{QRCode.toCanvas(document.querySelector('canvas'), '{sharedKey.AuthenticatorUri}')}}");
+            }
+            catch { }
+        }
+    }
+
+    async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Verify();
+    }
+
+    async Task Verify()
+    {
+        if (string.IsNullOrWhiteSpace(code)) { error = "请输入验证码"; return; }
+        verifying = true;
+        error = null;
+        var (ok, codes, err) = await AccountService.Enable2FaAsync(code.Trim());
+        verifying = false;
+        if (ok)
+        {
+            recoveryCodes = codes;
+            if (recoveryCodes == null)
+            {
+                Navigation.NavigateTo("account/2fa");
+            }
+        }
+        else
+        {
+            error = err ?? "验证码错误，请重试";
+        }
+    }
+
+    void GoTo2Fa() => Navigation.NavigateTo("account/2fa");
+
+    async Task CopyText(string text)
+    {
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", text); } catch { }
+    }
+}

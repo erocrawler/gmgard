@@ -124,8 +124,8 @@
 
             if (result.Require2fa)
             {
-                // 2FA not yet implemented in the Blazor client.
-                errorMessage = "此账户已启用两步验证，暂不支持在此登录。";
+                Navigation.NavigateTo("account/twofactor");
+                return;
             }
             else if (result.Errors.Count > 0)
             {

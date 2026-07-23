@@ -1,0 +1,258 @@
+@page "/punch-in"
+@attribute [Authorize]
+@inject PunchInService PunchInService
+
+<PageTitle>绅士签到</PageTitle>
+
+<div style="max-width:360px; margin:0 auto; padding:12px;">
+    <h1 class="text-2xl font-bold mb-4">绅士签到</h1>
+
+    @if (loading && user == null)
+    {
+        <div class="flex justify-center py-10"><span class="loading loading-spinner loading-sm"></span></div>
+    }
+    else
+    {
+        <div class="card bg-base-100 shadow border border-base-200 overflow-hidden">
+            @if (user != null)
+            {
+                <div class="flex items-center gap-2.5 px-4 py-3">
+                    <div class="avatar"><div class="w-10 h-10 rounded-full overflow-hidden"><img src="@user.Avatar" alt="avatar" /></div></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-sm">@user.NickName</div>
+                        <div class="flex gap-1.5 mt-1">
+                            <span class="badge badge-primary badge-xs">连续 @consecutiveSign 天</span>
+                            <span class="badge badge-ghost badge-xs">🍬 @points</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider my-0"></div>
+            }
+
+            <div class="flex items-center justify-between px-2 py-2 border-b border-base-200/50">
+                <button @onclick="PrevMonth" disabled="@IsMinMonth" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">‹</button>
+                <span class="text-sm font-bold">@activeDate.Year 年 @activeDate.Month 月</span>
+                <button @onclick="NextMonth" disabled="@IsMaxMonth" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">›</button>
+            </div>
+
+            @if (loading) { <progress class="progress progress-primary w-full h-0.5 rounded-none"></progress> }
+
+            <div style="padding:6px 10px 12px 10px;">
+                <div class="grid grid-cols-7">
+                    @foreach (var h in WeekHeaders)
+                    {
+                        <div style="text-align:center; font-size:12px; color:#9ca3af; height:28px; display:flex; align-items:center; justify-content:center;">@h</div>
+                    }
+                </div>
+                <div class="grid grid-cols-7" style="row-gap:2px;">
+                    @foreach (var d in CalendarDays)
+                    {
+                        if (d == 0)
+                        {
+                            <div style="height:32px;"></div>
+                        }
+                        else
+                        {
+                            var capturedDay = d;
+                            var dayDate = SafeDate(activeDate.Year, activeDate.Month, capturedDay);
+                            var state = dayDate.HasValue ? GetDayState(dayDate.Value) : DayState.Disabled;
+                            <div style="height:36px; display:flex; align-items:center; justify-content:center;">
+                                @{
+                                    var isClickable = state == DayState.Today || state == DayState.Missed;
+                                    var styleAttr = GetDayInlineStyle(state);
+                                }
+                                @if (dayDate.HasValue)
+                                {
+                                    var dd = dayDate.Value;
+                                    <button @onclick="@(() => OnDayClick(dd))"
+                                            disabled="@(!isClickable)"
+                                            style="@styleAttr; width:28px; height:28px; min-width:28px; min-height:28px; line-height:28px; padding:0; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; text-align:center;">
+                                        @capturedDay
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button disabled
+                                            style="@styleAttr; width:28px; height:28px;"
+                                            class="rounded-full flex items-center justify-center text-xs">
+                                        @capturedDay
+                                    </button>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+
+                @if (activeDate.Month == 1 && legacySign > 0)
+                {
+                    <div style="font-size:11px; color:#0284c7; margin-top:8px;">1/25前连续签到：@legacySign</div>
+                }
+
+                <div style="display:flex; gap:14px; margin-top:12px; padding-top:10px; border-top:1px solid #e5e7eb; justify-content:center; font-size:11px; color:#6b7280; flex-wrap:wrap;">
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:9999px; background:#22c55e; display:inline-block;"></span> 已签到</span>
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:9999px; background:#fecdd3; border:1px solid #fda4af; display:inline-block;"></span> 未签到（可补签）</span>
+                    <span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:9999px; border:2px solid #0ea5e9; display:inline-block;"></span> 今天</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<dialog class="modal @(showDialog ? "modal-open" : "")">
+    <div class="modal-box max-w-xs">
+        <h3 class="font-bold text-sm mb-2">@dialogDate.ToString("yyyy年MM月dd日") 签到</h3>
+        @if (dialogLoading) { <div class="flex justify-center py-3"><span class="loading loading-spinner loading-xs"></span></div> }
+        else if (dialogCost != null)
+        {
+            <p class="text-xs mb-1">需花费 <b>@dialogCost.Cost</b> 棒棒糖</p>
+            @if (dialogCost.Cost > 0) { <p class="text-xs text-center">@dialogCost.CurrentPoints → <span class="text-error font-bold">@(dialogCost.CurrentPoints - dialogCost.Cost)</span></p> }
+            @if (dialogCost.Tickets > 0) { <p class="text-xs opacity-60 mt-1">或用补签券（剩 @dialogCost.Tickets 张）</p> }
+        }
+        else { <p class="text-xs opacity-60">今日签到</p> }
+        <div class="modal-action">
+            <button class="btn btn-ghost btn-xs" @onclick="CloseDialog">取消</button>
+            @if (dialogCost == null || dialogCost.CurrentPoints >= dialogCost.Cost)
+            {
+                <button class="btn btn-primary btn-xs" @onclick="@(() => ConfirmPunchIn(false))" disabled="@signingIn">签到</button>
+            }
+            @if (dialogCost != null && dialogCost.Tickets > 0)
+            {
+                <button class="btn btn-secondary btn-xs" @onclick="@(() => ConfirmPunchIn(true))" disabled="@signingIn">补签券</button>
+            }
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button @onclick="CloseDialog">close</button></form>
+</dialog>
+
+@if (toastVisible)
+{
+    <div class="toast toast-bottom toast-center z-50"><div class="alert @(toastIsError ? "alert-error" : "alert-success") text-xs"><span>@toastMessage</span></div></div>
+}
+
+@code {
+    CurrentUser? user; int consecutiveSign; int points; HashSet<int> signedDays = new(); int legacySign; bool loading = true;
+    DateOnly today; DateOnly activeDate; static readonly DateOnly MinDate = new(2019, 1, 25);
+    static readonly string[] WeekHeaders = new[] { "日", "一", "二", "三", "四", "五", "六" };
+    List<int> CalendarDays = new();
+    bool showDialog; DateOnly dialogDate; PunchInCost? dialogCost; bool dialogLoading; bool signingIn;
+    bool toastVisible; bool toastIsError; string? toastMessage; CancellationTokenSource? toastCts;
+    bool IsMinMonth => activeDate.Year == MinDate.Year && activeDate.Month == MinDate.Month;
+    bool IsMaxMonth => activeDate.Year == today.Year && activeDate.Month == today.Month;
+
+    static DateOnly? SafeDate(int y, int m, int d)
+    {
+        try { return new DateOnly(y, m, d); } catch { return null; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        today = DateOnly.FromDateTime(DateTime.Today);
+        activeDate = new DateOnly(today.Year, today.Month, 1);
+        RebuildCalendar();
+        var userTask = PunchInService.GetUserAsync();
+        var histTask = PunchInService.GetHistoryAsync(today.Year, today.Month);
+        await Task.WhenAll(userTask, histTask);
+        user = await userTask;
+        if (user != null) { consecutiveSign = user.ConsecutiveSign; points = user.Points; }
+        ApplyHistory(await histTask);
+        loading = false;
+    }
+
+    async Task PrevMonth() { if (IsMinMonth) return; activeDate = activeDate.AddMonths(-1); RebuildCalendar(); await LoadMonth(); }
+    async Task NextMonth() { if (IsMaxMonth) return; activeDate = activeDate.AddMonths(1); RebuildCalendar(); await LoadMonth(); }
+
+    async Task LoadMonth() { loading = true; StateHasChanged(); var hist = await PunchInService.GetHistoryAsync(activeDate.Year, activeDate.Month); ApplyHistory(hist); loading = false; }
+
+    void ApplyHistory(PunchInHistoryResponse? hist)
+    {
+        signedDays.Clear(); legacySign = 0;
+        if (hist != null)
+        {
+            foreach (var h in hist.PunchIns)
+                if (DateTime.TryParse(h.TimeStamp, out var dt) && dt.Year == activeDate.Year && dt.Month == activeDate.Month)
+                    signedDays.Add(dt.Day);
+            legacySign = hist.LegacySignDays ?? 0;
+        }
+        RebuildCalendar();
+    }
+
+    void RebuildCalendar()
+    {
+        int daysInMonth;
+        try { daysInMonth = DateTime.DaysInMonth(activeDate.Year, activeDate.Month); } catch { daysInMonth = 30; }
+        int startOffset;
+        try { startOffset = (int)new DateOnly(activeDate.Year, activeDate.Month, 1).DayOfWeek; } catch { startOffset = 0; }
+        var cells = new List<int>(42);
+        for (int i = 0; i < startOffset; i++) cells.Add(0);
+        for (int d = 1; d <= daysInMonth; d++) cells.Add(d);
+        while (cells.Count % 7 != 0) cells.Add(0);
+        CalendarDays = cells;
+    }
+
+    enum DayState { Signed, Today, Missed, Future, Disabled }
+    DayState GetDayState(DateOnly d)
+    {
+        if (d < MinDate || d > today) return DayState.Disabled;
+        if (signedDays.Contains(d.Day)) return DayState.Signed;
+        if (d == today) return DayState.Today;
+        if (d < today) return DayState.Missed;
+        return DayState.Future;
+    }
+
+    // condensed mat-calendar: 28px perfect circles via inline style
+    static string GetDayInlineStyle(DayState state) => state switch
+    {
+        DayState.Signed   => "background:#22c55e; color:#fff; font-weight:600; border:0;",
+        DayState.Today    => "border:2px solid #0ea5e9; color:#0ea5e9; font-weight:600; background:#fff;",
+        DayState.Missed   => "background:#fff1f2; color:#e11d48; border:1px solid #fecdd3;",
+        DayState.Future   => "color:#d1d5db; background:transparent; border:0;",
+        DayState.Disabled => "color:#e5e7eb; background:transparent; border:0;",
+        _ => "color:#9ca3af; border:0;"
+    };
+
+    async Task OnDayClick(DateOnly d)
+    {
+        var s = GetDayState(d);
+        if (s != DayState.Today && s != DayState.Missed) return;
+        dialogDate = d;
+        dialogCost = null;
+        dialogLoading = true;
+        showDialog = true;
+        dialogCost = await PunchInService.GetCostAsync(d);
+        dialogLoading = false;
+    }
+    void CloseDialog() { showDialog = false; signingIn = false; }
+    async Task ConfirmPunchIn(bool useTicket)
+    {
+        signingIn = true;
+        var r = await PunchInService.DoPunchInAsync(dialogDate, useTicket);
+        showDialog = false;
+        signingIn = false;
+        if (r == null) await ShowToastAsync("签到出错，请刷新重试。", true);
+        else if (r.Success)
+        {
+            consecutiveSign = r.ConsecutiveDays;
+            points = r.Points;
+            await ShowToastAsync(r.ExpBonus > 0 ? $"签到成功，+{r.ExpBonus}" : "签到成功。", false);
+            await LoadMonth();
+        }
+        else await ShowToastAsync($"签到失败：{r.ErrorMessage}", true);
+    }
+    async Task ShowToastAsync(string msg, bool err)
+    {
+        toastCts?.Cancel();
+        toastCts = new CancellationTokenSource();
+        toastMessage = msg;
+        toastIsError = err;
+        toastVisible = true;
+        StateHasChanged();
+        var tok = toastCts.Token;
+        try { await Task.Delay(3000, tok); }
+        catch (TaskCanceledException) { return; }
+        if (!tok.IsCancellationRequested)
+        {
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

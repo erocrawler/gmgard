@@ -22,40 +22,130 @@
     <Content Remove="package-lock.json" />
   </ItemGroup>
 
-  <Target Name="NpmInstallAndBuild" BeforeTargets="Build">
-    <Exec Command="npm install" />
-    <Exec Command="npm run build:css" />
-  </Target>
+  <!--
+    CSS fingerprinting pipeline (safe version):
+    
+    Tailwind -> app.min.css -> SHA256 hash -> ?v={hash} in index.html
 
-  <UsingTask TaskName="UpdateCssHash" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
-    <ParameterGroup>
-      <CssFilePath ParameterType="System.String" Required="true" />
-      <IndexHtmlPath ParameterType="System.String" Required="true" />
-    </ParameterGroup>
+    CRITICAL ordering to avoid MSBuild double-writer race:
+    - Blazor SDK target GenerateHtmlAssetPlaceholdersBuildStaticWebAssets
+      ALSO edits index.html (importmap + blazor.webassembly.js fingerprint).
+      If we edit index.html AFTER ResolveStaticWebAssetsInputs, SDK sees
+      stale inputs => _CopyOutOfDateSourceItemsToOutputDirectory partially/completely.
+
+    FIXED ORDER:
+    1. NpmInstall (BeforeTargets=NpmBuildCss)
+    2. NpmBuildCss (BeforeTargets=ResolveStaticWebAssetsInputs) 
+       Inputs=app.css + Sources => Outputs=app.min.css (incremental)
+    3. UpdateCssHash (AfterTargets=NpmBuildCss, BeforeTargets=ResolveStaticWebAssetsInputs)
+       Reads app.min.css, computes SHA256, stamps ?v=hash into index.html
+       BEFORE static assets are collected, so SDK sees final file once.
+
+    Inline task uses C# (no PowerShell) -> Linux CI compatible per AGENTS.md.
+    Logs: GmGard/tmp/ per user request.
+  -->
+
+  <!-- Inline C# task for Linux-safe fingerprinting (no PowerShell). Uses CodeType=Class to avoid CS0162 unreachable code warning from fragment wrapper. -->
+  <UsingTask TaskName="UpdateCssHash" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
     <Task>
-      <Using Namespace="System.IO" />
-      <Using Namespace="System.Security.Cryptography" />
-      <Using Namespace="System.Text.RegularExpressions" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-          using (var sha = SHA256.Create())
-          {
-            byte[] hashBytes = sha.ComputeHash(File.ReadAllBytes(CssFilePath));
-            string hash = BitConverter.ToString(hashBytes).Replace("-", "").Substring(0, 8).ToLower();
-            string content = File.ReadAllText(IndexHtmlPath);
-            string updated = Regex.Replace(content, @"css/app\.min\.css(?:\?v=[a-fA-F0-9]*)?" , $"css/app.min.css?v={hash}");
-            File.WriteAllText(IndexHtmlPath, updated);
-            Log.LogMessage(MessageImportance.High, $"Updated CSS hash: {hash}");
-          }
-        ]]>
-      </Code>
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public class UpdateCssHash : Task
+{
+    [Required]
+    public string CssFilePath { get; set; } = "";
+    [Required]
+    public string IndexHtmlPath { get; set; } = "";
+
+    public override bool Execute()
+    {
+        try
+        {
+            if (!File.Exists(CssFilePath))
+            {
+                Log.LogMessage(MessageImportance.Low, $"CSS not found at {CssFilePath}, skipping hash");
+                return true;
+            }
+            if (!File.Exists(IndexHtmlPath))
+            {
+                Log.LogError($"index.html not found: {IndexHtmlPath}");
+                return false;
+            }
+
+            string hash;
+            using (var stream = File.OpenRead(CssFilePath))
+            using (var sha = SHA256.Create())
+            {
+                var hb = sha.ComputeHash(stream);
+                var sb = new StringBuilder(hb.Length * 2);
+                for (int i = 0; i < hb.Length; i++) sb.Append(hb[i].ToString("x2"));
+                hash = sb.ToString(0, 8);
+            }
+
+            var content = File.ReadAllText(IndexHtmlPath);
+            var newRef = "css/app.min.css?v=" + hash;
+
+            if (!content.Contains(newRef))
+            {
+                var pattern = @"css/app\.min\.css(\?v=[0-9a-fA-F]{1,32})?";
+                var replaced = Regex.Replace(content, pattern, newRef);
+                if (replaced != content)
+                {
+                    File.WriteAllText(IndexHtmlPath, replaced);
+                    Log.LogMessage(MessageImportance.High, $"Stamped CSS fingerprint: {hash}");
+                    content = replaced;
+                }
+                else
+                {
+                    Log.LogWarning("css/app.min.css not found in index.html, skipping");
+                    return true;
+                }
+            }
+
+            try
+            {
+                var tmpDir = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(IndexHtmlPath) ?? ".", "..", "..", "GmGard", "tmp"));
+                Directory.CreateDirectory(tmpDir);
+                File.WriteAllText(Path.Combine(tmpDir, "css-hash.txt"), hash);
+            }
+            catch {}
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.LogErrorFromException(ex, true);
+            return false;
+        }
+    }
+}
+      ]]></Code>
     </Task>
   </UsingTask>
 
-  <Target Name="AddCssHashToBust" AfterTargets="NpmInstallAndBuild">
-    <UpdateCssHash
-      CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css"
-      IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
+  <Target Name="NpmInstall" BeforeTargets="NpmBuildCss" Condition="'$(DesignTimeBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules')">
+    <Exec Command="npm install" />
+  </Target>
+
+  <Target Name="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json"
+          Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
+    <Exec Command="npm run build:css" />
+  </Target>
+
+  <!-- Stamps ?v={hash} AFTER css build, BEFORE static assets collection - safe ordering -->
+  <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <UpdateCssHash CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css"
+                   IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
   </Target>
 
 </Project>

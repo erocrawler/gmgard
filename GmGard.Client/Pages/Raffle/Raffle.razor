@@ -1,0 +1,122 @@
+@page "/raffle/{Id:int}"
+@attribute [Authorize]
+@inject RaffleService RaffleService
+
+<PageTitle>绅士彩券</PageTitle>
+
+<div class="max-w-2xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">绅士彩券</h1>
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (model == null)
+    {
+        <div class="card bg-base-100 shadow"><div class="card-body">
+            <div class="alert alert-error"><span>@errorMsg</span></div>
+        </div></div>
+    }
+    else
+    {
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <progress class="progress progress-primary w-full h-1 rounded-none @(!loading ? "hidden" : "")"></progress>
+
+                <h2 class="card-title text-xl">@model.Title</h2>
+
+                @if (!string.IsNullOrEmpty(model.Image))
+                {
+                    <img src="@model.Image" alt="奖品" class="w-full rounded-lg max-h-96 object-contain" />
+                }
+
+                <div class="space-y-2 text-sm mt-2">
+                    <div>活动时间：@model.EventStart.ToLocalTime().ToString("yyyy-MM-dd HH:mm") —— @model.EventEnd.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                    <div>彩券价格：<span class="font-bold">@model.RaffleCost</span> 棒棒糖</div>
+                    <div>当前棒棒糖：<span class="badge badge-primary">@model.Points</span></div>
+                    <div>一个账号限购一次</div>
+                </div>
+
+                @if (buySuccess)
+                {
+                    <div class="alert alert-success mt-3"><span>彩券购买成功！</span></div>
+                }
+                @if (!string.IsNullOrEmpty(buyError))
+                {
+                    <div class="alert alert-error mt-3"><span>@buyError</span></div>
+                }
+
+                <div class="card-actions justify-center mt-4">
+                    @if (model.IsActive)
+                    {
+                        @if (!model.HasRaffle && !buySuccess)
+                        {
+                            <button class="btn btn-primary" @onclick="Buy" disabled="@(buying || model.Points < model.RaffleCost)">
+                                @if (buying) { <span class="loading loading-spinner loading-xs"></span> }
+                                购买彩券
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-ghost" disabled>已购买</button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info"><span>@endMsg</span></div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    RaffleConfig? model;
+    bool loading = true;
+    bool buying = false;
+    bool buySuccess = false;
+    string? buyError;
+    string? errorMsg;
+    string endMsg = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        var result = await RaffleService.GetAsync(Id);
+        if (result == null)
+        {
+            errorMsg = "不存在此抽奖或加载失败。";
+        }
+        else
+        {
+            model = result;
+            var now = DateTime.Now;
+            endMsg = (now >= result.EventEnd) ? "抽奖已结束！抽奖结果请稍后参阅公告。" : "抽奖即将开始，敬请期待！";
+        }
+        loading = false;
+    }
+
+    async Task Buy()
+    {
+        if (model == null) return;
+        buying = true;
+        buyError = null;
+        StateHasChanged();
+
+        var ok = await RaffleService.BuyAsync(Id);
+        buying = false;
+        if (ok)
+        {
+            buySuccess = true;
+            model.HasRaffle = true;
+            model.Points -= model.RaffleCost;
+        }
+        else
+        {
+            buyError = "购买失败，请刷新重试。";
+        }
+    }
+}

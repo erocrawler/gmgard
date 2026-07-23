@@ -1,0 +1,192 @@
+@page "/audit-exam/admin"
+@attribute [Authorize(Roles = "Administrator")]
+@inject ExamService ExamService
+@inject NavigationManager Navigation
+
+<PageTitle>审核考试管理 - 查看考卷</PageTitle>
+
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">查看考卷（管理员）</h1>
+        <a href="audit-exam" class="btn btn-ghost btn-sm">返回列表</a>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body gap-3">
+            <div class="flex flex-wrap gap-2 items-end">
+                <fieldset class="fieldset flex-1 min-w-[140px]">
+                    <legend class="fieldset-legend">用户名</legend>
+                    <input class="input input-sm input-bordered w-full" @bind="username" placeholder="用户名" @onkeypress="OnKey" />
+                </fieldset>
+                <fieldset class="fieldset w-36">
+                    <legend class="fieldset-legend">版本</legend>
+                    <select class="select select-sm select-bordered w-full" @bind="version">
+                        <option value="">请选择</option>
+                        @foreach (var v in allVersions)
+                        {
+                            <option value="@v">@v</option>
+                        }
+                    </select>
+                </fieldset>
+                <button class="btn btn-primary btn-sm" @onclick="Lookup" disabled="@(requestActive || string.IsNullOrWhiteSpace(version))">
+                    @if (requestActive) { <span class="loading loading-spinner loading-xs"></span> }
+                    查看
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (requestActive)
+    {
+        <div class="flex justify-center py-10"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (!string.IsNullOrEmpty(username) && currentResult == null && searched)
+    {
+        <div class="alert alert-warning text-sm">
+            @if (string.IsNullOrWhiteSpace(version))
+            {
+                <span>请选择版本。</span>
+            }
+            else
+            {
+                <span>未找到用户 @username 版本 @version 的考卷。</span>
+            }
+        </div>
+    }
+    else if (currentResult != null && exam != null)
+    {
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <p class="text-sm">
+                    用户 <strong>@username</strong> 的考卷，总得分：@totalPoints。
+                    @(currentResult.HasPassed ? "通过" : "未通过")。
+                </p>
+                <p class="text-xs text-base-content/50">试卷提交于：@currentResult.SubmitTime.ToLocalTime()</p>
+            </div>
+        </div>
+
+        @foreach (var q in exam.Questions)
+        {
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-sm">第 @q.Id 题</h3>
+                        @if (resultMap.TryGetValue(q.Id, out var r))
+                        {
+                            <span class="badge badge-ghost badge-sm">得分：@r.Point @(string.IsNullOrEmpty(r.Comment) ? "" : $"— {r.Comment}")</span>
+                        }
+                    </div>
+                    <p class="text-sm mt-1">@q.Description</p>
+
+                    @if (q.Type == "Information" || q.Type == "0")
+                    {
+                        <div class="alert alert-info text-sm"><span>@q.Description</span></div>
+                    }
+                    else if (q.Type == "MultipleChoices" || q.Type == "1")
+                    {
+                        <div class="space-y-2 mt-2">
+                            @for (int i = 0; i < q.Choices.Count; i++)
+                            {
+                                var choiceIdx = i;
+                                <label class="flex gap-2 items-start text-sm @(IsCheckedResult(q.Id, choiceIdx) ? "font-semibold" : "opacity-70")">
+                                    <input type="checkbox" class="checkbox checkbox-xs mt-0.5" checked="@IsCheckedResult(q.Id, choiceIdx)" disabled />
+                                    <span>@((MarkupString)q.Choices[choiceIdx])</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-sm mt-2 space-y-1">
+                            @foreach (var part in q.Choices)
+                            {
+                                <div>@((MarkupString)part)</div>
+                            }
+                            <div class="font-mono text-sm bg-base-200 p-2 rounded mt-1">@resultMap.GetValueOrDefault(q.Id)?.Answer</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(toast))
+    {
+        <div class="toast toast-bottom toast-center z-50">
+            <div class="alert alert-error"><span>@toast</span></div>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "user")]
+    public string? QueryUser { get; set; }
+    [SupplyParameterFromQuery(Name = "version")]
+    public string? QueryVersion { get; set; }
+
+    string username = "";
+    string version = "";
+    string[] allVersions = Array.Empty<string>();
+    bool requestActive;
+    bool searched;
+    Exam? exam;
+    ExamResult? currentResult;
+    Dictionary<int, ExamAnswer> resultMap = new();
+    int totalPoints;
+    string? toast;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allVersions = ExamService.CurrentExamVersions();
+        if (!string.IsNullOrWhiteSpace(QueryUser)) username = QueryUser!;
+        if (!string.IsNullOrWhiteSpace(QueryVersion)) version = QueryVersion!;
+
+        if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(version))
+            await DoLookup();
+    }
+
+    async Task OnKey(KeyboardEventArgs e) { if (e.Key == "Enter") await Lookup(); }
+
+    async Task Lookup()
+    {
+        if (string.IsNullOrWhiteSpace(version)) { toast = "请选择版本"; return; }
+        Navigation.NavigateTo($"audit-exam/admin?user={Uri.EscapeDataString(username)}&version={Uri.EscapeDataString(version)}");
+        await DoLookup();
+    }
+
+    async Task DoLookup()
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(version)) return;
+        requestActive = true;
+        searched = false;
+        exam = null;
+        currentResult = null;
+        resultMap.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var examTask = ExamService.GetExamAsync(version);
+            var resultTask = ExamService.GetResultForUserAsync(username, version);
+            await Task.WhenAll(examTask, resultTask);
+            exam = await examTask;
+            currentResult = await resultTask;
+
+            if (currentResult != null)
+            {
+                totalPoints = currentResult.Score;
+                foreach (var a in currentResult.ExamAnswers) resultMap[a.QuestionId] = a;
+            }
+        }
+        catch (Exception ex) { toast = ex.Message; }
+        finally { requestActive = false; searched = true; }
+    }
+
+    bool IsCheckedResult(int qId, int choice)
+    {
+        if (!resultMap.TryGetValue(qId, out var ans) || string.IsNullOrWhiteSpace(ans.Answer)) return false;
+        foreach (var ch in ans.Answer.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            if (int.TryParse(ch.Trim(), out var v) && v == choice) return true;
+        return false;
+    }
+}

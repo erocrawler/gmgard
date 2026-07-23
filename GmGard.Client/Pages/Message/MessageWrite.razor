@@ -1,0 +1,182 @@
+@page "/message/write"
+@attribute [Authorize]
+@inject MessageService MessageService
+@inject NavigationManager Navigation
+
+<PageTitle>写消息</PageTitle>
+
+<div class="max-w-2xl mx-auto p-4 space-y-4">
+    <div class="flex items-center gap-2 mb-2">
+        <a href="message/inbox" class="btn btn-ghost btn-sm">← 返回收件箱</a>
+        <h1 class="text-2xl font-bold">写消息</h1>
+    </div>
+
+    @if (!string.IsNullOrEmpty(prefillInfo))
+    {
+        <div class="alert alert-info text-sm"><span>@prefillInfo</span></div>
+    }
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body gap-4">
+            @* Recipient *@
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">收件人</legend>
+                <input class="input w-full" type="text" placeholder="用户名，至少2字后会提示"
+                       @bind="recipient" @bind:event="oninput" @bind:after="OnRecipientInput" />
+                @if (suggestions.Count > 0)
+                {
+                    <div class="menu bg-base-100 rounded-box shadow border border-base-200 mt-1 max-h-48 overflow-auto">
+                        @foreach (var s in suggestions)
+                        {
+                            <li><a @onclick="() => SelectUser(s)">@FormatSuggestion(s)</a></li>
+                        }
+                    </div>
+                }
+            </fieldset>
+
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">标题</legend>
+                <input class="input w-full" type="text" placeholder="标题（可留空）" @bind="title" />
+            </fieldset>
+
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">正文</legend>
+                <textarea class="textarea w-full h-48" placeholder="消息内容" @bind="content"></textarea>
+            </fieldset>
+
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert alert-error text-sm"><span>@errorMsg</span></div>
+            }
+
+            @if (sentSuccess)
+            {
+                <div class="alert alert-success"><span>发送成功，正在跳转发件箱…</span></div>
+            }
+
+            <div class="card-actions justify-end">
+                <button class="btn btn-primary" @onclick="Send" disabled="@sending">
+                    @if (sending) { <span class="loading loading-spinner loading-xs"></span> }
+                    发送
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    string recipient = "";
+    string title = "";
+    string content = "";
+    bool sending;
+    bool sentSuccess;
+    string? errorMsg;
+    string? prefillInfo;
+    List<UserSuggestion> suggestions = new();
+    System.Threading.CancellationTokenSource? debounceCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Parse reply/forward query params
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var replyId = q["reply"];
+        var fwdId = q["forward"];
+        int? targetId = null;
+        string? action = null;
+        if (int.TryParse(replyId, out var rId)) { targetId = rId; action = "reply"; }
+        else if (int.TryParse(fwdId, out var fId)) { targetId = fId; action = "forward"; }
+
+        if (targetId.HasValue)
+        {
+            var details = await MessageService.ReadAsync(targetId.Value, false);
+            if (details != null)
+            {
+                if (action == "reply")
+                {
+                    recipient = details.Sender;
+                    title = "回复：" + (details.Title ?? "");
+                    // Strip HTML → text
+                    try
+                    {
+                        var doc = System.Net.WebUtility.HtmlDecode(details.Content);
+                        // crude text extract
+                        var plain = System.Text.RegularExpressions.Regex.Replace(doc ?? "", "<[^>]+>", ""); // doc is already decoded string
+                        content = $"\n\n---------{details.SenderNickName}于{details.SendDate.ToLocalTime():g}写道---------\n" + plain;
+                    }
+                    catch { content = $"\n\n---------{details.SenderNickName}写道---------\n"; }
+                    prefillInfo = $"回复 @{details.SenderNickName}";
+                }
+                else
+                {
+                    title = "转发：" + (details.Title ?? "");
+                    content = details.Content ?? "";
+                    prefillInfo = $"转发来自 @{details.SenderNickName}";
+                }
+            }
+        }
+    }
+
+    string FormatSuggestion(UserSuggestion s) => string.IsNullOrWhiteSpace(s.NickName) ? s.UserName : $"{s.UserName} ({s.NickName})";
+
+    async void OnRecipientInput()
+    {
+        debounceCts?.Cancel();
+        debounceCts = new System.Threading.CancellationTokenSource();
+        var token = debounceCts.Token;
+        try
+        {
+            await Task.Delay(200, token);
+            if (recipient.Length >= 2)
+            {
+                var result = await MessageService.SuggestUserAsync(recipient);
+                if (!token.IsCancellationRequested)
+                {
+                    suggestions = result;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                suggestions.Clear();
+                StateHasChanged();
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    void SelectUser(UserSuggestion s)
+    {
+        recipient = s.UserName;
+        suggestions.Clear();
+    }
+
+    async Task Send()
+    {
+        errorMsg = null;
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            errorMsg = "请填写收件人";
+            return;
+        }
+        sending = true;
+        var (ok, err) = await MessageService.SendAsync(new SendMessageRequest
+        {
+            Recipient = recipient,
+            Title = title,
+            Content = content
+        });
+        sending = false;
+        if (ok)
+        {
+            sentSuccess = true;
+            StateHasChanged();
+            await Task.Delay(800);
+            Navigation.NavigateTo("message/outbox");
+        }
+        else
+        {
+            errorMsg = string.IsNullOrWhiteSpace(err) ? "发送失败，请重试" : err;
+        }
+    }
+}

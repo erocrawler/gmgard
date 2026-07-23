@@ -83,6 +83,7 @@ namespace GmGard
             services.Configure<BackgroundSetting>(ConfigFromDataFile("App_Data/BackgroundSetting.json"));
             services.Configure<Models.App.AuditExamConfig>(ConfigFromDataFile("App_Data/AuditExam.json"));
             services.Configure<Models.App.WheelConfig>(ConfigFromDataFile("App_Data/WheelConfig.json"));
+            services.Configure<Models.App.TitleCategoriesConfig>(ConfigFromDataFile("App_Data/TitleCategories.json"));
             var siteConfig = ConfigFromDataFile("App_Data/SiteConfig.json");
             services.Configure<SiteConfig>(siteConfig);
 

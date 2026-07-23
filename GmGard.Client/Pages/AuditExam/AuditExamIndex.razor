@@ -1,0 +1,70 @@
+@page "/audit-exam"
+@attribute [Authorize]
+@inject ExamService ExamService
+
+<PageTitle>审核组测试</PageTitle>
+
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p>欢迎参加审核组测试！本测试用于开放用户审核的同时保证审核质量。题目内容均为审核工作中的常见问题。本测试答题时间不限，完成任意一组测试即可加入审核组。</p>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else
+    {
+        <div class="card bg-base-100 shadow">
+            <div class="card-body p-0">
+                <ul class="menu">
+                    @foreach (var exam in allExams)
+                    {
+                        <li>
+                            <a href="audit-exam/do/@exam.ExamVersion" class="flex justify-between">
+                                <span>试题版本：@exam.ExamVersion</span>
+                                @if (exam.IsSubmitted)
+                                {
+                                    <span class="flex items-center gap-2 text-xs">
+                                        提交时间：@exam.SubmitTime.ToLocalTime().ToString("yyyy-MM-dd") 得分：@exam.Score
+                                        @if (exam.HasPassed) { <span class="badge badge-success badge-sm">通过</span> } else { <span class="badge badge-error badge-sm">未通过</span> }
+                                    </span>
+                                }
+                                else if (exam.SubmitTime != default)
+                                {
+                                    <span class="text-xs text-base-content/50">草稿保存于：@exam.SubmitTime.ToLocalTime().ToString("g")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-ghost badge-sm">未开始</span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    List<ExamResult> allExams = new();
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var results = await ExamService.GetAllResultsAsync();
+        var versions = ExamService.CurrentExamVersions();
+        allExams = results ?? new List<ExamResult>();
+        foreach (var v in versions)
+        {
+            if (!allExams.Any(er => er.ExamVersion == v))
+            {
+                allExams.Add(new ExamResult { ExamVersion = v });
+            }
+        }
+        loading = false;
+    }
+}

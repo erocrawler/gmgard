@@ -1,99 +1,44 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 
-<div class="navbar bg-base-100 shadow-lg">
+<div class="navbar bg-base-100 shadow-sm border-b border-base-200">
     <div class="navbar-start">
-        <a class="btn btn-ghost text-xl" href="">绅士应用</a>
+        <a class="btn btn-ghost text-xl font-bold" href="">绅士应用</a>
     </div>
-    <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
-            <li>
-                <NavLink href="title-helper" class="rounded-none">标题助手</NavLink>
-            </li>
-            <li>
-                <NavLink href="gacha" class="rounded-none">绅士抽奖</NavLink>
-            </li>
-            <li>
-                <NavLink href="wheel" class="rounded-none">绅士转盘</NavLink>
-            </li>
-            <li>
-                <NavLink href="punch-in" class="rounded-none">绅士签到</NavLink>
-            </li>
-            <li>
-                <NavLink href="game" class="rounded-none">绅士冒险</NavLink>
-            </li>
-            <li>
-                <NavLink href="bounty" class="rounded-none">绅士求物板</NavLink>
-            </li>
-            <li>
-                <NavLink href="message" class="rounded-none">消息中心</NavLink>
-            </li>
-        </ul>
-    </div>
-    <div class="navbar-end">
-        @* User menu (desktop) *@
+    @* Center empty - features are deep-linked from main site, no need to list *@
+    <div class="navbar-center"></div>
+    <div class="navbar-end gap-2">
         <AuthorizeView>
             <Authorized>
-                <div class="dropdown dropdown-end hidden lg:block">
+                <div class="dropdown dropdown-end">
                     <label tabindex="0" class="btn btn-ghost btn-circle avatar">
-                        <div class="w-10 rounded-full ring ring-base-300">
+                        <div class="w-9 rounded-full ring ring-base-300 ring-offset-2 ring-offset-base-100">
                             <img src="@avatarUrl" alt="avatar" />
                         </div>
                     </label>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                        <li class="menu-title">
-                            <span>@context.User.Identity?.Name</span>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-box w-56 mt-2 border border-base-200">
+                        <li class="menu-title px-4 py-2">
+                            <span class="text-xs opacity-60">已登录</span>
+                            <span class="text-sm font-semibold truncate">@context.User.Identity?.Name</span>
                         </li>
+                        <div class="divider my-0"></div>
+                        <li class="menu-title mt-1"><span>账号</span></li>
+                        <li><NavLink href="account/2fa">两步验证</NavLink></li>
+                        <li><NavLink href="account/enable2fa">开启两步验证</NavLink></li>
+                        <li class="menu-title mt-1"><span>管理</span></li>
+                        <li><NavLink href="admin">管理首页</NavLink></li>
+                        <li><NavLink href="admin/category">分类管理</NavLink></li>
+                        <li><NavLink href="admin/raffle">抽奖管理</NavLink></li>
+                        <li><NavLink href="audit-exam/admin">审核考试管理</NavLink></li>
+                        <div class="divider my-1"></div>
                         <li><a @onclick="Logout" class="text-error">退出登录</a></li>
                     </ul>
                 </div>
             </Authorized>
             <NotAuthorized>
-                <a href="login" class="btn btn-primary btn-sm hidden lg:flex">登录</a>
+                <a href="login" class="btn btn-primary btn-sm">登录</a>
             </NotAuthorized>
         </AuthorizeView>
-
-        @* Mobile menu toggle *@
-        <div class="lg:hidden">
-            <div class="dropdown dropdown-end">
-                <label tabindex="0" class="btn btn-ghost btn-circle">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                </label>
-                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li>
-                        <NavLink href="title-helper">标题助手</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="gacha">绅士抽奖</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="wheel">绅士转盘</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="punch-in">绅士签到</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="game">绅士冒险</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="bounty">绅士求物板</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="message">消息中心</NavLink>
-                    </li>
-                    <AuthorizeView>
-                        <Authorized>
-                            <li class="menu-title"><span>@context.User.Identity?.Name</span></li>
-                            <li><a @onclick="Logout" class="text-error">退出登录</a></li>
-                        </Authorized>
-                        <NotAuthorized>
-                            <li><NavLink href="login">登录</NavLink></li>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                </ul>
-            </div>
-        </div>
     </div>
 </div>
 

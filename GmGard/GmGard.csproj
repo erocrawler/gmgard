@@ -41,7 +41,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="wwwroot\**\*;Views\**\*">
+    <!-- SDK handles wwwroot automatically. Including wwwroot\** in None causes a race with Blazor static web asset pipeline
+         leading to _CopyOutOfDateSourceItemsToOutputDirectory failing with exit code 1 in quiet builds. -->
+    <None Update="Views\**\*">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <None Update="wwwroot\bower_components\**\*;wwwroot\_references.js;">
@@ -53,7 +55,10 @@
 	</None>
 	<None Update="package.json;package-lock.json">
 		<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	</None>
+    <None Remove="package.json;package-lock.json" />
+    <Content Remove="package.json;package-lock.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -264,8 +269,92 @@
     <TypeScriptSourceRoot />
   </PropertyGroup>
 
-  <Target Name="RunGulp" BeforeTargets="Build">
-    <Exec Command="npm install" />
-    <Exec Command="gulp min" />
+  <!--
+    =============================================================
+    FIX FOR: MSBUILD : error Building target "_CopyOutOfDateSourceItemsToOutputDirectory"
+    
+    Root causes:
+    1) gulp min generates files into wwwroot/**/* while MSBuild is collecting
+       _CopyOutOfDateSourceItemsToOutputDirectory inputs → race.
+       OLD: BeforeTargets="Build" runs in parallel with CoreCompile + copy targets.
+       NEW: BeforeTargets="ResolveStaticWebAssetsInputs;BeforeBuild" + DesignTimeBuild guard
+            + proper Inputs/Outputs for incremental builds.
+
+    2) All *.d.ts from DtsGenerator + bower/advs are constantly marked out-of-date
+       unless excluded from CopyToOutputDirectory.
+
+    3) tmp/ is workspace-local diagnostics (binlogs, server logs).
+       Must never be part of Content/None copy.
+
+    Logs are written to GmGard/tmp/ per user request, and excluded here + in .gitignore.
+    =============================================================
+  -->
+
+  <PropertyGroup>
+    <!-- Where we store local diagnostics - never part of publish/output -->
+    <GmGardTmpDir>$(MSBuildProjectDirectory)/tmp</GmGardTmpDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Ensure tmp exists (harmless, incremental) -->
+    <Folder Include="tmp\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't copy TS declaration files or adv/node artifacts or tmp logs to output -->
+    <None Update="**/*.d.ts">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <Content Update="**/*.d.ts">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+
+    <!-- Generated min assets are already in wwwroot and handled by StaticWebAssets,
+         but raw source folders should not be copied via None/Content transfer -->
+    <None Update="wwwroot/adv/**;wwwroot/bower_components/**;node_modules/**;wwwroot/node_modules/**;tmp/**">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <Content Update="wwwroot/adv/**;wwwroot/bower_components/**;node_modules/**;wwwroot/node_modules/**;tmp/**">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+
+    <!-- But Scripts/* and Content/* .min.js/.min.css ARE intentional output from gulp, must stay -->
+    <!-- tmp must be removed from any SDK glob -->
+    <None Remove="tmp/**" />
+    <Content Remove="tmp/**" />
+    <EmbeddedResource Remove="tmp/**" />
+  </ItemGroup>
+
+  <!-- npm install only if node_modules missing, skip during design-time builds (intellisense) -->
+  <Target Name="NpmInstallServer" BeforeTargets="RunGulp" Condition="'$(DesignTimeBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules')">
+    <Exec Command="npm install" StandardOutputImportance="Low" />
+  </Target>
+
+  <!--
+    gulp generates Content/*.min.css and Scripts/*.min.js into wwwroot.
+    MUST run BEFORE static assets are collected to avoid
+    _CopyOutOfDateSourceItemsToOutputDirectory race.
+    
+    Inputs uses concrete files + explicit globs via ItemGroup; Outputs enables incremental skip.
+    Logs: GmGard/tmp/ per user request - gitignored & excluded.
+  -->
+  <ItemGroup>
+    <GulpCssSrc Include="wwwroot/Content/Site.css;wwwroot/Content/admin.css;wwwroot/Content/calendar.css;wwwroot/Content/chuncai.css;wwwroot/Content/follow.css;wwwroot/Content/userinfo.css;wwwroot/Content/tagmanager.css;wwwroot/Content/lightbox.css" />
+    <GulpJsSrc Include="wwwroot/Scripts/chuncai.js;wwwroot/Scripts/followScripts.js;wwwroot/Scripts/detailScripts.js;wwwroot/Scripts/pager.js;wwwroot/Scripts/scroll.js;wwwroot/Scripts/SubCategorySelect.js;wwwroot/Scripts/calendar.js;wwwroot/Scripts/Expansion.js;wwwroot/Scripts/tagmanager.js" />
+  </ItemGroup>
+
+  <!-- Inputs cannot use ! patterns, so we use concrete ItemGroups above -->
+  <Target Name="RunGulp"
+          BeforeTargets="ResolveStaticWebAssetsInputs;BeforeBuild"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="@(GulpCssSrc);@(GulpJsSrc);gulpfile.js;package.json"
+          Outputs="wwwroot/Content/Site.min.css;wwwroot/Scripts/site.min.js;wwwroot/Content/datepicker.min.css;wwwroot/Scripts/datepicker.min.js">
+    <Message Text="Running gulp min -> wwwroot/** (incremental, logs: GmGard/tmp/)" Importance="Low" />
+    <!-- write gulp output to workspace-local tmp per user request, ignore errors if tmp missing -->
+    <Exec Command="mkdir tmp 2&gt; nul &amp; npx gulp min --silent &gt; tmp/gulp.log 2&gt;&amp;1" />
   </Target>
 </Project>

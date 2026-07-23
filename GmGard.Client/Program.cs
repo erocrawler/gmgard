@@ -15,6 +15,12 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<BlogSearchService>();
 builder.Services.AddScoped<DLsiteSearchService>();
 builder.Services.AddScoped<PunchInService>();
+builder.Services.AddScoped<MessageService>();
+builder.Services.AddScoped<RaffleService>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<ExamService>();
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<TitleHelperService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthenticationStateProvider>();
 
 await builder.Build().RunAsync();

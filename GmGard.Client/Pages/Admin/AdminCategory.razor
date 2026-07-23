@@ -1,0 +1,331 @@
+@page "/admin/category"
+@attribute [Authorize(Roles = "Administrator,Moderator")]
+@inject AdminService AdminService
+
+<PageTitle>栏目管理</PageTitle>
+
+<div class="max-w-4xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">绅士管理</h1>
+    <div class="tabs tabs-boxed w-fit">
+        <a href="admin/registration" class="tab">注册码管理</a>
+        <a href="admin/category" class="tab tab-active">栏目管理</a>
+        <a href="admin/raffle" class="tab">抽奖管理</a>
+    </div>
+
+    @if (loading && categories == null)
+    {
+        <div class="flex justify-center py-10"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else
+    {
+        <!-- Remove all overflow-hidden ancestors that crop dropdowns -->
+        <div class="card bg-base-100 shadow" style="overflow: visible;">
+            <div class="card-body" style="overflow: visible;">
+                <div style="overflow: visible;">
+                    <table class="table table-sm">
+                        <thead><tr><th>ID</th><th>名称</th><th>父栏目</th><th>选项</th><th>操作</th></tr></thead>
+                        <tbody>
+                            @foreach (var c in categoryViewModels)
+                            {
+                                <tr>
+                                    <td>@c.CategoryID</td>
+                                    <td>
+                                        @if (editingId == c.CategoryID)
+                                        {
+                                            <input class="input input-xs w-32" @bind="editModel.CategoryName" />
+                                        }
+                                        else { @c.CategoryName }
+                                    </td>
+                                    <td>
+                                        @if (editingId == c.CategoryID)
+                                        {
+                                            <select class="select select-xs select-bordered w-36" @bind="editParent">
+                                                <option value="">(无)</option>
+                                                @foreach (var opt in categoryDropdown)
+                                                {
+                                                    if (opt.Value != c.CategoryID)
+                                                    {
+                                                        <option value="@opt.Value">@opt.Label</option>
+                                                    }
+                                                }
+                                            </select>
+                                        }
+                                        else { <span class="text-xs">@c.ParentName</span> }
+                                    </td>
+                                    <td>
+                                        @if (editingId == c.CategoryID)
+                                        {
+                                            <div class="min-w-[220px]">
+                                                <div class="text-[11px] opacity-60 mb-1">选项 (多选)</div>
+                                                <div class="grid grid-cols-1 gap-1">
+                                                    @foreach (var opt in optionDefs)
+                                                    {
+                                                        <label class="flex items-center gap-2 cursor-pointer text-xs p-1 rounded hover:bg-base-200">
+                                                            <input type="checkbox" class="checkbox checkbox-xs" checked="@editOptions.Contains(opt.Value)" @onchange="e => Toggle(editOptions, opt.Value, (bool)e.Value!)" />
+                                                            <span>@opt.Label</span>
+                                                        </label>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="flex gap-1 flex-wrap">
+                                                @if (c.LinkOptional) { <span class="badge badge-ghost badge-xs gap-1" title="不要求投稿链接"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22"/></svg> 链接可选</span> }
+                                                @if (c.DisableRanking) { <span class="badge badge-ghost badge-xs gap-1" title="不参与排行"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> 禁排行</span> }
+                                                @if (c.DisableRating) { <span class="badge badge-ghost badge-xs gap-1" title="不参与评分"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><line x1="2" y1="2" x2="22" y2="22"/></svg> 禁评分</span> }
+                                                @if (c.HideFromHomePage) { <span class="badge badge-ghost badge-xs gap-1" title="不在主页与资源列表默认显示"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.59 9.59 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg> 隐藏</span> }
+                                                @if (!c.LinkOptional && !c.DisableRanking && !c.DisableRating && !c.HideFromHomePage) { <span class="opacity-40 text-xs">—</span> }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="flex gap-1">
+                                        @if (editingId == c.CategoryID)
+                                        {
+                                            <button class="btn btn-primary btn-xs" @onclick="Save" disabled="@editSaving">保存</button>
+                                            <button class="btn btn-ghost btn-xs" @onclick="Cancel">取消</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => Edit(c)">编辑</button>
+                                            <button class="btn btn-error btn-xs" @onclick="() => DeleteCat(c.CategoryID)">删除</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            @if (editingId == 0)
+                            {
+                                <tr>
+                                    <td></td>
+                                    <td><input class="input input-xs w-32" placeholder="新栏目" @bind="newCat.CategoryName" /></td>
+                                    <td>
+                                        <select class="select select-xs select-bordered w-36" @bind="newParent">
+                                            <option value="">(无父栏目)</option>
+                                            @foreach (var opt in categoryDropdown)
+                                            {
+                                                <option value="@opt.Value">@opt.Label</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div class="min-w-[220px]">
+                                            <div class="text-[11px] opacity-60 mb-1">选项 (多选)</div>
+                                            <div class="grid grid-cols-1 gap-1">
+                                                @foreach (var opt in optionDefs)
+                                                {
+                                                    <label class="flex items-center gap-2 cursor-pointer text-xs p-1 rounded hover:bg-base-200">
+                                                        <input type="checkbox" class="checkbox checkbox-xs" checked="@newOptions.Contains(opt.Value)" @onchange="e => Toggle(newOptions, opt.Value, (bool)e.Value!)" />
+                                                        <span>@opt.Label</span>
+                                                    </label>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><button class="btn btn-primary btn-xs" @onclick="AddNew" disabled="@newSaving">添加</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="toast toast-bottom toast-center z-50"><div class="alert @(isError ? "alert-error" : "alert-success")"><span>@message</span></div></div>
+    }
+</div>
+
+@code {
+    List<CategoryAdmin>? categories;
+    List<CategoryViewModel> categoryViewModels = new();
+    List<DropdownOpt> categoryDropdown = new();
+    bool loading = true;
+    string? message;
+    bool isError;
+    int editingId = 0;
+    CategoryAdmin editModel = new();
+    CategoryAdmin newCat = new();
+    string? editParent;
+    string? newParent;
+    bool editSaving;
+    bool newSaving;
+
+    class CategoryViewModel : CategoryAdmin
+    {
+        public string ParentName { get; set; } = "";
+        public string IndentedName { get; set; } = "";
+    }
+    record DropdownOpt(int Value, string Label);
+    record OptionDef(string Value, string Label);
+
+    // Angular: mat-select[multiple] with 4 values - matching exactly
+    List<string> editOptions = new();
+    List<string> newOptions = new();
+    List<OptionDef> optionDefs = new()
+    {
+        new("linkOptional", "不要求投稿链接"),
+        new("disableRanking", "不参与排行"),
+        new("disableRating", "不参与评分"),
+        new("hideFromHomePage", "不在主页与资源列表默认显示"),
+    };
+
+    void Toggle(List<string> list, string value, bool checked_)
+    {
+        if (checked_) { if (!list.Contains(value)) list.Add(value); }
+        else list.Remove(value);
+    }
+
+    void Apply(HashSet<string> opts, CategoryAdmin m)
+    {
+        m.LinkOptional = opts.Contains("linkOptional");
+        m.DisableRanking = opts.Contains("disableRanking");
+        m.DisableRating = opts.Contains("disableRating");
+        m.HideFromHomePage = opts.Contains("hideFromHomePage");
+    }
+
+    HashSet<string> FromModel(CategoryAdmin m)
+    {
+        var s = new HashSet<string>();
+        if (m.LinkOptional) s.Add("linkOptional");
+        if (m.DisableRanking) s.Add("disableRanking");
+        if (m.DisableRating) s.Add("disableRating");
+        if (m.HideFromHomePage) s.Add("hideFromHomePage");
+        return s;
+    }
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    async Task Load()
+    {
+        loading = true;
+        categories = await AdminService.GetCategoriesAsync();
+        BuildViewModels();
+        loading = false;
+    }
+
+    void BuildViewModels()
+    {
+        if (categories == null) { categoryViewModels = new(); categoryDropdown = new(); return; }
+        var byId = categories.ToDictionary(c => c.CategoryID);
+        var viewMap = new Dictionary<int, CategoryViewModel>();
+        foreach (var c in categories)
+        {
+            viewMap[c.CategoryID] = new CategoryViewModel
+            {
+                CategoryID = c.CategoryID,
+                CategoryName = c.CategoryName,
+                ParentCategoryID = c.ParentCategoryID,
+                Description = c.Description,
+                DisableRanking = c.DisableRanking,
+                DisableRating = c.DisableRating,
+                HideFromHomePage = c.HideFromHomePage,
+                LinkOptional = c.LinkOptional,
+                ParentName = c.ParentCategoryID.HasValue && byId.TryGetValue(c.ParentCategoryID.Value, out var p) ? p.CategoryName : ""
+            };
+        }
+
+        var childrenMap = new Dictionary<int, List<CategoryAdmin>>();
+        foreach (var c in categories)
+        {
+            if (c.ParentCategoryID.HasValue)
+            {
+                if (!childrenMap.ContainsKey(c.ParentCategoryID.Value)) childrenMap[c.ParentCategoryID.Value] = new();
+                childrenMap[c.ParentCategoryID.Value].Add(c);
+            }
+        }
+
+        var roots = categories.Where(c => c.ParentCategoryID == null).OrderByDescending(c => c.CategoryID).ToList();
+        var stack = new Stack<(CategoryAdmin cat, int depth)>(roots.Select(r => (r, 0)).Reverse());
+        var dropdown = new List<DropdownOpt>();
+        var orderedVms = new List<CategoryViewModel>();
+
+        while (stack.Count > 0)
+        {
+            var (cat, depth) = stack.Pop();
+            var label = depth == 0 ? cat.CategoryName : new string('　', depth - 1) + "└" + cat.CategoryName;
+            dropdown.Add(new DropdownOpt(cat.CategoryID, label));
+
+            if (viewMap.TryGetValue(cat.CategoryID, out var vm))
+            {
+                vm.IndentedName = label;
+                orderedVms.Add(vm);
+            }
+
+            if (childrenMap.TryGetValue(cat.CategoryID, out var kids))
+            {
+                foreach (var kid in kids.OrderByDescending(k => k.CategoryID))
+                    stack.Push((kid, depth + 1));
+            }
+        }
+
+        foreach (var c in categories)
+        {
+            if (!dropdown.Any(d => d.Value == c.CategoryID))
+            {
+                dropdown.Add(new DropdownOpt(c.CategoryID, c.CategoryName));
+                if (viewMap.TryGetValue(c.CategoryID, out var vm) && !orderedVms.Contains(vm))
+                    orderedVms.Add(vm);
+            }
+        }
+
+        categoryDropdown = dropdown;
+        categoryViewModels = orderedVms;
+    }
+
+    void Edit(CategoryViewModel c)
+    {
+        editingId = c.CategoryID;
+        editModel = new CategoryAdmin
+        {
+            CategoryID = c.CategoryID,
+            CategoryName = c.CategoryName,
+            ParentCategoryID = c.ParentCategoryID,
+            Description = c.Description,
+            DisableRanking = c.DisableRanking,
+            DisableRating = c.DisableRating,
+            HideFromHomePage = c.HideFromHomePage,
+            LinkOptional = c.LinkOptional
+        };
+        editParent = c.ParentCategoryID?.ToString();
+        editOptions = FromModel(c).ToList();
+    }
+
+    void Cancel() { editingId = 0; editOptions.Clear(); editParent = null; }
+
+    async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(editModel.CategoryName)) { ShowToast("名称不能为空", true); return; }
+        if (string.IsNullOrWhiteSpace(editParent) || !int.TryParse(editParent, out var pid)) editModel.ParentCategoryID = null; else editModel.ParentCategoryID = pid;
+        Apply(editOptions.ToHashSet(), editModel);
+        editSaving = true;
+        var id = await AdminService.UpdateCategoryAsync(editModel);
+        editSaving = false;
+        if (id.HasValue) { await Load(); editingId = 0; editOptions.Clear(); editParent = null; ShowToast("已保存"); }
+        else ShowToast("保存失败", true);
+    }
+
+    async Task AddNew()
+    {
+        if (string.IsNullOrWhiteSpace(newCat.CategoryName)) { ShowToast("请输入栏目名称", true); return; }
+        if (string.IsNullOrWhiteSpace(newParent) || !int.TryParse(newParent, out var npid)) newCat.ParentCategoryID = null; else newCat.ParentCategoryID = npid;
+        Apply(newOptions.ToHashSet(), newCat);
+        newSaving = true;
+        var id = await AdminService.UpdateCategoryAsync(newCat);
+        newSaving = false;
+        if (id.HasValue) { await Load(); newCat = new(); newParent = null; newOptions.Clear(); ShowToast("已新增"); }
+        else ShowToast("新增失败", true);
+    }
+
+    async Task DeleteCat(int id)
+    {
+        var ok = await AdminService.DeleteCategoryAsync(id);
+        if (ok) { await Load(); ShowToast("已删除"); }
+        else ShowToast("删除失败", true);
+    }
+
+    void ShowToast(string msg, bool err = false) { message = msg; isError = err; StateHasChanged(); Task.Delay(3000).ContinueWith(_ => { message = null; InvokeAsync(StateHasChanged); }); }
+}
+
+

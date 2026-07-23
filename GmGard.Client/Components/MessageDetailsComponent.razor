@@ -1,0 +1,72 @@
+@using GmGard.Client.Models
+@using GmGard.Client.Services
+@inject MessageService MessageService
+
+@if (loading)
+{
+    <progress class="progress progress-primary w-full h-1"></progress>
+}
+else if (msg != null)
+{
+    <div class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+            <span>发件人：
+                <a href="@msg.SenderLink" target="_blank" class="link link-primary inline-flex items-center gap-1">
+                    <img class="w-6 h-6 rounded-full" src="@msg.SenderAvatar" alt="@msg.SenderNickName" />
+                    @msg.SenderNickName
+                </a>
+            </span>
+            <span class="hidden sm:inline">/</span>
+            <span>收件人：
+                <a href="@msg.RecipientLink" target="_blank" class="link link-primary inline-flex items-center gap-1">
+                    <img class="w-6 h-6 rounded-full" src="@msg.RecipientAvatar" alt="@msg.RecipientNickName" />
+                    @msg.RecipientNickName
+                </a>
+            </span>
+        </div>
+
+        <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm btn-error" @onclick="HandleDelete">删除</button>
+            <a class="btn btn-ghost btn-sm" href="message/write?reply=@msg.MessageId">回复</a>
+            <a class="btn btn-ghost btn-sm" href="message/write?forward=@msg.MessageId">转发</a>
+        </div>
+
+        <div class="divider my-1"></div>
+        <div class="prose max-w-none text-sm break-words" style="word-break:break-word">@((MarkupString)(content ?? ""))</div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public bool MarkRead { get; set; }
+    [Parameter] public EventCallback<int> OnDeleted { get; set; }
+
+    MessageDetails? msg;
+    string? content;
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await MessageService.ReadAsync(Id, MarkRead);
+        if (result != null)
+        {
+            msg = result;
+            content = result.Content?.Replace("\n", "<br />");
+        }
+        loading = false;
+    }
+
+    async Task HandleDelete()
+    {
+        loading = true;
+        StateHasChanged();
+        if (await MessageService.DeleteAsync(Id))
+        {
+            await OnDeleted.InvokeAsync(Id);
+        }
+        else
+        {
+            loading = false;
+        }
+    }
+}

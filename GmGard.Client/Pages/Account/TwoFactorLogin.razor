@@ -1,0 +1,103 @@
+@page "/account/twofactor"
+@inject AccountService AccountService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>两步验证登录</PageTitle>
+
+<div class="min-h-[70vh] flex items-center justify-center p-4">
+    <div class="card bg-base-100 shadow-xl w-full max-w-md">
+        <div class="card-body gap-4">
+            <h1 class="card-title">两步验证</h1>
+
+            <p class="text-sm text-base-content/60">请输入您的验证器APP生成的6位验证码。</p>
+
+            @if (!showRecovery)
+            {
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">验证码</legend>
+                    <input class="input w-full" placeholder="6位数字" @bind="code" @bind:event="oninput" />
+                </fieldset>
+
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input type="checkbox" class="checkbox checkbox-sm" @bind="rememberMachine" />
+                    <span class="label-text">记住此设备</span>
+                </label>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-error text-sm"><span>@error</span></div>
+                }
+
+                <div class="flex flex-col gap-2">
+                    <button class="btn btn-primary w-full" @onclick="Submit" disabled="@submitting">
+                        @if (submitting) { <span class="loading loading-spinner loading-xs"></span> }
+                        验证
+                    </button>
+                    <button class="btn btn-ghost btn-sm" @onclick="() => showRecovery = true">使用应急密码</button>
+                </div>
+            }
+            else
+            {
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">应急密码</legend>
+                    <input class="input w-full" placeholder="应急密码" @bind="recoveryCode" @bind:event="oninput" />
+                </fieldset>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-error text-sm"><span>@error</span></div>
+                }
+
+                <div class="flex flex-col gap-2">
+                    <button class="btn btn-primary w-full" @onclick="SubmitRecovery" disabled="@submitting">
+                        @if (submitting) { <span class="loading loading-spinner loading-xs"></span> }
+                        使用应急密码登录
+                    </button>
+                    <button class="btn btn-ghost btn-sm" @onclick="() => showRecovery = false">返回验证码登录</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    string code = "";
+    string recoveryCode = "";
+    bool rememberMachine = false;
+    bool submitting = false;
+    bool showRecovery = false;
+    string? error;
+
+    async Task Submit()
+    {
+        error = null;
+        submitting = true;
+        var result = await AccountService.TwoFactorLoginAsync(false, rememberMachine, code.Trim());
+        submitting = false;
+        if (result.Success)
+        {
+            AuthService.NavigateAfterLogin();
+        }
+        else
+        {
+            error = result.Errors.FirstOrDefault() ?? "验证失败";
+        }
+    }
+
+    async Task SubmitRecovery()
+    {
+        error = null;
+        submitting = true;
+        var result = await AccountService.RecoveryCodeLoginAsync(recoveryCode.Trim());
+        submitting = false;
+        if (result.Success)
+        {
+            AuthService.NavigateAfterLogin();
+        }
+        else
+        {
+            error = result.Errors.FirstOrDefault() ?? "应急密码无效";
+        }
+    }
+}

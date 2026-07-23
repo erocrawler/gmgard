@@ -1,0 +1,253 @@
+@page "/audit-exam/do/{Version}"
+@attribute [Authorize]
+@inject ExamService ExamService
+@inject NavigationManager Navigation
+
+<PageTitle>审核组测试</PageTitle>
+
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (exam == null)
+    {
+        <div class="alert alert-error"><span>试卷加载失败或版本不存在。</span></div>
+    }
+    else
+    {
+        @if (currentResult != null)
+        {
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    @if (currentResult.HasPassed)
+                    {
+                        <p>恭喜！您通过了审核组测试。总得分：@totalPoints。请返回<a class="link link-primary" href="/Audit/Join" target="_blank">主站</a>加入审核组参与审核投票！</p>
+                    }
+                    else
+                    {
+                        <p>很遗憾！您未通过审核组测试。总得分：@totalPoints。请返回<a class="link link-primary" href="audit-exam">题目列表</a>，欢迎在测试题目更新后重新参与。</p>
+                    }
+                    <p class="text-xs text-base-content/50">试卷提交于：@currentResult.SubmitTime.ToLocalTime()</p>
+                </div>
+            </div>
+        }
+
+        @foreach (var q in exam.Questions)
+        {
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex justify-between">
+                        <h3 class="font-bold">第 @q.Id 题</h3>
+                        @if (resultMap.TryGetValue(q.Id, out var r))
+                        {
+                            <span class="text-xs">得分：@r.Point @(string.IsNullOrEmpty(r.Comment) ? "" : $"— {r.Comment}")</span>
+                        }
+                    </div>
+                    <p class="text-sm mt-1">@q.Description</p>
+
+                    @if (q.Type == "Information")
+                    {
+                        <div class="alert alert-info text-sm"><span>@q.Description</span></div>
+                    }
+                    else if (q.Type == "MultipleChoices" || q.Type == "1")
+                    {
+                        <div class="space-y-2 mt-2">
+                            @for (int i = 0; i < q.Choices.Count; i++)
+                            {
+                                var idx = i;
+                                <label class="flex gap-2 items-start cursor-pointer">
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-sm mt-0.5"
+                                           checked="@IsChecked(q.Id, idx)"
+                                           disabled="@(!examActive)"
+                                           @onchange="e => OnChoiceChanged(q.Id, idx, (bool)e.Value!)" />
+                                    <span class="text-sm">@((MarkupString)q.Choices[idx])</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        string ph = q.Type == "FillInBlank" ? "填写答案" : (q.Type == "TitleCombination" ? "按要求组合标题" : $"类型 {q.Type}");
+                        <div class="mt-2">
+                            <span class="text-sm">@(q.Choices.FirstOrDefault() ?? ph)</span>
+                            @foreach (var part in q.Choices.Skip(1))
+                            {
+                                <div class="text-sm mb-1">@((MarkupString)part)</div>
+                            }
+                            <input class="input input-bordered input-sm w-full mt-1"
+                                   placeholder="@ph"
+                                   disabled="@( !examActive )"
+                                   value="@AnswerValues[q.Id]"
+                                   @onchange="@( (ChangeEventArgs e) => HandleTextChange(q.Id, e) )" />
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (examActive)
+        {
+            <div class="flex justify-end items-center gap-4">
+                @if (lastSave.HasValue)
+                {
+                    <span class="text-xs text-base-content/50">草稿保存于 @lastSave.Value.ToLocalTime().ToString("g")</span>
+                }
+                <button class="btn btn-primary" @onclick="Submit" disabled="@submitting">
+                    @if (submitting) { <span class="loading loading-spinner loading-xs"></span> }
+                    提交
+                </button>
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(toast))
+    {
+        <div class="toast toast-bottom toast-center z-50">
+            <div class="alert @(toastError ? "alert-error" : "alert-success")"><span>@toast</span></div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Version { get; set; } = "";
+
+    Exam? exam;
+    bool loading = true;
+    bool examActive = false;
+    bool submitting = false;
+    ExamResult? currentResult;
+    int totalPoints;
+    ExamSubmission submission = new();
+    Dictionary<int, string> answerMap = new();
+    Dictionary<int, string> AnswerValues => answerMap;
+    Dictionary<int, ExamAnswer> resultMap = new();
+    Dictionary<int, HashSet<int>> multiChoiceMap = new();
+    DateTime? lastSave;
+    string? toast;
+    bool toastError;
+    System.Threading.CancellationTokenSource? toastCts;
+    System.Threading.CancellationTokenSource? debounceCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!ExamService.CurrentExamVersions().Contains(Version))
+        {
+            Navigation.NavigateTo("audit-exam");
+            return;
+        }
+
+        var examTask = ExamService.GetExamAsync(Version);
+        var draftTask = ExamService.GetDraftAsync(Version);
+        var resultTask = ExamService.GetResultAsync(Version);
+
+        await Task.WhenAll(examTask, draftTask, resultTask);
+
+        exam = await examTask;
+        var draft = await draftTask;
+        var result = await resultTask;
+
+        if (exam == null) { loading = false; return; }
+
+        if (result != null && result.IsSubmitted)
+        {
+            currentResult = result;
+            totalPoints = result.Score;
+            foreach (var a in result.ExamAnswers) resultMap[a.QuestionId] = a;
+            examActive = false;
+            loading = false;
+            return;
+        }
+
+        examActive = true;
+        submission = draft ?? new ExamSubmission { ExamVersion = Version };
+        foreach (var q in exam.Questions)
+        {
+            if (q.Type == "Information" || q.Type == "0") continue;
+            var existing = submission.ExamAnswers.FirstOrDefault(a => a.QuestionId == q.Id);
+            if (existing == null)
+            {
+                existing = new QuestionSubmission { QuestionId = q.Id, Answer = "" };
+                submission.ExamAnswers.Add(existing);
+            }
+            answerMap[q.Id] = existing.Answer;
+
+            // parse multi choice
+            if ((q.Type == "MultipleChoices" || q.Type == "1") && !string.IsNullOrWhiteSpace(existing.Answer))
+            {
+                var set = new HashSet<int>();
+                foreach (var ch in existing.Answer.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    if (int.TryParse(ch.Trim(), out var v)) set.Add(v);
+                multiChoiceMap[q.Id] = set;
+            }
+        }
+        loading = false;
+    }
+
+    string GetAnswer(int qId) => answerMap.TryGetValue(qId, out var v) ? v : "";
+
+    bool IsChecked(int qId, int choice) => multiChoiceMap.TryGetValue(qId, out var set) && set.Contains(choice);
+
+    void OnChoiceChanged(int qId, int choice, bool isChecked)
+    {
+        if (!multiChoiceMap.TryGetValue(qId, out var set)) { set = new HashSet<int>(); multiChoiceMap[qId] = set; }
+        if (isChecked) set.Add(choice); else set.Remove(choice);
+        var ans = string.Join(",", set.OrderBy(x => x));
+        OnAnswerChangedInternal(qId, ans);
+    }
+
+    void HandleTextChange(int qId, ChangeEventArgs e)
+    {
+        OnAnswerChangedInternal(qId, e.Value?.ToString() ?? "");
+    }
+
+    void OnAnswerChangedInternal(int qId, string ans)
+    {
+        answerMap[qId] = ans;
+        var existing = submission.ExamAnswers.FirstOrDefault(a => a.QuestionId == qId);
+        if (existing != null) existing.Answer = ans; else submission.ExamAnswers.Add(new QuestionSubmission { QuestionId = qId, Answer = ans });
+
+        // debounced save
+        debounceCts?.Cancel();
+        debounceCts = new System.Threading.CancellationTokenSource();
+        var token = debounceCts.Token;
+        _ = Task.Delay(4000, token).ContinueWith(async t =>
+        {
+            if (t.IsCanceled) return;
+            var ok = await ExamService.SaveDraftAsync(submission);
+            if (ok) { lastSave = DateTime.Now; await InvokeAsync(StateHasChanged); }
+        }, TaskScheduler.Default);
+    }
+
+    async Task Submit()
+    {
+        submitting = true;
+        var result = await ExamService.SubmitAsync(submission);
+        submitting = false;
+        if (result != null)
+        {
+            currentResult = result;
+            totalPoints = result.Score;
+            foreach (var a in result.ExamAnswers) resultMap[a.QuestionId] = a;
+            examActive = false;
+            ShowToast("试卷已提交");
+        }
+        else
+        {
+            ShowToast("提交失败，请重试", true);
+        }
+    }
+
+    void ShowToast(string msg, bool err = false)
+    {
+        toast = msg; toastError = err;
+        toastCts?.Cancel();
+        toastCts = new System.Threading.CancellationTokenSource();
+        var token = toastCts.Token;
+        _ = Task.Delay(3000, token).ContinueWith(t => { if (!t.IsCanceled) { toast = null; InvokeAsync(StateHasChanged); } }, TaskScheduler.Default);
+    }
+}
+
+

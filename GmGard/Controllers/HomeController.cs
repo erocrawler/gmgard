@@ -551,8 +551,22 @@ namespace GmGard.Controllers
             return PartialView("BackgroundPartial", settings.Value);
         }
 
-        public RedirectResult App([FromServices]ConstantUtil constantUtil, string path)
+        // TODO-Blazor-Migration #2: Deep links from main site should point to Blazor pages
+        // Migrated routes serve from /app/{*path} fallback -> app/index.html (Blazor)
+        private static readonly HashSet<string> BlazorMigratedPrefixes = new(StringComparer.OrdinalIgnoreCase)
         {
+            "title-helper", "punch-in", "message", "raffle", "admin", "login", "account", "audit-exam"
+        };
+
+        public IActionResult App([FromServices]ConstantUtil constantUtil, string path)
+        {
+            path = (path ?? "").TrimStart('/');
+            var firstSegment = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+            if (BlazorMigratedPrefixes.Contains(firstSegment))
+            {
+                // Point to local Blazor app instead of external AppHost
+                return Redirect($"/app/{path}");
+            }
             var uri = new Uri(constantUtil.AppHost + path);
             return Redirect(uri.ToString());
         }

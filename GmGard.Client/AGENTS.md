@@ -68,6 +68,10 @@ DaisyUI v5 provides semantic colors: `primary`, `secondary`, `accent`, `neutral`
 
 Custom extension in `@theme`:
 - `primary-dark` → `#053967` — use as `bg-primary-dark`, `hover:bg-primary-dark`
+- `primary` → `#1b6ec2` (from legacy Tailwind config, kept for compat)
+- `accent` → `#3a0647`
+
+DaisyUI theme is `light`/`dark`. Use `bg-base-100`, `bg-base-200`, `text-base-content` for semantic base colors rather than hardcoding `bg-white` / `text-gray-*`.
 
 ### Calendar component
 DaisyUI v5 supports the **Cally** web component via the `cally` CSS class. However, for cases requiring per-day state coloring from API data (e.g. punch-in history), use a **custom CSS grid calendar** — Cally requires JS interop to set individual day states, which is more complex than a Blazor grid in this case.
@@ -125,108 +129,108 @@ DaisyUI v5 supports the **Cally** web component via the `cally` CSS class. Howev
 
 ## Services
 - Register all services in `Program.cs` with `builder.Services.AddScoped<TService>()`.
-- Services live in `Services/`, models in `Models/AppModels.cs`.
+- Services live in `Services/`, models in `Models/AppModels.cs` (+ `TitleCategory.cs`).
 - Use `System.Net.Http.Json` (`GetFromJsonAsync`, `PostAsJsonAsync`) — no manual JSON serialization.
 
 ## File structure
 ```
-Pages/          # @page routed components
-Components/     # Reusable non-routed components
-Services/       # HttpClient-based API services
-Models/         # C# model classes (AppModels.cs)
-Shared/         # Layout components
-wwwroot/        # Static assets
+Pages/                    # @page routed components (feature folders: Home/, Login/, Message/, Admin/, etc)
+  Admin/
+    AdminIndex.razor              # registration / invite code management
+    AdminCategory.razor           # category CRUD
+    AdminRaffle.razor             # raffle / lottery
+    AdminTitleCategories.razor    # title-helper categories editor (server-driven)
+  Account/
+  AuditExam/
+  Home/
+  Login/
+  Message/
+  PunchIn/
+  Raffle/
+  TitleHelper/
+Components/               # Reusable non-routed components (AdminCatIcon, CategoryFieldsComponent, MessageDetailsComponent)
+Services/                 # HttpClient-based API services
+Models/                   # C# model classes
+Shared/                   # Layout components (NavMenu)
+wwwroot/                  # Static assets
 ```
 
 ## API conventions
 - All API calls go to the same origin via the injected `HttpClient` (base address = host).
-- API paths match the existing ASP.NET backend: `/api/Account/...`, `/api/punchIn/...`, etc.
+- API paths match the existing ASP.NET backend: `/api/Account/...`, `/api/punchIn/...`, `/api/TitleHelper/...`, `/api/Admin/TitleCategories/...`, etc.
+- CORS policy `GmAppOrigin` must allow these routes.
 - Handle errors gracefully — services return `null` on failure; pages show user-facing error toasts.
 
-## Styling rules
+## TitleHelper / Title Categories (server-driven)
 
-### Always prefer DaisyUI semantic classes over raw Tailwind equivalents
+- **Source of truth**: `GmGard/App_Data/TitleCategories.json` — editable via admin UI.
+- **Backend**:
+  - `GmGard/Models/App/TitleCategoriesConfig.cs` — DTOs `TitleCategoriesConfig`, `TitleHelperCategory`, `TitleHelperField`
+  - `GmGard/Controllers/App/TitleHelperController.cs` — public `GET /api/TitleHelper/Categories`, admin `GET/PUT/POST/DELETE /api/Admin/TitleCategories/*`
+  - Registered in `Startup.cs` via `AddOptions<TitleCategoriesConfig>` pattern.
+- **Frontend**:
+  - `Models/TitleCategory.cs` (moved from `Data/`)
+  - `Services/TitleHelperService.cs` — fetches categories from API
+  - `Pages/TitleHelper/TitleHelper.razor` — renders fields from API
+  - `Pages/Admin/AdminTitleCategories.razor` — CRUD editor
+  - `Components/CategoryFieldsComponent.razor` — field editor component
 
-| Element | Use DaisyUI | Avoid |
+## Routing / deep-linking from main site
+
+### AppHost migration
+- Legacy main site used `ConstantUtil.AppHost` (external Angular host `https://.../app`) via `HomeController.App(string path)` which did `Redirect(AppHost + path)`.
+- **Migrated**: `HomeController.App` now checks `BlazorMigratedPrefixes` (`title-helper`, `punch-in`, `message`, `raffle`, `admin`, `login`, `account`, `audit-exam`, `title-categories`) and if matched, redirects to local `/app/{path}` instead of external host.
+- The Blazor app is served at `/app/{*path}` fallback to `app/index.html` (see `Startup.cs` static file mapping).
+- Navigation from main site MVC views still references `constUtil.AppHost` for unmigrated modules, but `App` action itself now short-circuits for Blazor routes.
+
+### Future: direct `/app/...` links
+- Consider updating `Views/Shared/_Layout` and other MVC views that link to `/App?path=...` to directly link to `/app/...` for migrated routes, avoiding an extra redirect.
+- Optionally add config `UseBlazorForPaths` in `appsettings.json` or `SiteConfig.json` for feature flagging.
+
+## Blazor Migration Status (merged from TODO)
+
+### Completed as of 2026-07-23
+| Area | Status | Notes |
 |---|---|---|
-| Buttons | `btn`, `btn-primary`, `btn-ghost`, `btn-error`, `btn-sm` | `px-4 py-2 rounded bg-primary text-white ...` |
-| Cards | `card`, `card-body`, `card-title` | `bg-white shadow-md rounded-lg p-6` |
-| Modal / dialog | `modal`, `modal-box`, `modal-action`, `modal-backdrop` | Custom fixed overlay divs |
-| Loading spinner | `loading loading-spinner` | `animate-spin rounded-full border-4 ...` |
-| Progress bar | `progress progress-primary` | `h-1 bg-primary animate-pulse` |
-| Toast / notification | `toast toast-bottom toast-center` + `alert alert-success/alert-error` | Custom fixed bottom positioned divs |
-| Badges | `badge badge-primary` | `text-xs px-2 rounded-full bg-...` |
-| Dividers | `divider` | `border-t my-4` |
-| Alerts | `alert alert-info/warning/error/success` | Custom colored divs |
+| `title-helper` `/title-helper`, `/title-helper/{id}` | ✅ | Now server-driven via `App_Data/TitleCategories.json` + `TitleHelperController`. Verify field parity with Angular still TODO. |
+| `punch-in` `/punch-in` | ✅ | Calendar UI (custom grid), streak logic, `PunchIn/Do`, `History` — compare with Angular. |
+| `message` `/message`, `/inbox`, `/outbox`, `/write` | ✅ | MessageBatch, unread count verification needed. |
+| `admin` `/admin`, `/admin/category`, `/admin/raffle`, `/admin/title-categories` | ✅ | Registration (invite codes), category, raffle, title-categories tabs unified with DaisyUI `tabs tabs-boxed`. Missing `draft-result`? Check legacy `AdminController.Manage`. |
+| `account` `/account/2fa`, `/enable2fa`, `/twofactor` | ✅ | AuthService verification needed. |
+| `login` `/login` | ✅ | |
+| `audit-exam` `/audit-exam`, `/do/:version`, `/admin` | ⚠️ | Need verify exam API compatibility. |
+| `raffle` `/raffle/{Id}` | ✅ | |
+| Deep-link `HomeController.App` → Blazor | ✅ | `BlazorMigratedPrefixes` implemented. |
 
-### Tailwind is fine for layout and spacing
-Use Tailwind freely for: `flex`, `grid`, `gap-*`, `p-*`, `m-*`, `max-w-*`, `text-*` sizing, `font-*`, `w-*`, `h-*`, `aspect-*`, `overflow-*`, custom calendar day cell colors.
+### Still TODO / Missing (not in Blazor yet)
+| Angular Module | Angular Routes | Blazor | Decision needed |
+|---|---|---|---|
+| `bounty` | `/bounty/*` (list, ask) | ❌ Missing | Check if bounty module still needed — has CKEditor dependency. |
+| `wheel` | `/wheel` (admin + vouchers + winwheel.js) | ❌ Missing | Is wheel part of raffle or separate page? Uses `winwheel.d.ts` + canvas. |
+| `gacha` | `/gacha/*` (list, detail, pools, animation) | ❌ Missing | Heavy JS animation (`gacha-animation.ts`, `gacha-video-animation.ts`). Low priority? |
+| `game` | `/game/*` (eternal-circle, tarnished-world, treasure-hunt) | ❌ Missing | Large modules — still needed? |
+| `account` extras | profile, follow, favorite | ❌ Not in Blazor | Keep legacy MVC for user profiles (`Views/Account/*`), or migrate later. |
 
-### Theme colors
-The Tailwind config extends with:
-- `primary` → `#1b6ec2`
-- `primary-dark` → `#053967`
-- `accent` → `#3a0647`
+### Verification plan for remaining parity
+1. Run Angular (`GmApps` `ng serve`) and Blazor side-by-side
+2. For each Angular component template, compare UI/behavior/API usage with Blazor counterpart
+3. Check services parity: `TitleHelperService`, `PunchInService`, `MessageService`, `RaffleService`, `AccountService`, `ExamService`, `AdminService` vs Angular services
+4. Ensure all `api/*/[action]` endpoints still reachable (CORS `GmAppOrigin`)
+5. Test auth flows, 2FA (CookieAuthenticationStateProvider), AuthorizeView guards
+6. For unmigrated modules (bounty/wheel/gacha/game) — product decision: drop, keep Angular host fallback, or re-implement in Blazor.
 
-DaisyUI theme is `light`/`dark`. Use `bg-base-100`, `bg-base-200`, `text-base-content` for semantic base colors rather than hardcoding `bg-white` / `text-gray-*`.
+### Admin navigation convention
+All admin pages (`AdminIndex`, `AdminCategory`, `AdminRaffle`, `AdminTitleCategories`) must include unified tab bar:
 
-## Component conventions
-
-### Modal pattern (DaisyUI v4)
 ```razor
-<dialog class="modal @(show ? "modal-open" : "")">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg">Title</h3>
-        <!-- content -->
-        <div class="modal-action">
-            <button class="btn btn-ghost" @onclick="Close">取消</button>
-            <button class="btn btn-primary" @onclick="Confirm">确认</button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button @onclick="Close">close</button>
-    </form>
-</dialog>
+<div class="tabs tabs-boxed w-fit flex-wrap">
+    <a href="admin/registration" class="tab @(IsActive("registration") ? "tab-active" : "")">注册码管理</a>
+    <a href="admin/category" class="tab @(IsActive("category") ? "tab-active" : "")">栏目管理</a>
+    <a href="admin/raffle" class="tab @(IsActive("raffle") ? "tab-active" : "")">抽奖管理</a>
+    <a href="admin/title-categories" class="tab @(IsActive("title-categories") ? "tab-active" : "")">标题助手</a>
+</div>
 ```
 
-### Toast pattern (DaisyUI v4)
-```razor
-@if (toastVisible)
-{
-    <div class="toast toast-bottom toast-center z-50">
-        <div class="alert @(toastIsError ? "alert-error" : "alert-success")">
-            <span>@toastMessage</span>
-        </div>
-    </div>
-}
-```
-
-### Loading spinner
-```razor
-<span class="loading loading-spinner loading-lg"></span>
-```
-
-### Progress bar (indeterminate)
-```razor
-<progress class="progress progress-primary w-full"></progress>
-```
-
-## Services
-- Register all services in `Program.cs` with `builder.Services.AddScoped<TService>()`.
-- Services live in `Services/`, models in `Models/AppModels.cs`.
-- Use `System.Net.Http.Json` (`GetFromJsonAsync`, `PostAsJsonAsync`) — no manual JSON serialization.
-
-## File structure
-```
-Pages/          # @page routed components
-Components/     # Reusable non-routed components
-Services/       # HttpClient-based API services
-Models/         # C# model classes (AppModels.cs)
-Shared/         # Layout components
-wwwroot/        # Static assets
-```
-
-## API conventions
-- All API calls go to the same origin via the injected `HttpClient` (base address = host).
-- API paths match the existing ASP.NET backend: `/api/Account/...`, `/api/punchIn/...`, etc.
-- Handle errors gracefully — services return `null` on failure; pages show user-facing error toasts.
+## MSBuild / npm ordering notes
+- `GmGard.Client.csproj` orders npm/gulp (Tailwind build) and CSS fingerprinting (`UpdateCssHash`) **before** `ResolveStaticWebAssetsInputs` and excludes `tmp/` (or `GmGard/tmp/`) via `.gitignore`.
+- If adding new static asset steps, ensure they run before static web asset resolution to avoid race conditions.

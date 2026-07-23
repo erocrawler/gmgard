@@ -1,0 +1,188 @@
+@page "/admin/raffle"
+@attribute [Authorize(Roles = "Administrator")]
+@inject AdminService AdminService
+
+<PageTitle>抽奖管理</PageTitle>
+
+<div class="max-w-4xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">绅士管理</h1>
+    <div class="tabs tabs-boxed w-fit">
+        <a href="admin/registration" class="tab">注册码管理</a>
+        <a href="admin/category" class="tab">栏目管理</a>
+        <a href="admin/raffle" class="tab tab-active">抽奖管理</a>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body gap-4">
+            <h2 class="card-title">新增抽奖</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">标题</legend>
+                    <input class="input input-bordered w-full" @bind="newCfg.Title" placeholder="抽奖标题" />
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">费用</legend>
+                    <input class="input input-bordered w-full" type="number" @bind="newCfg.RaffleCost" />
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">开始时间</legend>
+                    <input class="input input-bordered w-full" type="datetime-local" value="@newStartInput" @onchange="OnNewStartChanged" />
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">结束时间</legend>
+                    <input class="input input-bordered w-full" type="datetime-local" value="@newEndInput" @onchange="OnNewEndChanged" />
+                </fieldset>
+                <fieldset class="fieldset md:col-span-2">
+                    <legend class="fieldset-legend">图片URL</legend>
+                    <input class="input input-bordered w-full" @bind="newCfg.Image" placeholder="https://..." />
+                </fieldset>
+            </div>
+            <button class="btn btn-primary btn-sm" @onclick="Add">新增</button>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">现有抽奖</h2>
+            @if (loadingConfigs)
+            {
+                <span class="loading loading-spinner"></span>
+            }
+            else if (configs != null)
+            {
+                <div class="space-y-3">
+                    @foreach (var cfg in configs.Items)
+                    {
+                        <div class="card card-border bg-base-100">
+                            <div class="card-body p-4">
+                                <div class="flex gap-4 items-start">
+                                    @if (!string.IsNullOrEmpty(cfg.Image)) { <img src="@cfg.Image" class="w-20 h-20 object-cover rounded" /> }
+                                    <div class="flex-1 space-y-1 text-sm">
+                                        <div class="font-bold">@cfg.Title (ID: @cfg.Id)</div>
+                                        <div>@cfg.EventStart.ToLocalTime().ToString("g") — @cfg.EventEnd.ToLocalTime().ToString("g") 费用: @cfg.RaffleCost</div>
+                                        <div class="text-xs">抽奖链接：<code>/app/raffle/@cfg.Id</code> （主站：/home/app?path=/raffle/@cfg.Id）</div>
+                                        <div class="flex gap-2 mt-2">
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => Draft(cfg.Id)">抽取</button>
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => EditMode(cfg)">编辑</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (editingId == cfg.Id)
+                                {
+                                    <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <input class="input input-sm" @bind="editCfg.Title" />
+                                        <input class="input input-sm" type="number" @bind="editCfg.RaffleCost" />
+                                        <input class="input input-sm w-full" type="datetime-local" value="@editStartInput" @onchange="OnEditStartChanged" />
+                                        <input class="input input-sm w-full" type="datetime-local" value="@editEndInput" @onchange="OnEditEndChanged" />
+                                        <input class="input input-sm md:col-span-2" @bind="editCfg.Image" />
+                                        <div class="flex gap-2 md:col-span-2">
+                                            <button class="btn btn-primary btn-xs" @onclick="Update">保存</button>
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => editingId = 0">取消</button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (configs.PageCount > 1)
+                {
+                    <div class="flex gap-1 mt-3">
+                        @for (int p = 1; p <= configs.PageCount; p++) { var pg = p; <button class="btn btn-xs @(pg == configs.PageNumber ? "btn-primary" : "btn-ghost")" @onclick="() => LoadPage(pg)">@pg</button> }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @if (draftResult != null)
+    {
+        <div class="modal modal-open">
+            <div class="modal-box max-w-3xl">
+                <h3 class="font-bold">抽奖结果 (共 @draftResult.Total 人)</h3>
+                <div class="overflow-x-auto max-h-96 mt-3">
+                    <table class="table table-xs">
+                        <thead><tr><th>用户</th><th>代码</th><th>时间</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in draftResult.Result)
+                            {
+                                <tr><td>@item.User.UserName</td><td class="font-mono">@item.Code</td><td>@item.Date.ToLocalTime().ToString("g")</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-action"><button class="btn" @onclick="() => draftResult = null">关闭</button></div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="toast toast-bottom toast-center z-50"><div class="alert @(isError ? "alert-error" : "alert-success")"><span>@message</span></div></div>
+    }
+</div>
+
+@code {
+    PagedResult<RaffleConfig>? configs;
+    bool loadingConfigs = true;
+    RaffleConfig newCfg = new() { RaffleCost = 200, EventStart = DateTime.Now, EventEnd = DateTime.Now.AddDays(7) };
+    string newStartInput = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+    string newEndInput = DateTime.Now.AddDays(7).ToString("yyyy-MM-ddTHH:mm");
+    RaffleConfig editCfg = new();
+    int editingId = 0;
+    string editStartInput = "";
+    string editEndInput = "";
+    DraftResult? draftResult;
+    string? message;
+    bool isError;
+
+    protected override async Task OnInitializedAsync() => await LoadPage(1);
+
+    async Task LoadPage(int page)
+    {
+        loadingConfigs = true;
+        configs = await AdminService.AllRafflesAsync(page);
+        loadingConfigs = false;
+    }
+
+    void EditMode(RaffleConfig cfg)
+    {
+        editingId = cfg.Id;
+        editCfg = new RaffleConfig { Id = cfg.Id, Title = cfg.Title, RaffleCost = cfg.RaffleCost, Image = cfg.Image, EventStart = cfg.EventStart, EventEnd = cfg.EventEnd };
+        editStartInput = cfg.EventStart.ToLocalTime().ToString("yyyy-MM-ddTHH:mm");
+        editEndInput = cfg.EventEnd.ToLocalTime().ToString("yyyy-MM-ddTHH:mm");
+    }
+
+    async Task Add()
+    {
+        if (DateTime.TryParse(newStartInput, out var s)) newCfg.EventStart = s.ToUniversalTime();
+        if (DateTime.TryParse(newEndInput, out var e)) newCfg.EventEnd = e.ToUniversalTime();
+        var ok = await AdminService.AddRaffleAsync(newCfg);
+        if (ok) { ShowToast("已新增"); await LoadPage(1); newCfg = new RaffleConfig { RaffleCost = 200, EventStart = DateTime.Now, EventEnd = DateTime.Now.AddDays(7) }; }
+        else ShowToast("新增失败", true);
+    }
+
+    async Task Update()
+    {
+        if (DateTime.TryParse(editStartInput, out var s)) editCfg.EventStart = s.ToUniversalTime();
+        if (DateTime.TryParse(editEndInput, out var e)) editCfg.EventEnd = e.ToUniversalTime();
+        var ok = await AdminService.UpdateRaffleAsync(editCfg);
+        if (ok) { ShowToast("已保存"); editingId = 0; await LoadPage(configs?.PageNumber ?? 1); }
+        else ShowToast("保存失败", true);
+    }
+
+    void OnNewStartChanged(ChangeEventArgs e) => newStartInput = e.Value?.ToString() ?? string.Empty;
+    void OnNewEndChanged(ChangeEventArgs e) => newEndInput = e.Value?.ToString() ?? string.Empty;
+    void OnEditStartChanged(ChangeEventArgs e) => editStartInput = e.Value?.ToString() ?? string.Empty;
+    void OnEditEndChanged(ChangeEventArgs e) => editEndInput = e.Value?.ToString() ?? string.Empty;
+
+    async Task Draft(int id)
+    {
+        draftResult = await AdminService.DraftRaffleAsync(id);
+        if (draftResult == null) ShowToast("抽取失败", true);
+    }
+
+    void ShowToast(string msg, bool err = false) { message = msg; isError = err; StateHasChanged(); Task.Delay(3000).ContinueWith(_ => { message = null; InvokeAsync(StateHasChanged); }); }
+}

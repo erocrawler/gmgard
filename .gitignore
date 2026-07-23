@@ -134,6 +134,12 @@ DocProject/Help/Html2
 DocProject/Help/html
 
 # Click-Once directory
+# GmGard temp diagnostics - local only (build logs, binlogs, dev server dumps)
+GmGard/tmp/
+**/GmGard/tmp/
+tmp/
+[Bb]uild[Ll]og.*
+
 publish/
 
 # Publish Web Output

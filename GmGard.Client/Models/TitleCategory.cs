@@ -1,4 +1,4 @@
-namespace GmGard.Client.Data;
+namespace GmGard.Client.Models;
 
 /// <summary>
 /// Title helper specific category with fields for formatting titles
@@ -20,4 +20,6 @@ public class CategoryField
     public string? Default { get; set; }
     public Func<string, string>? Format { get; set; }
     public string? Hint { get; set; }
+    public string? FormatType { get; set; }
+    public string? FormatTemplate { get; set; }
 }

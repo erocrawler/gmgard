@@ -1,9 +1,9 @@
 @page "/title-helper"
 @page "/title-helper/{CategoryId:int}"
 @attribute [Authorize]
-@using GmGard.Client.Data
 @using GmGard.Client.Services
 @using GmGard.Client.Models
+@inject TitleHelperService TitleService
 @inject BlogSearchService BlogSearch
 @inject DLsiteSearchService DLsiteSearch
 @inject NavigationManager Navigation
@@ -11,6 +11,16 @@
 
 <PageTitle>标题助手</PageTitle>
 
+@if (loading)
+{
+    <div class="max-w-6xl mx-auto p-10 flex justify-center"><span class="loading loading-spinner loading-lg"></span></div>
+}
+else if (loadError != null)
+{
+    <div class="max-w-6xl mx-auto p-6"><div class="alert alert-error text-sm">加载失败: @loadError</div></div>
+}
+else
+{
 <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
     <!-- Category Selection Card -->
     <div class="bg-white shadow-md rounded-lg p-6">
@@ -116,11 +126,29 @@
     private bool showCategoryMenu = false;
     private bool searchMode = false;
 
-    protected override void OnInitialized()
+    private bool loading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
     {
-        categories = CategoryData.GetAllCategories();
-        
-        if (CategoryId.HasValue)
+        try
+        {
+            categories = await TitleService.GetCategoriesAsync();
+            if (CategoryId.HasValue)
+            {
+                selectedCategory = categories.FirstOrDefault(c => c.Id == CategoryId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+        finally { loading = false; }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CategoryId.HasValue && categories.Count > 0)
         {
             selectedCategory = categories.FirstOrDefault(c => c.Id == CategoryId.Value);
         }
@@ -150,4 +178,5 @@
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedTitle);
         }
     }
+}
 }

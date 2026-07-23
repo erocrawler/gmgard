@@ -1,0 +1,172 @@
+@page "/account/2fa"
+@page "/account"
+@attribute [Authorize]
+@inject AccountService AccountService
+@inject NavigationManager Navigation
+
+<PageTitle>两步验证</PageTitle>
+
+<div class="max-w-2xl mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">两步验证</h1>
+
+    @if (loading && model == null)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (model != null)
+    {
+        @if (model.Is2faEnabled)
+        {
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">两步验证已启用</h2>
+                    @if (model.RecoveryCodesLeft == 0)
+                    {
+                        <div class="alert alert-error"><span>您已没有剩余应急密码，您必须立即生成新的应急密码。</span></div>
+                    }
+                    else if (model.RecoveryCodesLeft <= 3)
+                    {
+                        <div class="alert alert-warning"><span>您只有 @model.RecoveryCodesLeft 个应急密码剩余，您应该生成新的应急密码。</span></div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info"><span>您有 @model.RecoveryCodesLeft 个应急密码剩余。</span></div>
+                    }
+
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @if (model.IsMachineRemembered)
+                        {
+                            <button class="btn btn-ghost btn-sm" @onclick="ForgetClient">忘记此设备的两步验证</button>
+                        }
+                        <button class="btn btn-ghost btn-sm" @onclick="() => Disable2Fa(false)">禁用两步验证</button>
+                        <button class="btn btn-outline btn-sm" @onclick="GenerateRecoveryCodes">重设应急密码</button>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">两步验证未启用</h2>
+                    <img src="/assets/two-factor-authentication-02.png" alt="2FA" class="w-full max-w-xl mx-auto" onerror="this.style.display='none'" />
+                    <p class="text-base-content/70 text-sm mt-2">
+                        为保障您的账户安全，推荐启用两步验证。两步验证确保只有您可以访问自己的帐户，即使其他人知道您的密码也无法访问。
+                    </p>
+                </div>
+            </div>
+        }
+
+        <div class="flex flex-wrap gap-2">
+            @if (!model.HasAuthenticator)
+            {
+                <a href="account/enable2fa" class="btn btn-primary">启用两步验证</a>
+            }
+            else
+            {
+                <a href="account/enable2fa" class="btn btn-primary">设置两步验证</a>
+                <button class="btn btn-outline" @onclick="() => Disable2Fa(true)">重设验证秘钥</button>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="toast toast-bottom toast-center z-50">
+                <div class="alert @(isError ? "alert-error" : "alert-success")"><span>@message</span></div>
+            </div>
+        }
+
+        @* Recovery codes dialog *@
+        @if (showCodes && recoveryCodes != null)
+        {
+            <div class="modal modal-open">
+                <div class="modal-box max-w-lg">
+                    <h3 class="font-bold text-lg mb-3">应急密码（请妥善保存）</h3>
+                    <p class="text-sm text-base-content/60 mb-2">每个应急密码仅可使用一次，请保存在安全的地方。</p>
+                    <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1">
+                        @foreach (var c in recoveryCodes)
+                        {
+                            <div>@c</div>
+                        }
+                    </div>
+                    <p class="text-xs text-base-content/50 mt-2">当前积分</p>
+                    <div class="modal-action">
+                        <button class="btn btn-primary" @onclick="CloseCodesAndGo">已知晓</button>
+                    </div>
+                </div>
+                <div class="modal-backdrop"><button @onclick="() => showCodes = false">close</button></div>
+            </div>
+        }
+    }
+    else if (!string.IsNullOrEmpty(message) && isError)
+    {
+        <div class="alert alert-error"><span>@message</span></div>
+    }
+</div>
+
+@code {
+    TwoFactorAuthenticationModel? model;
+    bool loading = true;
+    string? message;
+    bool isError;
+    bool showCodes = false;
+    string[]? recoveryCodes;
+    System.Threading.CancellationTokenSource? toastCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        model = await AccountService.Get2FaDataAsync();
+        loading = false;
+        if (model == null) { message = "加载失败，请刷新重试"; isError = true; }
+    }
+
+    async Task ForgetClient()
+    {
+        var ok = await AccountService.ForgetClientAsync();
+        if (ok && model != null) { model.IsMachineRemembered = false; ShowToast("操作成功"); }
+        else ShowToast("操作失败，请刷新重试", true);
+    }
+
+    async Task Disable2Fa(bool reset)
+    {
+        // TODO: add confirm dialog
+        var ok = await AccountService.Disable2FaAsync(reset);
+        if (ok)
+        {
+            model = await AccountService.Get2FaDataAsync();
+            ShowToast("操作成功");
+        }
+        else ShowToast("操作失败，请刷新重试", true);
+    }
+
+    async Task GenerateRecoveryCodes()
+    {
+        var (ok, codes, err) = await AccountService.GenerateRecoveryCodesAsync();
+        if (ok && codes != null)
+        {
+            recoveryCodes = codes;
+            showCodes = true;
+        }
+        else ShowToast(err ?? "生成失败", true);
+    }
+
+    void CloseCodesAndGo()
+    {
+        showCodes = false;
+        Navigation.NavigateTo("account/2fa");
+    }
+
+    void ShowToast(string msg, bool error = false)
+    {
+        message = msg;
+        isError = error;
+        StateHasChanged();
+        toastCts?.Cancel();
+        toastCts = new System.Threading.CancellationTokenSource();
+        var token = toastCts.Token;
+        _ = Task.Delay(3000, token).ContinueWith(t =>
+        {
+            if (!t.IsCanceled) { message = null; InvokeAsync(StateHasChanged); }
+        }, TaskScheduler.Default);
+    }
+}
