@@ -97,7 +97,7 @@ export class CategoryComponent implements OnInit {
 
   add() {
     const newCat: CategoryView = {
-      categoryID: -1,
+      categoryID: 0,
       categoryName: '',
       description: '',
       disableRanking: false,

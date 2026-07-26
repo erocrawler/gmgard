@@ -130,23 +130,33 @@ namespace GmGard.Controllers.App
         {
             if (string.IsNullOrWhiteSpace(category.CategoryName))
             {
-                return BadRequest(new { err = "请输�E栏目名称" });
+                return BadRequest(new { err = "请输入栏目名称" });
+            }
+            // Reject invalid IDs - must be 0 for new, or >0 for update
+            if (category.CategoryID < 0)
+            {
+                return BadRequest(new { err = "无效的栏目ID" });
             }
             if (category.ParentCategoryID.HasValue)
             {
-                var parent = await db_.Categories.SingleOrDefaultAsync(cc => cc.CategoryID == category.ParentCategoryID);
-                if (parent == null || parent.CategoryID == category.CategoryID)
+                if (category.ParentCategoryID <= 0)
                 {
                     return BadRequest(new { err = "无效的父级栏目ID" });
                 }
-                category.ParentCategory = parent;
+                var parentExists = await db_.Categories.AnyAsync(cc => cc.CategoryID == category.ParentCategoryID);
+                if (!parentExists || category.ParentCategoryID == category.CategoryID)
+                {
+                    return BadRequest(new { err = "无效的父级栏目ID" });
+                }
             }
-            if (db_.Categories.Any(c => c.CategoryID == category.CategoryID))
+            if (category.CategoryID > 0 && await db_.Categories.AnyAsync(c => c.CategoryID == category.CategoryID))
             {
+                category.ParentCategory = null;
                 db_.Entry(category).State = EntityState.Modified;
             }
             else
             {
+                category.ParentCategory = null;
                 db_.Categories.Add(category);
             }
             await db_.SaveChangesAsync();
@@ -163,11 +173,12 @@ namespace GmGard.Controllers.App
             {
                 return NotFound();
             }
-            if (cat.ParentCategoryID.HasValue)
+            // Has subcategories? (was incorrectly checking cat.ParentCategoryID)
+            if (await db_.Categories.AnyAsync(c => c.ParentCategoryID == id))
             {
-                return BadRequest(new { err = "不可删除带有次级栏目皁E��目" });
+                return BadRequest(new { err = "不可删除带有次级栏目的栏目" });
             }
-            if (cat.Blogs.Any())
+            if (await db_.Blogs.AnyAsync(b => b.CategoryID == id))
             {
                 return BadRequest(new { err = "不可删除非空栏目" });
             }
