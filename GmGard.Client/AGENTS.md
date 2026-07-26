@@ -168,7 +168,7 @@ wwwroot/                  # Static assets
   - `GmGard/Models/App/TitleCategoriesConfig.cs` — DTOs `TitleCategoriesConfig`, `TitleHelperCategory`, `TitleHelperField`
   - `GmGard/Controllers/App/TitleHelperController.cs` — public `GET /api/TitleHelper/Categories`, admin `GET/PUT/POST/DELETE /api/Admin/TitleCategories/*`
   - Registered in `Startup.cs` via `AddOptions<TitleCategoriesConfig>` pattern.
-- **Frontend**:
+  - **Frontend**:
   - `Models/TitleCategory.cs` (moved from `Data/`)
   - `Services/TitleHelperService.cs` — fetches categories from API
   - `Pages/TitleHelper/TitleHelper.razor` — renders fields from API
@@ -177,19 +177,44 @@ wwwroot/                  # Static assets
 
 ## Routing / deep-linking from main site
 
-### AppHost migration
+### AppHost migration with flip flag
 - Legacy main site used `ConstantUtil.AppHost` (external Angular host `https://.../app`) via `HomeController.App(string path)` which did `Redirect(AppHost + path)`.
-- **Migrated**: `HomeController.App` now checks `BlazorMigratedPrefixes` (`title-helper`, `punch-in`, `message`, `raffle`, `admin`, `login`, `account`, `audit-exam`, `title-categories`) and if matched, redirects to local `/app/{path}` instead of external host.
+- **Migrated**: `HomeController.App` now checks `DefaultBlazorPrefixes` (`title-helper`, `punch-in`, `message`, `raffle`, `admin`, `login`, `account`, `audit-exam`, `title-categories`) and if matched, redirects to local `/app/{path}` instead of external host.
 - The Blazor app is served at `/app/{*path}` fallback to `app/index.html` (see `Startup.cs` static file mapping).
 - Navigation from main site MVC views still references `constUtil.AppHost` for unmigrated modules, but `App` action itself now short-circuits for Blazor routes.
 
+**Feature flag to flip back to Angular:**
+
+Config lives in `GmGard/App_Data/SiteConfig.json` `BlazorApp`:
+
+```json
+{
+  "BlazorApp": {
+    "Enabled": true,                          // global: false => all App() routes go to legacy AppHost
+    "RedirectOverrides": {                    // per-prefix override
+      "bounty": false,                        // keep bounty on Angular even when Enabled=true
+      "wheel": false,
+      "gacha": false,
+      "game": false
+    },
+    "ExtraPrefixes": []                       // add new Blazor routes without code change e.g. ["bounty"]
+  }
+}
+```
+
+- `Enabled=false` => `HomeController.App` always redirects to `AppHost` (Angular fallback for rollback)
+- `RedirectOverrides[prefix]=false` => keep that single route on Angular
+- `ExtraPrefixes` => force additional prefixes to Blazor without changing `DefaultBlazorPrefixes` code
+- Query string override for manual testing: `?blazor=0` forces Angular, `?blazor=1` forces Blazor (e.g. `/App?path=audit-exam&blazor=0`)
+
+To rollback entirely: set `BlazorApp.Enabled=false` in `SiteConfig.json` (no build required, file is watched with `reloadOnChange:true`), or revert via `appsettings.override.json`.
+
 ### Future: direct `/app/...` links
 - Consider updating `Views/Shared/_Layout` and other MVC views that link to `/App?path=...` to directly link to `/app/...` for migrated routes, avoiding an extra redirect.
-- Optionally add config `UseBlazorForPaths` in `appsettings.json` or `SiteConfig.json` for feature flagging.
 
 ## Blazor Migration Status (merged from TODO)
 
-### Completed as of 2026-07-23
+### Completed as of 2026-07-26
 | Area | Status | Notes |
 |---|---|---|
 | `title-helper` `/title-helper`, `/title-helper/{id}` | ✅ | Now server-driven via `App_Data/TitleCategories.json` + `TitleHelperController`. Verify field parity with Angular still TODO. |
@@ -198,17 +223,17 @@ wwwroot/                  # Static assets
 | `admin` `/admin`, `/admin/category`, `/admin/raffle`, `/admin/title-categories` | ✅ | Registration (invite codes), category, raffle, title-categories tabs unified with DaisyUI `tabs tabs-boxed`. Missing `draft-result`? Check legacy `AdminController.Manage`. |
 | `account` `/account/2fa`, `/enable2fa`, `/twofactor` | ✅ | AuthService verification needed. |
 | `login` `/login` | ✅ | |
-| `audit-exam` `/audit-exam`, `/do/:version`, `/admin` | ⚠️ | Need verify exam API compatibility. |
+| `audit-exam` `/audit-exam`, `/do/:version`, `/admin` | ✅ | Assets moved from `GmApps/src/assets/` → `GmGard/wwwroot/assets/` (`audit-exam-201705.json`, `201707.json` + images folder). `ExamService` fetches via absolute `/assets/audit-exam-{v}.json` served by main site static files, works for both Angular and Blazor. Model camelCase vs PascalCase handled by case-insensitive JSON. Remaining verification items (CORS/auth/type handling) tracked separately. |
 | `raffle` `/raffle/{Id}` | ✅ | |
-| Deep-link `HomeController.App` → Blazor | ✅ | `BlazorMigratedPrefixes` implemented. |
+| Deep-link `HomeController.App` → Blazor | ✅ | `DefaultBlazorPrefixes` + `SiteConfig.BlazorApp` flip flag (`Enabled`, `RedirectOverrides`, `ExtraPrefixes`) + `?blazor=0/1` query override. |
 
 ### Still TODO / Missing (not in Blazor yet)
 | Angular Module | Angular Routes | Blazor | Decision needed |
 |---|---|---|---|
-| `bounty` | `/bounty/*` (list, ask) | ❌ Missing | Check if bounty module still needed — has CKEditor dependency. |
-| `wheel` | `/wheel` (admin + vouchers + winwheel.js) | ❌ Missing | Is wheel part of raffle or separate page? Uses `winwheel.d.ts` + canvas. |
-| `gacha` | `/gacha/*` (list, detail, pools, animation) | ❌ Missing | Heavy JS animation (`gacha-animation.ts`, `gacha-video-animation.ts`). Low priority? |
-| `game` | `/game/*` (eternal-circle, tarnished-world, treasure-hunt) | ❌ Missing | Large modules — still needed? |
+| `bounty` | `/bounty/*` (list, ask) | 🚧 TODO | WIP |
+| `wheel` | `/wheel` (admin + vouchers + winwheel.js) | ❌ Deprecated |  |
+| `gacha` | `/gacha/*` (list, detail, pools, animation) | ❌ Deprecated | Heavy JS animation (`gacha-animation.ts`, `gacha-video-animation.ts`). Low priority? |
+| `game` | `/game/*` (eternal-circle, tarnished-world, treasure-hunt) | ❌ Deprecated | Large modules — may remaster in future |
 | `account` extras | profile, follow, favorite | ❌ Not in Blazor | Keep legacy MVC for user profiles (`Views/Account/*`), or migrate later. |
 
 ### Verification plan for remaining parity

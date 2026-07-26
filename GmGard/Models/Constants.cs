@@ -28,6 +28,18 @@ namespace GmGard.Models
         public string DefaultRedirectUri { get; set; }
         public string[] Scopes { get; set; }
     }
+    public class BlazorAppConfig
+    {
+        /// <summary>Global toggle — when false, App() always redirects to legacy AppHost (Angular). Default false = safe opt-in.</summary>
+        public bool Enabled { get; set; } = false;
+
+        /// <summary>Per-prefix override. E.g. { "bounty": false } keeps bounty on old Angular even when Enabled=true</summary>
+        public Dictionary<string, bool> RedirectOverrides { get; set; } = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Additional prefixes forced to Blazor beyond the hardcoded defaults</summary>
+        public string[] ExtraPrefixes { get; set; } = Array.Empty<string>();
+    }
+
     public class SiteConfig
     {
         public List<SiteInfo> Sites { get; set; }
@@ -36,6 +48,8 @@ namespace GmGard.Models
         public string[] DevAppHostOrigins { get; set; }
         public string[] SmileyPaths { get; set; }
         public OAuthConfig OAuth { get; set; }
+        /// <summary>null => treat as disabled (safe default). Must add BlazorApp:{Enabled:true} to opt-in.</summary>
+        public BlazorAppConfig? BlazorApp { get; set; }
     }
 
     public class ConstantUtil
@@ -84,6 +98,8 @@ namespace GmGard.Models
         public string SiteStaticHost => _currentSite.StaticHost;
 
         public string AppHost => EffectiveProtocol + "://" + _currentSite.AppHost;
+
+        public IHttpContextAccessor HttpContextAccessor() => _contextAccessor;
     }
 
     public static class PostConstant

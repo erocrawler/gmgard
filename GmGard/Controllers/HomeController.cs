@@ -551,24 +551,52 @@ namespace GmGard.Controllers
             return PartialView("BackgroundPartial", settings.Value);
         }
 
-        // TODO-Blazor-Migration #2: Deep links from main site should point to Blazor pages
-        // Migrated routes serve from /app/{*path} fallback -> app/index.html (Blazor)
-        private static readonly HashSet<string> BlazorMigratedPrefixes = new(StringComparer.OrdinalIgnoreCase)
+        // Blazor migration: deep links from main site point to /app/* when BlazorApp.Enabled=true
+        private static readonly HashSet<string> DefaultBlazorPrefixes = new(StringComparer.OrdinalIgnoreCase)
         {
-            "title-helper", "punch-in", "message", "raffle", "admin", "login", "account", "audit-exam"
+            "title-helper", "punch-in", "message", "raffle", "admin", "login", "account", "audit-exam", "title-categories"
         };
 
-        public IActionResult App([FromServices]ConstantUtil constantUtil, string path)
+        public IActionResult App(
+            [FromServices] ConstantUtil constantUtil,
+            [FromServices] IOptions<SiteConfig> siteConfig,
+            string path)
         {
             path = (path ?? "").TrimStart('/');
-            var firstSegment = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
-            if (BlazorMigratedPrefixes.Contains(firstSegment))
+
+            // Flip switch: null BlazorApp section = disabled (safe opt-in). Must add Enabled:true to activate.
+            var blazorCfg = siteConfig.Value.BlazorApp;
+            bool globalEnabled = blazorCfg?.Enabled ?? false;
+
+            var httpCtx = constantUtil.HttpContextAccessor()?.HttpContext;
+            var blazorQuery = httpCtx?.Request.Query["blazor"].ToString();
+            if (blazorQuery == "0" || blazorQuery == "false") globalEnabled = false;
+            else if (blazorQuery == "1" || blazorQuery == "true") globalEnabled = true;
+
+            if (!globalEnabled)
             {
-                // Point to local Blazor app instead of external AppHost
+                return Redirect(new Uri(constantUtil.AppHost + path).ToString());
+            }
+
+            var firstSegment = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+
+            // per-prefix override: { "bounty": false } keeps route on old Angular host
+            if (blazorCfg.RedirectOverrides != null && blazorCfg.RedirectOverrides.TryGetValue(firstSegment, out var overrideVal) && !overrideVal)
+            {
+                return Redirect(new Uri(constantUtil.AppHost + path).ToString());
+            }
+
+            // default migrated prefixes + extra prefixes from config
+            bool isBlazorRoute = DefaultBlazorPrefixes.Contains(firstSegment) ||
+                (blazorCfg != null && blazorCfg.ExtraPrefixes != null && blazorCfg.ExtraPrefixes.Contains(firstSegment, StringComparer.OrdinalIgnoreCase));
+
+            if (isBlazorRoute)
+            {
                 return Redirect($"/app/{path}");
             }
-            var uri = new Uri(constantUtil.AppHost + path);
-            return Redirect(uri.ToString());
+
+            // fallback -> legacy Angular AppHost
+            return Redirect(new Uri(constantUtil.AppHost + path).ToString());
         }
     }
 }
