@@ -1,8 +1,8 @@
-﻿using GmGard.Controllers;
+using GmGard.Controllers;
 using GmGard.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nest;
+using Elastic.Clients.Elasticsearch;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +14,12 @@ namespace GmGard.Services
 {
     public class ElasticSearchUpdateService
     {
-        private readonly ElasticClient _client;
+        private readonly ElasticsearchClient _client;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly BackgroundTaskQueue _taskQueue;
         private readonly ILogger<ElasticSearchUpdateService> _logger;
 
-        public ElasticSearchUpdateService(IServiceScopeFactory scopeFactory, ElasticClient elasticClient, ILoggerFactory loggerFactory, BackgroundTaskQueue taskQueue)
+        public ElasticSearchUpdateService(IServiceScopeFactory scopeFactory, ElasticsearchClient elasticClient, ILoggerFactory loggerFactory, BackgroundTaskQueue taskQueue)
         {
             _client = elasticClient;
             _scopeFactory = scopeFactory;
@@ -33,7 +33,7 @@ namespace GmGard.Services
 
         public void RegisterUpdateEvents()
         {
-            EventHandler<BlogEventArgs> addOrUpdate = (s, e) => 
+            EventHandler<BlogEventArgs> addOrUpdate = (s, e) =>
                 _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBlog(e));
             ReplyController.OnAddPost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
             Controllers.App.ReplyController.OnAddPost += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.UpdatePostCount(e));
@@ -42,7 +42,7 @@ namespace GmGard.Services
             AuditController.OnApproveBlog += addOrUpdate;
             AuditController.OnDenyBlog += addOrUpdate;
             BlogController.OnNewBlog += addOrUpdate;
-            BlogController.OnDeleteBlog += (s, e) => 
+            BlogController.OnDeleteBlog += (s, e) =>
             {
                 if (e.Deleted)
                 {
@@ -64,10 +64,10 @@ namespace GmGard.Services
             {
                 var util = scope.ServiceProvider.GetService<RatingUtil>();
                 var rating = util.GetRating(e.Model.BlogID).Total;
-                var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Model.BlogID), ud => ud.Doc(new { rating }).Refresh(Elasticsearch.Net.Refresh.True));
-                if (!result.IsValid)
+                var result = await _client.UpdateAsync<BlogIndexed, object>("blogs", e.Model.BlogID, u => u.Doc(new { rating }).Refresh(Refresh.True));
+                if (!result.IsValidResponse)
                 {
-                    _logger.LogError(result.DebugInformation);
+                    _logger.LogError(result.DebugInformation ?? result.ElasticsearchServerError?.Error?.Reason);
                     var db = scope.ServiceProvider.GetService<BlogContext>();
                     var blog = await db.Blogs.FindAsync(e.Model.BlogID);
                     if (blog != null)
@@ -80,10 +80,10 @@ namespace GmGard.Services
 
         public async Task UpdateBlogTagAsync(TagEventArgs e)
         {
-            var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(e.Blog.BlogID), ud => ud.Doc(new { tags = e.Model, e.Blog.isHarmony }).Refresh(Elasticsearch.Net.Refresh.True));
-            if (!result.IsValid)
+            var result = await _client.UpdateAsync<BlogIndexed, object>("blogs", e.Blog.BlogID, u => u.Doc(new { tags = e.Model.Select(t => t.TagName), isHarmony = e.Blog.isHarmony }).Refresh(Refresh.True));
+            if (!result.IsValidResponse)
             {
-                _logger.LogError(result.DebugInformation);
+                _logger.LogError(result.DebugInformation ?? result.ElasticsearchServerError?.Error?.Reason);
                 await AddOrUpdateBlogAsync(new BlogEventArgs(e.Blog, e.Model));
             }
         }
@@ -95,10 +95,11 @@ namespace GmGard.Services
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var util = scope.ServiceProvider.GetService<ContextlessBlogUtil>();
-                    var result = await _client.UpdateAsync<BlogIndexed, object>(DocumentPath<BlogIndexed>.Id(p.Model.ItemId), ud => ud.Doc(new { PostCount = util.GetBlogPostCount(p.Model.ItemId) }).Refresh(Elasticsearch.Net.Refresh.True));
-                    if (!result.IsValid)
+                    var postCount = util.GetBlogPostCount(p.Model.ItemId);
+                    var result = await _client.UpdateAsync<BlogIndexed, object>("blogs", p.Model.ItemId, u => u.Doc(new { postCount }).Refresh(Refresh.True));
+                    if (!result.IsValidResponse)
                     {
-                        _logger.LogError(result.DebugInformation);
+                        _logger.LogError(result.DebugInformation ?? result.ElasticsearchServerError?.Error?.Reason);
                         var db = scope.ServiceProvider.GetService<BlogContext>();
                         var blog = await db.Blogs.FindAsync(p.Model.ItemId);
                         if (blog != null)
@@ -112,10 +113,31 @@ namespace GmGard.Services
 
         public void UpdateViewCount(IDictionary<int, long> visits)
         {
-            var result = _client.Bulk(bd => visits.Aggregate(bd, (b, kvp) => b.Update<BlogIndexed, object>(bud => bud.Id(kvp.Key).Doc(new { BlogVisit = kvp.Value })), i => i.Refresh(Elasticsearch.Net.Refresh.True)));
-            if (!result.IsValid)
+            if (visits == null || !visits.Any()) return;
+
+            var bulkResponse = _client.Bulk(b =>
             {
-                _logger.LogError(result.DebugInformation);
+                b.Index("blogs").Refresh(Refresh.True);
+                foreach (var kvp in visits)
+                {
+                    b.Update<BlogIndexed, object>(ud =>
+                    {
+                        ud.Id(kvp.Key);
+                        ud.Doc(new { blogVisit = kvp.Value });
+                    });
+                }
+            });
+
+            if (!bulkResponse.IsValidResponse)
+            {
+                _logger.LogError(bulkResponse.DebugInformation ?? bulkResponse.ElasticsearchServerError?.Error?.Reason);
+            }
+            else if (bulkResponse.Errors)
+            {
+                foreach (var item in bulkResponse.ItemsWithErrors)
+                {
+                    _logger.LogError($"Bulk update error id={item.Id} reason={item.Error?.Reason} caused by {item.Error?.CausedBy?.Reason}");
+                }
             }
         }
 
@@ -130,23 +152,22 @@ namespace GmGard.Services
                     var tagUtil = scope.ServiceProvider.GetService<TagUtil>();
                     tags = await tagUtil.GetTagsInBlogAsync(b.Model.BlogID);
                 }
-                var result = await _client.IndexAsync(BlogIndexed.FromBlogTag(b.Model, tags.Select(t => t.TagName), util.GetPostCount(b.Model)), i => i.Refresh(Elasticsearch.Net.Refresh.True));
-                if (!result.IsValid)
+                var doc = BlogIndexed.FromBlogTag(b.Model, tags.Select(t => t.TagName), util.GetPostCount(b.Model));
+                var result = await _client.IndexAsync(doc, i => i.Index("blogs").Id(doc.Id).Refresh(Refresh.True));
+                if (!result.IsValidResponse)
                 {
-                    _logger.LogError(result.DebugInformation);
+                    _logger.LogError(result.DebugInformation ?? result.ElasticsearchServerError?.Error?.Reason);
                 }
             }
         }
 
-        public Task RemoveBlogAsync(BlogEventArgs b)
+        public async Task RemoveBlogAsync(BlogEventArgs b)
         {
-            return _client.DeleteAsync(new DocumentPath<BlogIndexed>(b.Model.BlogID), i => i.Refresh(Elasticsearch.Net.Refresh.True)).ContinueWith(r =>
+            var r = await _client.DeleteAsync(b.Model.BlogID, d => d.Index("blogs").Refresh(Refresh.True));
+            if (!r.IsValidResponse)
             {
-                if (!r.Result.IsValid)
-                {
-                    _logger.LogError(r.Result.DebugInformation);
-                }
-            });
+                _logger.LogError(r.DebugInformation ?? r.ElasticsearchServerError?.Error?.Reason);
+            }
         }
     }
 }
