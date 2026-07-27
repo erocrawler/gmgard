@@ -426,43 +426,45 @@ namespace GmGard.Controllers
                 
                 string currentUser = User.Identity.IsAuthenticated ? User.Identity.Name : null;
 
-                // Experience ranking - top 10 + current user if needed
-                model.Exp = await _udb.Users
+                // Experience ranking - top 10: only 10 rows projected (Name+Value) from SQL, index added client-side
+                var expData = await _udb.Users.AsNoTracking()
                     .OrderByDescending(u => u.Experience)
+                    .Select(u => new { u.UserName, Value = u.Experience })
                     .Take(10)
-                    .Select((u, index) => new RankTuple 
-                    { 
-                        Name = u.UserName, 
-                        Value = u.Experience, 
-                        Ranking = index + 1 
-                    })
                     .ToListAsync();
+                model.Exp = expData.Select((u, index) => new RankTuple
+                {
+                    Name = u.UserName,
+                    Value = u.Value,
+                    Ranking = index + 1
+                }).ToList();
 
-                // Consecutive sign ranking - top 10
-                model.Sign = await _udb.Users
+                // Consecutive sign ranking - top 10: only 10 rows from SQL
+                var signData = await _udb.Users.AsNoTracking()
                     .OrderByDescending(u => u.ConsecutiveSign)
+                    .Select(u => new { u.UserName, Value = u.ConsecutiveSign })
                     .Take(10)
-                    .Select((u, index) => new RankTuple 
-                    { 
-                        Name = u.UserName, 
-                        Value = u.ConsecutiveSign, 
-                        Ranking = index + 1 
-                    })
                     .ToListAsync();
+                model.Sign = signData.Select((u, index) => new RankTuple
+                {
+                    Name = u.UserName,
+                    Value = u.Value,
+                    Ranking = index + 1
+                }).ToList();
 
                 // Blog count ranking - top 10
-                model.Blog = await _db.Blogs
+                var blogData = await _db.Blogs
                     .GroupBy(b => b.Author)
                     .Select(g => new { Name = g.Key, Value = g.Count() })
                     .OrderByDescending(g => g.Value)
                     .Take(10)
-                    .Select((b, index) => new RankTuple 
-                    { 
-                        Name = b.Name, 
-                        Value = b.Value, 
-                        Ranking = index + 1 
-                    })
                     .ToListAsync();
+                model.Blog = blogData.Select((b, index) => new RankTuple
+                {
+                    Name = b.Name,
+                    Value = b.Value,
+                    Ranking = index + 1
+                }).ToList();
 
                 // Post + Reply count ranking - top 10
                 var postCounts = _db.Posts
@@ -471,19 +473,19 @@ namespace GmGard.Controllers
                 var replyCounts = _db.Replies
                     .GroupBy(r => r.Author)
                     .Select(g => new { Name = g.Key, Count = g.Count() });
-                model.Post = await postCounts
+                var postData = await postCounts
                     .Concat(replyCounts)
                     .GroupBy(x => x.Name)
                     .Select(g => new { Name = g.Key, Value = g.Sum(x => x.Count) })
                     .OrderByDescending(x => x.Value)
                     .Take(10)
-                    .Select((p, index) => new RankTuple 
-                    { 
-                        Name = p.Name, 
-                        Value = p.Value, 
-                        Ranking = index + 1 
-                    })
                     .ToListAsync();
+                model.Post = postData.Select((p, index) => new RankTuple
+                {
+                    Name = p.Name,
+                    Value = p.Value,
+                    Ranking = index + 1
+                }).ToList();
 
                 if (User.Identity.IsAuthenticated)
                 {
@@ -499,8 +501,8 @@ namespace GmGard.Controllers
 
                         var blogCount = await _db.Blogs.CountAsync(b => b.Author == currentUser);
                         var blogRank = await _db.Blogs.GroupBy(b => b.Author)
-                            .Where(g => g.Count() > blogCount)
-                            .CountAsync() + 1;
+                            .Select(g => g.Count())
+                            .CountAsync(c => c > blogCount) + 1;
                         model.MyBlog = new Tuple<int, long>(blogCount, blogRank);
 
                         var postCount = await _db.Posts.CountAsync(p => p.Author == currentUser);
@@ -508,11 +510,10 @@ namespace GmGard.Controllers
                         var totalCount = postCount + replyCount;
                         var postCounts2 = _db.Posts.GroupBy(p => p.Author).Select(g => new { Name = g.Key, Count = g.Count() });
                         var replyCounts2 = _db.Replies.GroupBy(r => r.Author).Select(g => new { Name = g.Key, Count = g.Count() });
-                        var postRank = await postCounts2
-                            .Concat(replyCounts2)
+                        var combinedCounts = postCounts2.Concat(replyCounts2)
                             .GroupBy(x => x.Name)
-                            .Where(g => g.Sum(x => x.Count) > totalCount)
-                            .CountAsync() + 1;
+                            .Select(g => g.Sum(x => x.Count));
+                        var postRank = await combinedCounts.CountAsync(c => c > totalCount) + 1;
                         model.MyPost = new Tuple<int, long>(totalCount, postRank);
                     }
                 }
