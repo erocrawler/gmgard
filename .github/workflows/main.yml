@@ -25,7 +25,9 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: GmGard/package.json
+        cache-dependency-path: |
+          GmGard/package.json
+          GmGard.Client/package.json
 
     - name: Publish Application
       run: |
@@ -34,6 +36,22 @@ jobs:
         -r linux-x64 \
         --self-contained true \
         -o ./publish
+
+        echo "=== DEBUG: List possible CSS locations ==="
+        echo "-- Client src wwwroot/css --"
+        ls -lh GmGard.Client/wwwroot/css/ || echo "GmGard.Client/wwwroot/css missing"
+        echo "-- Client bin Release wwwroot --"
+        ls -lh GmGard.Client/bin/Release/net10.0/wwwroot/css/ 2>&1 | head -20
+        echo "-- Server publish wwwroot/app/css (expected final location) --"
+        ls -lh ./publish/wwwroot/app/css/ || echo "publish/wwwroot/app/css MISSING!"
+        echo "-- Server publish wwwroot/css (legacy location, should NOT exist for Blazor) --"
+        ls -lh ./publish/wwwroot/css/ 2>&1 | head -20 || echo "publish/wwwroot/css not found (expected)"
+        echo "-- Search all app.min.css --"
+        find ./publish -type f -name "app.min.css" -exec ls -lh {} \;
+        echo "-- index.html CSS reference --"
+        grep -n "app.min.css" ./publish/wwwroot/app/index.html || echo "index.html missing or no reference"
+        echo "-- All publish/wwwroot structure --"
+        find ./publish/wwwroot -type f | sort | head -n 100
 
     # ---------------------------------------------------
     # 2. SETUP SSH AGENT
