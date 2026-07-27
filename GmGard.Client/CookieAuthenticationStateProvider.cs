@@ -21,14 +21,20 @@ public class CookieAuthenticationStateProvider : AuthenticationStateProvider
         _authService = authService;
         _authService.AuthStateChanged = async () =>
         {
-            await GetAuthenticationStateAsync();
+            // After login/logout, force refresh user to avoid stale cached false
+            await GetAuthenticationStateAsync(force: true);
             NotifyAuthenticationStateChanged();
         };
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var user = await _authService.GetUserAsync();
+        return await GetAuthenticationStateAsync(force: false);
+    }
+
+    private async Task<AuthenticationState> GetAuthenticationStateAsync(bool force)
+    {
+        var user = await _authService.GetUserAsync(force: force);
         _cachedUser = ToClaimsPrincipal(user);
         return new AuthenticationState(_cachedUser);
     }

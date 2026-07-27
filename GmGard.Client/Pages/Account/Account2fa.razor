@@ -49,7 +49,7 @@
             <div class="card bg-base-100 shadow">
                 <div class="card-body">
                     <h2 class="card-title">两步验证未启用</h2>
-                    <img src="/assets/two-factor-authentication-02.png" alt="2FA" class="w-full max-w-xl mx-auto" onerror="this.style.display='none'" />
+                    <img src="assets/two-factor-authentication-02.png" alt="2FA" class="w-full max-w-xl mx-auto" onerror="this.style.display='none'" />
                     <p class="text-base-content/70 text-sm mt-2">
                         为保障您的账户安全，推荐启用两步验证。两步验证确保只有您可以访问自己的帐户，即使其他人知道您的密码也无法访问。
                     </p>
@@ -58,14 +58,15 @@
         }
 
         <div class="flex flex-wrap gap-2">
-            @if (!model.HasAuthenticator)
+            @if (!model.Is2faEnabled)
             {
                 <a href="account/enable2fa" class="btn btn-primary">启用两步验证</a>
             }
             else
             {
-                <a href="account/enable2fa" class="btn btn-primary">设置两步验证</a>
-                <button class="btn btn-outline" @onclick="() => Disable2Fa(true)">重设验证秘钥</button>
+                // 已启用：允许重新绑定（same secret）或重设（new secret, requires confirm + logout warning）
+                <a href="account/enable2fa" class="btn btn-primary">重新绑定验证器</a>
+                <button class="btn btn-outline btn-error" @onclick="() => showResetConfirm = true">重设验证秘钥</button>
             }
         </div>
 
@@ -73,6 +74,29 @@
         {
             <div class="toast toast-bottom toast-center z-50">
                 <div class="alert @(isError ? "alert-error" : "alert-success")"><span>@message</span></div>
+            </div>
+        }
+
+        @* Reset authenticator confirm dialog *@
+        @if (showResetConfirm)
+        {
+            <div class="modal modal-open">
+                <div class="modal-box">
+                    <h3 class="font-bold text-lg text-error">⚠️ 重设验证秘钥？</h3>
+                    <div class="py-3 space-y-3 text-sm">
+                        <p>此操作将：</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><b>立即禁用两步验证（2FA）</b>，旧验证器中的验证码将立即失效，账户仅靠密码保护</li>
+                            <li>重置并生成全新的验证器秘钥，旧二维码/秘钥永久失效，您必须重新扫描新二维码绑定验证器APP</li>
+                            <li><b>将强制退出其他浏览器/设备的登录</b>，您可能需要<strong>重新登录</strong></li>
+                        </ul>
+                    </div>
+                    <div class="modal-action">
+                        <button class="btn btn-ghost" @onclick="() => showResetConfirm = false">取消</button>
+                        <button class="btn btn-error" @onclick="ConfirmReset">确认重设并禁用2FA</button>
+                    </div>
+                </div>
+                <div class="modal-backdrop"><button @onclick="() => showResetConfirm = false">close</button></div>
             </div>
         }
 
@@ -110,6 +134,7 @@
     string? message;
     bool isError;
     bool showCodes = false;
+    bool showResetConfirm = false;
     string[]? recoveryCodes;
     System.Threading.CancellationTokenSource? toastCts;
 
@@ -129,14 +154,19 @@
 
     async Task Disable2Fa(bool reset)
     {
-        // TODO: add confirm dialog
         var ok = await AccountService.Disable2FaAsync(reset);
         if (ok)
         {
             model = await AccountService.Get2FaDataAsync();
-            ShowToast("操作成功");
+            ShowToast(reset ? "已重设秘钥并禁用2FA，请重新启用" : "操作成功");
         }
         else ShowToast("操作失败，请刷新重试", true);
+    }
+
+    async Task ConfirmReset()
+    {
+        showResetConfirm = false;
+        await Disable2Fa(true);
     }
 
     async Task GenerateRecoveryCodes()

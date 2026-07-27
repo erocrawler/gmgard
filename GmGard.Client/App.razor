@@ -1,21 +1,23 @@
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-            <Authorizing>
-                <div class="flex justify-center items-center min-h-screen">
-                    <span class="loading loading-spinner loading-lg text-primary"></span>
-                </div>
-            </Authorizing>
-            <NotAuthorized>
-                <RedirectToLogin />
-            </NotAuthorized>
-        </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>未找到</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">抱歉，这里什么也没有。</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <Authorizing>
+                    <div class="flex justify-center items-center min-h-screen">
+                        <span class="loading loading-spinner loading-lg text-primary"></span>
+                    </div>
+                </Authorizing>
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>未找到</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">抱歉，这里什么也没有。</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

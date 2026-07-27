@@ -4,11 +4,21 @@
   "description": "Blazor WebAssembly client with Tailwind CSS",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css",
-    "watch:css": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
+    "watch:css": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch",
+    "build:js": "npm run build:js:vendor && npm run build:js:app",
+    "build:js:vendor": "npm run build:js:vendor:qrcode",
+    "build:js:vendor:qrcode": "npx terser node_modules/qrcode-generator/qrcode.js --compress --mangle --output wwwroot/js/qrcode.min.js",
+    "build:js:app": "npm run build:js:app:enable2fa",
+    "build:js:app:enable2fa": "npx terser wwwroot/js/enable2fa.js --module --compress --mangle --output wwwroot/js/enable2fa.min.js",
+    "build": "npm run build:css && npm run build:js"
+  },
+  "dependencies": {
+    "qrcode-generator": "^1.4.4"
   },
   "devDependencies": {
     "tailwindcss": "^4.1.0",
     "@tailwindcss/cli": "^4.1.0",
-    "daisyui": "^5.5.0"
+    "daisyui": "^5.5.0",
+    "terser": "^5.36.0"
   }
 }

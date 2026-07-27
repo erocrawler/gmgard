@@ -131,7 +131,7 @@ public class UpdateCssHash : Task
     </Task>
   </UsingTask>
 
-  <Target Name="NpmInstall" BeforeTargets="NpmBuildCss" Condition="'$(DesignTimeBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules')">
+  <Target Name="NpmInstall" BeforeTargets="NpmBuildCss;NpmBuildJs" Condition="'$(DesignTimeBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)/node_modules')">
     <Exec Command="npm install" />
   </Target>
 
@@ -143,6 +143,18 @@ public class UpdateCssHash : Task
   <!-- Stamps ?v={hash} AFTER css build, BEFORE static assets collection - safe ordering -->
   <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
     <UpdateCssHash CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css" IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
+  </Target>
+
+  <!-- Ensure js dir exists for generated assets (qrcode.min.js, enable2fa.min.js) – both gitignored like main's site.min.js -->
+  <Target Name="EnsureJsDir" BeforeTargets="NpmBuildJs;DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MakeDir Directories="$(MSBuildProjectDirectory)/wwwroot/js" Condition="!Exists('$(MSBuildProjectDirectory)/wwwroot/js')" />
+  </Target>
+
+  <!-- Minify JS via terser CLI (like main's gulp-uglify) – pure npm, no mjs wrapper
+       - Vendor qrcode-generator (npm) -> qrcode.min.js (like jquery.min.js from bower)
+       - App enable2fa.js -> enable2fa.min.js (like site.min.js) -->
+  <Target Name="NpmBuildJs" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" DependsOnTargets="EnsureJsDir" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="$(MSBuildProjectDirectory)/wwwroot/js/enable2fa.js;$(MSBuildProjectDirectory)/package.json;$(MSBuildProjectDirectory)/node_modules/qrcode-generator/qrcode.js" Outputs="$(MSBuildProjectDirectory)/wwwroot/js/enable2fa.min.js;$(MSBuildProjectDirectory)/wwwroot/js/qrcode.min.js">
+    <Exec Command="npm run build:js" />
   </Target>
 
 </Project>

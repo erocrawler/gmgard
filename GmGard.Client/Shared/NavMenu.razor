@@ -1,5 +1,7 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@implements IDisposable
 
 <div class="navbar bg-base-100 shadow-sm border-b border-base-200">
     <div class="navbar-start">
@@ -12,8 +14,15 @@
             <Authorized>
                 <div class="dropdown dropdown-end">
                     <label tabindex="0" class="btn btn-ghost btn-circle avatar">
-                        <div class="w-9 rounded-full ring ring-base-300 ring-offset-2 ring-offset-base-100">
-                            <img src="@avatarUrl" alt="avatar" />
+                        <div class="w-9 rounded-full ring ring-base-300 ring-offset-2 ring-offset-base-100 overflow-hidden">
+                            @if (string.IsNullOrEmpty(avatarUrl))
+                            {
+                                <div class="w-full h-full bg-base-300 flex items-center justify-center text-base-content">?</div>
+                            }
+                            else
+                            {
+                                <img src="@avatarUrl" alt="avatar" />
+                            }
                         </div>
                     </label>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-box w-56 mt-2 border border-base-200">
@@ -24,7 +33,6 @@
                         <div class="divider my-0"></div>
                         <li class="menu-title mt-1"><span>账号</span></li>
                         <li><NavLink href="account/2fa">两步验证</NavLink></li>
-                        <li><NavLink href="account/enable2fa">开启两步验证</NavLink></li>
                         <li class="menu-title mt-1"><span>管理</span></li>
                         <li><NavLink href="admin">管理首页</NavLink></li>
                         <li><NavLink href="admin/category">分类管理</NavLink></li>
@@ -45,13 +53,49 @@
 @code {
     private string avatarUrl = "";
 
+    // Cascading auth state to react when Blazor's auth system updates (after login)
+    [CascadingParameter]
+    private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState>? AuthTask { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        var user = await AuthService.GetUserAsync();
-        if (user != null)
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+        await LoadAvatar();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // This runs whenever cascading auth state changes (e.g. after login navigation)
+        if (AuthTask != null)
         {
-            avatarUrl = user.Avatar;
+            var auth = await AuthTask;
+            if (auth.User.Identity?.IsAuthenticated == true && string.IsNullOrEmpty(avatarUrl))
+            {
+                await LoadAvatar(force: true);
+            }
+            else if (auth.User.Identity?.IsAuthenticated != true)
+            {
+                avatarUrl = "";
+            }
         }
+    }
+
+    private async void OnAuthStateChanged(Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> task)
+    {
+        // Force refresh user (avatar) when auth state provider notifies change
+        await LoadAvatar(force: true);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadAvatar(bool force = false)
+    {
+        var user = await AuthService.GetUserAsync(force: force);
+        avatarUrl = user?.Avatar ?? "";
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
     }
 
     private async Task Logout()

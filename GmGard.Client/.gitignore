@@ -30,5 +30,8 @@ bld/
 [Bb]in/
 [Oo]bj/
 
+# Generated JS libs (from npm)
+wwwroot/js/*.min.js
+
 # Tailwind
 .tailwindcss-*
