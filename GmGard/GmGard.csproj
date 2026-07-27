@@ -350,8 +350,8 @@
 
   <!-- Inputs cannot use ! patterns, so we use concrete ItemGroups above -->
   <Target Name="RunGulp" BeforeTargets="ResolveStaticWebAssetsInputs;BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="@(GulpCssSrc);@(GulpJsSrc);gulpfile.js;package.json" Outputs="wwwroot/Content/Site.min.css;wwwroot/Scripts/site.min.js;wwwroot/Content/datepicker.min.css;wwwroot/Scripts/datepicker.min.js">
-    <Message Text="Running gulp min -&gt; wwwroot/** (incremental, logs: GmGard/tmp/)" Importance="Low" />
-    <!-- write gulp output to workspace-local tmp per user request, ignore errors if tmp missing -->
-    <Exec Command="mkdir tmp 2&gt; nul &amp; npx gulp min --silent &gt; tmp/gulp.log 2&gt;&amp;1" />
+    <Message Text="Running gulp min -&gt; wwwroot/** (incremental)" Importance="Low" />
+    <MakeDir Directories="$(GmGardTmpDir)" Condition="!Exists('$(GmGardTmpDir)')" />
+    <Exec Command="npx gulp min --silent" />
   </Target>
 </Project>
