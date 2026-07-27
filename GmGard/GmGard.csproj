@@ -26,6 +26,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" />
+
+  <!-- Fallback for Linux runner: if Tailwind output ends up at wwwroot/css/ instead of wwwroot/app/css/ (BasePath), copy to correct location.
+       Happens on clean checkout where app.min.css is gitignored and NpmBuildCss timing differs between Windows and Linux SDK.
+       Safe for user uploads, no delete. -->
+  <Target Name="EnsureBlazorCssAtAppPath" AfterTargets="Publish">
+    <Message Text="Checking Blazor CSS locations..." Importance="low" />
+    <Copy SourceFiles="$(PublishDir)wwwroot/css/app.min.css" DestinationFiles="$(PublishDir)wwwroot/app/css/app.min.css" Condition="Exists('$(PublishDir)wwwroot/css/app.min.css') And !Exists('$(PublishDir)wwwroot/app/css/app.min.css')" />
+    <Copy SourceFiles="$(PublishDir)wwwroot/css/app.css" DestinationFiles="$(PublishDir)wwwroot/app/css/app.css" Condition="Exists('$(PublishDir)wwwroot/css/app.css') And !Exists('$(PublishDir)wwwroot/app/css/app.css')" />
+    <Message Text="Copied css from wwwroot/css to wwwroot/app/css fallback" Condition="Exists('$(PublishDir)wwwroot/css/app.min.css')" Importance="low" />
+  </Target>
   
   <ItemGroup>
     <Content Remove="appsettings.override.json" />

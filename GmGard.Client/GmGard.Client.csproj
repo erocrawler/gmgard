@@ -135,12 +135,13 @@ public class UpdateCssHash : Task
     <Exec Command="npm install" />
   </Target>
 
-  <Target Name="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json" Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
+  <!-- Must run before DefineStaticWebAssets as well, otherwise gitignored app.min.css missing at evaluation causes MSB error on clean checkout (Linux runner) -->
+  <Target Name="NpmBuildCss" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json" Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
     <Exec Command="npm run build:css" />
   </Target>
 
   <!-- Stamps ?v={hash} AFTER css build, BEFORE static assets collection - safe ordering -->
-  <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+  <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
     <UpdateCssHash CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css" IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
   </Target>
 
