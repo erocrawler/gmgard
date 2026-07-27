@@ -5,12 +5,46 @@
 - **Tailwind CSS v4** + **DaisyUI v5.5+** — styling via utility classes and DaisyUI component classes
 - **C#** for all logic (no JavaScript unless absolutely necessary via `IJSRuntime`)
 
-## Build / asset fingerprinting notes
+## Build / asset fingerprinting notes – .NET 10 hosted WASM gotchas
 
-- **`blazor.webassembly.js`** is fingerprinted by the SDK via the `#[.{fingerprint}]` placeholder in `index.html` + `OverrideHtmlAssetPlaceholders=true`. This works through the browser's JS import map.
-- **CSS `<link>` tags are NOT updated by the SDK fingerprinting pipeline.** The `#[.{fingerprint}]` placeholder is silently stripped from `<link href>` without inserting the hash. There is no CSS equivalent of the JS import map.
-- Cache-busting for `app.min.css` is handled by the **`UpdateCssHash` inline MSBuild task** in `GmGard.Client.csproj`, which computes a SHA-256 hash of the built CSS and stamps `?v={hash}` into `index.html` after Tailwind builds. Do not replace this with a PowerShell script — production Linux CI does not have PowerShell.
-- The fingerprinted `app.min.{hash}.css` file that appears in the publish output is a **server-side artifact** consumed by `MapStaticAssets` for ETag generation. The browser never loads it by that filename.
+### Bug: dotnet/runtime#121993 (also #121121, aspnetcore#65710) – fingerprint placeholder not replaced in hosted publish
+- **Link**: https://github.com/dotnet/runtime/issues/121993
+- **Minimal repro**: Server csproj references Client csproj, Client has `StaticWebAssetBasePath=app` + `OverrideHtmlAssetPlaceholders=true` + `<script src="_framework/blazor.webassembly#[.{fingerprint}].js">` in index.html. Publish Server → `publish/wwwroot/index.html` still contains literal `#[.{fingerprint}]`.
+- **Why browser requests `/app/_framework/blazor.webassembly` (no .js)**: `#` is URL fragment delimiter. Browser drops fragment before request, so `_framework/blazor.webassembly#[.{fingerprint}].js` becomes fetch for `/app/_framework/blazor.webassembly` → 404.
+- **Root cause per maraf (MSFT)**: When WebAssembly project is referenced by Server, MSBuild calls into referenced project several times. Project instance is recreated each call, so `@(_HtmlStaticWebAssets)` collection not shared between Build and Publish. Assigned milestone 10.0.x but not yet fixed as of 2026-07-26.
+- **Official workaround per maraf**: Opt-out of placeholder overriding – remove `<OverrideHtmlAssetPlaceholders>true</...>` and update index.html to plain `blazor.webassembly.js`. "You will loose fingerprint on dotnet.js and blazor.webassembly.js scripts, which is the same situation as we had in .NET 9. Fortunately in hosted scenario, you can control server sent headers for caching"
+- **Applied in this repo**: Both `GmGard.Client.csproj` and `GmGard.csproj` set `<OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>` with comment linking bug. `index.html` is plain (NO preload):
+  ```html
+  <!-- <link rel="preload" id="webassembly" /> REMOVED – see below -->
+  <script type="importmap"></script> <!-- empty importmap stays empty, MapStaticAssets serves framework via no-cache endpoint -->
+  <script src="_framework/blazor.webassembly.js"></script>
+  ```
+  `MapStaticAssets` still creates fingerprinted physical file `blazor.webassembly.958z1vx7fr.js` + endpoint `Route=app/_framework/blazor.webassembly.js` → `AssetFile=app/_framework/blazor.webassembly.{fp}.js` via no-cache mapping (same as .NET 9).
+- **Why `<link rel="preload" id="webassembly" />` was removed**: This tag is part of new .NET 10 fingerprinting system. When `OverrideHtmlAssetPlaceholders=true`, SDK replaces it at build with `<link rel="preload" as="fetch" href="_framework/blazor.webassembly.{fp}.js" id="webassembly" />` + more preloads for dotnet.js etc. It's a perf optimization. But with `OverrideHtmlAssetPlaceholders=false` (workaround), the tag stays as `<link rel="preload" id="webassembly" />` with NO `href` → browser ignores it, devtools warns, does nothing. Official MSFT workaround says remove it and use plain `blazor.webassembly.js` ( .NET 9 behavior ). When #121993 is fixed in 10.0.x, re-enable by: set `OverrideHtmlAssetPlaceholders=true` + add `<link rel="preload" id="webassembly" />` back + use `blazor.webassembly#[.{fingerprint}].js`. See commit that removed it: https://github.com/nick-boey/Homespun/commit/35f3833381eecf62b57869593ee22c3c574a2f36 referencing same bug.
+
+### Pipeline (after workaround)
+- Client: `StaticWebAssetBasePath=app` + `StaticWebAssetFingerprintingEnabled=true` + `OverrideHtmlAssetPlaceholders=false`. Server: `endpoints.MapStaticAssets()` **no** `MapGroup("/app")` – JSON already has `app/` prefix, using MapGroup would cause `app/app/`.
+- Do NOT use `UseBlazorFrameworkFiles("/app")` alongside MapStaticAssets – legacy middleware expects plain physical file (which doesn't exist, only fingerprinted exists) and masks 404 via `UseStatusCodePagesWithReExecute("/Error/Index/{0}")` → returns MVC 404 page `Images/404.jpg` hiding real error.
+- **CSS**: `#[.{fingerprint}]` placeholder is ignored for CSS (SDK strips it). Fingerprinted `app.min.ydx3wd2ji5.css` is server artifact for ETag only, never loaded by browser. Cache-busting via `UpdateCssHash` inline task (`RoslynCodeTaskFactory` using `SHA256.Create().ComputeHash` – NOT `SHA256.HashData()` which is unavailable in inline task's older ref set – error `CS0117`) stamps `?v={hash}` into index.html **Before** `ResolveStaticWebAssetsInputs`. Incremental Inputs/Outputs to avoid race.
+- **Publish**: SDK 10.0.10+ correctly puts Client `index.html` to `wwwroot/app/index.html` (was incorrectly at `wwwroot/index.html` in 10.0.9, hence old `CopyIndexHtmlToAppFolder` target – removed now since we are on 10.0.10+). Dev also has `bin/Debug/net10.0/GmGard.staticwebassets.endpoints.json` with ~6075 routes including `app/index.html` endpoint.
+- **Fallback ordering**: `MapFallbackToFile("/app/{*path:nonfile}", "app/index.html")` MUST be placed **before** `MapControllerRoute default` – otherwise `/app/title-helper` matches `{controller=app}/{action=title-helper}` → MVC error page.
+- **Dev `_content` rewrite**: Blazor with `base href="/app/"` requests `GET /app/_content/Microsoft.DotNet.HotReload.WebAssembly.Browser...lib.module.js` for HotReload. But `MapStaticAssets` registers `_content` at root `/_content` (verified: Debug endpoints.json has `_content/...` not `app/_content/...`). Middleware in `Startup.cs` before `UseStaticFiles` rewrites `/app/_content/*` → `/_content/*`. Also rewrites legacy `GmGard.Client.styles.css` → `GmGard.Client.bundle.scp.css`. Without this, dev `dotnet run` shows `Failed to load config file undefined TypeError: Failed to fetch dynamically imported module: .../app/_content/...` and page stuck at "加载中".
+- **Launch profile gotcha**: Running `dotnet run --no-launch-profile --urls https://...` forces Production environment → hits `OpenIddict signing certificate not found at App_Data/Certificates/signing-cert.pfx` (your last terminal error). Use `dotnet run` without flag (launchSettings.json sets Development) or set `ASPNETCORE_ENVIRONMENT=Development` or `GMGARD_USE_DEV_CERTS=true` for prod binary.
+
+### Deploy checklist (prod)
+```powershell
+dotnet publish GmGard/GmGard.csproj -c Release -o publish_prod --nologo -v:q
+# Verify:
+cat publish_prod/wwwroot/index.html   # Must be plain blazor.webassembly.js, NO #[.{fingerprint}]
+Test-Path publish_prod/wwwroot/app/index.html  # Must exist via CopyIndexHtmlToAppFolder
+# Run test:
+$env:GMGARD_USE_DEV_CERTS="true"; dotnet publish_prod/GmGard.dll --urls https://127.0.0.1:5001
+# Check endpoints:
+# GET /app/_framework/blazor.webassembly.js -> 200 (was 404 before fix)
+# GET /app/ -> 200 text/html
+# GET /app/title-helper -> 200 text/html (SPA fallback, not MVC 404)
+```
+For real prod: need pfx certs + `OPENIDDICT_CERT_PASSWORD` env, `GMGARD_USE_DEV_CERTS` only for local testing.
 
 ## CSS setup (Tailwind v4 + DaisyUI v5)
 

@@ -149,8 +149,15 @@ namespace GmGard
                     options.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow();
 
                     // Load signing certificate based on environment
-                    if (IsDev)
+                    // Flag for local prod testing: set env var GMGARD_USE_DEV_CERTS=true to bypass cert file requirement
+                    var useDevCertsFlag = string.Equals(Environment.GetEnvironmentVariable("GMGARD_USE_DEV_CERTS"), "true", StringComparison.OrdinalIgnoreCase);
+
+                    if (IsDev || useDevCertsFlag)
                     {
+                        if (useDevCertsFlag)
+                        {
+                            Log.Warning("GMGARD_USE_DEV_CERTS=true – using development OpenIddict certificates even in Production (local prod testing only)");
+                        }
                         options.AddDevelopmentEncryptionCertificate()
                                .AddDevelopmentSigningCertificate();
                     }
@@ -188,7 +195,8 @@ namespace GmGard
                         else
                         {
                             throw new InvalidOperationException($"OpenIddict signing certificate not found at {signingCertPath}. " +
-                                "For production, generate certificates with: generate-certificates.ps1 in GmGardMigrations project");
+                                "For production, generate certificates with: generate-certificates.ps1 in GmGardMigrations project. " +
+                                "For local prod testing, set env var GMGARD_USE_DEV_CERTS=true to bypass.");
                         }
 
                         if (File.Exists(encryptionCertPath))
@@ -405,7 +413,21 @@ namespace GmGard
             app.UseForwardedHeaders();
 
             var siteConfig = app.ApplicationServices.GetRequiredService<IOptions<SiteConfig>>().Value;
-            app.UseBlazorFrameworkFiles("/app");
+
+            // Dev hot-reload fix: Blazor runtime with base href="/app/" requests /app/_content/...
+            // but MapStaticAssets registers _content at /_content. Rewrite /app/_content -> /_content
+            // Also rewrite legacy scoped css query if any.
+            app.Use(async (ctx, next) =>
+            {
+                var path = ctx.Request.Path.Value;
+                if (path != null && path.StartsWith("/app/_content/", StringComparison.OrdinalIgnoreCase))
+                {
+                    ctx.Request.Path = path.Substring(4); // "/app/_content" -> "/_content"
+                }
+                await next();
+            });
+
+            // UseBlazorFrameworkFiles removed – MapStaticAssets() serves app/_framework via fingerprinted endpoints (plain .js file doesn't exist physically)
             app.UseStaticFiles(new StaticFileOptions
             {
                 ContentTypeProvider = ConfigureFileExtensionProvider(),
@@ -481,14 +503,16 @@ namespace GmGard
                     pattern: "gm{id:decimal}",
                     defaults: new { controller = "Blog", action = "Details" }
                 );
+                // Blazor static assets: MapStaticAssets serves app/_framework/*, app/css/* etc. via StaticWebAssetBasePath=app
+                // Do NOT use MapGroup("/app") with endpoints file that already has app/ prefix – causes double app/app/ prefix
+                endpoints.MapStaticAssets();
+
+                // SPA fallback MUST be before default MVC route, otherwise /app/title-helper matches {controller=app}/{action=title-helper} -> MVC 404
+                endpoints.MapFallbackToFile("/app/{*path:nonfile}", "app/index.html");
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-                var appGroup = endpoints.MapGroup("/app");
-                appGroup.MapStaticAssets("GmGard.staticwebassets.endpoints.json");
-                
-                endpoints.MapFallbackToFile("/app/{*path:nonfile}", "app/index.html");
             });
         }
 

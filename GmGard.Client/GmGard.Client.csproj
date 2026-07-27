@@ -8,13 +8,14 @@
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
     <StaticWebAssetBasePath>app</StaticWebAssetBasePath>
     <StaticWebAssetFingerprintingEnabled>true</StaticWebAssetFingerprintingEnabled>
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!-- Workaround for dotnet/runtime#121993: See AGENTS.md -->
+    <OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.9" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>
@@ -134,18 +135,13 @@ public class UpdateCssHash : Task
     <Exec Command="npm install" />
   </Target>
 
-  <Target Name="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs"
-          Condition="'$(DesignTimeBuild)' != 'true'"
-          Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json"
-          Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
+  <Target Name="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json" Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
     <Exec Command="npm run build:css" />
   </Target>
 
   <!-- Stamps ?v={hash} AFTER css build, BEFORE static assets collection - safe ordering -->
-  <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs"
-          Condition="'$(DesignTimeBuild)' != 'true'">
-    <UpdateCssHash CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css"
-                   IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
+  <Target Name="UpdateCssHash" AfterTargets="NpmBuildCss" BeforeTargets="ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+    <UpdateCssHash CssFilePath="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css" IndexHtmlPath="$(MSBuildProjectDirectory)/wwwroot/index.html" />
   </Target>
 
 </Project>

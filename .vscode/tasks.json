@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "dotnet run (web)",
+			"type": "shell",
+			"command": "dotnet run --project GmGard/GmGard.csproj -c Debug --launch-profile web"
+		}
+	]
+}
