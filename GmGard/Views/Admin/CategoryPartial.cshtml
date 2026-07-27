@@ -1,8 +1,7 @@
 ﻿@model GmGard.Models.AdminViewModel
-@inject ConstantUtil constUtil
 
 <h2>栏目管理</h2>
-<iframe loading="lazy" style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/admin/category"></iframe>
+<iframe loading="lazy" style="width:100%;border:none;height:600px" src="@Url.Action("App", "Home", new { path = "admin/category" })"></iframe>
 
 <h2>汉化组管理</h2>
 <h4 class="text-info">@ViewBag.HgMsg</h4>

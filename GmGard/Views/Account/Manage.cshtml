@@ -3,7 +3,6 @@
 @inject ExpUtil expUtil
 @inject TitleService titleService
 @inject IOptionsSnapshot<BackgroundSetting> bgSetting
-@inject ConstantUtil constUtil
 @{
     ViewBag.Title = "账号设置";
     int points = expUtil.getUserPoints(User.Identity.Name);
@@ -73,8 +72,8 @@
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#account-accordion" href="#two-factor-auth"><h3>两步验证设置</h3></a>
             </div>
             <div class="accordion-body collapse" id="two-factor-auth">
-                <iframe loading="lazy" style="width:100%;border:none;height:600px" src="@(constUtil.AppHost)/account/2fa"></iframe>
-                <p>如果无法显示，请尝试在<a href="@(constUtil.AppHost)/account/2fa" target="_blank">新窗口中打开</a></p>
+                <iframe loading="lazy" style="width:100%;border:none;height:600px" src="@Url.Action("App", "Home", new { path = "account/2fa" })"></iframe>
+                <p>如果无法显示，请尝试在<a href="@Url.Action("App", "Home", new { path = "account/2fa" })" target="_blank">新窗口中打开</a></p>
             </div>
         </div>
         <div class="accordion-group">

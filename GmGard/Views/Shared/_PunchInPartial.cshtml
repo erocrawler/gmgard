@@ -1,5 +1,4 @@
 ﻿@inject ExpUtil expUtil
-@inject ConstantUtil constUtil
 @{
     expUtil.HasSigned(out int hasSigned);
 }
@@ -18,9 +17,13 @@
         }
     </div>
 </div>
-<div id="punchin-modal" class="modal hide fade" style="background:white" data-base-href="@constUtil.AppHost">
+@{
+    // Use Home/App flip-flag so it points to /app/punch-in when BlazorApp.Enabled=true, else AppHost (legacy)
+    var punchInUrl = Url.Action("App", "Home", new { path = "punch-in" });
+}
+<div id="punchin-modal" class="modal hide fade" style="background:white" data-base-href="@punchInUrl">
     <div class="modal-footer">
-        <span>如果无法显示，请尝试<a href="@(constUtil.AppHost)/punch-in" target="_blank">在新窗口中打开</a></span>
+        <span>如果无法显示，请尝试<a href="@punchInUrl" target="_blank">在新窗口中打开</a></span>
         <button class="btn" data-dismiss="modal">关闭</button>
     </div>
 </div>
@@ -30,7 +33,7 @@
         $("#punchin-modal").one('show', function () {
             var iframe = document.createElement('iframe'), $t = $(this);
             $t.appendTo('body')
-            iframe.src = $t.data('base-href') + '/punch-in';
+            iframe.src = $t.data('base-href');
             $t.prepend(iframe);
         });
         if ($('#checkin').length > 0) {

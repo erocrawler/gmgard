@@ -1,9 +1,8 @@
 ﻿@model GmGard.Models.AdminViewModel
 @inject Microsoft.AspNetCore.Identity.UserManager<UserProfile> userManager
-@inject ConstantUtil constUtil
 
 <div class="alert alert-info">所有组员变动需要最多30分钟生效。注销并重新登录可以使变动立即生效。</div>
-<p><a target="_blank" href="@(constUtil.AppHost)/admin/registration">管理用户邀请码<i class="icon icon-share"></i></a></p>
+<p><a target="_blank" href="@Url.Action("App", "Home", new { path = "admin/registration" })">管理用户邀请码<i class="icon icon-share"></i></a></p>
 <div class="accordion" id="userlist">
     <div class="accordion-group">
         <div class="accordion-heading">

@@ -1,5 +1,4 @@
 ﻿@inject IOptionsSnapshot<DataSettingsModel> dataSetting
-@inject ConstantUtil constUtil
 @{
     ViewBag.Title = "加入审核组";
     var setting = dataSetting.Value;
@@ -16,7 +15,7 @@
 
 <h4>加入审核组需要注意：</h4>
 <ul>
-    <li>需要通过<a href="@(constUtil.AppHost)/audit-exam">审核组测试。</a></li>
+    <li>需要通过<a href="@Url.Action("App", "Home", new { path = "audit-exam" })">审核组测试。</a></li>
     <li>需要熟知站规与投稿须知，能发现所有常见问题。</li>
     <li>有不确定的投稿或任何问题可以加入审核群<span class="label">189836722</span>进行讨论。</li>
     <li>管理员有最终判定权。</li>
@@ -50,7 +49,7 @@
     }
     else if (ViewBag.HasPassed == false)
     {
-        <a href="@(constUtil.AppHost)/audit-exam" class="btn btn-large btn-primary">参与测试</a>
+        <a href="@Url.Action("App", "Home", new { path = "audit-exam" })" class="btn btn-large btn-primary">参与测试</a>
     }
     else
     {
