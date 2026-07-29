@@ -177,22 +177,28 @@
                                     </div>
                                 }
                                 <div class="mt-1">
-                                    @if (activeReplyPostId != bc.PostId)
-                                    {
-                                        <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(bc.PostId)"><span>回复</span></a>
-                                    }
-                                    else
-                                    {
-                                        <div class="mt-1 addReply" id="addReplyBox_@bc.PostId" style="display:block">
-                                            <textarea id="ck_reply_post_@bc.PostId" style="visibility:hidden; height:0;"></textarea>
-                                            <div id="ckwrap_post_@bc.PostId" class="min-h-[100px]"></div>
-                                            <div class="flex gap-1 mt-1">
-                                                <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(bc.PostId)">发表</button>
-                                                <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(bc.PostId)">取消</button>
-                                            </div>
-                                            @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(bc.PostId))){<div class="text-[11px] text-error">@postReplyErrors[bc.PostId]</div>}
-                                        </div>
-                                    }
+                                    <AuthorizeView>
+                                        <Authorized>
+                                            @if (activeReplyPostId != bc.PostId)
+                                            {
+                                                <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(bc.PostId)"><span>回复</span></a>
+                                            }
+                                            else
+                                            {
+                                                <div class="mt-1 addReply" id="addReplyBox_@bc.PostId" style="display:block">
+                                                    <textarea id="ck_reply_post_@bc.PostId" style="visibility:hidden; height:0;"></textarea>
+                                                    <div class="flex gap-1 mt-1">
+                                                        <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(bc.PostId)">发表</button>
+                                                        <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(bc.PostId)">取消</button>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(bc.PostId))){<div class="text-[11px] text-error">@postReplyErrors[bc.PostId]</div>}
+                                                </div>
+                                            }
+                                        </Authorized>
+                                        <NotAuthorized>
+                                            <span class="text-[11px] opacity-50">登录后可回复</span>
+                                        </NotAuthorized>
+                                    </AuthorizeView>
                                 </div>
                             </div>
                         }
@@ -210,22 +216,28 @@
 
                 @* Bounty comment input – stays open after close/expire *@
                 <div class="mt-3">
-                    @if (activeBountyComment)
-                    {
-                        <div class="addReply border rounded p-2 bg-base-100 space-y-2">
-                            <textarea id="ck_bounty_comment" style="visibility:hidden; height:0;"></textarea>
-                            <div id="ckwrap_bounty_comment" class="min-h-[120px]"></div>
-                            <div class="flex gap-2">
-                                <button class="btn btn-primary btn-xs" @onclick="DoBountyComment">发表</button>
-                                <button class="btn btn-ghost btn-xs" @onclick="CancelBountyComment">取消</button>
-                            </div>
-                            @if (!string.IsNullOrEmpty(bountyCommentError)){<div class="text-[11px] text-error">@bountyCommentError</div>}
-                        </div>
-                    }
-                    else
-                    {
-                        <button class="btn btn-ghost btn-xs text-[11px]" @onclick="OpenBountyComment">写评论</button>
-                    }
+                    <AuthorizeView>
+                        <Authorized>
+                            @if (activeBountyComment)
+                            {
+                                <div class="addReply border rounded p-2 bg-base-100">
+                                    <textarea id="ck_bounty_comment" style="visibility:hidden; height:0;"></textarea>
+                                    <div class="flex gap-2 mt-2">
+                                        <button class="btn btn-primary btn-xs" @onclick="DoBountyComment">发表</button>
+                                        <button class="btn btn-ghost btn-xs" @onclick="CancelBountyComment">取消</button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(bountyCommentError)){<div class="text-[11px] text-error mt-1">@bountyCommentError</div>}
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="btn btn-ghost btn-xs text-[11px]" @onclick="OpenBountyComment">写评论</button>
+                            }
+                        </Authorized>
+                        <NotAuthorized>
+                            <a href="login" class="btn btn-ghost btn-xs text-[11px]">登录后可评论</a>
+                        </NotAuthorized>
+                    </AuthorizeView>
                 </div>
             </div>
         </div>
@@ -308,22 +320,28 @@
                                             }
                                             @* Answer floor replies stay open even after bounty closed/expired *@
                                             <div class="mt-1">
-                                                @if (activeReplyPostId != rp.PostId)
-                                                {
-                                                    <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(rp.PostId)"><span>回复楼层</span></a>
-                                                }
-                                                else
-                                                {
-                                                    <div class="mt-1 addReply" id="addReplyBox_@rp.PostId" style="display:block">
-                                                        <textarea id="ck_reply_post_@rp.PostId" style="visibility:hidden; height:0;"></textarea>
-                                                        <div id="ckwrap_post_@rp.PostId" class="min-h-[100px]"></div>
-                                                        <div class="flex gap-1 mt-1">
-                                                            <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(rp.PostId)">发表</button>
-                                                            <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(rp.PostId)">取消</button>
-                                                        </div>
-                                                        @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(rp.PostId))){<div class="text-[11px] text-error">@postReplyErrors[rp.PostId]</div>}
-                                                    </div>
-                                                }
+                                                <AuthorizeView>
+                                                    <Authorized>
+                                                        @if (activeReplyPostId != rp.PostId)
+                                                        {
+                                                            <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(rp.PostId)"><span>回复楼层</span></a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="mt-1 addReply" id="addReplyBox_@rp.PostId" style="display:block">
+                                                                <textarea id="ck_reply_post_@rp.PostId" style="visibility:hidden; height:0;"></textarea>
+                                                                <div class="flex gap-1 mt-1">
+                                                                    <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(rp.PostId)">发表</button>
+                                                                    <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(rp.PostId)">取消</button>
+                                                                </div>
+                                                                @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(rp.PostId))){<div class="text-[11px] text-error">@postReplyErrors[rp.PostId]</div>}
+                                                            </div>
+                                                        }
+                                                    </Authorized>
+                                                    <NotAuthorized>
+                                                        <span class="text-[11px] opacity-50">登录后可回复</span>
+                                                    </NotAuthorized>
+                                                </AuthorizeView>
                                             </div>
                                         </div>
                                     }
@@ -332,22 +350,28 @@
 
                             @* Reply to answer – stays open after closed/expired (only blocked if bounty IsDeleted) *@
                             <div class="mt-2" id="postcontent@(ans.AnswerId)_actions">
-                                @if (activeReplyAnswerId != ans.AnswerId)
-                                {
-                                    <a class="post-reply text-xs link link-primary cursor-pointer" @onclick="() => OpenReplyAnswer(ans.AnswerId)">回复此答案</a>
-                                }
-                                else
-                                {
-                                    <div class="addReply border rounded p-2 bg-base-100 space-y-2" id="addReplyBoxAnsw_@ans.AnswerId" style="display:block">
-                                        <textarea id="ck_reply_ans_@ans.AnswerId" style="visibility:hidden; height:0;"></textarea>
-                                        <div id="ckwrap_ans_@ans.AnswerId" class="min-h-[120px]"></div>
-                                        <div class="flex gap-2">
-                                            <button class="btn btn-primary btn-xs" @onclick="()=>DoReplyAnswer(ans.AnswerId)">发表</button>
-                                            <button class="btn btn-ghost btn-xs" @onclick="()=>CancelReplyAnswer(ans.AnswerId)">取消</button>
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(replyErrors.GetValueOrDefault(ans.AnswerId))){<div class="text-[11px] text-error">@replyErrors[ans.AnswerId]</div>}
-                                    </div>
-                                }
+                                <AuthorizeView>
+                                    <Authorized>
+                                        @if (activeReplyAnswerId != ans.AnswerId)
+                                        {
+                                            <a class="post-reply text-xs link link-primary cursor-pointer" @onclick="() => OpenReplyAnswer(ans.AnswerId)">回复此答案</a>
+                                        }
+                                        else
+                                        {
+                                            <div class="addReply border rounded p-2 bg-base-100" id="addReplyBoxAnsw_@ans.AnswerId" style="display:block">
+                                                <textarea id="ck_reply_ans_@ans.AnswerId" style="visibility:hidden; height:0;"></textarea>
+                                                <div class="flex gap-2 mt-2">
+                                                    <button class="btn btn-primary btn-xs" @onclick="()=>DoReplyAnswer(ans.AnswerId)">发表</button>
+                                                    <button class="btn btn-ghost btn-xs" @onclick="()=>CancelReplyAnswer(ans.AnswerId)">取消</button>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(replyErrors.GetValueOrDefault(ans.AnswerId))){<div class="text-[11px] text-error mt-1">@replyErrors[ans.AnswerId]</div>}
+                                            </div>
+                                        }
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <span class="text-xs opacity-50">登录后可回复</span>
+                                    </NotAuthorized>
+                                </AuthorizeView>
                             </div>
                         </div>
                     </div>
@@ -358,24 +382,47 @@
                 }
             }
 
-            @if (detail != null && !detail.IsAccepted && detail.CanAnswer)
+            @if (detail != null)
             {
-                <div class="card bg-base-100 shadow border border-base-200">
-                    <div class="card-body p-4">
-                        <div class="font-bold text-sm mb-2">发布回答</div>
-                        <CkEditor @ref="answerEditor" @bind-Value="answerContent" />
-                        <div class="mt-2"><ImageManager @ref="answerImgMgr" MaxCount="5" OnUpdate="OnAnswerImagesUpdate" OnBufferedUpdate="OnAnswerBufferedUpdate" /></div>
-                        @if (!string.IsNullOrEmpty(answerError)){<div class="alert alert-error py-1 text-xs mt-2"><span>@answerError</span></div>}
-                        @if (answerSuccess){<div class="alert alert-success py-1 text-xs mt-2">回答发布成功</div>}
-                        <div class="mt-2">
-                            <button class="btn btn-primary btn-sm" @onclick="DoAnswer" disabled="@(answering || string.IsNullOrWhiteSpace(PlainAnswer))">@if(answering){<span class="loading loading-spinner loading-xs"></span>} 提交回答</button>
-                        </div>
-                    </div>
-                </div>
-            }
-            else if (detail != null && !detail.IsAccepted && !detail.CanAnswer && !detail.CanAccept)
-            {
-                <div class="opacity-60 text-xs">登录后可回答自己的求物以外的悬赏</div>
+                if (detail.IsAccepted)
+                {
+                    <div class="text-xs opacity-60">已结贴，无法回答</div>
+                }
+                else if (detail.CloseDate.HasValue || (detail.ExpiresAt.HasValue && detail.ExpiresAt.Value < DateTime.Now))
+                {
+                    <div class="text-xs opacity-60">已过期，无法回答（评论仍可）</div>
+                }
+                else
+                {
+                    <AuthorizeView>
+                        <Authorized>
+                            @if (detail.CanAnswer)
+                            {
+                                <div class="card bg-base-100 shadow border border-base-200">
+                                    <div class="card-body p-4">
+                                        <div class="font-bold text-sm mb-2">发布回答</div>
+                                        <CkEditor @ref="answerEditor" @bind-Value="answerContent" />
+                                        <div class="mt-2"><ImageManager @ref="answerImgMgr" MaxCount="5" OnUpdate="OnAnswerImagesUpdate" OnBufferedUpdate="OnAnswerBufferedUpdate" /></div>
+                                        @if (!string.IsNullOrEmpty(answerError)){<div class="alert alert-error py-1 text-xs mt-2"><span>@answerError</span></div>}
+                                        @if (answerSuccess){<div class="alert alert-success py-1 text-xs mt-2">回答发布成功</div>}
+                                        <div class="mt-2">
+                                            <button class="btn btn-primary btn-sm" @onclick="DoAnswer" disabled="@(answering || string.IsNullOrWhiteSpace(PlainAnswer))">@if(answering){<span class="loading loading-spinner loading-xs"></span>} 提交回答</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="opacity-60 text-xs">不能回答自己的求物</div>
+                            }
+                        </Authorized>
+                        <NotAuthorized>
+                            <div class="card bg-base-100 shadow border border-base-200 p-4 text-xs opacity-70">
+                                <a href="login" class="link link-primary">登录后可回答</a>
+                            </div>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                }
             }
         </div>
     }
