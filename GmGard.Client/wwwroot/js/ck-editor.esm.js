@@ -6,7 +6,7 @@ function loadCkEditorCore() {
   loadingPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.type = "text/javascript";
-    script.src = "/ckeditor/ckeditor.js";
+    script.src = "/ckeditor/ckeditor.js?t=J9EB";
     script.onload = () => resolve();
     script.onerror = (e) => reject(e);
     document.head.appendChild(script);
