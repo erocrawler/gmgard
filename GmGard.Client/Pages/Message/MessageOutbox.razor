@@ -10,7 +10,7 @@
         <div class="flex gap-2">
             <a href="message/inbox" class="btn btn-sm btn-ghost">收件箱</a>
             <a href="message/outbox" class="btn btn-sm btn-primary">发件箱</a>
-            <a href="message/write" class="btn btn-sm btn-primary">写消息</a>
+            <a href="message/write" class="btn btn-sm btn-ghost">写消息</a>
         </div>
     </div>
 
@@ -24,22 +24,19 @@
     }
     else
     {
-        <div class="space-y-2">
+        <div class="space-y-3">
             @foreach (var m in messages.Items)
             {
-                <div class="card bg-base-100 shadow">
+                <div class="card bg-base-100 shadow hover:shadow-lg transition border border-base-200 cursor-pointer" @onclick="() => ToggleDetail(m.MessageId)">
                     <div class="card-body p-4">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="flex-1">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="font-semibold text-sm">收件人：@m.RecipientNickName</span>
                                     <span class="text-xs text-base-content/50">@m.SendDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
                                 </div>
-                                <div class="mt-1 font-medium">@(string.IsNullOrWhiteSpace(m.Title) ? "（无标题）" : m.Title)</div>
+                                <div class="mt-1 font-medium truncate">@(string.IsNullOrWhiteSpace(m.Title) ? "（无标题）" : m.Title)</div>
                             </div>
-                            <button class="btn btn-ghost btn-xs" @onclick="() => ToggleDetail(m.MessageId)">
-                                @(expandedIds.Contains(m.MessageId) ? "收起" : "查看")
-                            </button>
                         </div>
 
                         @if (expandedIds.Contains(m.MessageId))
@@ -55,13 +52,7 @@
 
         @if (messages.PageCount > 1)
         {
-            <div class="flex justify-center gap-1 mt-4">
-                @for (int p = 1; p <= messages.PageCount; p++)
-                {
-                    var pg = p;
-                    <button class="btn btn-sm @(pg == messages.PageNumber ? "btn-primary" : "btn-ghost")" @onclick="() => LoadPage(pg)">@pg</button>
-                }
-            </div>
+            <Pagination PageCount="messages.PageCount" CurrentPage="page" OnPageChanged="LoadPage" />
         }
     }
 </div>

@@ -32,8 +32,8 @@ export class CkeditorResolverService implements Resolve<boolean> {
 
     get config(): CKEDITOR.config {
         const config: CKEDITOR.config = {};
-        config.extraAllowedContent = "a[rel]; span(*); embed[*]; table(*); ruby; iframe{*}";
-        config.extraPlugins = "custom_smiley,colorbutton,font,mediaembed,flash,rubymarkup,spoiler";
+        config.extraAllowedContent = "a[rel]; span(*); table(*); ruby; video[*]; audio[*]; source[*]";
+        config.extraPlugins = "custom_smiley,colorbutton,font,mediaembed,rubymarkup,spoiler";
         config.removeButtons = "Underline,Subscript,Superscript";
         config.format_tags = "p;h1;h2;h3;h4;h5;pre";
         config.removeDialogTabs = "image:advanced;link:advanced";
@@ -43,7 +43,7 @@ export class CkeditorResolverService implements Resolve<boolean> {
         config.toolbar = [
             ["Undo", "Redo"],
             ["Link", "Unlink", "Anchor"],
-            ["MediaEmbed", "Flash", "Image", "Custom_Smiley"],
+            ["MediaEmbed", "Image", "Custom_Smiley"],
             ["Table", "HorizontalRule", "Spoiler", "Mentions", "RubyMarkup"],
             ["Maximize"],
             ["Source"],

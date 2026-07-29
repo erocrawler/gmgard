@@ -11,7 +11,7 @@ CKEDITOR.editorConfig = function (config) {
     config.toolbar = [
 	{ name: 'undo', groups: ['undo'], items: ['Undo', 'Redo'] },
 	{ name: 'links', items: ['Link', 'Unlink', 'Anchor'] },
-    { name: 'pics', items: ['MediaEmbed', 'Flash', 'Image', 'Custom_Smiley'] },
+    { name: 'pics', items: ['MediaEmbed', 'Image', 'Custom_Smiley'] },
 	{ name: 'insert', items: ['Table', 'HorizontalRule', 'Spoiler', 'Mentions', 'RubyMarkup'] },
 	{ name: 'tools', items: ['Maximize'] },
 	{ name: 'document', groups: ['mode', 'document', 'doctools'], items: ['Source'] },
@@ -37,8 +37,8 @@ CKEDITOR.editorConfig = function (config) {
     config.removeDialogTabs = 'image:advanced;link:advanced';
     config.removePlugins = 'elementspath';
 
-    config.extraAllowedContent = 'a[rel,data-mention]; span(*); embed[*]; table(*); ruby; iframe{*}';
-    config.extraPlugins = 'custom_smiley,colorbutton,font,mediaembed,flash,mentions,rubymarkup,autosave,spoiler';
+    config.extraAllowedContent = 'a[rel,data-mention]; span(*); table(*); ruby; video[*]; audio[*]; source[*]';
+    config.extraPlugins = 'custom_smiley,colorbutton,font,mediaembed,mentions,rubymarkup,autosave,spoiler';
 
     config.autosave_saveDetectionSelectors = '#submitbtn,#SubmitButton,#editversion';
 

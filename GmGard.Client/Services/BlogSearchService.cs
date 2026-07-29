@@ -19,7 +19,7 @@ public class BlogSearchService
 
         try
         {
-            var results = await _http.GetFromJsonAsync<List<BlogPreview>>($"/api/Blog/SearchTitle?title={Uri.EscapeDataString(title)}");
+            var results = await _http.GetFromJsonAsync<List<BlogPreview>>(ApiRoutes.Blog.SearchTitle(title));
             return results ?? new List<BlogPreview>();
         }
         catch

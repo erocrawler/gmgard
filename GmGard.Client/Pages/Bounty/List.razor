@@ -1,0 +1,215 @@
+@page "/bounty"
+@using GmGard.Client.Models
+@inject BountyService BountyService
+@inject NavigationManager Navigation
+
+<PageTitle>求物版 - 悬赏</PageTitle>
+
+<div class="max-w-4xl mx-auto p-4 space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <h1 class="text-2xl font-bold">求物版 <span class="text-sm font-normal opacity-60">悬赏</span></h1>
+        <div class="flex gap-2">
+            <a href="bounty/ask" class="btn btn-primary btn-sm">发布悬赏</a>
+            <button class="btn btn-ghost btn-sm" @onclick="() => LoadPage(1)">刷新</button>
+        </div>
+    </div>
+
+    <div class="flex gap-2 flex-wrap">
+        <button class="btn btn-sm @(showType==BountyShowType.All ? "btn-primary" : "btn-outline")" @onclick="() => ChangeType(BountyShowType.All)">全部</button>
+        <button class="btn btn-sm @(showType==BountyShowType.Pending ? "btn-primary" : "btn-outline")" @onclick="() => ChangeType(BountyShowType.Pending)">
+            悬赏中
+        </button>
+        <button class="btn btn-sm @(showType==BountyShowType.Answered ? "btn-primary" : "btn-outline")" @onclick="() => ChangeType(BountyShowType.Answered)">
+            已结贴
+        </button>
+        <button class="btn btn-sm @(onlyMine ? "btn-secondary" : "btn-ghost")" @onclick="ToggleMine">
+            @(onlyMine ? "我的发布" : "只看我的")
+        </button>
+        @if (onlyMine)
+        {
+            <label class="flex items-center gap-1 text-xs cursor-pointer ml-2">
+                <input type="checkbox" class="checkbox checkbox-xs" @bind="includeDeleted" @bind:after="() => LoadPage(1)" />
+                显示已删除
+            </label>
+        }
+    </div>
+
+    <div class="text-xs opacity-60 flex items-center gap-1 flex-wrap">
+        @if (cfg != null)
+        {
+            <span>最佳≥@cfg.MinPrize，押金=最佳，热心@(cfg.AllowZeroHelpfulReward ? $"可0或≥{cfg.MinHelpfulReward}" : $"≥{cfg.MinHelpfulReward}")，合计≥@cfg.MinTotal<span class="ico-lolly ico-lolly-sm"></span>，@(cfg.ExpireDays)天有效</span>
+        }
+        else
+        {
+            <span>最佳≥40，押金=最佳，热心≥20，合计≥100<span class="ico-lolly ico-lolly-sm"></span>，30天有效</span>
+        }
+    </div>
+
+    @if (loading && paged == null)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (paged == null)
+    {
+        <div class="alert alert-error"><span>加载失败，请重试</span><button class="btn btn-sm" @onclick="() => LoadPage(page)">重试</button></div>
+    }
+    else if (paged.Items.Count == 0)
+    {
+        <div class="card bg-base-100 shadow"><div class="card-body text-center py-10 opacity-60">暂无悬赏，快来发布第一个吧！</div></div>
+    }
+    else
+    {
+        <div class="space-y-3">
+            @foreach (var b in paged.Items)
+            {
+                <a href="@($"bounty/{b.Id}")" class="card bg-base-100 shadow hover:shadow-lg transition border border-base-200 block">
+                    <div class="card-body p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="avatar"><div class="w-9 h-9 rounded-full overflow-hidden bg-base-200"><img src="@b.AuthorAvatar" alt="av" onerror="this.style.display='none'" /></div></div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-semibold text-sm truncate max-w-[14rem]">@b.Author</span>
+                                    <span class="text-[11px] opacity-50">@b.CreateDate.ToLocalTime().ToString("yyyy-MM-dd")</span>
+                                    @if (b.IsDeleted)
+                                    {
+                                        <span class="badge badge-error badge-sm">已删除</span>
+                                    }
+                                    else if (b.IsAccepted)
+                                    {
+                                        <span class="badge badge-success badge-sm">已结贴</span>
+                                    }
+                                    else if (b.CloseDate.HasValue)
+                                    {
+                                        <span class="badge badge-warning badge-sm">已过期</span>
+                                    }
+                                    else if (b.ExpiresAt.HasValue && b.ExpiresAt.Value < DateTime.Now)
+                                    {
+                                        <span class="badge badge-warning badge-sm">已过期</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-primary badge-sm">悬赏中</span>
+                                    }
+                                </div>
+                                <div class="font-medium mt-1 leading-snug truncate">@b.Title</div>
+                                <div class="text-xs opacity-70 mt-1 line-clamp-2">@((MarkupString)Strip(b.Content))</div>
+                                <div class="flex gap-2 mt-2 flex-wrap text-xs items-center">
+                                    <span class="badge badge-outline badge-sm">最佳<span class="ico-lolly ico-lolly-sm ml-1"></span>@b.Prize</span>
+                                    @if (b.HelpfulReward > 0)
+                                    {
+                                        <span class="badge badge-outline badge-sm">热心<span class="ico-lolly ico-lolly-sm ml-1"></span>@b.HelpfulReward</span>
+                                    }
+                                    <span class="opacity-60">回答 @b.AnswerCount</span>
+                                    <span class="opacity-60">浏览 @b.ViewCount</span>
+                                    @if (b.ExpiresAt.HasValue)
+                                    {
+                                        var left = b.ExpiresAt.Value - DateTime.Now;
+                                        if (left.TotalDays > 0 && !b.IsAccepted)
+                                        {
+                                            <span class="opacity-60">剩余 @((int)left.TotalDays) 天</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+
+        @if (paged.PageCount > 1)
+        {
+            <Pagination PageCount="paged.PageCount" CurrentPage="page" OnPageChanged="LoadPage" />
+        }
+    }
+</div>
+
+@code {
+    BountyPaged<BountyPreview>? paged;
+    BountyConfigDto? cfg;
+    bool loading = true;
+    int page = 1;
+    BountyShowType showType = BountyShowType.All;
+    bool onlyMine = false;
+    bool includeDeleted = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        if (int.TryParse(q["page"], out var pg) && pg>0) page = pg;
+        if (Enum.TryParse<BountyShowType>(q["showType"], true, out var st)) showType = st;
+        if (bool.TryParse(q["onlyMine"], out var mine)) onlyMine = mine;
+        if (bool.TryParse(q["includeDeleted"], out var inc)) includeDeleted = inc;
+        // Legacy param support: showMine query?
+        if (bool.TryParse(q["showMine"], out var legacyMine)) onlyMine = legacyMine;
+
+        // Guard: onlyMine requires auth, don't spam 401
+        if (onlyMine)
+        {
+            var isAuth = await BountyService.IsAuthenticatedAsync();
+            if (!isAuth)
+            {
+                // Strip onlyMine param and continue as All to avoid 401; or redirect to login
+                onlyMine = false;
+                includeDeleted = false;
+            }
+        }
+
+        cfg = await BountyService.GetConfigAsync();
+        await LoadPage(page);
+    }
+
+    async Task ChangeType(BountyShowType t)
+    {
+        showType = t;
+        page = 1;
+        // If user selected Deleted, force onlyMine+includeDeleted
+        if (t == BountyShowType.Deleted)
+        {
+            onlyMine = true;
+            includeDeleted = true;
+        }
+        await LoadPage(page);
+    }
+
+    async Task ToggleMine()
+    {
+        if (!onlyMine)
+        {
+            // Need auth to view mine
+            var isAuth = await BountyService.IsAuthenticatedAsync();
+            if (!isAuth)
+            {
+                Navigation.NavigateTo("login?ReturnUrl=" + Uri.EscapeDataString("bounty?onlyMine=true"), true);
+                return;
+            }
+        }
+        onlyMine = !onlyMine;
+        if (!onlyMine)
+        {
+            includeDeleted = false;
+        }
+        page = 1;
+        await LoadPage(page);
+    }
+
+    async Task LoadPage(int p)
+    {
+        loading = true; page = p; StateHasChanged();
+        // onlyMine composes with showType (All/Pending/Answered + Mine)
+        // Deleted is special: only my deleted
+        if (showType == BountyShowType.Deleted) { onlyMine = true; includeDeleted = true; }
+        paged = await BountyService.ListAsync(showType, page, onlyMine, includeDeleted);
+        loading = false;
+        StateHasChanged();
+    }
+    string Strip(string html)
+    {
+        if (string.IsNullOrEmpty(html)) return "";
+        var plain = System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", " ");
+        plain = System.Net.WebUtility.HtmlDecode(plain);
+        if (plain.Length > 150) plain = plain.Substring(0, 150) + "...";
+        return plain;
+    }
+}

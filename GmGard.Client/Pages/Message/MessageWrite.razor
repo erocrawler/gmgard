@@ -6,9 +6,13 @@
 <PageTitle>写消息</PageTitle>
 
 <div class="max-w-2xl mx-auto p-4 space-y-4">
-    <div class="flex items-center gap-2 mb-2">
-        <a href="message/inbox" class="btn btn-ghost btn-sm">← 返回收件箱</a>
+    <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">写消息</h1>
+        <div class="flex gap-2">
+            <a href="message/inbox" class="btn btn-sm btn-ghost">收件箱</a>
+            <a href="message/outbox" class="btn btn-sm btn-ghost">发件箱</a>
+            <a href="message/write" class="btn btn-sm btn-primary">写消息</a>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(prefillInfo))

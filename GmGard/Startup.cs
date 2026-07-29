@@ -84,6 +84,7 @@ namespace GmGard
             services.Configure<Models.App.AuditExamConfig>(ConfigFromDataFile("App_Data/AuditExam.json"));
             services.Configure<Models.App.WheelConfig>(ConfigFromDataFile("App_Data/WheelConfig.json"));
             services.Configure<Models.App.TitleCategoriesConfig>(ConfigFromDataFile("App_Data/TitleCategories.json"));
+            services.Configure<Models.App.BountyConfig>(ConfigFromDataFile("App_Data/BountyConfig.json"));
             var siteConfig = ConfigFromDataFile("App_Data/SiteConfig.json");
             services.Configure<SiteConfig>(siteConfig);
 
@@ -299,8 +300,7 @@ namespace GmGard
             });
             services.AddScoped<JobTaskRunner>();
             services.AddSingleton<BackgroundTaskQueue>();
-            services.AddHostedService<BackgroundJobService>();
-            services.AddSingleton<QuestService>();
+            services.AddHostedService<BackgroundJobService>();            services.AddHostedService<BountyExpireService>();            services.AddSingleton<QuestService>();
             services.AddSingleton<TitleService>();
             services.AddSingleton<IVisitCounter>(s =>
             {

@@ -30,5 +30,12 @@ namespace GmGard.Models
 
         [InverseProperty("Bounty")]
         public virtual List<Answer> Answers { get; set; }
+
+        // Extended for full bounty workflow (求物版)
+        // Deposit should equal Prize per tutorial (40 best + 40 deposit + 20 helpful = 100 min)
+        public int Deposit { get; set; } = 0;
+        public int HelpfulReward { get; set; } = 0;
+        public DateTime? ExpiresAt { get; set; }
+        public DateTime? CloseDate { get; set; }
     }
 }

@@ -1,0 +1,222 @@
+@page "/bounty/ask"
+@attribute [Authorize]
+@using GmGard.Client.Models
+@inject BountyService BountyService
+@inject NavigationManager Navigation
+
+<PageTitle>发布悬赏 - 求物版</PageTitle>
+
+<div class="max-w-2xl mx-auto p-4 space-y-4">
+    <a href="bounty" class="btn btn-ghost btn-xs">← 返回求物版</a>
+    <h1 class="text-2xl font-bold">发布悬赏</h1>
+
+    @if (loadingUser)
+    {
+        <div class="flex justify-center py-6"><span class="loading loading-spinner"></span></div>
+    }
+    else
+    {
+        <div class="card bg-base-100 shadow border border-base-200">
+            <div class="card-body space-y-4">
+                <div class="alert alert-info text-xs py-2">
+                    <div>
+                        @if (cfg == null)
+                        {
+                            <div>加载配置中...</div>
+                        }
+                        else
+                        {
+                            <div>悬赏构成：最佳 <span class="ico-lolly"></span>@(cfg.MinPrize)+，押金=最佳，热心 @(cfg.AllowZeroHelpfulReward ? $"可为0，或≥{cfg.MinHelpfulReward}" : $"≥{cfg.MinHelpfulReward}")。合计最低 @(cfg.MinTotal)<span class="ico-lolly"></span>。</div>
+                            <div>实际花费 = 最佳 + 热心，押金结贴后返还；若无热心回答，热心池按比例退回。有效期 @cfg.ExpireDays 天。</div>
+                        }
+                        <div>当前你的棒棒糖：<span class="badge badge-primary badge-sm"><span class="ico-lolly ico-lolly-md"></span> @(currentUser?.Points ?? 0)</span></div>
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">标题（最多@(cfg?.MaxTitleLength ?? 120)字）</span></label>
+                    <input class="input input-bordered w-full" @bind="title" maxlength="@(cfg?.MaxTitleLength ?? 120)" placeholder="例如：求某动漫资源、求某本子..." />
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-semibold">内容（至少@(cfg?.MinContentLength ?? 5)字）</span></label>
+                    <CkEditor @ref="ckEditorRef" @bind-Value="content" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">最佳奖励 <span class="ico-lolly ico-lolly-md"></span> (≥@(cfg?.MinPrize ?? 40))</span></label>
+                        <input type="number" class="input input-bordered" min="@(cfg?.MinPrize ?? 40)" step="1" @bind="prize" @bind:event="oninput" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">热心奖励池 <span class="ico-lolly ico-lolly-md"></span> (@(cfg?.AllowZeroHelpfulReward == true ? $"0或≥{cfg?.MinHelpfulReward ?? 20}" : $"≥{cfg?.MinHelpfulReward ?? 20}"))</span></label>
+                        <input type="number" class="input input-bordered" min="0" step="1" @bind="helpfulReward" @bind:event="oninput" />
+                    </div>
+                </div>
+
+                <div class="p-3 bg-base-200/60 rounded-lg text-sm space-y-1">
+                    <div class="opacity-70">押金 = 最佳奖励</div>
+                    <div>冻结：<span class="ico-lolly ico-lolly-md"></span>@prize 最佳 + <span class="ico-lolly ico-lolly-md"></span>@prize 押金 + <span class="ico-lolly ico-lolly-md"></span>@helpfulReward 热心 = <b><span class="ico-lolly ico-lolly-md"></span>@TotalCost</b>，结贴后实际花费 @(prize + helpfulReward)</div>
+                    <div class="@(IsValid ? "text-success" : "text-error")">
+                        @if (cfg != null)
+                        {
+                            if (TotalCost < cfg.MinTotal) { <span>❌ 总计不足@(cfg.MinTotal)（当前 @TotalCost）</span> }
+                            else if (prize < cfg.MinPrize) { <span>❌ 最佳需≥@cfg.MinPrize</span> }
+                            else if (helpfulReward != 0 && helpfulReward < cfg.MinHelpfulReward) { <span>❌ 热心需0或≥@cfg.MinHelpfulReward</span> }
+                            else { <span>✅ 满足最低要求</span> }
+                        }
+                        else
+                        {
+                            if (TotalCost < 100) { <span>❌ 总计不足100（当前 @TotalCost）</span> }
+                            else if (prize < 40) { <span>❌ 最佳需≥40</span> }
+                            else if (helpfulReward != 0 && helpfulReward < 20) { <span>❌ 热心需0或≥20</span> }
+                            else { <span>✅ 满足最低要求</span> }
+                        }
+                    </div>
+                    @if (currentUser != null)
+                    {
+                        if (currentUser.Points < TotalCost)
+                        {
+                            <div class="text-error">❌ 棒棒糖不足：你有 @currentUser.Points，需 @TotalCost</div>
+                        }
+                        else
+                        {
+                            <div class="text-success">剩余：<span class="ico-lolly ico-lolly-md"></span>@(currentUser.Points - TotalCost)</div>
+                        }
+                    }
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text">图片上传（可选，最多9张）</span></label>
+                    <GmGard.Client.Components.ImageManager @ref="imgManager" MaxCount="9" OnUpdate="OnImagesUpdate" OnBufferedUpdate="OnBufferedUpdate" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMsg))
+                {
+                    <div class="alert alert-error text-sm"><span>@errorMsg</span></div>
+                }
+
+                <div class="card-actions justify-end">
+                    <button class="btn btn-ghost" @onclick='() => Navigation.NavigateTo("bounty")'>取消</button>
+                    <button class="btn btn-primary" disabled="@(submitting || !CanSubmit)" @onclick="DoCreate">
+                        @if (submitting) { <span class="loading loading-spinner loading-xs"></span> }
+                        发布，冻结 <span class="ico-lolly ico-lolly-sm"></span>@TotalCost
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    string title = "";
+    string content = ""; // will hold HTML from ckeditor
+    int prize;
+    int helpfulReward;
+    GmGard.Client.Components.ImageManager? imgManager;
+    CkEditor? ckEditorRef;
+
+    List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> selectedFiles = new();
+    List<GmGard.Client.Components.BufferedImage> selectedBuffered = new();
+
+
+    void OnImagesUpdate(List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> files)
+    {
+        selectedFiles = files;
+    }
+    void OnBufferedUpdate(List<GmGard.Client.Components.BufferedImage> bufs)
+    {
+        selectedBuffered = bufs;
+    }
+
+    BountyConfigDto? cfg;
+    bool loadingUser = true;
+    CurrentUser? currentUser;
+    bool submitting = false;
+    string? errorMsg;
+
+    int TotalCost => prize * 2 + helpfulReward;
+    bool IsValid => cfg != null 
+        ? prize >= cfg.MinPrize && (helpfulReward == 0 ? cfg.AllowZeroHelpfulReward : helpfulReward >= cfg.MinHelpfulReward) && TotalCost >= cfg.MinTotal
+        : prize >= 40 && (helpfulReward == 0 || helpfulReward >= 20) && TotalCost >= 100;
+    bool CanSubmit => IsValid && !string.IsNullOrWhiteSpace(title) && (cfg == null || title.Length <= cfg.MaxTitleLength) && title.Length <= 120 && !string.IsNullOrWhiteSpace(content) && content.Length >= (cfg?.MinContentLength ?? 5) && content.Length <= (cfg?.MaxContentLength ?? 10000) && (currentUser == null || currentUser.Points >= TotalCost);
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadingUser = true;
+        var cfgTask = BountyService.GetConfigAsync();
+        var userTask = BountyService.GetCurrentUserAsync();
+        cfg = await cfgTask;
+        currentUser = await userTask;
+        if (cfg != null)
+        {
+            prize = cfg.MinPrize;
+            // Default to minimal valid total: prize*2 + helpful >= MinTotal
+            // Prefer meeting MinHelpfulReward, else compute remainder
+            if (cfg.AllowZeroHelpfulReward)
+            {
+                // If 0 is allowed but total 80 < 100, need helpful to fill
+                var need = cfg.MinTotal - prize * 2;
+                if (need <= 0) helpfulReward = 0;
+                else if (need >= cfg.MinHelpfulReward) helpfulReward = Math.Max(cfg.MinHelpfulReward, need);
+                else helpfulReward = need; // if need < minHelpful but 0 allowed, we can use need? but to satisfy total, use max(need,0) and ensure validation passes - here allow using need even if < MinHelpful, but config says 0 or >=MinHelpful, so if need < MinHelpful, either 0 invalid (total not enough) or need to bump to MinHelpful
+                // re-evaluate: if need >0 && need < MinHelpful, must use MinHelpful to satisfy both rules
+                if (helpfulReward > 0 && helpfulReward < cfg.MinHelpfulReward)
+                    helpfulReward = cfg.MinHelpfulReward;
+            }
+            else
+            {
+                helpfulReward = cfg.MinHelpfulReward;
+            }
+            // Ensure total meets MinTotal, bump helpful if needed
+            var total = prize * 2 + helpfulReward;
+            if (total < cfg.MinTotal)
+                helpfulReward += cfg.MinTotal - total;
+        }
+        else
+        {
+            prize = 40;
+            helpfulReward = 20;
+        }
+        loadingUser = false;
+    }
+
+    async Task DoCreate()
+    {
+        // Get latest from editor
+        if (ckEditorRef != null)
+        {
+            var latest = await ckEditorRef.GetDataAsync();
+            if (!string.IsNullOrEmpty(latest)) content = latest;
+        }
+
+        // Strip html tags for length check (keep simple)
+        var plain = System.Text.RegularExpressions.Regex.Replace(content ?? "", "<.*?>", "");
+        plain = System.Net.WebUtility.HtmlDecode(plain).Trim();
+
+        if (!IsValid) { errorMsg="参数不符合最低要求"; return; }
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(plain)) { errorMsg="标题/内容不能为空"; return; }
+        if (title.Length>120) { errorMsg="标题最多120字"; return; }
+        if (plain.Length< (cfg?.MinContentLength ?? 5)) { errorMsg=$"内容至少{cfg?.MinContentLength ?? 5}字"; return; }
+
+        submitting = true; errorMsg=null; StateHasChanged();
+        // external images should now be embedded in content directly via CKEditor paste, not via ImageUrls list
+        string[] imgs = Array.Empty<string>();
+        // Prefer buffered path to avoid _blazorFilesById null (InputFile lifecycle)
+        var res = selectedBuffered.Count > 0
+            ? await BountyService.CreateAsyncBuffered(title, content, prize, helpfulReward, imgs, selectedBuffered)
+            : await BountyService.CreateAsync(title, content, prize, helpfulReward, imgs, selectedFiles);
+        submitting = false;
+        if (res.Success && res.Id.HasValue)
+        {
+            // Redirect immediately to new bounty to prevent duplicate publish
+            Navigation.NavigateTo($"bounty/{res.Id}");
+            return;
+        }
+        else
+        {
+            errorMsg = res.Error ?? "发布失败";
+        }
+        StateHasChanged();
+    }
+}

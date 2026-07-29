@@ -18,5 +18,8 @@ namespace GmGard.Models
 
         [ForeignKey("BountyId")]
         public virtual Bounty Bounty { get; set;}
+
+        // Helpful flag for distribution
+        public bool IsHelpful { get; set; } = false;
     }
 }

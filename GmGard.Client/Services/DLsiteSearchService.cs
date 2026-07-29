@@ -19,7 +19,7 @@ public class DLsiteSearchService
 
         try
         {
-            var results = await _http.GetFromJsonAsync<List<DLsite>>($"/api/DLsite/Search?query={Uri.EscapeDataString(query)}");
+            var results = await _http.GetFromJsonAsync<List<DLsite>>(ApiRoutes.DLsite.Search(query));
             return results ?? new List<DLsite>();
         }
         catch

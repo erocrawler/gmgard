@@ -90,9 +90,7 @@
 
                 @if (configs.PageCount > 1)
                 {
-                    <div class="flex gap-1 mt-3">
-                        @for (int p = 1; p <= configs.PageCount; p++) { var pg = p; <button class="btn btn-xs @(pg == configs.PageNumber ? "btn-primary" : "btn-ghost")" @onclick="() => LoadPage(pg)">@pg</button> }
-                    </div>
+                    <Pagination PageCount="configs.PageCount" CurrentPage="configs.PageNumber" OnPageChanged="LoadPage" />
                 }
             }
         </div>

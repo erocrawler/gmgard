@@ -66,7 +66,7 @@ namespace GmGard.Controllers.App
                 ParentCategoryId = categoryUtil_.GetParentCategoryId(bd.blog.CategoryID),
                 Content = BlogHelper.ReplaceContentImage(bd.blog),
                 CreateDate = bd.blog.BlogDate,
-                ImageUrls = bd.blog.IsLocalImg ? bd.blog.ImagePath?.Split(';') : new[] { bd.blog.ImagePath },
+                ImageUrls = bd.blog.IsLocalImg ? bd.blog.ImagePath?.Split(';', StringSplitOptions.RemoveEmptyEntries) : new[] { System.Net.WebUtility.HtmlDecode(bd.blog.ImagePath ?? "") },
                 ThumbUrl = BlogHelper.firstImgPath(bd.blog, true),
                 Links = BlogHelper.GetBlogLink(bd.blog.Links),
                 IsApproved = bd.blog.isApproved,

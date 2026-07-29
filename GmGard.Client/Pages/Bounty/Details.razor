@@ -1,0 +1,789 @@
+@page "/bounty/{Id:int}"
+@using GmGard.Client.Models
+@inject BountyService BountyService
+@inject NavigationManager Navigation
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<PageTitle>悬赏详情</PageTitle>
+
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+    <a href="bounty" class="btn btn-ghost btn-xs">← 返回求物版</a>
+
+    @if (loading)
+    {
+        <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+    else if (detail == null)
+    {
+        <div class="alert alert-error"><span>悬赏不存在或已删除</span></div>
+    }
+    else
+    {
+        <div class="card bg-base-100 shadow border border-base-200 group">
+            <div class="card-body">
+                <div class="flex items-start justify-between gap-2">
+                    <h1 class="text-xl font-bold leading-snug">@detail.Title</h1>
+                    <div class="flex gap-1 shrink-0">
+                        @if (detail.IsAccepted) { <span class="badge badge-success badge-sm">已结贴</span> }
+                        else if (detail.CloseDate.HasValue) { <span class="badge badge-warning badge-sm">已过期</span> }
+                        else if (detail.ExpiresAt.HasValue && detail.ExpiresAt.Value < DateTime.Now) { <span class="badge badge-warning badge-sm">已过期</span> }
+                        else { <span class="badge badge-primary badge-sm">悬赏中</span> }
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <div class="avatar"><div class="w-8 h-8 rounded-full overflow-hidden bg-base-200"><img src="@detail.AuthorAvatar" alt="av" /></div></div>
+                    <span class="text-sm font-semibold">@detail.Author</span>
+                    <span class="text-xs opacity-60">@detail.CreateDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                    <span class="text-xs opacity-60">浏览 @detail.ViewCount</span>
+                    <button class="btn btn-ghost btn-xs h-6 min-h-0 text-[11px] gap-1 opacity-100" title="汇报问题" @onclick="()=>OpenReport(3, detail.Id, null)"><span class="text-xs">⚑</span><span class="hidden sm:inline">举报</span></button>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3 text-xs">
+                    <span class="badge badge-outline"><span class="ico-lolly ico-lolly-sm"></span> 最佳 @detail.Prize</span>
+                    <span class="badge badge-outline">押金 @detail.Deposit</span>
+                    <span class="badge badge-outline">热心助人池 @detail.HelpfulReward</span>
+                </div>
+                @if (detail.ExpiresAt.HasValue){<div class="text-[11px] opacity-60 mt-1">过期: @detail.ExpiresAt.Value.ToLocalTime().ToString("yyyy-MM-dd")</div>}
+                @if (!string.IsNullOrEmpty(deleteError)){<div class="alert alert-error py-1 text-xs mt-2">@deleteError</div>}
+
+                <div class="divider my-2"></div>
+                <div class="prose prose-sm max-w-none break-words bounty-content">
+                    @((MarkupString)detail.Content)
+                </div>
+                @if (detail.ImageUrls != null && detail.ImageUrls.Length > 0)
+                {
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 bounty-thumb-grid">
+                        @for (int i=0;i<detail.ImageUrls.Length;i++)
+                        {
+                            var idx = i;
+                            var img = detail.ImageUrls[i];
+                            if (!string.IsNullOrWhiteSpace(img))
+                            {
+                                <img src="@img" class="rounded-lg border h-40 w-full object-contain bg-base-200 cursor-zoom-in bounty-img-fix" @onclick="()=>imgViewer?.Open(detail.ImageUrls, idx)" />
+                            }
+                        }
+                    </div>
+                }
+
+                @* Accept panel *@
+                @if (detail.CanAccept && !detail.IsAccepted)
+                {
+                    <div class="mt-4 border border-amber-200 bg-amber-50 rounded p-3">
+                        <div class="font-bold text-sm">结贴操作</div>
+                        <div class="text-xs opacity-70 mt-1">选择最佳答案，热心助人答案可多选。押金退回楼主，热心助人池平分，剩余退回。</div>
+                        <div class="mt-3 space-y-2">
+                            @foreach (var a in detail.Answers.OrderBy(x=>x.CreateDate))
+                            {
+                                var snip = GetSnippet(a.Content, 50);
+                                <label class="flex items-start gap-2 cursor-pointer p-1 rounded hover:bg-amber-100/60">
+                                    <input type="radio" class="radio radio-xs radio-primary mt-1" name="best" checked="@(selectedBest==a.AnswerId)" @onchange="()=> SelectBest(a)" />
+                                    <span class="text-xs leading-tight">
+                                        <span class="font-semibold">@a.Author</span> 的回答
+                                        <span class="opacity-60">(@a.CreateDate.ToLocalTime().ToString("MM-dd")) #@a.AnswerId</span>
+                                        <br/>
+                                        <span class="opacity-70 italic break-all">@snip</span>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <div class="text-xs font-semibold">热心助人 (可多选，不含最佳) – 按用户去重，选用户即选其所有有效回答均分奖励</div>
+                            @{
+                                var bestAuthor = detail.Answers.FirstOrDefault(x=>x.AnswerId==selectedBest)?.Author;
+                                var helpfulCandidates = detail.Answers
+                                    .Where(x=>x.AnswerId!=selectedBest && (bestAuthor==null || x.Author!=bestAuthor))
+                                    .GroupBy(x=>x.Author)
+                                    .Select(g=> new { Author = g.Key, Count = g.Count(), Latest = g.OrderByDescending(x=>x.CreateDate).First(), Snippet = GetSnippet(g.OrderByDescending(x=>x.CreateDate).First().Content, 40), AnswerIds = g.Select(x=>x.AnswerId).ToList() })
+                                    .OrderBy(x=>x.Author)
+                                    .ToList();
+                            }
+                            @foreach (var g in helpfulCandidates)
+                            {
+                                var isChecked = g.AnswerIds.Any(id=>selectedHelpful.Contains(id));
+                                <label class="flex items-start gap-2 cursor-pointer p-1 rounded hover:bg-amber-100/60">
+                                    <input type="checkbox" class="checkbox checkbox-xs mt-1" checked="@isChecked" @onchange="(e)=>ToggleHelpfulGroup(g.AnswerIds, (bool)(e.Value??false))" />
+                                    <span class="text-xs leading-tight">
+                                        <span class="font-semibold">@g.Author</span>
+                                        @if (g.Count>1){<span class="badge badge-xs badge-ghost ml-1">@g.Count 回答</span>}
+                                        <span class="opacity-60 ml-1">(@g.Latest.CreateDate.ToLocalTime().ToString("MM-dd"))</span>
+                                        <br/>
+                                        <span class="opacity-70 italic break-all">@g.Snippet</span>
+                                    </span>
+                                </label>
+                            }
+                            @if (!helpfulCandidates.Any()){<div class="text-[11px] opacity-50">暂无其他回答可选</div>}
+                        </div>
+                        @if (!string.IsNullOrEmpty(acceptError)){<div class="text-xs text-error mt-1">@acceptError</div>}
+                        @if (acceptSuccess){<div class="text-xs text-success mt-1">已结贴</div>}
+                        <div class="mt-2 flex gap-2">
+                            <button class="btn btn-success btn-sm" @onclick="DoAccept" disabled="@(accepting || selectedBest==0)">@if(accepting){<span class="loading loading-spinner loading-xs"></span>} 确认结贴</button>
+                            @if (detail.AnswerCount==0)
+                            {
+                                <button class="btn btn-error btn-sm" @onclick="()=> showDeleteConfirm = true">删除悬赏</button>
+                            }
+                        </div>
+                        @if (showDeleteConfirm)
+                        {
+                            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                <div class="card bg-base-100 shadow-xl w-96">
+                                    <div class="card-body">
+                                        <h3 class="font-bold">确认删除？</h3>
+                                        <p class="text-xs">删除后将退回 <span class="ico-lolly ico-lolly-sm"></span>@(detail.Prize+detail.Deposit+detail.HelpfulReward) 给你。<br/><span class="opacity-60">仅在无回答时可删除。</span></p>
+                                        <div class="card-actions justify-end mt-2">
+                                            <button class="btn btn-ghost btn-sm" @onclick="() => showDeleteConfirm = false" disabled="@deleting">取消</button>
+                                            <button class="btn btn-error btn-sm" @onclick="DoDelete" disabled="@deleting">@if(deleting){<span class="loading loading-spinner loading-xs"></span>} 确认删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Bounty-level comments (Post IdType=Bounty) – allowed even after closed/expired, paginated *@
+        <div class="card bg-base-100 shadow border border-base-200" id="bounty-comments">
+            <div class="card-body p-4">
+                @{
+                    var allBountyComments = detail?.BountyComments?.OrderBy(c=>c.CreateDate).ToList() ?? new List<PostDto>();
+                    int bountyCommentPageSize = 10;
+                    int bountyCommentPageCount = allBountyComments.Count == 0 ? 0 : (int)Math.Ceiling(allBountyComments.Count / (double)bountyCommentPageSize);
+                    var displayedBountyComments = allBountyComments.Skip((bountyCommentPage-1)*bountyCommentPageSize).Take(bountyCommentPageSize).ToList();
+                }
+                <h3 class="text-sm font-bold">求物评论 (@(detail?.BountyComments?.Count ?? 0))</h3>
+                @if (displayedBountyComments.Count > 0)
+                {
+                    <div class="mt-3 space-y-2">
+                        @foreach (var bc in displayedBountyComments)
+                        {
+                            <div class="bg-base-200/50 rounded p-2" id="bountyComment@(bc.PostId)">
+                                <div class="flex items-center gap-1 text-xs">
+                                    <span class="font-semibold">@bc.Author</span>
+                                    <span class="opacity-60">@bc.CreateDate.ToLocalTime().ToString("MM-dd HH:mm")</span>
+                                </div>
+                                <div class="text-xs mt-1 bounty-content">@((MarkupString)bc.Content)</div>
+                                @if (bc.Replies != null && bc.Replies.Count > 0)
+                                {
+                                    <div class="mt-2 ml-2 pl-2 border-l border-base-300 space-y-1">
+                                        @foreach (var rr in bc.Replies.OrderBy(x=>x.CreateDate))
+                                        {
+                                            <div class="text-[11px]" id="bountyCommentReply@(rr.ReplyId)">
+                                                <span class="font-semibold">@rr.Author:</span>
+                                                <span class="bounty-content">@((MarkupString)rr.Content)</span>
+                                                <span class="opacity-50 ml-1">@rr.CreateDate.ToLocalTime().ToString("MM-dd")</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                <div class="mt-1">
+                                    @if (activeReplyPostId != bc.PostId)
+                                    {
+                                        <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(bc.PostId)"><span>回复</span></a>
+                                    }
+                                    else
+                                    {
+                                        <div class="mt-1 addReply" id="addReplyBox_@bc.PostId" style="display:block">
+                                            <textarea id="ck_reply_post_@bc.PostId" style="visibility:hidden; height:0;"></textarea>
+                                            <div id="ckwrap_post_@bc.PostId" class="min-h-[100px]"></div>
+                                            <div class="flex gap-1 mt-1">
+                                                <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(bc.PostId)">发表</button>
+                                                <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(bc.PostId)">取消</button>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(bc.PostId))){<div class="text-[11px] text-error">@postReplyErrors[bc.PostId]</div>}
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-[11px] opacity-50 mt-2">暂无评论</div>
+                }
+
+                @if (bountyCommentPageCount > 1)
+                {
+                    <Pagination PageCount="bountyCommentPageCount" CurrentPage="bountyCommentPage" OnPageChanged="ChangeBountyCommentPage" />
+                }
+
+                @* Bounty comment input – stays open after close/expire *@
+                <div class="mt-3">
+                    @if (activeBountyComment)
+                    {
+                        <div class="addReply border rounded p-2 bg-base-100 space-y-2">
+                            <textarea id="ck_bounty_comment" style="visibility:hidden; height:0;"></textarea>
+                            <div id="ckwrap_bounty_comment" class="min-h-[120px]"></div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-primary btn-xs" @onclick="DoBountyComment">发表</button>
+                                <button class="btn btn-ghost btn-xs" @onclick="CancelBountyComment">取消</button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(bountyCommentError)){<div class="text-[11px] text-error">@bountyCommentError</div>}
+                        </div>
+                    }
+                    else
+                    {
+                        <button class="btn btn-ghost btn-xs text-[11px]" @onclick="OpenBountyComment">写评论</button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-3" id="answers-top">
+            <h2 class="text-lg font-bold">回答 (@(detail?.AnswerCount ?? 0))</h2>
+            @{
+                var orderedAnswers = detail?.Answers?.OrderBy(a=> a.IsBest ? 0 : a.IsHelpful ? 1 : 2).ThenBy(a=>a.CreateDate).ToList() ?? new List<BountyAnswerDto>();
+                int answerPageSize = 10;
+                int answerPageCount = orderedAnswers.Count == 0 ? 0 : (int)Math.Ceiling(orderedAnswers.Count / (double)answerPageSize);
+                var displayedAnswers = orderedAnswers.Skip((answerPage-1)*answerPageSize).Take(answerPageSize).ToList();
+            }
+            @if (detail != null && detail.Answers != null)
+            {
+                if (answerPageCount > 1)
+                {
+                    <Pagination PageCount="answerPageCount" CurrentPage="answerPage" OnPageChanged="ChangeAnswerPage" />
+                }
+                foreach (var ans in displayedAnswers)
+                {
+                    <div class="card bg-base-100 shadow border @(ans.IsBest ? "border-success" : ans.IsHelpful ? "border-primary/40" : "border-base-200") group" id="postcontent@(ans.AnswerId)">
+                        <div class="card-body p-4">
+                            <div class="flex items-center gap-2">
+                                <div class="avatar"><div class="w-7 h-7 rounded-full overflow-hidden bg-base-200"><img src="@ans.AuthorAvatar" alt="av" /></div></div>
+                                <span class="text-sm font-semibold">@ans.Author</span>
+                                <span class="text-[11px] opacity-60">@ans.CreateDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                                @if (detail != null && ans.IsBest){<span class="badge badge-success badge-sm">最佳 <span class="ico-lolly ico-lolly-sm"></span>@detail.Prize</span>}
+                                else if (ans.IsHelpful){<span class="badge badge-primary badge-sm">热心助人</span>}
+                                <button class="btn btn-ghost btn-xs h-5 min-h-0 text-[10px] ml-auto opacity-80 hover:opacity-100" @onclick="()=>OpenReport(4, ans.AnswerId, null)" title="汇报此回答">⚑ 举报</button>
+                            </div>
+                            <div class="mt-2 prose prose-sm max-w-none break-words bounty-answer-content">
+                                @((MarkupString)ans.Content)
+                            </div>
+                            @{
+                                string[] ansImgsRaw;
+                                if (string.IsNullOrWhiteSpace(ans.ImageUrl)) ansImgsRaw = Array.Empty<string>();
+                                else if (ans.ImageUrl.TrimStart().StartsWith("[")) 
+                                { try { ansImgsRaw = System.Text.Json.JsonSerializer.Deserialize<string[]>(ans.ImageUrl) ?? Array.Empty<string>(); } catch { ansImgsRaw = Array.Empty<string>(); } }
+                                else ansImgsRaw = ans.ImageUrl.Split(new[]{';'}, StringSplitOptions.RemoveEmptyEntries).Select(s=>System.Net.WebUtility.HtmlDecode(s.Trim())).Where(s=>!string.IsNullOrWhiteSpace(s)).ToArray();
+                            }
+                            @if (ansImgsRaw.Length > 0)
+                            {
+                                if (ansImgsRaw.Length == 1)
+                                {
+                                    <img src="@ansImgsRaw[0]" class="rounded-lg border max-h-64 w-auto max-w-full object-contain mt-2 cursor-zoom-in bounty-img-fix" @onclick="()=>imgViewer?.Open(ansImgsRaw,0)" />
+                                }
+                                else
+                                {
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                                        @for(int ai=0; ai<ansImgsRaw.Length; ai++){ var idx=ai; var im=ansImgsRaw[ai];
+                                            <img src="@im" class="rounded-lg border h-40 w-full object-contain bg-base-200 cursor-zoom-in bounty-img-fix" @onclick="()=>imgViewer?.Open(ansImgsRaw, idx)" />
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (ans.Replies != null && ans.Replies.Count > 0)
+                            {
+                                <div class="mt-3 pl-3 border-l-2 border-base-300 space-y-2">
+                                    @foreach (var rp in ans.Replies.OrderBy(r=>r.CreateDate))
+                                    {
+                                        <div class="bg-base-200/50 rounded p-2" id="reply@(rp.PostId)">
+                                            <div class="flex items-center gap-1 text-xs">
+                                                <span class="font-semibold">@rp.Author</span>
+                                                <span class="opacity-60">@rp.CreateDate.ToLocalTime().ToString("MM-dd HH:mm")</span>
+                                            </div>
+                                            <div class="text-xs mt-1 bounty-content">@((MarkupString)rp.Content)</div>
+                                            @if (rp.Replies != null && rp.Replies.Count > 0)
+                                            {
+                                                <div class="mt-2 ml-2 pl-2 border-l border-base-300 space-y-1 postreply">
+                                                    @foreach (var rr in rp.Replies.OrderBy(x=>x.CreateDate))
+                                                    {
+                                                        <div class="text-[11px]" id="replyReply@(rr.ReplyId)">
+                                                            <span class="font-semibold">@rr.Author:</span>
+                                                            <span class="bounty-content">@((MarkupString)rr.Content)</span>
+                                                            <span class="opacity-50 ml-1">@rr.CreateDate.ToLocalTime().ToString("MM-dd")</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @* Answer floor replies stay open even after bounty closed/expired *@
+                                            <div class="mt-1">
+                                                @if (activeReplyPostId != rp.PostId)
+                                                {
+                                                    <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(rp.PostId)"><span>回复楼层</span></a>
+                                                }
+                                                else
+                                                {
+                                                    <div class="mt-1 addReply" id="addReplyBox_@rp.PostId" style="display:block">
+                                                        <textarea id="ck_reply_post_@rp.PostId" style="visibility:hidden; height:0;"></textarea>
+                                                        <div id="ckwrap_post_@rp.PostId" class="min-h-[100px]"></div>
+                                                        <div class="flex gap-1 mt-1">
+                                                            <button class="btn btn-primary btn-xs h-6" @onclick="()=>DoReplyPost(rp.PostId)">发表</button>
+                                                            <button class="btn btn-ghost btn-xs h-6" @onclick="()=>CancelReplyPost(rp.PostId)">取消</button>
+                                                        </div>
+                                                        @if (!string.IsNullOrEmpty(postReplyErrors.GetValueOrDefault(rp.PostId))){<div class="text-[11px] text-error">@postReplyErrors[rp.PostId]</div>}
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @* Reply to answer – stays open after closed/expired (only blocked if bounty IsDeleted) *@
+                            <div class="mt-2" id="postcontent@(ans.AnswerId)_actions">
+                                @if (activeReplyAnswerId != ans.AnswerId)
+                                {
+                                    <a class="post-reply text-xs link link-primary cursor-pointer" @onclick="() => OpenReplyAnswer(ans.AnswerId)">回复此答案</a>
+                                }
+                                else
+                                {
+                                    <div class="addReply border rounded p-2 bg-base-100 space-y-2" id="addReplyBoxAnsw_@ans.AnswerId" style="display:block">
+                                        <textarea id="ck_reply_ans_@ans.AnswerId" style="visibility:hidden; height:0;"></textarea>
+                                        <div id="ckwrap_ans_@ans.AnswerId" class="min-h-[120px]"></div>
+                                        <div class="flex gap-2">
+                                            <button class="btn btn-primary btn-xs" @onclick="()=>DoReplyAnswer(ans.AnswerId)">发表</button>
+                                            <button class="btn btn-ghost btn-xs" @onclick="()=>CancelReplyAnswer(ans.AnswerId)">取消</button>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(replyErrors.GetValueOrDefault(ans.AnswerId))){<div class="text-[11px] text-error">@replyErrors[ans.AnswerId]</div>}
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                if (answerPageCount > 1)
+                {
+                    <Pagination PageCount="answerPageCount" CurrentPage="answerPage" OnPageChanged="ChangeAnswerPage" />
+                }
+            }
+
+            @if (detail != null && !detail.IsAccepted && detail.CanAnswer)
+            {
+                <div class="card bg-base-100 shadow border border-base-200">
+                    <div class="card-body p-4">
+                        <div class="font-bold text-sm mb-2">发布回答</div>
+                        <CkEditor @ref="answerEditor" @bind-Value="answerContent" />
+                        <div class="mt-2"><ImageManager @ref="answerImgMgr" MaxCount="5" OnUpdate="OnAnswerImagesUpdate" OnBufferedUpdate="OnAnswerBufferedUpdate" /></div>
+                        @if (!string.IsNullOrEmpty(answerError)){<div class="alert alert-error py-1 text-xs mt-2"><span>@answerError</span></div>}
+                        @if (answerSuccess){<div class="alert alert-success py-1 text-xs mt-2">回答发布成功</div>}
+                        <div class="mt-2">
+                            <button class="btn btn-primary btn-sm" @onclick="DoAnswer" disabled="@(answering || string.IsNullOrWhiteSpace(PlainAnswer))">@if(answering){<span class="loading loading-spinner loading-xs"></span>} 提交回答</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (detail != null && !detail.IsAccepted && !detail.CanAnswer && !detail.CanAccept)
+            {
+                <div class="opacity-60 text-xs">登录后可回答自己的求物以外的悬赏</div>
+            }
+        </div>
+    }
+</div>
+
+<ImageLightbox @ref="imgViewer" />
+
+@* Report modal - similar to Details.cshtml #rptModal *@
+@if (showReportModal)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @onclick="CloseReport">
+        <div class="card bg-base-100 shadow-xl w-full max-w-md" @onclick:stopPropagation="true">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold">汇报问题</h3>
+                    <button class="btn btn-ghost btn-xs" @onclick="CloseReport">✕</button>
+                </div>
+                @if (!string.IsNullOrEmpty(reportSuccess)){<div class="alert alert-success py-1 text-xs mt-2">@reportSuccess</div>}
+                @if (!string.IsNullOrEmpty(reportError)){<div class="alert alert-error py-1 text-xs mt-2">@reportError</div>}
+                <div class="alert alert-warning py-2 text-[11px] mt-2">链接失效等补档问题请汇报给投稿者。汇报时请说明原因，无说明不处理。</div>
+                <div class="mt-2">
+                    <label class="label"><span class="label-text text-xs">原因：</span></label>
+                    <textarea class="textarea textarea-bordered w-full h-32 text-sm" placeholder="请说明问题..." @bind="reportContent"></textarea>
+                </div>
+                <div class="card-actions justify-end mt-3 gap-2">
+                    <button class="btn btn-ghost btn-sm" @onclick="CloseReport" disabled="@reporting">关闭</button>
+                    <button class="btn btn-outline btn-sm" @onclick='()=>DoReport("rpt-admin")' disabled="@reporting">@if(reporting){<span class="loading loading-spinner loading-xs"></span>} 汇报给管理员</button>
+                    <button class="btn btn-primary btn-sm" @onclick='()=>DoReport("rpt-author")' disabled="@reporting">@if(reporting){<span class="loading loading-spinner loading-xs"></span>} 汇报给投稿者</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    BountyDetail? detail;
+    bool loading = true;
+    ImageLightbox? imgViewer;
+    int selectedBest = 0;
+    HashSet<int> selectedHelpful = new();
+    bool accepting = false;
+    string? acceptError;
+    bool acceptSuccess = false;
+    bool deleting = false;
+    string? deleteError;
+    bool showDeleteConfirm = false;
+
+    string answerContent = "";
+    string PlainAnswer => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(answerContent ?? "", "<.*?>", "")).Trim();
+    bool answering = false;
+    string? answerError;
+    bool answerSuccess = false;
+    List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> answerFiles = new();
+    List<GmGard.Client.Components.BufferedImage> answerBuffered = new();
+    CkEditor? answerEditor;
+    ImageManager? answerImgMgr;
+    void OnAnswerImagesUpdate(List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> files) => answerFiles = files;
+    void OnAnswerBufferedUpdate(List<GmGard.Client.Components.BufferedImage> bufs) => answerBuffered = bufs;
+
+    Dictionary<int, string> replyInputs = new();
+    Dictionary<int, string> replyErrors = new();
+    Dictionary<int, string> postReplyInputs = new();
+    Dictionary<int, string> postReplyErrors = new();
+    int activeReplyAnswerId = 0;
+    int activeReplyPostId = 0;
+
+    bool activeBountyComment = false;
+    string bountyCommentInput = "";
+    string? bountyCommentError;
+
+    DotNetObjectReference<Details>? dotNetRef;
+    int answerPage = 1;
+    int bountyCommentPage = 1;
+    bool hasScrolledToHash = false;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            try { await JSRuntime.InvokeVoidAsync("gmBountyContent.register", dotNetRef); } catch {}
+        }
+        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.bind"); } catch {}
+        // spoiler toggle behavior like main site
+        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.bindSpoiler"); } catch {}
+
+        // Scroll to hash if visiting /app/bounty/{id}#postcontentX (report link)
+        if (!hasScrolledToHash && detail != null)
+        {
+            try
+            {
+                var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+                var hash = uri.Fragment;
+                if (!string.IsNullOrEmpty(hash))
+                {
+                    var numStr = System.Text.RegularExpressions.Regex.Match(hash, @"\d+").Value;
+                    if (int.TryParse(numStr, out var targetId) && hash.Contains("postcontent") && detail.Answers != null)
+                    {
+                        var ordered = detail.Answers.OrderBy(a=> a.IsBest ? 0 : a.IsHelpful ? 1 : 2).ThenBy(a=>a.CreateDate).ToList();
+                        var idx = ordered.FindIndex(a => a.AnswerId == targetId);
+                        if (idx >= 0)
+                        {
+                            const int pageSize = 10;
+                            var neededPage = idx / pageSize + 1;
+                            if (neededPage != answerPage)
+                            {
+                                answerPage = neededPage;
+                                StateHasChanged();
+                                await Task.Delay(100);
+                            }
+                        }
+                    }
+                    // highlight when coming from report link
+                    await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", hash, true, true);
+                    hasScrolledToHash = true;
+                }
+            }
+            catch {}
+        }
+    }
+
+    [JSInvokable] public void OpenLightboxJs(string[] images, int index){ imgViewer?.Open(images, index); StateHasChanged(); }
+
+    async Task ChangeAnswerPage(int p)
+    {
+        answerPage = p;
+        StateHasChanged();
+        await Task.Delay(50);
+        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#answers-top", true, false); } catch {}
+    }
+    async Task ChangeBountyCommentPage(int p)
+    {
+        bountyCommentPage = p;
+        StateHasChanged();
+        await Task.Delay(50);
+        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#bounty-comments", true, false); } catch {}
+    }
+
+    async Task Load(bool preservePage = false)
+    {
+        loading = true;
+        detail = await BountyService.GetAsync(Id);
+        if (detail != null)
+        {
+            selectedBest = detail.BestAnswerId ?? detail.Answers?.FirstOrDefault(a=>a.IsBest)?.AnswerId ?? 0;
+            selectedHelpful = detail.Answers?.Where(a=>a.IsHelpful).Select(a=>a.AnswerId).ToHashSet() ?? new HashSet<int>();
+            if (!preservePage) { answerPage = 1; bountyCommentPage = 1; }
+        }
+        loading = false;
+        hasScrolledToHash = false;
+    }
+
+    void ToggleHelpful(int id, bool checkedNow){ if (checkedNow) selectedHelpful.Add(id); else selectedHelpful.Remove(id); }
+    void ToggleHelpfulGroup(List<int> ids, bool checkedNow)
+    {
+        if (checkedNow) { foreach(var i in ids) selectedHelpful.Add(i); }
+        else { foreach(var i in ids) selectedHelpful.Remove(i); }
+    }
+    void SelectBest(Models.BountyAnswerDto a)
+    {
+        selectedBest = a.AnswerId;
+        // When best author changes, remove that author from helpful selection entirely
+        if (detail != null)
+        {
+            var idsFromBestAuthor = detail.Answers.Where(x=>x.Author==a.Author).Select(x=>x.AnswerId).ToList();
+            foreach(var id in idsFromBestAuthor) selectedHelpful.Remove(id);
+        }
+    }
+
+    static string GetSnippet(string html, int max=50)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return "(无内容)";
+        try
+        {
+            var plain = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", "");
+            plain = System.Net.WebUtility.HtmlDecode(plain).Trim();
+            plain = System.Text.RegularExpressions.Regex.Replace(plain, @"\s+", " ");
+            if (plain.Length > max) return plain.Substring(0, max) + "…";
+            return string.IsNullOrEmpty(plain) ? "(无文本内容)" : plain;
+        }
+        catch { return html.Length>max ? html.Substring(0,max)+"…" : html; }
+    }
+
+    async Task DoAccept()
+    {
+        if (selectedBest==0){ acceptError="请先选择最佳答案"; return; }
+        accepting = true; acceptError=null; StateHasChanged();
+        var (ok, err) = await BountyService.AcceptAsync(Id, selectedBest, selectedHelpful.Where(i=>i!=selectedBest).ToArray());
+        accepting = false;
+        if (ok){ acceptSuccess=true; await Load(); }
+        else acceptError = err ?? "结贴失败";
+        StateHasChanged();
+    }
+
+    async Task DoAnswer()
+    {
+        if (answerEditor != null){ var latest = await answerEditor.GetDataAsync(); if (!string.IsNullOrEmpty(latest)) answerContent = latest; }
+        if (string.IsNullOrWhiteSpace(PlainAnswer) || PlainAnswer.Length<2){ answerError="内容太短"; return; }
+        answering = true; answerError=null; answerSuccess=false; StateHasChanged();
+        var res = answerBuffered.Count > 0
+            ? await BountyService.AnswerAsyncBuffered(Id, answerContent, null, answerBuffered)
+            : await BountyService.AnswerAsync(Id, answerContent, null, answerFiles);
+        answering = false;
+        if (res.Success)
+        {
+            answerSuccess=true; 
+            answerContent=""; answerFiles.Clear(); answerBuffered.Clear(); answerImgMgr?.Clear(); 
+            // preserve page logic: after posting, go to last page where new answer will appear
+            await Load(preservePage: false);
+            if (detail != null)
+            {
+                var ordered = detail.Answers.OrderBy(a=> a.IsBest ? 0 : a.IsHelpful ? 1 : 2).ThenBy(a=>a.CreateDate).ToList();
+                int pageSize = 10;
+                if (res.AnswerId.HasValue)
+                {
+                    var idx = ordered.FindIndex(a => a.AnswerId == res.AnswerId.Value);
+                    if (idx >= 0) answerPage = idx / pageSize + 1;
+                    else answerPage = (ordered.Count + pageSize -1)/pageSize; // last page
+                    StateHasChanged();
+                    await Task.Delay(200);
+                    try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToId", $"postcontent{res.AnswerId.Value}", true); } catch {}
+                    // update url hash without reload - like blog window.location.href = pathname + "#listpost"+id
+                    try { Navigation.NavigateTo(Navigation.Uri.Split('#')[0] + $"#postcontent{res.AnswerId.Value}", false); } catch {}
+                }
+                else
+                {
+                    answerPage = (ordered.Count + pageSize -1)/pageSize;
+                    StateHasChanged();
+                    await Task.Delay(200);
+                    try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#answers-top", true, false); } catch {}
+                }
+            }
+        }
+        else answerError = res.Error ?? "回答失败";
+        StateHasChanged();
+    }
+
+    async Task DoDelete()
+    {
+        deleting = true; deleteError=null; StateHasChanged();
+        var (ok, err) = await BountyService.DeleteAsync(Id);
+        deleting = false;
+        if (ok){ Navigation.NavigateTo("bounty"); }
+        else deleteError = err ?? "删除失败";
+        StateHasChanged();
+    }
+
+    async Task OpenReplyAnswer(int answerId)
+    {
+        if (activeReplyAnswerId != 0 && activeReplyAnswerId != answerId)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {}
+        }
+        if (activeReplyPostId != 0)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {}
+            activeReplyPostId = 0;
+        }
+        if (activeBountyComment)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
+            activeBountyComment = false;
+        }
+        activeReplyAnswerId = answerId;
+        if (!replyInputs.ContainsKey(answerId)) replyInputs[answerId] = "";
+        StateHasChanged();
+        await Task.Delay(50);
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_reply_ans_{answerId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => replyInputs[answerId]=v))); } catch {}
+    }
+    async Task CancelReplyAnswer(int answerId)
+    {
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{answerId}"); } catch {}
+        activeReplyAnswerId = 0;
+        replyInputs.Remove(answerId);
+    }
+
+    async Task OpenReplyPost(int postId)
+    {
+        if (activeReplyPostId != 0 && activeReplyPostId != postId)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {}
+        }
+        if (activeReplyAnswerId != 0)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {}
+            activeReplyAnswerId = 0;
+        }
+        if (activeBountyComment)
+        {
+            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
+            activeBountyComment = false;
+        }
+        activeReplyPostId = postId;
+        if (!postReplyInputs.ContainsKey(postId)) postReplyInputs[postId] = "";
+        StateHasChanged();
+        await Task.Delay(50);
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_reply_post_{postId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => postReplyInputs[postId]=v))); } catch {}
+    }
+    async Task CancelReplyPost(int postId)
+    {
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{postId}"); } catch {}
+        activeReplyPostId = 0;
+        postReplyInputs.Remove(postId);
+    }
+
+    string PlainFromHtml(string html) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(html ?? "", "<.*?>", "")).Trim();
+
+    async Task OpenBountyComment()
+    {
+        // close other editors
+        if (activeReplyAnswerId != 0) { try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {} activeReplyAnswerId = 0; }
+        if (activeReplyPostId != 0) { try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {} activeReplyPostId = 0; }
+        activeBountyComment = true; bountyCommentInput = ""; StateHasChanged();
+        await Task.Delay(50);
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_bounty_comment", DotNetObjectReference.Create(new ReplyEditorCallback(v => bountyCommentInput=v))); } catch {}
+    }
+    async Task CancelBountyComment()
+    {
+        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
+        activeBountyComment = false; bountyCommentInput = ""; bountyCommentError = null;
+    }
+    async Task DoBountyComment()
+    {
+        var txt = bountyCommentInput ?? "";
+        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_bounty_comment"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; bountyCommentInput = latest; } } catch {}
+        if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ bountyCommentError="内容太短"; return; }
+        bountyCommentError = null; StateHasChanged();
+        var (ok, err) = await BountyService.CommentBountyAsync(Id, txt);
+        if (ok){
+            await CancelBountyComment();
+            await Load(true);
+            // jump to last page of bounty comments
+            if (detail != null && detail.BountyComments != null)
+            {
+                int pageSize = 10;
+                bountyCommentPage = Math.Max(1, (int)Math.Ceiling(detail.BountyComments.Count / (double)pageSize));
+                StateHasChanged();
+                await Task.Delay(100);
+                try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#bounty-comments", true, false); } catch {}
+            }
+        }
+        else bountyCommentError = err ?? "评论失败";
+        StateHasChanged();
+    }
+
+    async Task DoReplyAnswer(int answerId)
+    {
+        var txt = replyInputs.GetValueOrDefault(answerId) ?? "";
+        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_reply_ans_{answerId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; replyInputs[answerId]=latest; } } catch {}
+        if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ replyErrors[answerId]="内容太短"; return; }
+        replyErrors.Remove(answerId); StateHasChanged();
+        var (ok, err) = await BountyService.ReplyAnswerAsync(answerId, txt);
+        if (ok){ await CancelReplyAnswer(answerId); await Load(true); }
+        else replyErrors[answerId]= err ?? "回复失败";
+        StateHasChanged();
+    }
+    async Task DoReplyPost(int postId)
+    {
+        var txt = postReplyInputs.GetValueOrDefault(postId) ?? "";
+        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_reply_post_{postId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; postReplyInputs[postId]=latest; } } catch {}
+        if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ postReplyErrors[postId]="内容太短"; return; }
+        postReplyErrors.Remove(postId); StateHasChanged();
+        var (ok, err) = await BountyService.ReplyPostAsync(postId, txt);
+        if (ok){ await CancelReplyPost(postId); await Load(true); }
+        else postReplyErrors[postId]= err ?? "回复失败";
+        StateHasChanged();
+    }
+
+    // Report modal state - mirrors blog's #rptModal
+    bool showReportModal = false;
+    int reportItemType = 3; // ItemType.Bounty=3, Answer=4
+    int reportId = 0;
+    int? reportPostId = null;
+    string reportContent = "";
+    bool reporting = false;
+    string? reportError;
+    string? reportSuccess;
+
+    void OpenReport(int itemType, int id, int? postId)
+    {
+        reportItemType = itemType;
+        reportId = id;
+        reportPostId = postId;
+        reportContent = "";
+        reportError = null;
+        reportSuccess = null;
+        showReportModal = true;
+    }
+    void CloseReport(){ showReportModal = false; }
+
+    async Task DoReport(string type)
+    {
+        if (string.IsNullOrWhiteSpace(reportContent)){ reportError="请填写原因"; return; }
+        reporting = true; reportError=null; StateHasChanged();
+        var (ok, err, msg) = await BountyService.ReportAsync(reportId, reportItemType, reportPostId, reportContent, type);
+        reporting = false;
+        if (ok){ reportSuccess = msg ?? "已成功报告。"; await Task.Delay(800); CloseReport(); }
+        else reportError = err ?? "举报失败";
+        StateHasChanged();
+    }
+
+    public class ReplyEditorCallback
+    {
+        Action<string> _setter;
+        public ReplyEditorCallback(Action<string> setter){ _setter = setter; }
+        [JSInvokable] public void OnEditorChange(string data){ _setter?.Invoke(data); }
+    }
+}

@@ -417,12 +417,27 @@ namespace GmGard.Controllers
                 {
                     hashtag = "#listpost" + postid;
                 }
-                string controller = itemType == ItemType.Topic ? "Topic" : "Blog";
-                string url = Url.Action("Details", controller, new { id = id }) + hashtag;
-                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址：<br><a href='" + url + "'>" + url + "</a>";
-                if (type == "rpt-author")
+                string controller;
+                string url;
+                string author = null;
+                if (itemType == ItemType.Bounty)
                 {
-                    string author;
+                    var bounty = _db.Bounties.Find(id.Value);
+                    author = bounty?.Author;
+                    if (postid.HasValue)
+                    {
+                        // report specific answer/post id within bounty
+                        hashtag = "#postcontent" + postid;
+                    }
+                    // use Home/App redirector - single entry point for Blazor vs legacy Angular
+                    // generates /Home/App?path=bounty%2F5  -> App action redirects to /app/bounty/5 or AppHost
+                    var appPath = $"bounty/{id.Value}";
+                    url = Url.Action("App", "Home", new { path = appPath }) + (hashtag ?? "");
+                }
+                else
+                {
+                    controller = itemType == ItemType.Topic ? "Topic" : "Blog";
+                    url = Url.Action("Details", controller, new { id = id }) + hashtag;
                     if (itemType == ItemType.Topic)
                     {
                         var t = _db.Topics.Find(id.Value);
@@ -433,11 +448,23 @@ namespace GmGard.Controllers
                         var blog = _db.Blogs.Find(id.Value);
                         author = blog?.Author;
                     }
+                }
+                string content = System.Net.WebUtility.HtmlEncode(MsgContent) + "<br>地址：<br><a href='" + url + "'>" + url + "</a>";
+                if (type == "rpt-author")
+                {
+                    if (string.IsNullOrEmpty(author))
+                    {
+                        // For bounty, we already fetched author above
+                        if (itemType == ItemType.Bounty)
+                        {
+                            author = _db.Bounties.Where(b => b.BountyId == id.Value).Select(b => b.Author).FirstOrDefault();
+                        }
+                    }
                     if (author == null)
                     {
                         return NotFound();
                     }
-                    _msgUtil.AddMsg(User.Identity.Name, author, "报告投稿问题", content);
+                    _msgUtil.AddMsg(User.Identity.Name, author, itemType == ItemType.Bounty ? "报告悬赏问题" : "报告投稿问题", content);
                 }
                 else
                 {

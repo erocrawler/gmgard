@@ -33,10 +33,10 @@ namespace GmGard.Models
         /// <summary>Global toggle — when false, App() always redirects to legacy AppHost (Angular). Default false = safe opt-in.</summary>
         public bool Enabled { get; set; } = false;
 
-        /// <summary>Per-prefix override. E.g. { "bounty": false } keeps bounty on old Angular even when Enabled=true</summary>
+        /// <summary>Deny list — when Enabled=true, entries with false keep that prefix on legacy Angular. E.g. { "wheel": false }</summary>
         public Dictionary<string, bool> RedirectOverrides { get; set; } = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Additional prefixes forced to Blazor beyond the hardcoded defaults</summary>
+        /// <summary>Legacy allow-list field, kept for backward compat but ignored in deny-list model.</summary>
         public string[] ExtraPrefixes { get; set; } = Array.Empty<string>();
     }
 
@@ -96,6 +96,8 @@ namespace GmGard.Models
         public string SiteTitle => _currentSite.Title;
 
         public string SiteStaticHost => _currentSite.StaticHost;
+
+        public string SiteBaseUrl => EffectiveProtocol + "://" + _currentSite.Host;
 
         public string AppHost => EffectiveProtocol + "://" + _currentSite.AppHost;
 

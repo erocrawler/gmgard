@@ -1,6 +1,7 @@
 using FluentScheduler;
 using GmGard.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ namespace GmGard.Services
         private ConcurrentDictionary<int, byte> DirtyBlogs;
         private ConcurrentDictionary<int, AtomicLong> TopicVisits;
         private ConcurrentDictionary<int, byte> DirtyTopics;
+        private ConcurrentDictionary<int, AtomicLong> BountyVisits;
+        private ConcurrentDictionary<int, byte> DirtyBounties;
         private readonly Schedule _saveSchedule;
         private IServiceScopeFactory _scopeFactory;
 
@@ -30,6 +33,8 @@ namespace GmGard.Services
             DirtyBlogs = new ConcurrentDictionary<int, byte>();
             TopicVisits = new ConcurrentDictionary<int, AtomicLong>();
             DirtyTopics = new ConcurrentDictionary<int, byte>();
+            BountyVisits = new ConcurrentDictionary<int, AtomicLong>();
+            DirtyBounties = new ConcurrentDictionary<int, byte>();
             _saveSchedule = new Schedule(() => SaveVisits().Wait(), run => run.Every(15).Minutes());
             _saveSchedule.Start();
         }
@@ -38,6 +43,7 @@ namespace GmGard.Services
         {
             await SaveBlogVisit();
             await SaveTopicVisit();
+            await SaveBountyVisit();
         }
 
         protected async Task SaveBlogVisit()
@@ -165,6 +171,76 @@ namespace GmGard.Services
                 }
             }
             return visit.Value;
+        }
+
+        // --- Bounty Visit support (reuse same batching pattern) ---
+        protected async Task SaveBountyVisit()
+        {
+            var IdPairs = new Dictionary<int, long>();
+            foreach (var dirty in DirtyBounties)
+            {
+                int id = dirty.Key;
+                if (BountyVisits.TryGetValue(id, out AtomicLong l) && !IdPairs.ContainsKey(id))
+                {
+                    IdPairs.Add(id, l.Value);
+                }
+            }
+            if (IdPairs.Count > 0)
+            {
+                DirtyBounties.Clear();
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var db = GetDB(scope);
+                    var bountyIds = IdPairs.Keys.ToList();
+                    var bountiesToUpdate = await db.Bounties.Where(b => bountyIds.Contains(b.BountyId)).ToListAsync();
+                    foreach (var b in bountiesToUpdate)
+                    {
+                        if (IdPairs.TryGetValue(b.BountyId, out long newVisit))
+                        {
+                            b.ViewCount = (int)Math.Clamp(newVisit, 0, int.MaxValue);
+                        }
+                    }
+                    await db.SaveChangesAsync();
+                }
+            }
+        }
+
+        public long GetBountyVisit(int id, bool increment = false)
+        {
+            var visit = BountyVisits.GetOrAdd(id, i =>
+            {
+                long v = 0;
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    v = GetDB(scope).Bounties.AsNoTracking().Where(b => b.BountyId == id).Select(b => b.ViewCount).SingleOrDefault();
+                }
+                return new AtomicLong(v);
+            });
+            if (increment)
+            {
+                visit.Increment();
+                if (!DirtyBounties.ContainsKey(id))
+                {
+                    DirtyBounties.TryAdd(id, 0);
+                }
+            }
+            return visit.Value;
+        }
+
+        public void PrepareBountyVisits(IEnumerable<int> ids)
+        {
+            var uncached = ids.Where(i => !BountyVisits.ContainsKey(i));
+            if (uncached.Any())
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var visits = GetDB(scope).Bounties.AsNoTracking().Where(b => uncached.Contains(b.BountyId)).ToDictionary(b => b.BountyId, b => (long)b.ViewCount);
+                    foreach (var v in visits)
+                    {
+                        BountyVisits.TryAdd(v.Key, new AtomicLong(v.Value));
+                    }
+                }
+            }
         }
     }
 }

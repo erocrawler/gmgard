@@ -10,25 +10,25 @@ public class MessageService
 
     public async Task<PagedResult<MessageDisplay>?> InboxAsync(int page = 1, bool unreadOnly = false)
     {
-        try { return await _http.GetFromJsonAsync<PagedResult<MessageDisplay>>($"/api/Message/Inbox?pagenum={page}&unreadOnly={unreadOnly}"); }
+        try { return await _http.GetFromJsonAsync<PagedResult<MessageDisplay>>(ApiRoutes.Message.Inbox(page, unreadOnly)); }
         catch { return null; }
     }
 
     public async Task<PagedResult<MessageDisplay>?> OutboxAsync(int page = 1)
     {
-        try { return await _http.GetFromJsonAsync<PagedResult<MessageDisplay>>($"/api/Message/Outbox?pagenum={page}"); }
+        try { return await _http.GetFromJsonAsync<PagedResult<MessageDisplay>>(ApiRoutes.Message.Outbox(page)); }
         catch { return null; }
     }
 
     public async Task<MessageDetails?> ReadAsync(int id, bool markRead = false)
     {
-        try { return await _http.GetFromJsonAsync<MessageDetails>($"/api/Message/Content?id={id}&markRead={markRead}"); }
+        try { return await _http.GetFromJsonAsync<MessageDetails>(ApiRoutes.Message.Content(id, markRead)); }
         catch { return null; }
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        try { var r = await _http.DeleteAsync($"/api/Message/Delete?id={id}"); return r.IsSuccessStatusCode; }
+        try { var r = await _http.DeleteAsync(ApiRoutes.Message.Delete(id)); return r.IsSuccessStatusCode; }
         catch { return false; }
     }
 
@@ -36,7 +36,7 @@ public class MessageService
     {
         try
         {
-            var resp = await _http.PostAsJsonAsync("/api/Message/Send", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Message.Send, req);
             if (resp.IsSuccessStatusCode) return (true, null);
             var body = await resp.Content.ReadAsStringAsync();
             return (false, body);
@@ -49,9 +49,7 @@ public class MessageService
         if (string.IsNullOrWhiteSpace(name) || name.Length < 2) return [];
         try
         {
-            // Main-site endpoint: /api/Account/SuggestUser (legacy), app endpoint: /api/Account/SuggestUser too?
-            // Fall back to main site via same origin
-            var result = await _http.GetFromJsonAsync<List<UserSuggestion>>($"/api/Account/SuggestUser?name={Uri.EscapeDataString(name)}");
+            var result = await _http.GetFromJsonAsync<List<UserSuggestion>>(ApiRoutes.Account.SuggestUser(name));
             return result ?? [];
         }
         catch { return []; }

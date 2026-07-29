@@ -21,6 +21,7 @@ builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<ExamService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<TitleHelperService>();
+builder.Services.AddScoped<BountyService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthenticationStateProvider>();
 
 await builder.Build().RunAsync();

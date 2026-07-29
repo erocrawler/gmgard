@@ -16,5 +16,12 @@ namespace GmGard.Models.App
         public int Prize { get; set; }
         public bool IsAccepted { get; set; }
         public int AnswerCount { get; set; }
+        // Extended fields
+        public int Deposit { get; set; }
+        public int HelpfulReward { get; set; }
+        public int ViewCount { get; set; }
+        public DateTime? ExpiresAt { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? CloseDate { get; set; }
     }
 }

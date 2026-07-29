@@ -53,7 +53,7 @@ public class ExamService
 
     public async Task<ExamResult?> GetResultForUserAsync(string user, string version)
     {
-        try { return await _http.GetFromJsonAsync<ExamResult>($"/api/AuditExam/ResultForUser?version={version}&user={Uri.EscapeDataString(user)}"); }
+        try { return await _http.GetFromJsonAsync<ExamResult>(ApiRoutes.AuditExam.ResultForUser(version, user)); }
         catch { return null; }
     }
 }

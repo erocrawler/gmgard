@@ -24,7 +24,7 @@ public class AdminService
     {
         try
         {
-            var r = await _http.DeleteAsync($"/api/Admin/InvitationCode?code={Uri.EscapeDataString(code)}&reason={Uri.EscapeDataString(reason)}&notice={notice.ToString().ToLower()}");
+            var r = await _http.DeleteAsync(ApiRoutes.Admin.DeleteInvitationCode(code, reason, notice));
             return r.IsSuccessStatusCode;
         }
         catch { return false; }

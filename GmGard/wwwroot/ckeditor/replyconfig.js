@@ -24,7 +24,7 @@ CKEDITOR.editorConfig = function (config) {
     config.removeDialogTabs = 'image:advanced;link:advanced';
     config.removePlugins = 'elementspath';
 
-    config.extraAllowedContent = 'a[rel,data-mention]; span(*); embed[*]; table(*); ruby;';
+    config.extraAllowedContent = 'a[rel,data-mention]; span(*); table(*); ruby; video[*]; audio[*]; source[*];';
     config.extraPlugins = 'custom_smiley,colorbutton,mentions,rubymarkup';
 
     config.customConfig = '/ckeditor/smiley_config.js';

@@ -9,8 +9,20 @@
         init: function (editor) {
 
             var getRubyText = function (node) {
-                var txt = $(node).clone().find('rp,rt').remove().end().text();
-                return txt;
+                try {
+                    var clone = node.cloneNode(true);
+                    var toRemove = clone.querySelectorAll('rp,rt');
+                    for (var k = toRemove.length - 1; k >= 0; k--) {
+                        var el = toRemove[k];
+                        if (el.parentNode) el.parentNode.removeChild(el);
+                    }
+                    // textContent with trimming
+                    return (clone.textContent || clone.innerText || "").trim();
+                } catch (e) {
+                    // fallback
+                    var txt = node.textContent || "";
+                    return txt;
+                }
             };
             CKEDITOR.dialog.add('RubyMarkupDialog', function (instance) {
                 return {
@@ -41,9 +53,13 @@
                                          var val = this.getValue(),
                                              is_split = this.getDialog().getContentElement('main', 'markuptype').getValue() == 'char',
                                              words = is_split ? val.split(/\s+/) : [val];
-                                         element.setHtml($.map(words, function (word) {
-                                             if (word) return '<rp>(</rp><rt>' + word + '</rt><rp>)</rp>';
-                                         }).join(''));
+                                        // Replace $.map with native
+                                        var htmlParts = [];
+                                        for (var wi = 0; wi < words.length; wi++) {
+                                            var word = words[wi];
+                                            if (word) htmlParts.push('<rp>(</rp><rt>' + CKEDITOR.tools.htmlEncode(word) + '</rt><rp>)</rp>');
+                                        }
+                                        element.setHtml(htmlParts.join(''));
                                      },
                                      onLoad: function () {
                                          var dialog = this.getDialog(),
@@ -146,7 +162,6 @@
                         }
                         else
                             this.insertMode = false;
-                        debugger;
                         this.element = element;
                         this.setupContent(this.element);
                     },

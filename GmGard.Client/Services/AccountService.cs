@@ -24,7 +24,7 @@ public class AccountService
     {
         try
         {
-            var resp = await _http.PostAsync($"/api/Account/Enable2Fa?code={Uri.EscapeDataString(code)}", null);
+            var resp = await _http.PostAsync(ApiRoutes.Account.Enable2Fa(code), null);
             if (!resp.IsSuccessStatusCode)
             {
                 var err = await resp.Content.ReadAsStringAsync();

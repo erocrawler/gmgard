@@ -6,9 +6,15 @@
 <div class="navbar bg-base-100 shadow-sm border-b border-base-200">
     <div class="navbar-start">
         <a class="btn btn-ghost text-xl font-bold" href="">绅士应用</a>
+        <div class="hidden sm:flex gap-1 ml-2">
+            <NavLink href="bounty" class="btn btn-ghost btn-sm">求物版</NavLink>
+            <NavLink href="punch-in" class="btn btn-ghost btn-sm">签到</NavLink>
+            <NavLink href="message/inbox" class="btn btn-ghost btn-sm">消息</NavLink>
+        </div>
     </div>
-    @* Center empty - features are deep-linked from main site, no need to list *@
-    <div class="navbar-center"></div>
+    <div class="navbar-center sm:hidden">
+        <NavLink href="bounty" class="btn btn-ghost btn-xs">求物</NavLink>
+    </div>
     <div class="navbar-end gap-2">
         <AuthorizeView>
             <Authorized>

@@ -1,0 +1,32 @@
+@* Reusable pagination - matches bounty List.razor style, used by message inbox/outbox and future lists *@
+@if (PageCount > 1)
+{
+    <div class="flex justify-center gap-1 mt-4 flex-wrap items-center">
+        <button class="btn btn-sm btn-ghost" disabled="@(CurrentPage <= 1)" @onclick="() => GoTo(CurrentPage - 1)">‹</button>
+        @for (int p = 1; p <= PageCount; p++)
+        {
+            var pg = p;
+            if (Math.Abs(pg - CurrentPage) <= 2 || pg == 1 || pg == PageCount)
+            {
+                <button class="btn btn-sm @(pg == CurrentPage ? "btn-primary" : "btn-ghost")" @onclick="() => GoTo(pg)">@pg</button>
+            }
+            else if (Math.Abs(pg - CurrentPage) == 3)
+            {
+                <span class="btn btn-sm btn-ghost btn-disabled">…</span>
+            }
+        }
+        <button class="btn btn-sm btn-ghost" disabled="@(CurrentPage >= PageCount)" @onclick="() => GoTo(CurrentPage + 1)">›</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int PageCount { get; set; }
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+
+    async Task GoTo(int page)
+    {
+        if (page < 1 || page > PageCount || page == CurrentPage) return;
+        await OnPageChanged.InvokeAsync(page);
+    }
+}

@@ -3,6 +3,41 @@
   themes: light --default, dark;
 }
 
+.cke_dialog {
+  max-width: min(92vw, 580px) !important;
+  width: auto !important;
+}
+.cke_dialog .cke_dialog_body {
+  max-width: 100% !important;
+}
+.cke_dialog .cke_dialog_tabs {
+  display: flex !important;
+  flex-wrap: wrap !important; /* allow wrapping to prevent horizontal push */
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  gap: 0 !important;
+  border-bottom: 1px solid #d1d1d1;
+}
+.cke_dialog .cke_dialog_tab {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  padding: 4px 8px !important; /* reduced from 10px 12px - fixes overflow, per your suggestion */
+  margin: 0 1px 0 0 !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+.cke_dialog .cke_dialog_tab span {
+  white-space: nowrap !important;
+}
+/* If still many tabs, allow second row */
+.cke_dialog .cke_dialog_tab:last-child {
+  margin-right: 0 !important;
+}
+
 /* Scan razor/html/cshtml files for used classes */
 @source "../../**/*.{razor,html,cshtml}";
 @source "../../../GmGard/Views/**/*.cshtml";
@@ -70,3 +105,213 @@
     .loading-progress-text:after {
         content: var(--blazor-load-percentage-text, "加载中");
     }
+
+/* Lollipop point icon - cut from /Images/pointico.png sprite for clean sizing */
+.ico-lolly {
+    display: inline-block;
+    vertical-align: middle;
+    background: url(/Images/ico-lolly.png) no-repeat center / contain;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+.ico-lolly-sm {
+    width: 12px;
+    height: 12px;
+}
+.ico-lolly-md {
+    width: 14px;
+    height: 14px;
+}
+.ico-lolly-lg {
+    width: 20px;
+    height: 21px;
+}
+
+/* === Bounty content rich styles - copied from ckeditor contents.css + spoiler.css === */
+.bounty-content, .bounty-answer-content {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+}
+.bounty-content img, .bounty-answer-content img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    max-height: 600px;
+    vertical-align: middle;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.bounty-content .answer-img, .bounty-answer-content .answer-img {
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+}
+/* Fix stretched - overrides for bounty images */
+.bounty-img-fix {
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Spoiler - flat style, ONLY for Blazor app (bounty-content / bounty-answer-content)
+   Legacy site #blogcontent etc keeps original gradient (see /ckeditor/plugins/spoiler/css/spoiler.css which we reverted).
+   Previously used hsl(var(--bc)/0.1)=10% opacity = invisible on white. Now solid #d1d5db / base-300 with oklch vars for Tailwind v4 DaisyUI v5 (--color-base-*).
+*/
+.bounty-content div.spoiler, .bounty-answer-content div.spoiler {
+    padding: 0;
+    line-height: 1.6;
+    margin: 12px 0;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f3f4f6;
+    border-color: var(--color-base-300, #d1d5db);
+    background: var(--color-base-200, #f3f4f6);
+}
+.bounty-content div.spoiler div.spoiler-title, .bounty-answer-content div.spoiler div.spoiler-title {
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 650;
+    padding: 10px 12px 10px 34px;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    background: #e5e7eb;
+    cursor: pointer;
+    text-indent: 0;
+    user-select: none;
+    position: relative;
+    transition: filter 0.15s;
+    color: var(--color-base-content, #1f2937);
+    border-bottom-color: var(--color-base-300, #e5e7eb);
+    background: var(--color-base-300, #e5e7eb);
+}
+.bounty-content div.spoiler div.spoiler-title:hover, .bounty-answer-content div.spoiler div.spoiler-title:hover {
+    filter: brightness(0.96);
+}
+.bounty-content div.spoiler div.spoiler-title::before, .bounty-answer-content div.spoiler div.spoiler-title::before {
+    content: "▶";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    line-height: 1;
+    opacity: 0.85;
+    transition: transform 0.18s ease;
+    display: inline-block;
+}
+.bounty-content div.spoiler div.spoiler-title.hide-icon::before, .bounty-answer-content div.spoiler div.spoiler-title.hide-icon::before {
+    transform: translateY(-50%) rotate(90deg);
+}
+.bounty-content div.spoiler div.spoiler-title.show-icon::before, .bounty-answer-content div.spoiler div.spoiler-title.show-icon::before {
+    transform: translateY(-50%) rotate(0deg);
+}
+.bounty-content div.spoiler div.spoiler-title.hide-icon, .bounty-answer-content div.spoiler div.spoiler-title.hide-icon,
+.bounty-content div.spoiler div.spoiler-title.show-icon, .bounty-answer-content div.spoiler div.spoiler-title.show-icon {
+    background-image: none !important;
+}
+/* ALWAYS collapsed by default - JS forces display:none + main site trigger('click') */
+.bounty-content div.spoiler div.spoiler-content, .bounty-answer-content div.spoiler div.spoiler-content {
+    display: none !important;
+    font-size: 13px;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 10px 10px;
+    background: #ffffff;
+    padding: 12px 12px;
+    line-height: 1.65;
+    border-top-color: var(--color-base-300, #e5e7eb);
+    background: var(--color-base-100, #fff);
+}
+.bounty-content div.spoiler.is-expanded div.spoiler-content, .bounty-content div.spoiler div.spoiler-content.is-visible,
+.bounty-answer-content div.spoiler.is-expanded div.spoiler-content, .bounty-answer-content div.spoiler div.spoiler-content.is-visible {
+    display: block !important;
+}
+
+/* ============ CKEditor contents.css full port for bounty ============ */
+.bounty-content .marker, .bounty-answer-content .marker { background-color: Yellow; }
+.bounty-content blockquote, .bounty-answer-content blockquote {
+    font-style: italic;
+    font-family: Georgia, Times, "Times New Roman", serif;
+    padding: 2px 0 2px 20px;
+    border-left: 5px solid #ccc;
+    margin: 8px 0;
+}
+.bounty-content pre, .bounty-answer-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: var(--color-base-200, #f3f4f6);
+    border: 1px solid var(--color-base-300, #d1d5db);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+.bounty-content figure, .bounty-answer-content figure {
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.04);
+    padding: 8px;
+    margin: 10px 0;
+    display: inline-block;
+}
+.bounty-content figure > figcaption, .bounty-answer-content figure > figcaption { font-size: 0.9em; }
+
+.bounty-content .well, .bounty-answer-content .well {
+    background-color: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 8px 0;
+}
+.bounty-content span[lang], .bounty-answer-content span[lang] { font-style: italic; }
+
+/* Legacy label/badge from contents.css */
+.bounty-content .label, .bounty-answer-content .label,
+.bounty-content .badge, .bounty-answer-content .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 14px;
+    color: #fff;
+    white-space: nowrap;
+    vertical-align: baseline;
+    background-color: #333;
+    border-radius: 3px;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.25);
+}
+.bounty-content .label-success, .bounty-answer-content .label-success { background-color: #468847; }
+.bounty-content .label-warning, .bounty-answer-content .label-warning { background-color: #f89406; }
+.bounty-content .label-important, .bounty-content .label-danger,
+.bounty-answer-content .label-important, .bounty-answer-content .label-danger { background-color: #b94a48; }
+.bounty-content .label-info, .bounty-answer-content .label-info { background-color: #3a87ad; }
+.bounty-content .label-inverse, .bounty-answer-content .label-inverse { background-color: #333; }
+
+/* ruby markup */
+.bounty-content ruby, .bounty-answer-content ruby { ruby-position: over; }
+.bounty-content ruby rt, .bounty-answer-content ruby rt { font-size: 0.7em; color: hsl(var(--bc) / 0.7); }
+.bounty-content ruby rp, .bounty-answer-content ruby rp { font-size: 0.6em; opacity: 0.6; }
+
+/* embed responsive */
+.bounty-content .embed-240p, .bounty-answer-content .embed-240p { max-width: 426px; max-height: 240px; margin: 0 auto; }
+.bounty-content .embed-360p, .bounty-answer-content .embed-360p { max-width: 640px; max-height: 360px; margin: 0 auto; }
+.bounty-content .embed-480p, .bounty-answer-content .embed-480p { max-width: 854px; max-height: 480px; margin: 0 auto; }
+
+/* prose overrides */
+.prose img { max-width: 100%; height: auto; }
+
+/* thumbnail grid fix for stretched */
+.bounty-thumb-grid img { width: 100% !important; height: auto !important; max-height: 200px; object-fit: cover; }
+
+/* For answer images that previously stretched */
+.bounty-answer-content img, .bounty-content img {
+    max-width: 100%;
+    height: auto !important;
+    width: auto;
+}

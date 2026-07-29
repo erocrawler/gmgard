@@ -342,7 +342,7 @@ namespace GmGard.Controllers.App
             return Ok();
         }
 
-        [HttpPost, Authorize]
+        [HttpGet, HttpPost, Authorize]
         public async Task<JsonResult> SuggestUser([FromServices] UsersContext udb, string name = "")
         {
             name = name.Trim();

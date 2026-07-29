@@ -1,0 +1,74 @@
+@inject IJSRuntime JS
+
+@if (isOpen)
+{
+    <div class="fixed inset-0 z-[9999] bg-black/85 flex items-center justify-center p-4 select-none" @onclick="Close" @onkeydown="HandleKey" tabindex="0">
+        <button class="absolute top-4 right-4 btn btn-circle btn-sm bg-black/60 border-none text-white z-[10000]" @onclick="Close" @onclick:stopPropagation>✕</button>
+        @if (Images != null && Images.Length > 0 && currentIndex >=0)
+        {
+            <div class="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" @onclick:stopPropagation>
+                <img src="@Images[currentIndex]" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                @if (Images.Length > 1)
+                {
+                    <div class="flex gap-3 mt-4 items-center">
+                        <button class="btn btn-circle btn-sm" @onclick="Prev" @onclick:stopPropagation>‹</button>
+                        <span class="text-white text-xs">@(currentIndex+1) / @Images.Length</span>
+                        <button class="btn btn-circle btn-sm" @onclick="Next" @onclick:stopPropagation>›</button>
+                    </div>
+                }
+                <div class="text-white text-[11px] mt-2 opacity-50 truncate max-w-[80vw]">@Images[currentIndex]</div>
+            </div>
+            @if (Images.Length>1)
+            {
+                <button class="absolute left-3 top-1/2 -translate-y-1/2 btn btn-circle btn-sm bg-white/90" @onclick="Prev" @onclick:stopPropagation>‹</button>
+                <button class="absolute right-3 top-1/2 -translate-y-1/2 btn btn-circle btn-sm bg-white/90" @onclick="Next" @onclick:stopPropagation>›</button>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string[] Images { get; set; } = Array.Empty<string>();
+    [Parameter] public int StartIndex { get; set; } = 0;
+
+    bool isOpen = false;
+    int currentIndex = 0;
+
+    public void Open(int index = 0)
+    {
+        if (Images == null || Images.Length == 0) return;
+        currentIndex = Math.Clamp(index, 0, Images.Length - 1);
+        isOpen = true;
+        StateHasChanged();
+    }
+
+    public void Open(string[] images, int index = 0)
+    {
+        if (images == null || images.Length == 0) return;
+        Images = images;
+        StartIndex = index;
+        Open(index);
+    }
+
+    // JS interop variant to open from JS for content images
+    [JSInvokable]
+    public void OpenFromJs(string[] images, int index)
+    {
+        Open(images, index);
+    }
+
+    void Close() 
+    { 
+        isOpen = false; 
+        StateHasChanged(); 
+    }
+    void Prev() { if (Images != null && Images.Length>0) { currentIndex = (currentIndex -1 + Images.Length) % Images.Length; StateHasChanged(); } }
+    void Next() { if (Images != null && Images.Length>0) { currentIndex = (currentIndex +1) % Images.Length; StateHasChanged(); } }
+
+    void HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") Close();
+        else if (e.Key == "ArrowLeft") Prev();
+        else if (e.Key == "ArrowRight") Next();
+    }
+}

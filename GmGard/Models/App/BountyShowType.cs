@@ -10,5 +10,7 @@ namespace GmGard.Models.App
         All,
         Answered,
         Pending,
+        Deleted,
+        Mine,
     }
 }

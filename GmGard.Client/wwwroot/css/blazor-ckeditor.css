@@ -1,0 +1,116 @@
+/* Blazor-only CKEditor contents override - flat spoiler + marker etc, no gradient, does NOT affect legacy MVC site
+   Legacy site loads /ckeditor/contents.css and /ckeditor/plugins/spoiler/css/spoiler.css (original gradient).
+   Blazor loads ck-editor.js which sets contentsCss to this file, so editor preview matches Blazor frontend.
+*/
+
+/* marker */
+.marker { background-color: Yellow; }
+
+/* blockquote */
+blockquote {
+  font-style: italic;
+  font-family: Georgia, Times, "Times New Roman", serif;
+  padding: 2px 0 2px 20px;
+  border-left: 5px solid #ccc;
+  margin: 8px 0;
+}
+
+/* pre */
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+/* figure */
+figure {
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.04);
+  padding: 8px;
+  margin: 10px 0;
+  display: inline-block;
+}
+figure > figcaption { font-size: 0.9em; }
+
+/* well */
+.well {
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+
+/* label/badge */
+.label, .badge {
+  display:inline-block;
+  padding:2px 6px;
+  font-size:11px;
+  font-weight:bold;
+  line-height:14px;
+  color:#fff;
+  white-space:nowrap;
+  vertical-align:baseline;
+  background-color:#333;
+  border-radius:3px;
+}
+.label-success { background-color:#468847; }
+.label-warning { background-color:#f89406; }
+.label-important, .label-danger { background-color:#b94a48; }
+.label-info { background-color:#3a87ad; }
+.label-inverse { background-color:#333; }
+
+/* ruby */
+ruby rt { font-size:0.7em; color:#6b7280; }
+ruby rp { font-size:0.6em; opacity:0.6; }
+
+/* SPOILER - flat visible, no gradient, Blazor only */
+div.spoiler {
+  padding:0;
+  line-height:1.6;
+  margin:12px 0;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  overflow:hidden;
+  background:#f3f4f6;
+}
+div.spoiler div.spoiler-title {
+  color:#1f2937;
+  font-size:13px;
+  font-weight:650;
+  padding:10px 12px 10px 34px;
+  border:none;
+  border-bottom:1px solid #e5e7eb;
+  background:#e5e7eb;
+  cursor:pointer;
+  text-indent:0;
+  user-select:none;
+  position:relative;
+}
+div.spoiler div.spoiler-title::before {
+  content:"▶";
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:11px;
+}
+div.spoiler div.spoiler-title.hide-icon::before { transform:translateY(-50%) rotate(90deg); }
+div.spoiler div.spoiler-title.show-icon::before { transform:translateY(-50%) rotate(0deg); }
+div.spoiler div.spoiler-title.hide-icon,
+div.spoiler div.spoiler-title.show-icon {
+  background-image:none !important;
+}
+div.spoiler div.spoiler-content {
+  font-size:13px;
+  border:none;
+  border-top:1px solid #e5e7eb;
+  border-radius:0 0 10px 10px;
+  background:#ffffff;
+  padding:12px;
+}

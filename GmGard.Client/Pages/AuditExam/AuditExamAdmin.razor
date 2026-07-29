@@ -150,7 +150,10 @@
     async Task Lookup()
     {
         if (string.IsNullOrWhiteSpace(version)) { toast = "请选择版本"; return; }
-        Navigation.NavigateTo($"audit-exam/admin?user={Uri.EscapeDataString(username)}&version={Uri.EscapeDataString(version)}");
+        var url = GmGard.Client.Services.ApiRoutes.AuditExam.ResultForUser(version, username); // reuse logic
+        // For nav we want audit-exam/admin?user=&version=
+        var navUrl = $"audit-exam/admin?user={Uri.EscapeDataString(username)}&version={Uri.EscapeDataString(version)}";
+        Navigation.NavigateTo(navUrl);
         await DoLookup();
     }
 

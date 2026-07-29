@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace GmGard.Controllers
 {
@@ -552,20 +553,15 @@ namespace GmGard.Controllers
             return PartialView("BackgroundPartial", settings.Value);
         }
 
-        // Blazor migration: deep links from main site point to /app/* when BlazorApp.Enabled=true
-        private static readonly HashSet<string> DefaultBlazorPrefixes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "title-helper", "punch-in", "message", "raffle", "admin", "login", "account", "audit-exam", "title-categories"
-        };
-
+        // Blazor migration: DENY-LIST model. When BlazorApp.Enabled=true, all /Home/App?path=XXX go to /app/XXX (Blazor) except those explicitly denied in BlazorApp.RedirectOverrides[prefix]=false (legacy Angular).
         public IActionResult App(
             [FromServices] ConstantUtil constantUtil,
             [FromServices] IOptions<SiteConfig> siteConfig,
+            [FromServices] Microsoft.Extensions.Logging.ILogger<HomeController> logger,
             string path)
         {
             path = (path ?? "").TrimStart('/');
 
-            // Flip switch: null BlazorApp section = disabled (safe opt-in). Must add Enabled:true to activate.
             var blazorCfg = siteConfig.Value.BlazorApp;
             bool globalEnabled = blazorCfg?.Enabled ?? false;
 
@@ -574,30 +570,34 @@ namespace GmGard.Controllers
             if (blazorQuery == "0" || blazorQuery == "false") globalEnabled = false;
             else if (blazorQuery == "1" || blazorQuery == "true") globalEnabled = true;
 
+            string LegacyRedirect(string p)
+            {
+                var baseHost = constantUtil.AppHost.TrimEnd('/');
+                if (string.IsNullOrEmpty(p)) return baseHost + "/";
+                if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || p.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    return p;
+                logger.LogInformation("Legacy redirect -> {BaseHost}/{Path}", baseHost, p);
+                return $"{baseHost}/{p}";
+            }
+
             if (!globalEnabled)
             {
-                return Redirect(new Uri(constantUtil.AppHost + path).ToString());
+                logger.LogInformation("Blazor disabled -> legacy {Path}", path);
+                return Redirect(LegacyRedirect(path));
             }
 
             var firstSegment = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
 
-            // per-prefix override: { "bounty": false } keeps route on old Angular host
-            if (blazorCfg.RedirectOverrides != null && blazorCfg.RedirectOverrides.TryGetValue(firstSegment, out var overrideVal) && !overrideVal)
+            // DENY LIST check
+            if (blazorCfg?.RedirectOverrides != null && blazorCfg.RedirectOverrides.TryGetValue(firstSegment, out var overrideVal) && !overrideVal)
             {
-                return Redirect(new Uri(constantUtil.AppHost + path).ToString());
+                logger.LogInformation("Deny-list hit ({Segment}) -> legacy {Path}", firstSegment, path);
+                return Redirect(LegacyRedirect(path));
             }
 
-            // default migrated prefixes + extra prefixes from config
-            bool isBlazorRoute = DefaultBlazorPrefixes.Contains(firstSegment) ||
-                (blazorCfg != null && blazorCfg.ExtraPrefixes != null && blazorCfg.ExtraPrefixes.Contains(firstSegment, StringComparer.OrdinalIgnoreCase));
-
-            if (isBlazorRoute)
-            {
-                return Redirect($"/app/{path}");
-            }
-
-            // fallback -> legacy Angular AppHost
-            return Redirect(new Uri(constantUtil.AppHost + path).ToString());
+            // Everything else goes to Blazor when enabled
+            logger.LogInformation("Blazor route -> /app/{Path}", path);
+            return Redirect($"/app/{path}");
         }
     }
 }

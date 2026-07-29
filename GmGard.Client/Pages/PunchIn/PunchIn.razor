@@ -22,7 +22,7 @@
                         <div class="font-semibold text-sm">@user.NickName</div>
                         <div class="flex gap-1.5 mt-1">
                             <span class="badge badge-primary badge-xs">连续 @consecutiveSign 天</span>
-                            <span class="badge badge-ghost badge-xs">🍬 @points</span>
+                            <span class="badge badge-ghost badge-xs flex items-center gap-1"><span class="ico-lolly ico-lolly-sm"></span> @points</span>
                         </div>
                     </div>
                 </div>
@@ -30,9 +30,9 @@
             }
 
             <div class="flex items-center justify-between px-2 py-2 border-b border-base-200/50">
-                <button @onclick="PrevMonth" disabled="@IsMinMonth" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">‹</button>
+                <button @onclick="PrevMonth" disabled="@(IsMinMonth || loading)" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">‹</button>
                 <span class="text-sm font-bold">@activeDate.Year 年 @activeDate.Month 月</span>
-                <button @onclick="NextMonth" disabled="@IsMaxMonth" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">›</button>
+                <button @onclick="NextMonth" disabled="@(IsMaxMonth || loading)" class="btn btn-ghost btn-circle text-lg" style="width:32px;height:32px;min-height:32px;">›</button>
             </div>
 
             @if (loading) { <progress class="progress progress-primary w-full h-0.5 rounded-none"></progress> }
@@ -56,15 +56,12 @@
                             var capturedDay = d;
                             var dayDate = SafeDate(activeDate.Year, activeDate.Month, capturedDay);
                             var state = dayDate.HasValue ? GetDayState(dayDate.Value) : DayState.Disabled;
+                            var isClickable = state == DayState.Today || state == DayState.Missed;
+                            var styleAttr = GetDayInlineStyle(state);
                             <div style="height:36px; display:flex; align-items:center; justify-content:center;">
-                                @{
-                                    var isClickable = state == DayState.Today || state == DayState.Missed;
-                                    var styleAttr = GetDayInlineStyle(state);
-                                }
                                 @if (dayDate.HasValue)
                                 {
-                                    var dd = dayDate.Value;
-                                    <button @onclick="@(() => OnDayClick(dd))"
+                                    <button @key="@capturedDay" @onclick="@(() => OnDayClick(capturedDay))"
                                             disabled="@(!isClickable)"
                                             style="@styleAttr; width:28px; height:28px; min-width:28px; min-height:28px; line-height:28px; padding:0; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; text-align:center;">
                                         @capturedDay
@@ -101,8 +98,7 @@
 <dialog class="modal @(showDialog ? "modal-open" : "")">
     <div class="modal-box max-w-xs">
         <h3 class="font-bold text-sm mb-2">@dialogDate.ToString("yyyy年MM月dd日") 签到</h3>
-        @if (dialogLoading) { <div class="flex justify-center py-3"><span class="loading loading-spinner loading-xs"></span></div> }
-        else if (dialogCost != null)
+        @if (dialogCost != null)
         {
             <p class="text-xs mb-1">需花费 <b>@dialogCost.Cost</b> 棒棒糖</p>
             @if (dialogCost.Cost > 0) { <p class="text-xs text-center">@dialogCost.CurrentPoints → <span class="text-error font-bold">@(dialogCost.CurrentPoints - dialogCost.Cost)</span></p> }
@@ -129,13 +125,16 @@
     <div class="toast toast-bottom toast-center z-50"><div class="alert @(toastIsError ? "alert-error" : "alert-success") text-xs"><span>@toastMessage</span></div></div>
 }
 
+@implements IDisposable
+
 @code {
     CurrentUser? user; int consecutiveSign; int points; HashSet<int> signedDays = new(); int legacySign; bool loading = true;
     DateOnly today; DateOnly activeDate; static readonly DateOnly MinDate = new(2019, 1, 25);
     static readonly string[] WeekHeaders = new[] { "日", "一", "二", "三", "四", "五", "六" };
     List<int> CalendarDays = new();
-    bool showDialog; DateOnly dialogDate; PunchInCost? dialogCost; bool dialogLoading; bool signingIn;
+    bool showDialog; DateOnly dialogDate; PunchInCost? dialogCost; bool signingIn;
     bool toastVisible; bool toastIsError; string? toastMessage; CancellationTokenSource? toastCts;
+    CancellationTokenSource? loadCts;
     bool IsMinMonth => activeDate.Year == MinDate.Year && activeDate.Month == MinDate.Month;
     bool IsMaxMonth => activeDate.Year == today.Year && activeDate.Month == today.Month;
 
@@ -158,10 +157,23 @@
         loading = false;
     }
 
-    async Task PrevMonth() { if (IsMinMonth) return; activeDate = activeDate.AddMonths(-1); RebuildCalendar(); await LoadMonth(); }
-    async Task NextMonth() { if (IsMaxMonth) return; activeDate = activeDate.AddMonths(1); RebuildCalendar(); await LoadMonth(); }
+    async Task PrevMonth() { if (IsMinMonth || loading) return; activeDate = activeDate.AddMonths(-1); await LoadMonth(); }
+    async Task NextMonth() { if (IsMaxMonth || loading) return; activeDate = activeDate.AddMonths(1); await LoadMonth(); }
 
-    async Task LoadMonth() { loading = true; StateHasChanged(); var hist = await PunchInService.GetHistoryAsync(activeDate.Year, activeDate.Month); ApplyHistory(hist); loading = false; }
+    async Task LoadMonth()
+    {
+        loadCts?.Cancel();
+        loadCts = new CancellationTokenSource();
+        var ct = loadCts.Token;
+        loading = true;
+        StateHasChanged();
+        var hist = await PunchInService.GetHistoryAsync(activeDate.Year, activeDate.Month);
+        if (!ct.IsCancellationRequested)
+        {
+            ApplyHistory(hist);
+            loading = false;
+        }
+    }
 
     void ApplyHistory(PunchInHistoryResponse? hist)
     {
@@ -210,20 +222,25 @@
         _ => "color:#9ca3af; border:0;"
     };
 
-    async Task OnDayClick(DateOnly d)
+    async Task OnDayClick(int day)
     {
-        var s = GetDayState(d);
+        if (loading) return;
+        var d = SafeDate(activeDate.Year, activeDate.Month, day);
+        if (d == null) return;
+        loadCts?.Cancel();
+        var s = GetDayState(d.Value);
         if (s != DayState.Today && s != DayState.Missed) return;
-        dialogDate = d;
+        dialogDate = d.Value;
         dialogCost = null;
-        dialogLoading = true;
+        loading = true;
+        dialogCost = await PunchInService.GetCostAsync(d.Value);
         showDialog = true;
-        dialogCost = await PunchInService.GetCostAsync(d);
-        dialogLoading = false;
+        loading = false;
     }
     void CloseDialog() { showDialog = false; signingIn = false; }
     async Task ConfirmPunchIn(bool useTicket)
     {
+        if (signingIn) return;
         signingIn = true;
         var r = await PunchInService.DoPunchInAsync(dialogDate, useTicket);
         showDialog = false;
@@ -233,7 +250,7 @@
         {
             consecutiveSign = r.ConsecutiveDays;
             points = r.Points;
-            await ShowToastAsync(r.ExpBonus > 0 ? $"签到成功，+{r.ExpBonus}" : "签到成功。", false);
+            _ = ShowToastAsync(r.ExpBonus > 0 ? $"签到成功，绅士度+{r.ExpBonus}" : "签到成功。", false);
             await LoadMonth();
         }
         else await ShowToastAsync($"签到失败：{r.ErrorMessage}", true);
@@ -254,5 +271,13 @@
             toastVisible = false;
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    void IDisposable.Dispose()
+    {
+        loadCts?.Cancel();
+        loadCts?.Dispose();
+        toastCts?.Cancel();
+        toastCts?.Dispose();
     }
 }

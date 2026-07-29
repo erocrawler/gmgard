@@ -1,0 +1,57 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="ckeditor-wrapper">
+    <textarea @ref="textAreaRef" id="@ElementId" style="visibility:hidden; height:0;"></textarea>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? ElementId { get; set; } = $"ck_{Guid.NewGuid():N}";
+    [Parameter] public bool ReadOnly { get; set; }
+
+    ElementReference textAreaRef;
+    bool initialized = false;
+    DotNetObjectReference<CkEditor>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            // Load CKEditor if not present, then init
+            await JS.InvokeVoidAsync("gmCkEditor.init", ElementId, dotNetRef, Value, ReadOnly);
+            initialized = true;
+        }
+        else if (initialized)
+        {
+            // If external value changed, update editor (avoid loop)
+            await JS.InvokeVoidAsync("gmCkEditor.setDataIfDifferent", ElementId, Value);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnEditorChange(string data)
+    {
+        if (Value != data)
+        {
+            Value = data;
+            await ValueChanged.InvokeAsync(data);
+        }
+    }
+
+    public async ValueTask<string?> GetDataAsync()
+    {
+        if (!initialized) return Value;
+        try { return await JS.InvokeAsync<string>("gmCkEditor.getData", ElementId); }
+        catch { return Value; }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("gmCkEditor.destroy", ElementId); } catch { }
+        dotNetRef?.Dispose();
+    }
+}
