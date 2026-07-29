@@ -278,17 +278,12 @@ namespace GmGard.Controllers.App
             }
 
             await _userManager.SetTwoFactorEnabledAsync(user, true);
-            var userId = await _userManager.GetUserIdAsync(user);
 
-            if (await _userManager.CountRecoveryCodesAsync(user) == 0)
-            {
-                var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-                return Json(recoveryCodes);
-            }
-            else
-            {
-                return Ok();
-            }
+            // Always generate fresh recovery codes on (re-)enable - old codes are invalidated.
+            // Previously kept old codes if Count != 0, causing security issue: old codes stayed valid
+            // but were not shown after re-enable, leaving user unaware they still work.
+            var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            return Json(recoveryCodes);
         }
 
         [HttpPost, Authorize]

@@ -100,22 +100,27 @@
             </div>
         }
 
-        @* Recovery codes dialog *@
+        @* Recovery codes dialog - mirrors Angular recovery-code.component.html *@
         @if (showCodes && recoveryCodes != null)
         {
             <div class="modal modal-open">
                 <div class="modal-box max-w-lg">
-                    <h3 class="font-bold text-lg mb-3">应急密码（请妥善保存）</h3>
-                    <p class="text-sm text-base-content/60 mb-2">每个应急密码仅可使用一次，请保存在安全的地方。</p>
-                    <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1">
+                    <h3 class="font-bold text-lg">🔑 两步验证应急密码</h3>
+                    <div class="py-2 text-sm space-y-2">
+                        <p><span class="badge badge-success badge-sm">✓</span> 应急密码已重新生成。请妥善保存，在验证器APP不可用时可使用应急密码登录，一次性使用。</p>
+                        <div class="alert alert-warning text-xs py-2">
+                            <span><b>⚠️ 本信息只显示一次</b>，请在关闭前保存至安全位置（如邮箱、加密笔记）。旧应急密码已作废并由以上 @recoveryCodes.Length 个密码替换。</span>
+                        </div>
+                    </div>
+                    <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1 select-all cursor-pointer" @onclick="CopyCodesToClipboard" title="点击复制全部">
                         @foreach (var c in recoveryCodes)
                         {
                             <div>@c</div>
                         }
                     </div>
-                    <p class="text-xs text-base-content/50 mt-2">当前积分</p>
+                    <p class="text-xs opacity-50 mt-2">点击上方区域复制全部应急密码。</p>
                     <div class="modal-action">
-                        <button class="btn btn-primary" @onclick="CloseCodesAndGo">已知晓</button>
+                        <button class="btn btn-primary" @onclick="CloseCodesAndGo">我已记录应急密码</button>
                     </div>
                 </div>
                 <div class="modal-backdrop"><button @onclick="() => showCodes = false">close</button></div>
@@ -184,6 +189,14 @@
     {
         showCodes = false;
         Navigation.NavigateTo("account/2fa");
+    }
+
+    [Inject] IJSRuntime JS { get; set; } = default!;
+    async Task CopyCodesToClipboard()
+    {
+        if (recoveryCodes == null) return;
+        var all = string.Join("\n", recoveryCodes);
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", all); ShowToast("已复制到剪贴板"); } catch {}
     }
 
     void ShowToast(string msg, bool error = false)

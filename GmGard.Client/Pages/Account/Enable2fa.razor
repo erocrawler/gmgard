@@ -61,12 +61,17 @@
                 {
                     <div class="modal modal-open">
                         <div class="modal-box max-w-lg">
-                            <h3 class="font-bold text-lg mb-3">应急密码（请妥善保存）</h3>
-                            <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1">
+                            <h3 class="font-bold text-lg">✅ 两步验证已启用</h3>
+                            <p class="text-sm mt-2">请妥善保存以下应急密码，在验证器APP不可用时可使用应急密码登录。应急密码为一次性密码，使用后作废。</p>
+                            <div class="alert alert-warning text-xs py-2 mt-2">
+                                <span><b>⚠️ 本信息只显示一次</b>，请在关闭前保存至安全位置（如邮箱、加密笔记）。旧应急密码已作废。</span>
+                            </div>
+                            <div class="bg-base-200 rounded p-3 font-mono text-sm space-y-1 mt-3 select-all cursor-pointer" @onclick="CopyAllCodes" title="点击复制全部">
                                 @foreach (var c in recoveryCodes) { <div>@c</div> }
                             </div>
+                            <p class="text-xs opacity-50 mt-2">点击上方区域可复制全部应急密码。已生成 @recoveryCodes.Length 个密码替换旧密码。</p>
                             <div class="modal-action">
-                                <button class="btn btn-primary" @onclick="GoTo2Fa">已保存，返回</button>
+                                <button class="btn btn-primary" @onclick="GoTo2Fa">我已记录应急密码</button>
                             </div>
                         </div>
                     </div>
@@ -163,6 +168,13 @@
     }
 
     void GoTo2Fa() => Navigation.NavigateTo("account/2fa");
+
+    async Task CopyAllCodes()
+    {
+        if (recoveryCodes == null) return;
+        var all = string.Join("\n", recoveryCodes);
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", all); } catch {}
+    }
 
     async Task CopyText(string text)
     {
