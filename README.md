@@ -60,10 +60,11 @@ ElasticSearch需要单独搭建ES服务器。可通过GmGardMigrations > FillEla
 本系统由以下主要项目组成：
 
 -  GmGard：gmgard.com的主站源码。使用ASP.NET Core 10编写，支持跨平台部署。
--  GmGard.Client：基于Blazor WebAssembly的客户端应用。使用.NET 10和Tailwind CSS构建现代化前端界面。通讯API参见API.md。
+-  GmGard.Client：基于Blazor WebAssembly的客户端应用（原 app.gmgard.com）。使用.NET 10和Tailwind CSS构建，彻底取代旧 Angular 版 GmApps。通讯API参见API.md。
 -  GmGard.Models：数据库模型对象和Entity Framework相关配置。
--  GmApps：app.gmgard.com的源码。由Angular编写并与主站通过JSON通讯。即将被GmGard.Client取代。
 -  GmGardMigrations：用于执行Entity Framework数据迁移工具，以及临时数据填充或修复任务。
+
+> 旧 Angular 项目 GmApps 已于 2026-07-29 删除，不再维护。生产环境旧版可在维护模式下保留最后一次构建产物，但代码不再支持。
 
 
 ### Who do I talk to? ###

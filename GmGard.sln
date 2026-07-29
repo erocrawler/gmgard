@@ -11,28 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGard.Models", "GmGard.Mod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GmGard.Client", "GmGard.Client\GmGard.Client.csproj", "{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}"
 EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "GmApps", "GmApps\", "{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}"
-	ProjectSection(WebsiteProperties) = preProject
-		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.8"
-		Debug.AspNetCompiler.VirtualPath = "/localhost_59853"
-		Debug.AspNetCompiler.PhysicalPath = "GmApps\"
-		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59853\"
-		Debug.AspNetCompiler.Updateable = "true"
-		Debug.AspNetCompiler.ForceOverwrite = "true"
-		Debug.AspNetCompiler.FixedNames = "false"
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.VirtualPath = "/localhost_59853"
-		Release.AspNetCompiler.PhysicalPath = "GmApps\"
-		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59853\"
-		Release.AspNetCompiler.Updateable = "true"
-		Release.AspNetCompiler.ForceOverwrite = "true"
-		Release.AspNetCompiler.FixedNames = "false"
-		Release.AspNetCompiler.Debug = "False"
-		VWDPort = "59853"
-		SlnRelativePath = "GmApps\"
-		DefaultWebSiteLanguage = "Visual C#"
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,12 +42,6 @@ Global
 		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Staging|Any CPU.ActiveCfg = Release|Any CPU
 		{D4E8F1A2-3B5C-4D6E-8F9A-1C2D3E4F5A6B}.Staging|Any CPU.Build.0 = Release|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Release|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Release|Any CPU.Build.0 = Debug|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Staging|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDE14E8A-61F0-41F3-9E92-1BA3BE24C868}.Staging|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
