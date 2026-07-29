@@ -15,20 +15,21 @@
     ElementReference textAreaRef;
     bool initialized = false;
     DotNetObjectReference<CkEditor>? dotNetRef;
+    IJSObjectReference? module;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            // Load CKEditor if not present, then init
-            await JS.InvokeVoidAsync("gmCkEditor.init", ElementId, dotNetRef, Value, ReadOnly);
+            // Blazor native isolation – pure ESM, no window globals needed
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/ck-editor.esm.js");
+            await module.InvokeVoidAsync("init", ElementId, dotNetRef, Value, ReadOnly);
             initialized = true;
         }
         else if (initialized)
         {
-            // If external value changed, update editor (avoid loop)
-            await JS.InvokeVoidAsync("gmCkEditor.setDataIfDifferent", ElementId, Value);
+            try { await module!.InvokeVoidAsync("setDataIfDifferent", ElementId, Value); } catch {}
         }
     }
 
@@ -45,13 +46,14 @@
     public async ValueTask<string?> GetDataAsync()
     {
         if (!initialized) return Value;
-        try { return await JS.InvokeAsync<string>("gmCkEditor.getData", ElementId); }
+        try { return await module!.InvokeAsync<string>("getData", ElementId); }
         catch { return Value; }
     }
 
     public async ValueTask DisposeAsync()
     {
-        try { await JS.InvokeVoidAsync("gmCkEditor.destroy", ElementId); } catch { }
+        try { await module!.InvokeVoidAsync("destroy", ElementId); } catch {}
+        try { await module!.DisposeAsync(); } catch {}
         dotNetRef?.Dispose();
     }
 }

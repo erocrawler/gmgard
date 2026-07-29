@@ -448,6 +448,8 @@
     string? bountyCommentError;
 
     DotNetObjectReference<Details>? dotNetRef;
+    IJSObjectReference? bountyModule;
+    IJSObjectReference? editorModule;
     int answerPage = 1;
     int bountyCommentPage = 1;
     bool hasScrolledToHash = false;
@@ -459,11 +461,13 @@
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            try { await JSRuntime.InvokeVoidAsync("gmBountyContent.register", dotNetRef); } catch {}
+            // Pure ESM isolation – index.html has 0 custom scripts
+            editorModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/ck-editor.esm.js");
+            bountyModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/bounty-content.esm.js");
+            await bountyModule.InvokeVoidAsync("register", dotNetRef);
         }
-        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.bind"); } catch {}
-        // spoiler toggle behavior like main site
-        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.bindSpoiler"); } catch {}
+        try { await bountyModule!.InvokeVoidAsync("bind"); } catch {}
+        try { await bountyModule!.InvokeVoidAsync("bindSpoiler"); } catch {}
 
         // Scroll to hash if visiting /app/bounty/{id}#postcontentX (report link)
         if (!hasScrolledToHash && detail != null)
@@ -491,8 +495,7 @@
                             }
                         }
                     }
-                    // highlight when coming from report link
-                    await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", hash, true, true);
+                    try { await bountyModule!.InvokeVoidAsync("scrollToHash", hash, true, true); } catch {}
                     hasScrolledToHash = true;
                 }
             }
@@ -507,14 +510,14 @@
         answerPage = p;
         StateHasChanged();
         await Task.Delay(50);
-        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#answers-top", true, false); } catch {}
+        try { await bountyModule!.InvokeVoidAsync("scrollToHash", "#answers-top", true, false); } catch {}
     }
     async Task ChangeBountyCommentPage(int p)
     {
         bountyCommentPage = p;
         StateHasChanged();
         await Task.Delay(50);
-        try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#bounty-comments", true, false); } catch {}
+        try { await bountyModule!.InvokeVoidAsync("scrollToHash", "#bounty-comments", true, false); } catch {}
     }
 
     async Task Load(bool preservePage = false)
@@ -599,8 +602,7 @@
                     else answerPage = (ordered.Count + pageSize -1)/pageSize; // last page
                     StateHasChanged();
                     await Task.Delay(200);
-                    try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToId", $"postcontent{res.AnswerId.Value}", true); } catch {}
-                    // update url hash without reload - like blog window.location.href = pathname + "#listpost"+id
+                    try { await bountyModule!.InvokeVoidAsync("scrollToId", $"postcontent{res.AnswerId.Value}", true); } catch {}
                     try { Navigation.NavigateTo(Navigation.Uri.Split('#')[0] + $"#postcontent{res.AnswerId.Value}", false); } catch {}
                 }
                 else
@@ -608,7 +610,7 @@
                     answerPage = (ordered.Count + pageSize -1)/pageSize;
                     StateHasChanged();
                     await Task.Delay(200);
-                    try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#answers-top", true, false); } catch {}
+                    try { await bountyModule!.InvokeVoidAsync("scrollToHash", "#answers-top", true, false); } catch {}
                 }
             }
         }
@@ -626,60 +628,47 @@
         StateHasChanged();
     }
 
+    async Task DestroyEditor(string id)
+    {
+        try { await editorModule!.InvokeVoidAsync("destroy", id); } catch {}
+    }
+    async Task InitInlineEditor(string id, DotNetObjectReference<ReplyEditorCallback> cb)
+    {
+        try { await editorModule!.InvokeVoidAsync("initInlineReply", id, cb); } catch {}
+    }
+
     async Task OpenReplyAnswer(int answerId)
     {
-        if (activeReplyAnswerId != 0 && activeReplyAnswerId != answerId)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {}
-        }
-        if (activeReplyPostId != 0)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {}
-            activeReplyPostId = 0;
-        }
-        if (activeBountyComment)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
-            activeBountyComment = false;
-        }
+        if (activeReplyAnswerId != 0 && activeReplyAnswerId != answerId) await DestroyEditor($"ck_reply_ans_{activeReplyAnswerId}");
+        if (activeReplyPostId != 0) { await DestroyEditor($"ck_reply_post_{activeReplyPostId}"); activeReplyPostId = 0; }
+        if (activeBountyComment) { await DestroyEditor("ck_bounty_comment"); activeBountyComment = false; }
         activeReplyAnswerId = answerId;
         if (!replyInputs.ContainsKey(answerId)) replyInputs[answerId] = "";
         StateHasChanged();
         await Task.Delay(50);
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_reply_ans_{answerId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => replyInputs[answerId]=v))); } catch {}
+        await InitInlineEditor($"ck_reply_ans_{answerId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => replyInputs[answerId]=v)));
     }
     async Task CancelReplyAnswer(int answerId)
     {
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{answerId}"); } catch {}
+        await DestroyEditor($"ck_reply_ans_{answerId}");
         activeReplyAnswerId = 0;
         replyInputs.Remove(answerId);
     }
 
     async Task OpenReplyPost(int postId)
     {
-        if (activeReplyPostId != 0 && activeReplyPostId != postId)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {}
-        }
-        if (activeReplyAnswerId != 0)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {}
-            activeReplyAnswerId = 0;
-        }
-        if (activeBountyComment)
-        {
-            try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
-            activeBountyComment = false;
-        }
+        if (activeReplyPostId != 0 && activeReplyPostId != postId) await DestroyEditor($"ck_reply_post_{activeReplyPostId}");
+        if (activeReplyAnswerId != 0) { await DestroyEditor($"ck_reply_ans_{activeReplyAnswerId}"); activeReplyAnswerId = 0; }
+        if (activeBountyComment) { await DestroyEditor("ck_bounty_comment"); activeBountyComment = false; }
         activeReplyPostId = postId;
         if (!postReplyInputs.ContainsKey(postId)) postReplyInputs[postId] = "";
         StateHasChanged();
         await Task.Delay(50);
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_reply_post_{postId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => postReplyInputs[postId]=v))); } catch {}
+        await InitInlineEditor($"ck_reply_post_{postId}", DotNetObjectReference.Create(new ReplyEditorCallback(v => postReplyInputs[postId]=v)));
     }
     async Task CancelReplyPost(int postId)
     {
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{postId}"); } catch {}
+        await DestroyEditor($"ck_reply_post_{postId}");
         activeReplyPostId = 0;
         postReplyInputs.Remove(postId);
     }
@@ -688,22 +677,26 @@
 
     async Task OpenBountyComment()
     {
-        // close other editors
-        if (activeReplyAnswerId != 0) { try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_ans_{activeReplyAnswerId}"); } catch {} activeReplyAnswerId = 0; }
-        if (activeReplyPostId != 0) { try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_reply_post_{activeReplyPostId}"); } catch {} activeReplyPostId = 0; }
+        if (activeReplyAnswerId != 0) { await DestroyEditor($"ck_reply_ans_{activeReplyAnswerId}"); activeReplyAnswerId = 0; }
+        if (activeReplyPostId != 0) { await DestroyEditor($"ck_reply_post_{activeReplyPostId}"); activeReplyPostId = 0; }
         activeBountyComment = true; bountyCommentInput = ""; StateHasChanged();
         await Task.Delay(50);
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.initInlineReply", $"ck_bounty_comment", DotNetObjectReference.Create(new ReplyEditorCallback(v => bountyCommentInput=v))); } catch {}
+        await InitInlineEditor("ck_bounty_comment", DotNetObjectReference.Create(new ReplyEditorCallback(v => bountyCommentInput=v)));
     }
     async Task CancelBountyComment()
     {
-        try { await JSRuntime.InvokeVoidAsync("gmCkEditor.destroy", $"ck_bounty_comment"); } catch {}
+        await DestroyEditor("ck_bounty_comment");
         activeBountyComment = false; bountyCommentInput = ""; bountyCommentError = null;
     }
+    async Task<string> GetEditorData(string id)
+    {
+        try { return await editorModule!.InvokeAsync<string>("getData", id); } catch { return ""; }
+    }
+
     async Task DoBountyComment()
     {
         var txt = bountyCommentInput ?? "";
-        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_bounty_comment"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; bountyCommentInput = latest; } } catch {}
+        try { var latest = await GetEditorData("ck_bounty_comment"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; bountyCommentInput = latest; } } catch {}
         if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ bountyCommentError="内容太短"; return; }
         bountyCommentError = null; StateHasChanged();
         var (ok, err) = await BountyService.CommentBountyAsync(Id, txt);
@@ -717,7 +710,7 @@
                 bountyCommentPage = Math.Max(1, (int)Math.Ceiling(detail.BountyComments.Count / (double)pageSize));
                 StateHasChanged();
                 await Task.Delay(100);
-                try { await JSRuntime.InvokeVoidAsync("gmBountyContent.scrollToHash", "#bounty-comments", true, false); } catch {}
+                try { await bountyModule!.InvokeVoidAsync("scrollToHash", "#bounty-comments", true, false); } catch {}
             }
         }
         else bountyCommentError = err ?? "评论失败";
@@ -727,7 +720,7 @@
     async Task DoReplyAnswer(int answerId)
     {
         var txt = replyInputs.GetValueOrDefault(answerId) ?? "";
-        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_reply_ans_{answerId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; replyInputs[answerId]=latest; } } catch {}
+        try { var latest = await GetEditorData($"ck_reply_ans_{answerId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; replyInputs[answerId]=latest; } } catch {}
         if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ replyErrors[answerId]="内容太短"; return; }
         replyErrors.Remove(answerId); StateHasChanged();
         var (ok, err) = await BountyService.ReplyAnswerAsync(answerId, txt);
@@ -738,7 +731,7 @@
     async Task DoReplyPost(int postId)
     {
         var txt = postReplyInputs.GetValueOrDefault(postId) ?? "";
-        try { var latest = await JSRuntime.InvokeAsync<string>("gmCkEditor.getData", $"ck_reply_post_{postId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; postReplyInputs[postId]=latest; } } catch {}
+        try { var latest = await GetEditorData($"ck_reply_post_{postId}"); if (!string.IsNullOrWhiteSpace(latest)) { txt = latest; postReplyInputs[postId]=latest; } } catch {}
         if (string.IsNullOrWhiteSpace(PlainFromHtml(txt))){ postReplyErrors[postId]="内容太短"; return; }
         postReplyErrors.Remove(postId); StateHasChanged();
         var (ok, err) = await BountyService.ReplyPostAsync(postId, txt);
