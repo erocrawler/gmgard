@@ -98,6 +98,18 @@ namespace GmGard.Services
                         await userTx.CommitAsync();
                         await blogTx.CommitAsync();
                         result.ClosedNoAnswer++;
+
+                        // Notifications: expiration to OP + ES cleanup
+                        try
+                        {
+                            var scope2 = _scopeFactory.CreateScope();
+                            var msgUtil = scope2.ServiceProvider.GetRequiredService<MessageUtil>();
+                            var url = $"/app/bounty/{bounty.BountyId}";
+                            msgUtil.SendBountyExpiredNotice(bounty.Author, bounty.Title ?? $"悬赏#{bounty.BountyId}", url);
+                            var taskQueue = scope2.ServiceProvider.GetService<BackgroundTaskQueue>();
+                            taskQueue?.QueueBackgroundWorkItem(Job.RemoveBounty(new BountyEventArgs { BountyId = bounty.BountyId }));
+                        }
+                        catch (Exception ex) { _logger.LogWarning(ex, "Failed to send bounty expired notice for {Id}", bounty.BountyId); }
                     }
                     else
                     {
@@ -108,6 +120,17 @@ namespace GmGard.Services
                             await db.SaveChangesAsync();
                             await blogTx.CommitAsync();
                             result.ClosedNoAnswer++;
+
+                            try
+                            {
+                                var scope2 = _scopeFactory.CreateScope();
+                                var msgUtil = scope2.ServiceProvider.GetRequiredService<MessageUtil>();
+                                var url = $"/app/bounty/{bounty.BountyId}";
+                                msgUtil.SendBountyExpiredNotice(bounty.Author, bounty.Title ?? $"悬赏#{bounty.BountyId}", url);
+                                var taskQueue = scope2.ServiceProvider.GetService<BackgroundTaskQueue>();
+                                taskQueue?.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(bounty.BountyId));
+                            }
+                            catch (Exception ex) { _logger.LogWarning(ex, "Failed to send bounty expired notice for {Id}", bounty.BountyId); }
                             continue;
                         }
 
@@ -167,6 +190,28 @@ namespace GmGard.Services
                         await blogTx.CommitAsync();
                         result.AutoAccepted++;
                         _logger.LogInformation("Auto-accepted expired bounty {BountyId} best={BestId} prize={Prize} helpfulCount={HCount}", bounty.BountyId, best.AnswerId, bounty.Prize, helpfulOthers.Count);
+
+                        // Notifications: OP auto-accepted + best + helpful
+                        try
+                        {
+                            var scope2 = _scopeFactory.CreateScope();
+                            var msgUtil = scope2.ServiceProvider.GetRequiredService<MessageUtil>();
+                            var taskQueue = scope2.ServiceProvider.GetService<BackgroundTaskQueue>();
+                            var baseUrl = $"/app/bounty/{bounty.BountyId}";
+                            // OP
+                            msgUtil.SendBountyAutoAcceptedNotice(bounty.Author, best.Author, bounty.Title ?? $"悬赏#{bounty.BountyId}", baseUrl, true);
+                            // Best
+                            var bestUrl = baseUrl + $"#postcontent{best.AnswerId}";
+                            msgUtil.SendBountyAcceptedNotice(best.Author, "system", bounty.Title ?? $"悬赏#{bounty.BountyId}", bestUrl);
+                            // Helpful others
+                            foreach (var ha in helpfulOthers)
+                            {
+                                var hUrl = baseUrl + $"#postcontent{ha.AnswerId}";
+                                msgUtil.SendBountyHelpfulNotice(ha.Author, "system", bounty.Title ?? $"悬赏#{bounty.BountyId}", hUrl);
+                            }
+                            taskQueue?.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(bounty.BountyId));
+                        }
+                        catch (Exception ex) { _logger.LogWarning(ex, "Failed to send bounty auto-accept notices for {Id}", bounty.BountyId); }
                     }
                 }
                 catch (Exception ex)

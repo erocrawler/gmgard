@@ -297,6 +297,40 @@ namespace GmGard.Services
                     });
                     return;
 
+                case NoticeType.BountyAccepted:
+                    await AddMessage(new Message
+                    {
+                        Sender = "admin",
+                        Recipient = args.NoticeUser,
+                        MsgTitle = "悬赏结贴通知",
+                        // args.Content = bountyTitle, args.Url = link, args.Actor = who accepted
+                        MsgContent = string.Format("<a href='/User/{0}'>{0}</a> 将您的回答在 <a href='{2}'>{1}</a> 中选为最佳/热心助人答案，奖励已发放。", args.Actor, args.Content, args.Url),
+                        IsSenderDelete = true
+                    });
+                    return;
+
+                case NoticeType.BountyExpired:
+                    await AddMessage(new Message
+                    {
+                        Sender = "admin",
+                        Recipient = args.NoticeUser,
+                        MsgTitle = "悬赏过期通知",
+                        MsgContent = string.Format("您的悬赏 <a href='{1}'>{0}</a> 已过期且无有效回答，已自动关闭，押金已退还。", args.Content, args.Url),
+                        IsSenderDelete = true
+                    });
+                    return;
+
+                case NoticeType.BountyAutoAccepted:
+                    await AddMessage(new Message
+                    {
+                        Sender = "admin",
+                        Recipient = args.NoticeUser,
+                        MsgTitle = "悬赏自动结贴通知",
+                        MsgContent = string.Format("您的悬赏 <a href='{2}'>{1}</a> 因过期未手动结贴，系统已自动选定最佳答案 (作者: {0})。押金规则按站点设定处理。", args.Actor, args.Content, args.Url),
+                        IsSenderDelete = true
+                    });
+                    return;
+
                 default:
                     return;
             }

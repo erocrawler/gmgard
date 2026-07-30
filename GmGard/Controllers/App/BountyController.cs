@@ -22,6 +22,11 @@ namespace GmGard.Controllers.App
     [ApiController]
     public class BountyController : AppControllerBase
     {
+        public static event EventHandler<Services.BountyEventArgs> OnCreateBounty;
+        public static event EventHandler<Services.BountyEventArgs> OnAnswerBounty;
+        public static event EventHandler<Services.BountyEventArgs> OnDeleteBounty;
+        public static event EventHandler<Services.BountyEventArgs> OnAcceptBounty;
+
         private readonly BlogContext db_;
         private readonly UsersContext udb_;
         private readonly ExpUtil expUtil_;
@@ -563,6 +568,23 @@ namespace GmGard.Controllers.App
                 await udb_.SaveChangesAsync();
                 await userTx.CommitAsync();
                 await blogTx.CommitAsync();
+
+                // Notifications: best + helpful
+                try
+                {
+                    var url = Url.Action("App", "Home", new { path = $"bounty/{bounty.BountyId}" }) + $"#postcontent{best.AnswerId}";
+                    var title = bounty.Title;
+                    // Best
+                    msgUtil_.SendBountyAcceptedNotice(best.Author, User.Identity.Name, title, url);
+                    // Helpful
+                    foreach (var ha in helpfulAnswers)
+                    {
+                        var hUrl = Url.Action("App", "Home", new { path = $"bounty/{bounty.BountyId}" }) + $"#postcontent{ha.AnswerId}";
+                        msgUtil_.SendBountyHelpfulNotice(ha.Author, User.Identity.Name, title, hUrl);
+                    }
+                }
+                catch { }
+                try { OnAcceptBounty?.Invoke(this, new Services.BountyEventArgs { BountyId = bounty.BountyId }); } catch { }
             }
             catch (Exception ex)
             {
@@ -759,6 +781,21 @@ namespace GmGard.Controllers.App
                             msgUtil_.SendNewReplyNotice(target2.UserName, User.Identity.Name, title, url);
                         }
                     }
+                }
+                // Also notify bounty OP when reply happens in his bounty threads (if not already notified)
+                if (bountyId != 0)
+                {
+                    try
+                    {
+                        var bountyAuthor = await db_.Bounties.AsNoTracking().Where(b => b.BountyId == bountyId).Select(b => b.Author).FirstOrDefaultAsync();
+                        if (!string.IsNullOrEmpty(bountyAuthor) && bountyAuthor != User.Identity.Name && bountyAuthor != post.Author)
+                        {
+                            var opTarget = await udb_.Users.Include(u => u.option).FirstOrDefaultAsync(u => u.UserName == bountyAuthor);
+                            if (opTarget != null && (opTarget.option == null || opTarget.option.sendNoticeForNewPostReply))
+                                msgUtil_.SendNewReplyNotice(opTarget.UserName, User.Identity.Name, title, url);
+                        }
+                    }
+                    catch { }
                 }
                 // Mentions
                 if (mention2.HasMentions())

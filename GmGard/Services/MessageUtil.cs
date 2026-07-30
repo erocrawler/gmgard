@@ -83,5 +83,14 @@ namespace GmGard.Services
 
         internal void SendDeleteBlogNotice(string author, string actor, string msgContent, string blogTitle)
             => SendNoticeMsg(author, NoticeType.DeleteBlog, actor, msgContent, blogTitle);
+
+        internal void SendBountyAcceptedNotice(string noticeUser, string actor, string bountyTitle, string url)
+            => SendNoticeMsg(noticeUser, NoticeType.BountyAccepted, actor, bountyTitle, url);
+        internal void SendBountyHelpfulNotice(string noticeUser, string actor, string bountyTitle, string url)
+            => SendNoticeMsg(noticeUser, NoticeType.BountyAccepted, actor, bountyTitle, url); // same type, title distinguishes points
+        internal void SendBountyExpiredNotice(string noticeUser, string bountyTitle, string url)
+            => SendNoticeMsg(noticeUser, NoticeType.BountyExpired, "system", bountyTitle, url);
+        internal void SendBountyAutoAcceptedNotice(string noticeUser, string actor, string bountyTitle, string url, bool isBest)
+            => SendNoticeMsg(noticeUser, isBest ? NoticeType.BountyAutoAccepted : NoticeType.BountyAccepted, actor ?? "system", bountyTitle, url);
     }
 }

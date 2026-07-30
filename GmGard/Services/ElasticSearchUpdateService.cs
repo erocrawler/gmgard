@@ -42,6 +42,11 @@ namespace GmGard.Services
             AuditController.OnApproveBlog += addOrUpdate;
             AuditController.OnDenyBlog += addOrUpdate;
             BlogController.OnNewBlog += addOrUpdate;
+            // Bounty ES hooks
+            Controllers.App.BountyController.OnCreateBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBounty(e));
+            Controllers.App.BountyController.OnAnswerBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(e.BountyId));
+            Controllers.App.BountyController.OnDeleteBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.RemoveBounty(e));
+            Controllers.App.BountyController.OnAcceptBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(e.BountyId));
             BlogController.OnDeleteBlog += (s, e) =>
             {
                 if (e.Deleted)

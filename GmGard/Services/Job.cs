@@ -90,6 +90,9 @@ namespace GmGard.Services
             Mention,
             RankReward,
             UpdateEmail,
+            BountyAccepted,    // best/helpful answerer notified
+            BountyExpired,     // OP notified expired no-answer / closed
+            BountyAutoAccepted, // OP + best/helpful when auto-closed with answers
         }
         public string NoticeUser { get; set; }
         public NoticeType Type { get; set; }
