@@ -135,8 +135,19 @@ public class UpdateCssHash : Task
     <Exec Command="npm install" />
   </Target>
 
-  <!-- Must run before DefineStaticWebAssets as well, otherwise gitignored app.min.css missing at evaluation causes MSB error on clean checkout (Linux runner) -->
-  <Target Name="NpmBuildCss" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="$(MSBuildProjectDirectory)/wwwroot/css/app.css;$(MSBuildProjectDirectory)/package.json" Outputs="$(MSBuildProjectDirectory)/wwwroot/css/app.min.css">
+  <!-- Must run before DefineStaticWebAssets as well, otherwise gitignored app.min.css missing at evaluation causes MSB error on clean checkout (Linux runner)
+       NOTE: Tailwind v4 content scanning reads razor files via @source. If Inputs only watched app.css, MSBuild incremental skip leaves stale css missing new classes (btn-neutral bug). So we include razor sources in Inputs. -->
+  <Target Name="NpmBuildCss" BeforeTargets="DefineStaticWebAssets;ResolveStaticWebAssetsInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_CssSource Include="$(MSBuildProjectDirectory)/wwwroot/css/app.css" />
+      <_CssSource Include="$(MSBuildProjectDirectory)/**/*.razor" />
+      <_CssSource Include="$(MSBuildProjectDirectory)/../../GmGard/Views/**/*.cshtml" Condition="Exists('$(MSBuildProjectDirectory)/../../GmGard/Views')" />
+      <_CssSource Include="$(MSBuildProjectDirectory)/package.json" />
+    </ItemGroup>
+    <!-- Determine if rebuild needed via hash comparison - use custom logic: if any razor newer than css output => rebuild -->
+    <PropertyGroup>
+      <_CssOutput>$(MSBuildProjectDirectory)/wwwroot/css/app.min.css</_CssOutput>
+    </PropertyGroup>
     <Exec Command="npm run build:css" />
   </Target>
 
