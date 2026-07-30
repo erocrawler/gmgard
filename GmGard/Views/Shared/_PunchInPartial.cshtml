@@ -18,12 +18,13 @@
     </div>
 </div>
 @{
-    // Use Home/App flip-flag so it points to /app/punch-in when BlazorApp.Enabled=true, else AppHost (legacy)
+    // Main modal still uses Blazor; fallback link below forces legacy with blazor=0
     var punchInUrl = Url.Action("App", "Home", new { path = "punch-in" });
+    var punchInLegacyUrl = Url.Action("App", "Home", new { path = "punch-in", blazor = 0 });
 }
 <div id="punchin-modal" class="modal hide fade" style="background:white" data-base-href="@punchInUrl">
     <div class="modal-footer">
-        <span>如果无法显示，请尝试<a href="@punchInUrl" target="_blank">在新窗口中打开</a></span>
+        <span>如果无法显示，请尝试<a href="@punchInLegacyUrl" target="_blank">在新窗口中打开</a></span>
         <button class="btn" data-dismiss="modal">关闭</button>
     </div>
 </div>

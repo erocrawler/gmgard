@@ -158,7 +158,7 @@
 @section end_scripts {
     <div id="title-helper-modal" class="modal hide fade" data-base-href="@Url.Action("App", "Home", new { path = "title-helper" })">
         <div class="modal-footer">
-            <span>如果无法显示，请尝试<a href="@Url.Action("App", "Home", new { path = "title-helper" })" target="_blank">在新窗口中打开</a></span>
+            <span>如果无法显示，请尝试<a href="@Url.Action("App", "Home", new { path = "title-helper", blazor = 0 })" target="_blank">在新窗口中打开</a></span>
             <button class="btn" data-dismiss="modal">取消</button>
             <button class="btn btn-primary hide" id="title-helper-commit" data-dismiss="modal">完成</button>
         </div>

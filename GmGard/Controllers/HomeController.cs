@@ -553,11 +553,9 @@ namespace GmGard.Controllers
             return PartialView("BackgroundPartial", settings.Value);
         }
 
-        // Blazor migration: DENY-LIST model. When BlazorApp.Enabled=true, all /Home/App?path=XXX go to /app/XXX (Blazor) except those explicitly denied in BlazorApp.RedirectOverrides[prefix]=false (legacy Angular).
         public IActionResult App(
             [FromServices] ConstantUtil constantUtil,
             [FromServices] IOptions<SiteConfig> siteConfig,
-            [FromServices] Microsoft.Extensions.Logging.ILogger<HomeController> logger,
             string path)
         {
             path = (path ?? "").TrimStart('/');
@@ -576,13 +574,11 @@ namespace GmGard.Controllers
                 if (string.IsNullOrEmpty(p)) return baseHost + "/";
                 if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || p.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                     return p;
-                logger.LogInformation("Legacy redirect -> {BaseHost}/{Path}", baseHost, p);
                 return $"{baseHost}/{p}";
             }
 
             if (!globalEnabled)
             {
-                logger.LogInformation("Blazor disabled -> legacy {Path}", path);
                 return Redirect(LegacyRedirect(path));
             }
 
@@ -591,12 +587,10 @@ namespace GmGard.Controllers
             // DENY LIST check
             if (blazorCfg?.RedirectOverrides != null && blazorCfg.RedirectOverrides.TryGetValue(firstSegment, out var overrideVal) && !overrideVal)
             {
-                logger.LogInformation("Deny-list hit ({Segment}) -> legacy {Path}", firstSegment, path);
                 return Redirect(LegacyRedirect(path));
             }
 
             // Everything else goes to Blazor when enabled
-            logger.LogInformation("Blazor route -> /app/{Path}", path);
             return Redirect($"/app/{path}");
         }
     }

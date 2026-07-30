@@ -73,7 +73,7 @@
             </div>
             <div class="accordion-body collapse" id="two-factor-auth">
                 <iframe loading="lazy" style="width:100%;border:none;height:600px" src="@Url.Action("App", "Home", new { path = "account/2fa" })"></iframe>
-                <p>如果无法显示，请尝试在<a href="@Url.Action("App", "Home", new { path = "account/2fa" })" target="_blank">新窗口中打开</a></p>
+                <p>如果无法显示，请尝试在<a href="@Url.Action("App", "Home", new { path = "account/2fa", blazor = 0 })" target="_blank">新窗口中打开</a></p>
             </div>
         </div>
         <div class="accordion-group">

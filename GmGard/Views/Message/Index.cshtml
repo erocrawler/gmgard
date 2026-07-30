@@ -23,7 +23,7 @@
 </div>
 <div id="new-ui" class="hide">
     <iframe loading="lazy" onerror="loaderror(this)" onload="console.log(this)" style="width:100%;border:none;height:1200px" src="@Url.Action("App", "Home", new { path = "message/" + context })"></iframe>
-    <p>如果无法显示，请尝试在<a href="@Url.Action("App", "Home", new { path = "message/" + context })" target="_blank">新窗口中打开</a>，或使用旧界面。</p>
+    <p>如果无法显示，请尝试在<a href="@Url.Action("App", "Home", new { path = "message/" + context, blazor = 0 })" target="_blank">新窗口中打开</a>，或使用旧界面。</p>
     <button id="use-old" class="btn btn-large">使用旧界面</button>
 </div>
 @section scripts{
