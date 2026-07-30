@@ -419,9 +419,10 @@ namespace GmGard.Controllers.App
 
             if (orderedIds == null)
             {
-                // DB fallback: title/content/answers LIKE
+                // DB fallback: case-insensitive LIKE (handles when ES missing)
                 var qLower = q.ToLower();
-                query = query.Where(b => b.Title.Contains(q) || b.Content.Contains(q) || b.Answers.Any(a => a.Content.Contains(q)));
+                // Use ToLower() translation for case-insensitive; EF Core translates to LOWER()
+                query = query.Where(b => b.Title.ToLower().Contains(qLower) || b.Content.ToLower().Contains(qLower) || b.Answers.Any(a => a.Content.ToLower().Contains(qLower)));
             }
 
             string avatarUrlBase = AvatarBase;

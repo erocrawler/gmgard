@@ -559,7 +559,11 @@ namespace GmGard.Services
 
             try
             {
+                // Hybrid mapping: primary standard_lc for relevance, ngram subfield for substring fallback.
+                // Case-insensitive via lowercase filter in analyzers.
                 var q = query.Trim();
+                if (string.IsNullOrEmpty(q)) return result;
+
                 var esResult = await _client.SearchAsync<BountyIndexed>(s => s
                     .Indices("bounties")
                     .Query(qd => qd
@@ -568,8 +572,9 @@ namespace GmGard.Services
                             .Must(m => m
                                 .MultiMatch(mm => mm
                                     .Query(q)
-                                    .Fields(new[] { "title^3", "title.ngram_lc^2", "content", "answerContent" })
+                                    .Fields(new[] { "title^3", "title.ngram^2", "content", "content.ngram", "answerContent", "answerContent.ngram" })
                                     .Operator(Operator.Or)
+                                    .Analyzer("standard_lc")
                                 )
                             )
                         )
