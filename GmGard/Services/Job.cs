@@ -19,6 +19,9 @@ namespace GmGard.Services
         internal TagEventArgs UpdateBlogTagArgs { get; set; }
         internal PostEventArgs UpdatePostCountArgs { get; set; }
         internal BlogEventArgs RemoveBlogArgs { get; set; }
+        internal BountyEventArgs AddOrUpdateBountyArgs { get; set; }
+        internal BountyEventArgs AddOrUpdateBountyByIdArgs { get; set; }
+        internal BountyEventArgs RemoveBountyArgs { get; set; }
 
         public static Job CreateJob(ArchiveAuditArgs args)
             => new Job { JobType = JobType.ArchiveAudit, ArchiveAuditArgs = args };
@@ -38,6 +41,12 @@ namespace GmGard.Services
             => new Job { JobType = JobType.UpdatePostCount, UpdatePostCountArgs = args };
         public static Job RemoveBlog(BlogEventArgs args)
             => new Job { JobType = JobType.RemoveBlog, RemoveBlogArgs = args };
+        public static Job AddOrUpdateBounty(BountyEventArgs args)
+            => new Job { JobType = JobType.AddOrUpdateBounty, AddOrUpdateBountyArgs = args };
+        public static Job AddOrUpdateBountyById(int bountyId)
+            => new Job { JobType = JobType.AddOrUpdateBountyById, AddOrUpdateBountyByIdArgs = new BountyEventArgs { BountyId = bountyId } };
+        public static Job RemoveBounty(BountyEventArgs args)
+            => new Job { JobType = JobType.RemoveBounty, RemoveBountyArgs = args };
 
         public override string ToString()
         {
@@ -57,6 +66,9 @@ namespace GmGard.Services
         UpdateBlogTag,
         UpdatePostCount,
         RemoveBlog,
+        AddOrUpdateBounty,
+        AddOrUpdateBountyById,
+        RemoveBounty,
     }
 
     public class AddExpPtsArgs

@@ -61,6 +61,18 @@ namespace GmGard.Services
                     {
                         return TryUpdateES(u => u.RemoveBlogAsync(job.RemoveBlogArgs));
                     }
+                case JobType.AddOrUpdateBounty:
+                    {
+                        return TryUpdateES(u => u.AddOrUpdateBountyAsync(job.AddOrUpdateBountyArgs));
+                    }
+                case JobType.AddOrUpdateBountyById:
+                    {
+                        return TryUpdateES(u => u.AddOrUpdateBountyByIdAsync(job.AddOrUpdateBountyByIdArgs.BountyId));
+                    }
+                case JobType.RemoveBounty:
+                    {
+                        return TryUpdateES(u => u.RemoveBountyAsync(job.RemoveBountyArgs));
+                    }
                 default:
                     _logger.LogWarning("Unrecognized job: {0}", job.JobType);
                     break;

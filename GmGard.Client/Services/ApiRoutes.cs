@@ -114,6 +114,15 @@ public static class ApiRoutes
         public const string ReplyPost = Base + "/ReplyPost";
         public const string CommentBounty = Base + "/CommentBounty";
         public const string Report = Base + "/Report";
+        public static string Search(string q, int page, BountyShowType showType, bool onlyMine, bool includeDeleted)
+            => Add(Base + "/Search", new Dictionary<string, string?>
+            {
+                ["q"] = q,
+                ["page"] = page.ToString(),
+                ["showType"] = showType.ToString(),
+                ["onlyMine"] = onlyMine.ToString().ToLower(),
+                ["includeDeleted"] = includeDeleted.ToString().ToLower()
+            });
     }
 
     // Raffle / Lottery

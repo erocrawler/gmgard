@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using X.PagedList;
 
 namespace GmGard.Controllers.App
 {
@@ -37,8 +38,9 @@ namespace GmGard.Controllers.App
         private readonly IVisitCounter visitCounter_;
         private readonly MessageUtil msgUtil_;
         private readonly BlogUtil blogUtil_;
+        private readonly Services.ElasticSearchProvider? esProvider_;
 
-        public BountyController(BlogContext db, UsersContext udb, ExpUtil expUtil, UserManager<UserProfile> userManager, UploadUtil uploadUtil, HtmlSanitizerService sanitizer, IOptions<BountyConfig> bountyConfig, IVisitCounter visitCounter, MessageUtil msgUtil, BlogUtil blogUtil)
+        public BountyController(BlogContext db, UsersContext udb, ExpUtil expUtil, UserManager<UserProfile> userManager, UploadUtil uploadUtil, HtmlSanitizerService sanitizer, IOptions<BountyConfig> bountyConfig, IVisitCounter visitCounter, MessageUtil msgUtil, BlogUtil blogUtil, Services.ElasticSearchProvider? esProvider = null)
         {
             db_ = db;
             udb_ = udb;
@@ -50,6 +52,7 @@ namespace GmGard.Controllers.App
             visitCounter_ = visitCounter;
             msgUtil_ = msgUtil;
             blogUtil_ = blogUtil;
+            esProvider_ = esProvider;
         }
 
         private string AvatarBase => Url.Action("Show", "Avatar", null, Request.Scheme) + "/";
@@ -349,7 +352,125 @@ namespace GmGard.Controllers.App
             db_.Bounties.Add(bounty);
             await db_.SaveChangesAsync();
 
+            try { OnCreateBounty?.Invoke(this, new Services.BountyEventArgs { BountyId = bounty.BountyId, Bounty = bounty }); } catch { }
             return Json(new { id = bounty.BountyId, totalCost, remaining = user.Points, images = finalImageUrls });
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> Search(string q, int page = 1, BountyShowType showType = BountyShowType.All, bool onlyMine = false, bool includeDeleted = false)
+        {
+            if (string.IsNullOrWhiteSpace(q)) return await Task.FromResult(List(page, showType, onlyMine, includeDeleted));
+
+            q = q.Trim();
+            if (q.Length > 100) q = q.Substring(0, 100);
+
+            IQueryable<Bounty> query = db_.Bounties.AsQueryable();
+            var currentUser = User.Identity?.Name;
+            bool isAuth = User.Identity?.IsAuthenticated == true;
+
+            // same filters as List
+            if (onlyMine)
+            {
+                if (!isAuth) return Unauthorized();
+                query = query.Where(b => b.Author == currentUser);
+            }
+            if (showType == BountyShowType.Deleted)
+            {
+                if (!isAuth) return Unauthorized();
+                if (!onlyMine) query = query.Where(b => b.Author == currentUser);
+                query = query.Where(b => b.IsDeleted);
+            }
+            else
+            {
+                if (!includeDeleted) query = query.Where(b => !b.IsDeleted);
+                else
+                {
+                    if (!isAuth) return Unauthorized();
+                    if (!onlyMine) query = query.Where(b => !b.IsDeleted || b.Author == currentUser);
+                }
+                if (showType == BountyShowType.Answered) query = query.Where(b => b.IsAccepted);
+                else if (showType == BountyShowType.Pending) query = query.Where(b => !b.IsAccepted && b.CloseDate == null);
+            }
+
+            int pageSize = cfg_.PageSize;
+            List<int> orderedIds = null;
+
+            // ES if available
+            if (esProvider_ != null && esProvider_.IsValid())
+            {
+                try
+                {
+                    var esResult = await esProvider_.SearchBountyAsync(q, 1, 1000);
+                    if (esResult.Ids.Any())
+                    {
+                        orderedIds = esResult.Ids;
+                        query = query.Where(b => orderedIds.Contains(b.BountyId));
+                    }
+                    else
+                    {
+                        // ES returned no hits - return empty paged
+                        var empty = new X.PagedList.StaticPagedList<BountyPreview>(new List<BountyPreview>(), page, pageSize, 0);
+                        return Json(new Paged<BountyPreview>(empty));
+                    }
+                }
+                catch { /* fallback to DB LIKE below */ }
+            }
+
+            if (orderedIds == null)
+            {
+                // DB fallback: title/content/answers LIKE
+                var qLower = q.ToLower();
+                query = query.Where(b => b.Title.Contains(q) || b.Content.Contains(q) || b.Answers.Any(a => a.Content.Contains(q)));
+            }
+
+            string avatarUrlBase = AvatarBase;
+            var proj = query.Select(b => new BountyPreview
+            {
+                Id = b.BountyId,
+                Author = b.Author,
+                AuthorAvatar = avatarUrlBase + b.Author,
+                Content = b.Content.Length > 200 ? b.Content.Substring(0, 200) : b.Content,
+                CreateDate = b.CreateDate,
+                Prize = b.Prize,
+                Title = b.Title,
+                AnswerCount = b.Answers.Count,
+                IsAccepted = b.IsAccepted,
+                Deposit = b.Deposit,
+                HelpfulReward = b.HelpfulReward,
+                ViewCount = b.ViewCount,
+                ExpiresAt = b.ExpiresAt,
+                Image = b.ImageUrls,
+                IsDeleted = b.IsDeleted,
+                CloseDate = b.CloseDate,
+            });
+
+            // manual ToPagedList via static list to avoid extension missing in this version
+            X.PagedList.IPagedList<BountyPreview> pagedList;
+            if (orderedIds != null)
+            {
+                var list = await proj.ToListAsync();
+                var ordered = orderedIds.Where(id => list.Any(x => x.Id == id)).Select(id => list.First(x => x.Id == id)).ToList();
+                var remaining = list.Where(x => !orderedIds.Contains(x.Id)).ToList();
+                var allOrdered = ordered.Concat(remaining).ToList();
+                pagedList = new X.PagedList.StaticPagedList<BountyPreview>(allOrdered.Skip((page - 1) * pageSize).Take(pageSize), page, pageSize, allOrdered.Count);
+            }
+            else
+            {
+                var total = await proj.CountAsync();
+                var items = await proj.OrderByDescending(b => b.CreateDate).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+                pagedList = new X.PagedList.StaticPagedList<BountyPreview>(items, page, pageSize, total);
+            }
+
+            try
+            {
+                var ids = pagedList.Select(b => b.Id).ToList();
+                visitCounter_.PrepareBountyVisits(ids);
+                foreach (var b in pagedList) b.ViewCount = (int)visitCounter_.GetBountyVisit(b.Id);
+            }
+            catch { }
+
+            return Json(new Paged<BountyPreview>(pagedList));
         }
 
         // Dedicated upload endpoint for progressive upload (also usable standalone)
@@ -472,6 +593,8 @@ namespace GmGard.Controllers.App
                 }
             }
             catch { /* ignore notification failures */ }
+
+            try { OnAnswerBounty?.Invoke(this, new Services.BountyEventArgs { BountyId = bounty.BountyId }); } catch { }
 
             return Json(new { answerId = ans.AnswerId, imageUrl = finalImg });
         }
@@ -620,6 +743,7 @@ namespace GmGard.Controllers.App
                 bounty.IsDeleted = true;
                 await db_.SaveChangesAsync();
                 await userTx.CommitAsync();
+                try { OnDeleteBounty?.Invoke(this, new Services.BountyEventArgs { BountyId = bounty.BountyId }); } catch { }
             }
             catch (Exception ex)
             {

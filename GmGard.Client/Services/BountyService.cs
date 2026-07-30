@@ -24,6 +24,17 @@ public class BountyService
         }
     }
 
+    public async Task<BountyPaged<BountyPreview>?> SearchAsync(string q, int page, BountyShowType showType, bool onlyMine, bool includeDeleted)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(q)) return await ListAsync(showType, page, onlyMine, includeDeleted);
+            var url = ApiRoutes.Bounty.Search(q.Trim(), page, showType, onlyMine, includeDeleted);
+            return await _http.GetFromJsonAsync<BountyPaged<BountyPreview>>(url);
+        }
+        catch { return null; }
+    }
+
     public async Task<BountyPaged<BountyPreview>?> MyAsync(int page = 1, bool includeDeleted = false, bool onlyMine = true)
     {
         try

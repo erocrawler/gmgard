@@ -8,11 +8,27 @@
 <div class="max-w-4xl mx-auto p-4 space-y-4">
     <div class="flex items-center justify-between flex-wrap gap-2">
         <h1 class="text-2xl font-bold">求物版 <span class="text-sm font-normal opacity-60">悬赏</span></h1>
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center flex-wrap">
+            <div class="join">
+                <input class="input input-bordered input-sm join-item w-48 md:w-64" placeholder="搜索标题/内容/回答..." @bind="searchQuery" @bind:event="oninput" @onkeydown="OnSearchKey" />
+                <button class="btn btn-sm join-item" @onclick="DoSearch">🔍</button>
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="btn btn-sm join-item btn-ghost" @onclick="ClearSearch">✕</button>
+                }
+            </div>
             <a href="bounty/ask" class="btn btn-primary btn-sm">发布悬赏</a>
             <button class="btn btn-ghost btn-sm" @onclick="() => LoadPage(1)">刷新</button>
         </div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(activeSearch))
+    {
+        <div class="alert alert-info py-2 text-sm flex justify-between">
+            <span>搜索: <b>@activeSearch</b> @(paged!=null ? $"({paged.TotalItemCount} 结果)" : "")</span>
+            <button class="btn btn-ghost btn-xs" @onclick="ClearSearch">清除</button>
+        </div>
+    }
 
     <div class="flex gap-2 flex-wrap">
         <button class="btn btn-sm @(showType==BountyShowType.All ? "btn-primary" : "btn-outline")" @onclick="() => ChangeType(BountyShowType.All)">全部</button>
@@ -121,6 +137,8 @@
     BountyShowType showType = BountyShowType.All;
     bool onlyMine = false;
     bool includeDeleted = false;
+    string searchQuery = "";
+    string activeSearch = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,6 +148,7 @@
         if (Enum.TryParse<BountyShowType>(q["showType"], true, out var st)) showType = st;
         if (bool.TryParse(q["onlyMine"], out var mine)) onlyMine = mine;
         if (bool.TryParse(q["includeDeleted"], out var inc)) includeDeleted = inc;
+        if (q["q"] != null) { searchQuery = q["q"] ?? ""; activeSearch = q["q"] ?? ""; }
         // Legacy param support: showMine query?
         if (bool.TryParse(q["showMine"], out var legacyMine)) onlyMine = legacyMine;
 
@@ -146,6 +165,24 @@
         }
 
         cfg = await BountyService.GetConfigAsync();
+        await LoadPage(page);
+    }
+
+    async Task OnSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await DoSearch();
+    }
+    async Task DoSearch()
+    {
+        activeSearch = searchQuery.Trim();
+        page = 1;
+        await LoadPage(page);
+    }
+    async Task ClearSearch()
+    {
+        searchQuery = "";
+        activeSearch = "";
+        page = 1;
         await LoadPage(page);
     }
 
@@ -189,7 +226,10 @@
         // onlyMine composes with showType (All/Pending/Answered + Mine)
         // Deleted is special: only my deleted
         if (showType == BountyShowType.Deleted) { onlyMine = true; includeDeleted = true; }
-        paged = await BountyService.ListAsync(showType, page, onlyMine, includeDeleted);
+        if (!string.IsNullOrWhiteSpace(activeSearch))
+            paged = await BountyService.SearchAsync(activeSearch, page, showType, onlyMine, includeDeleted);
+        else
+            paged = await BountyService.ListAsync(showType, page, onlyMine, includeDeleted);
         loading = false;
         StateHasChanged();
     }

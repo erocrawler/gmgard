@@ -75,6 +75,53 @@ namespace GmGard.Services
             }
         }
 
+        // Separate doc type for bounties - just title, question content, and answer content per FR
+        public class BountyIndexed
+        {
+            public int Id { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string Content { get; set; } = string.Empty; // question body, stripped of HTML?
+            public string AnswerContent { get; set; } = string.Empty; // concatenated answers
+            public string Author { get; set; } = string.Empty;
+            public DateTime CreateDate { get; set; }
+            public bool IsDeleted { get; set; }
+            public bool IsAccepted { get; set; }
+            public int Prize { get; set; }
+            public int AnswerCount { get; set; }
+
+            private static string StripHtml(string html)
+            {
+                if (string.IsNullOrEmpty(html)) return "";
+                // quick strip - full sanitizer not needed for index
+                var plain = System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", " ");
+                plain = System.Net.WebUtility.HtmlDecode(plain);
+                return plain;
+            }
+
+            public static BountyIndexed FromBounty(Bounty bounty, IEnumerable<string>? answerContents = null)
+            {
+                var aContents = answerContents != null ? string.Join("\n", answerContents.Where(s => !string.IsNullOrWhiteSpace(s)).Select(StripHtml)) : "";
+                return new BountyIndexed
+                {
+                    Id = bounty.BountyId,
+                    Title = StripHtml(bounty.Title ?? ""),
+                    Content = StripHtml(bounty.Content ?? ""),
+                    AnswerContent = aContents,
+                    Author = bounty.Author ?? "",
+                    CreateDate = bounty.CreateDate,
+                    IsDeleted = bounty.IsDeleted,
+                    IsAccepted = bounty.IsAccepted,
+                    Prize = bounty.Prize,
+                    AnswerCount = bounty.Answers?.Count ?? (answerContents?.Count() ?? 0)
+                };
+            }
+
+            public static BountyIndexed FromBountyWithAnswers(Bounty bounty, IEnumerable<Answer> answers)
+            {
+                return FromBounty(bounty, answers?.Select(a => a.Content));
+            }
+        }
+
         public class ElasticSearchSettings
         {
             public string EndPoint { get; set; }
@@ -495,6 +542,64 @@ namespace GmGard.Services
             }
 
             return searchBlogResult;
+        }
+
+        // Bounty search - separate index "bounties"
+        public class BountySearchResult
+        {
+            public List<int> Ids { get; set; } = new();
+            public long Total { get; set; }
+        }
+
+        public async Task<BountySearchResult> SearchBountyAsync(string query, int pageNumber, int pageSize)
+        {
+            var result = new BountySearchResult();
+            if (!IsValid() || string.IsNullOrWhiteSpace(query))
+                return result;
+
+            try
+            {
+                var q = query.Trim();
+                var esResult = await _client.SearchAsync<BountyIndexed>(s => s
+                    .Indices("bounties")
+                    .Query(qd => qd
+                        .Bool(b => b
+                            .MustNot(mn => mn.Term(t => t.Field("isDeleted").Value(true)))
+                            .Must(m => m
+                                .MultiMatch(mm => mm
+                                    .Query(q)
+                                    .Fields(new[] { "title^3", "title.ngram_lc^2", "content", "answerContent" })
+                                    .Operator(Operator.Or)
+                                )
+                            )
+                        )
+                    )
+                    .TrackTotalHits(new TrackHits(true))
+                    .From((pageNumber - 1) * pageSize)
+                    .Size(pageSize)
+                    .Sort(sort => sort.Score(sc => sc.Order(SortOrder.Desc)).Field(f => f.Field("createDate").Order(SortOrder.Desc))),
+                    _httpContext?.RequestAborted ?? default);
+
+                if (esResult.IsValidResponse)
+                {
+                    result.Ids = esResult.Hits.Select(h => h.Source?.Id ?? 0).Where(id => id != 0).ToList();
+                    // fallback if Source null but Id parsed from hit
+                    if (result.Ids.Count == 0)
+                    {
+                        result.Ids = esResult.Hits.Select(h => int.TryParse(h.Id, out var i) ? i : 0).Where(i => i != 0).ToList();
+                    }
+                    result.Total = esResult.Total;
+                }
+                else
+                {
+                    _logger.LogError(esResult.DebugInformation ?? esResult.ElasticsearchServerError?.Error?.Reason ?? "Bounty search failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SearchBountyAsync exception");
+            }
+            return result;
         }
     }
 }

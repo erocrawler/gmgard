@@ -2,6 +2,7 @@ using GmGard.Controllers;
 using GmGard.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Elastic.Clients.Elasticsearch;
 using System;
 using System.Collections.Generic;
@@ -174,5 +175,55 @@ namespace GmGard.Services
                 _logger.LogError(r.DebugInformation ?? r.ElasticsearchServerError?.Error?.Reason);
             }
         }
+
+        // Bounty indexing
+        public async Task AddOrUpdateBountyAsync(BountyEventArgs b)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetService<BlogContext>();
+                Bounty bounty;
+                List<Answer> answers;
+                if (b.Bounty != null)
+                {
+                    bounty = b.Bounty;
+                    answers = await db.Answers.Where(a => a.BountyId == bounty.BountyId).ToListAsync();
+                }
+                else
+                {
+                    bounty = await db.Bounties.FirstOrDefaultAsync(x => x.BountyId == b.BountyId);
+                    if (bounty == null) return;
+                    answers = await db.Answers.Where(a => a.BountyId == bounty.BountyId).ToListAsync();
+                }
+                var doc = BountyIndexed.FromBountyWithAnswers(bounty, answers);
+                var result = await _client.IndexAsync(doc, i => i.Index("bounties").Id(doc.Id).Refresh(Refresh.True));
+                if (!result.IsValidResponse)
+                    _logger.LogError(result.DebugInformation ?? result.ElasticsearchServerError?.Error?.Reason);
+            }
+            catch (Exception ex) { _logger.LogError(ex, "AddOrUpdateBountyAsync failed"); }
+        }
+
+        public async Task AddOrUpdateBountyByIdAsync(int bountyId)
+        {
+            await AddOrUpdateBountyAsync(new BountyEventArgs { BountyId = bountyId });
+        }
+
+        public async Task RemoveBountyAsync(BountyEventArgs b)
+        {
+            try
+            {
+                var r = await _client.DeleteAsync(b.BountyId, d => d.Index("bounties").Refresh(Refresh.True));
+                if (!r.IsValidResponse)
+                    _logger.LogError(r.DebugInformation ?? r.ElasticsearchServerError?.Error?.Reason);
+            }
+            catch (Exception ex) { _logger.LogError(ex, "RemoveBountyAsync failed"); }
+        }
+    }
+
+    public class BountyEventArgs : EventArgs
+    {
+        public int BountyId { get; set; }
+        public Bounty? Bounty { get; set; }
     }
 }
