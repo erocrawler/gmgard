@@ -3,6 +3,7 @@
 @inject AccountService AccountService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@using GmGard.Client.Services
 
 <PageTitle>启用两步验证</PageTitle>
 
@@ -114,16 +115,15 @@
         {
             try
             {
-                // Blazor JS isolation – prefer minified (built via npm run build:js / terser, like main project gulp min:js)
-                // Fingerprinting enabled via StaticWebAssetFingerprintingEnabled=true -> cache-busted URL
+                // enable2fa.min.js is built via npm run build:js (gitignored like site.min.js);
+                // fallback to unminified enable2fa.js when building without npm / in dev
                 try
                 {
-                    module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/enable2fa.min.js");
+                    module = await JS.InvokeAsync<IJSObjectReference>("import", ApiRoutes.Js.Enable2faMin);
                 }
                 catch
                 {
-                    // Fallback to unminified for dev when node_modules missing
-                    module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/enable2fa.js");
+                    module = await JS.InvokeAsync<IJSObjectReference>("import", ApiRoutes.Js.Enable2fa);
                 }
                 if (sharedKey != null && !string.IsNullOrEmpty(sharedKey.AuthenticatorUri))
                 {

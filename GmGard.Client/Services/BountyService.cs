@@ -15,7 +15,7 @@ public class BountyService
     {
         try
         {
-            var url = $"/api/Bounty/List?page={page}&showType={showType}&onlyMine={onlyMine.ToString().ToLower()}&includeDeleted={includeDeleted.ToString().ToLower()}";
+            var url = ApiRoutes.Bounty.List(page, showType, onlyMine, includeDeleted);
             return await _http.GetFromJsonAsync<BountyPaged<BountyPreview>>(url);
         }
         catch
@@ -28,7 +28,7 @@ public class BountyService
     {
         try
         {
-            return await _http.GetFromJsonAsync<BountyPaged<BountyPreview>>($"/api/Bounty/My?page={page}&includeDeleted={includeDeleted.ToString().ToLower()}");
+            return await _http.GetFromJsonAsync<BountyPaged<BountyPreview>>(ApiRoutes.Bounty.My(page, includeDeleted));
         }
         catch { return null; }
     }
@@ -37,8 +37,7 @@ public class BountyService
     {
         try
         {
-            // Details action is [HttpGet] Details(int id) -> /api/Bounty/Details?id=xx
-            return await _http.GetFromJsonAsync<BountyDetail>($"/api/Bounty/Details?id={id}");
+            return await _http.GetFromJsonAsync<BountyDetail>(ApiRoutes.Bounty.Details(id));
         }
         catch { return null; }
     }
@@ -63,7 +62,7 @@ public class BountyService
                     sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(b.ContentType);
                     form.Add(sc, "Files", b.FileName);
                 }
-                resp = await _http.PostAsync("/api/Bounty/Create", form);
+                resp = await _http.PostAsync(ApiRoutes.Bounty.Create, form);
             }
             else
             {
@@ -75,7 +74,7 @@ public class BountyService
                     HelpfulReward = helpfulReward,
                     ImageUrls = imageUrls != null && imageUrls.Length > 0 ? System.Text.Json.JsonSerializer.Serialize(imageUrls) : "[]"
                 };
-                resp = await _http.PostAsJsonAsync("/api/Bounty/Create", req);
+                resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Create, req);
             }
             if (resp.IsSuccessStatusCode)
             {
@@ -128,7 +127,7 @@ public class BountyService
                     streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(f.ContentType);
                     form.Add(streamContent, "Files", f.Name);
                 }
-                resp = await _http.PostAsync("/api/Bounty/Create", form);
+                resp = await _http.PostAsync(ApiRoutes.Bounty.Create, form);
             }
             else
             {
@@ -140,7 +139,7 @@ public class BountyService
                     HelpfulReward = helpfulReward,
                     ImageUrls = imageUrls != null && imageUrls.Length > 0 ? System.Text.Json.JsonSerializer.Serialize(imageUrls) : "[]"
                 };
-                resp = await _http.PostAsJsonAsync("/api/Bounty/Create", req);
+                resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Create, req);
             }
 
             if (resp.IsSuccessStatusCode)
@@ -182,7 +181,7 @@ public class BountyService
                 sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(f.ContentType);
                 form.Add(sc, "Files", f.Name);
             }
-            var resp = await _http.PostAsync("/api/Bounty/UploadImages", form);
+            var resp = await _http.PostAsync(ApiRoutes.Bounty.UploadImages, form);
             if (!resp.IsSuccessStatusCode) return null;
             var json = await resp.Content.ReadFromJsonAsync<UploadResponse>();
             return json?.Urls;
@@ -210,13 +209,13 @@ public class BountyService
                     form.Add(sc, "Files", b.FileName);
                 }
                 System.Console.WriteLine($"[BountyService] Posting buffered multipart Answer bountyId={bountyId} files={bufferedFiles.Count} contentLen={content?.Length}");
-                resp = await _http.PostAsync("/api/Bounty/Answer", form);
+                resp = await _http.PostAsync(ApiRoutes.Bounty.Answer, form);
             }
             else
             {
                 System.Console.WriteLine($"[BountyService] Posting JSON Answer bountyId={bountyId} no files");
                 var req = new CreateAnswerRequestClient { BountyId = bountyId, Content = content.Trim(), ImageUrl = imageUrl };
-                resp = await _http.PostAsJsonAsync("/api/Bounty/Answer", req);
+                resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Answer, req);
             }
             var respTxt = await resp.Content.ReadAsStringAsync();
             System.Console.WriteLine($"[BountyService] Answer response {(int)resp.StatusCode}: {respTxt}");
@@ -266,13 +265,13 @@ public class BountyService
                     form.Add(sc, "Files", f.Name);
                 }
                 System.Console.WriteLine($"[BountyService] Posting multipart Answer bountyId={bountyId} files={files.Count} contentLen={content?.Length}");
-                resp = await _http.PostAsync("/api/Bounty/Answer", form);
+                resp = await _http.PostAsync(ApiRoutes.Bounty.Answer, form);
             }
             else
             {
                 System.Console.WriteLine($"[BountyService] Posting JSON Answer bountyId={bountyId} no files");
                 var req = new CreateAnswerRequestClient { BountyId = bountyId, Content = content.Trim(), ImageUrl = imageUrl };
-                resp = await _http.PostAsJsonAsync("/api/Bounty/Answer", req);
+                resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Answer, req);
             }
 
             var respTxt = await resp.Content.ReadAsStringAsync();
@@ -311,7 +310,7 @@ public class BountyService
         try
         {
             var req = new AcceptRequestClient { BountyId = bountyId, BestAnswerId = bestAnswerId, HelpfulAnswerIds = helpfulIds };
-            var resp = await _http.PostAsJsonAsync("/api/Bounty/Accept", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Accept, req);
             if (resp.IsSuccessStatusCode) return (true, null);
             var txt = await resp.Content.ReadAsStringAsync();
             string err;
@@ -331,9 +330,7 @@ public class BountyService
     {
         try
         {
-            // Controller Delete is POST with int id query? signature public async Task<IActionResult> Delete(int id)
-            // Since no FromBody, it binds from query. So use POST with query string and null body.
-            var resp = await _http.PostAsync($"/api/Bounty/Delete?id={id}", null);
+            var resp = await _http.PostAsync(ApiRoutes.Bounty.Delete(id), null);
             if (resp.IsSuccessStatusCode) return (true, null);
             var txt = await resp.Content.ReadAsStringAsync();
             string err;
@@ -351,7 +348,7 @@ public class BountyService
 
     public async Task<CurrentUser?> GetCurrentUserAsync()
     {
-        try { return await _http.GetFromJsonAsync<CurrentUser>("/api/Account/GetUser"); }
+        try { return await _http.GetFromJsonAsync<CurrentUser>(ApiRoutes.Account.GetUser); }
         catch { return null; }
     }
 
@@ -359,7 +356,7 @@ public class BountyService
     {
         try
         {
-            var res = await _http.GetFromJsonAsync<IsAuthDto>("/api/Account/IsAuthenticated");
+            var res = await _http.GetFromJsonAsync<IsAuthDto>(ApiRoutes.Account.IsAuthenticated);
             return res?.IsAuthenticated == true;
         }
         catch { return false; }
@@ -371,7 +368,7 @@ public class BountyService
     {
         try
         {
-            return await _http.GetFromJsonAsync<BountyConfigDto>("/api/Bounty/GetConfig");
+            return await _http.GetFromJsonAsync<BountyConfigDto>(ApiRoutes.Bounty.GetConfig);
         }
         catch
         {
@@ -385,7 +382,7 @@ public class BountyService
         try
         {
             var req = new { AnswerId = answerId, Content = content.Trim() };
-            var resp = await _http.PostAsJsonAsync("/api/Bounty/ReplyAnswer", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.ReplyAnswer, req);
             if (resp.IsSuccessStatusCode) return (true, null);
             var txt = await resp.Content.ReadAsStringAsync();
             string err;
@@ -400,7 +397,7 @@ public class BountyService
         try
         {
             var req = new { PostId = postId, Content = content.Trim() };
-            var resp = await _http.PostAsJsonAsync("/api/Bounty/ReplyPost", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.ReplyPost, req);
             if (resp.IsSuccessStatusCode) return (true, null);
             var txt = await resp.Content.ReadAsStringAsync();
             string err;
@@ -416,7 +413,7 @@ public class BountyService
         try
         {
             var req = new { BountyId = bountyId, Content = content.Trim() };
-            var resp = await _http.PostAsJsonAsync("/api/Bounty/CommentBounty", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.CommentBounty, req);
             if (resp.IsSuccessStatusCode) return (true, null);
             var txt = await resp.Content.ReadAsStringAsync();
             string err;
@@ -431,7 +428,7 @@ public class BountyService
         try
         {
             var req = new { Id = id, ItemType = itemType, PostId = postId, MsgContent = content.Trim(), Type = type };
-            var resp = await _http.PostAsJsonAsync("/api/Bounty/Report", req);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Bounty.Report, req);
             var txt = await resp.Content.ReadAsStringAsync();
             if (resp.IsSuccessStatusCode)
             {

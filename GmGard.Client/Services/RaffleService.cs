@@ -10,13 +10,13 @@ public class RaffleService
 
     public async Task<RaffleConfig?> GetAsync(int id)
     {
-        try { return await _http.GetFromJsonAsync<RaffleConfig>($"/api/Raffle?id={id}"); }
+        try { return await _http.GetFromJsonAsync<RaffleConfig>(ApiRoutes.Raffle.Get(id)); }
         catch { return null; }
     }
 
     public async Task<bool> BuyAsync(int id)
     {
-        try { var r = await _http.PostAsync($"/api/Raffle?id={id}", null); return r.IsSuccessStatusCode; }
+        try { var r = await _http.PostAsync(ApiRoutes.Raffle.Get(id), null); return r.IsSuccessStatusCode; }
         catch { return false; }
     }
 }

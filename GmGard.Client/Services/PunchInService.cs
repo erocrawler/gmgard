@@ -19,7 +19,7 @@ public class PunchInService
     {
         try
         {
-            return await _http.GetFromJsonAsync<CurrentUser>("/api/Account/GetUser");
+            return await _http.GetFromJsonAsync<CurrentUser>(ApiRoutes.Account.GetUser);
         }
         catch
         {
@@ -31,7 +31,7 @@ public class PunchInService
     {
         try
         {
-            return await _http.GetFromJsonAsync<PunchInCost>($"/api/punchIn/cost?date={date:yyyy-MM-dd}");
+            return await _http.GetFromJsonAsync<PunchInCost>(ApiRoutes.PunchIn.Cost(date.ToString("yyyy-MM-dd")));
         }
         catch
         {
@@ -43,7 +43,7 @@ public class PunchInService
     {
         try
         {
-            var response = await _http.PostAsJsonAsync("/api/punchIn/do", new
+            var response = await _http.PostAsJsonAsync(ApiRoutes.PunchIn.Do, new
             {
                 date = date.ToString("yyyy-MM-dd"),
                 useTicket
@@ -65,7 +65,7 @@ public class PunchInService
         try
         {
             return await _http.GetFromJsonAsync<PunchInHistoryResponse>(
-                $"/api/punchIn/history?year={year}&month={month}");
+                ApiRoutes.PunchIn.History(year, month));
         }
         catch
         {

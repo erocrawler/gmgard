@@ -53,7 +53,7 @@ public class AuthService
 
         try
         {
-            var status = await _http.GetFromJsonAsync<AuthStatus>("/api/Account/IsAuthenticated");
+            var status = await _http.GetFromJsonAsync<AuthStatus>(ApiRoutes.Account.IsAuthenticated);
             _isAuthenticated = status?.IsAuthenticated ?? false;
         }
         catch
@@ -80,7 +80,7 @@ public class AuthService
 
         try
         {
-            _user = await _http.GetFromJsonAsync<CurrentUser>("/api/Account/GetUser");
+            _user = await _http.GetFromJsonAsync<CurrentUser>(ApiRoutes.Account.GetUser);
         }
         catch
         {
@@ -97,7 +97,7 @@ public class AuthService
         LoginResult result;
         try
         {
-            var response = await _http.PostAsJsonAsync("/api/Account/Login", request);
+            var response = await _http.PostAsJsonAsync(ApiRoutes.Account.Login, request);
             result = await response.Content.ReadFromJsonAsync<LoginResult>() ?? new LoginResult();
         }
         catch
@@ -122,7 +122,7 @@ public class AuthService
     {
         try
         {
-            await _http.PostAsync("/api/Account/LogOff", null);
+            await _http.PostAsync(ApiRoutes.Account.LogOff, null);
         }
         catch
         {

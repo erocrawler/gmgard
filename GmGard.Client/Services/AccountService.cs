@@ -10,13 +10,13 @@ public class AccountService
 
     public async Task<TwoFactorAuthenticationModel?> Get2FaDataAsync()
     {
-        try { return await _http.GetFromJsonAsync<TwoFactorAuthenticationModel>("/api/Account/Manage2Fa"); }
+        try { return await _http.GetFromJsonAsync<TwoFactorAuthenticationModel>(ApiRoutes.Account.Manage2Fa); }
         catch { return null; }
     }
 
     public async Task<TwoFactorAuthSharedKey?> Get2FaKeysAsync()
     {
-        try { return await _http.GetFromJsonAsync<TwoFactorAuthSharedKey>("/api/Account/Get2FaKeys"); }
+        try { return await _http.GetFromJsonAsync<TwoFactorAuthSharedKey>(ApiRoutes.Account.Get2FaKeys); }
         catch { return null; }
     }
 
@@ -45,13 +45,13 @@ public class AccountService
 
     public async Task<bool> Disable2FaAsync(bool reset = false)
     {
-        try { var r = await _http.PostAsync($"/api/Account/Disable2Fa?reset={reset.ToString().ToLower()}", null); return r.IsSuccessStatusCode; }
+        try { var r = await _http.PostAsync(ApiRoutes.Account.Disable2Fa(reset), null); return r.IsSuccessStatusCode; }
         catch { return false; }
     }
 
     public async Task<bool> ForgetClientAsync()
     {
-        try { var r = await _http.PostAsync("/api/Account/ForgetClient", null); return r.IsSuccessStatusCode; }
+        try { var r = await _http.PostAsync(ApiRoutes.Account.ForgetClient, null); return r.IsSuccessStatusCode; }
         catch { return false; }
     }
 
@@ -59,7 +59,7 @@ public class AccountService
     {
         try
         {
-            var resp = await _http.PostAsync("/api/Account/GenerateRecoveryCodes", null);
+            var resp = await _http.PostAsync(ApiRoutes.Account.GenerateRecoveryCodes, null);
             if (!resp.IsSuccessStatusCode) return (false, null, await resp.Content.ReadAsStringAsync());
             var codes = await resp.Content.ReadFromJsonAsync<string[]>();
             return (true, codes, null);
@@ -71,7 +71,7 @@ public class AccountService
     {
         try
         {
-            var resp = await _http.PostAsJsonAsync("/api/Account/TwoFactorAuth", new
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Account.TwoFactorAuth, new
             {
                 rememberMe,
                 rememberMachine,
@@ -87,7 +87,7 @@ public class AccountService
     {
         try
         {
-            var resp = await _http.PostAsJsonAsync("/api/Account/RecoveryCode", new { recoveryCode = code });
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.Account.RecoveryCode, new { recoveryCode = code });
             var result = await resp.Content.ReadFromJsonAsync<LoginResult>() ?? new();
             return result;
         }

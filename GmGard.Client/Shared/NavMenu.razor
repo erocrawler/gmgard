@@ -6,14 +6,19 @@
 <div class="navbar bg-base-100 shadow-sm border-b border-base-200">
     <div class="navbar-start">
         <a class="btn btn-ghost text-xl font-bold" href="">绅士应用</a>
-        <div class="hidden sm:flex gap-1 ml-2">
+        @* Consistent links for both desktop and mobile - same set, just different sizing/drawer *@
+        <div class="hidden sm:flex gap-1 ml-2 items-center">
             <NavLink href="bounty" class="btn btn-ghost btn-sm">求物版</NavLink>
             <NavLink href="punch-in" class="btn btn-ghost btn-sm">签到</NavLink>
             <NavLink href="message/inbox" class="btn btn-ghost btn-sm">消息</NavLink>
+            <a href="/" class="btn btn-ghost btn-sm opacity-70">← 主站</a>
         </div>
-    </div>
-    <div class="navbar-center sm:hidden">
-        <NavLink href="bounty" class="btn btn-ghost btn-xs">求物</NavLink>
+        <div class="sm:hidden flex gap-1 ml-1">
+            <NavLink href="bounty" class="btn btn-ghost btn-xs">求物</NavLink>
+            <NavLink href="punch-in" class="btn btn-ghost btn-xs">签到</NavLink>
+            <NavLink href="message/inbox" class="btn btn-ghost btn-xs">消息</NavLink>
+            <a href="/" class="btn btn-ghost btn-xs opacity-70">主站</a>
+        </div>
     </div>
     <div class="navbar-end gap-2">
         <AuthorizeView>
@@ -39,11 +44,16 @@
                         <div class="divider my-0"></div>
                         <li class="menu-title mt-1"><span>账号</span></li>
                         <li><NavLink href="account/2fa">两步验证</NavLink></li>
-                        <li class="menu-title mt-1"><span>管理</span></li>
-                        <li><NavLink href="admin">管理首页</NavLink></li>
-                        <li><NavLink href="admin/category">分类管理</NavLink></li>
-                        <li><NavLink href="admin/raffle">抽奖管理</NavLink></li>
-                        <li><NavLink href="audit-exam/admin">审核考试管理</NavLink></li>
+                        @if (isAdmin)
+                        {
+                            <li class="menu-title mt-1"><span>管理</span></li>
+                            <li><NavLink href="admin">管理首页</NavLink></li>
+                            <li><NavLink href="admin/category">分类管理</NavLink></li>
+                            <li><NavLink href="admin/raffle">抽奖管理</NavLink></li>
+                            <li><NavLink href="audit-exam/admin">审核考试管理</NavLink></li>
+                        }
+                        <li class="menu-title mt-1"><span>站点</span></li>
+                        <li><a href="/">返回主站</a></li>
                         <div class="divider my-1"></div>
                         <li><a @onclick="Logout" class="text-error">退出登录</a></li>
                     </ul>
@@ -51,6 +61,7 @@
             </Authorized>
             <NotAuthorized>
                 <a href="login" class="btn btn-primary btn-sm">登录</a>
+                <a href="/" class="btn btn-ghost btn-sm hidden sm:inline-flex">主站</a>
             </NotAuthorized>
         </AuthorizeView>
     </div>
@@ -58,6 +69,7 @@
 
 @code {
     private string avatarUrl = "";
+    private bool isAdmin = false;
 
     // Cascading auth state to react when Blazor's auth system updates (after login)
     [CascadingParameter]
@@ -82,6 +94,7 @@
             else if (auth.User.Identity?.IsAuthenticated != true)
             {
                 avatarUrl = "";
+                isAdmin = false;
             }
         }
     }
@@ -97,6 +110,7 @@
     {
         var user = await AuthService.GetUserAsync(force: force);
         avatarUrl = user?.Avatar ?? "";
+        isAdmin = user?.Roles != null && (Array.Exists(user.Roles, r => r.Equals("Administrator", StringComparison.OrdinalIgnoreCase)) || Array.Exists(user.Roles, r => r.Equals("Moderator", StringComparison.OrdinalIgnoreCase)));
     }
 
     public void Dispose()

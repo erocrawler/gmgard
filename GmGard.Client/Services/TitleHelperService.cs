@@ -31,7 +31,7 @@ public class TitleHelperService
     {
         // API returns List<TitleHelperCategory> which JSON shape matches Client TitleCategory exactly
         // So we deserialize directly into TitleCategory, then attach Format delegates
-        var categories = await _http.GetFromJsonAsync<List<TitleCategory>>("/api/TitleHelper/Categories");
+        var categories = await _http.GetFromJsonAsync<List<TitleCategory>>(ApiRoutes.TitleHelper.Categories);
         if (categories == null) return new();
         foreach (var c in categories)
         {
@@ -60,7 +60,7 @@ public class TitleHelperService
                 })]
             }).ToList()
         };
-        var resp = await _http.PostAsJsonAsync("/api/Admin/TitleCategories/Save", payload);
+        var resp = await _http.PostAsJsonAsync(ApiRoutes.Admin.TitleCategoriesSave, payload);
         resp.EnsureSuccessStatusCode();
     }
 }

@@ -1,5 +1,6 @@
 @page "/bounty/{Id:int}"
 @using GmGard.Client.Models
+@using GmGard.Client.Services
 @inject BountyService BountyService
 @inject NavigationManager Navigation
 @using Microsoft.JSInterop
@@ -508,9 +509,9 @@
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            // Pure ESM isolation – index.html has 0 custom scripts
-            editorModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/ck-editor.esm.js");
-            bountyModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/bounty-content.esm.js");
+            // Pure ESM isolation – versioned via ApiRoutes.Js to bust CDN cache like CKEDITOR.timestamp
+            editorModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", ApiRoutes.Js.CkEditorEsm);
+            bountyModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", ApiRoutes.Js.BountyContentEsm);
             await bountyModule.InvokeVoidAsync("register", dotNetRef);
         }
         try { await bountyModule!.InvokeVoidAsync("bind"); } catch {}

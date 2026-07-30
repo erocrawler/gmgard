@@ -18,13 +18,13 @@ public class ExamService
 
     public async Task<ExamSubmission?> GetDraftAsync(string version)
     {
-        try { return await _http.GetFromJsonAsync<ExamSubmission>($"/api/AuditExam/Draft?version={version}"); }
+        try { return await _http.GetFromJsonAsync<ExamSubmission>(ApiRoutes.AuditExam.Draft(version)); }
         catch { return null; }
     }
 
     public async Task<bool> SaveDraftAsync(ExamSubmission draft)
     {
-        try { var r = await _http.PutAsJsonAsync("/api/AuditExam/Draft", draft); return r.IsSuccessStatusCode; }
+        try { var r = await _http.PutAsJsonAsync(ApiRoutes.AuditExam.DraftPut, draft); return r.IsSuccessStatusCode; }
         catch { return false; }
     }
 
@@ -32,7 +32,7 @@ public class ExamService
     {
         try
         {
-            var resp = await _http.PostAsJsonAsync("/api/AuditExam/Submit", sub);
+            var resp = await _http.PostAsJsonAsync(ApiRoutes.AuditExam.Submit, sub);
             if (!resp.IsSuccessStatusCode) return null;
             return await resp.Content.ReadFromJsonAsync<ExamResult>();
         }
@@ -41,13 +41,13 @@ public class ExamService
 
     public async Task<ExamResult?> GetResultAsync(string version)
     {
-        try { return await _http.GetFromJsonAsync<ExamResult>($"/api/AuditExam/Result?version={version}"); }
+        try { return await _http.GetFromJsonAsync<ExamResult>(ApiRoutes.AuditExam.Result(version)); }
         catch { return null; }
     }
 
     public async Task<List<ExamResult>?> GetAllResultsAsync()
     {
-        try { return await _http.GetFromJsonAsync<List<ExamResult>>("/api/AuditExam/Results"); }
+        try { return await _http.GetFromJsonAsync<List<ExamResult>>(ApiRoutes.AuditExam.Results); }
         catch { return null; }
     }
 

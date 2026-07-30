@@ -34,17 +34,6 @@
         }
     </div>
 
-    <div class="text-xs opacity-60 flex items-center gap-1 flex-wrap">
-        @if (cfg != null)
-        {
-            <span>最佳≥@cfg.MinPrize，押金=最佳，热心@(cfg.AllowZeroHelpfulReward ? $"可0或≥{cfg.MinHelpfulReward}" : $"≥{cfg.MinHelpfulReward}")，合计≥@cfg.MinTotal<span class="ico-lolly ico-lolly-sm"></span>，@(cfg.ExpireDays)天有效</span>
-        }
-        else
-        {
-            <span>最佳≥40，押金=最佳，热心≥20，合计≥100<span class="ico-lolly ico-lolly-sm"></span>，30天有效</span>
-        }
-    </div>
-
     @if (loading && paged == null)
     {
         <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg"></span></div>
