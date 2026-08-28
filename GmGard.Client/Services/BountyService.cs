@@ -357,6 +357,70 @@ public class BountyService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    // Demote an answer to a bounty-level comment (author of answer/bounty, or admin)
+    public async Task<(bool success, string? error)> DemoteAnswerAsync(int answerId)
+    {
+        try
+        {
+            var resp = await _http.PostAsync(ApiRoutes.Bounty.DemoteAnswer(answerId), null);
+            if (resp.IsSuccessStatusCode) return (true, null);
+            return (false, await ExtractErrorAsync(resp));
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    // Promote a bounty-level comment to a real answer (author of comment/bounty, or admin)
+    public async Task<(bool success, string? error, int? answerId)> PromoteCommentAsync(int postId)
+    {
+        try
+        {
+            var resp = await _http.PostAsync(ApiRoutes.Bounty.PromoteComment(postId), null);
+            if (!resp.IsSuccessStatusCode) return (false, await ExtractErrorAsync(resp), null);
+            var txt = await resp.Content.ReadAsStringAsync();
+            int? aid = null;
+            try
+            {
+                var jo = System.Text.Json.JsonDocument.Parse(txt);
+                if (jo.RootElement.TryGetProperty("answerId", out var el) && el.TryGetInt32(out var v)) aid = v;
+            }
+            catch { }
+            return (true, null, aid);
+        }
+        catch (Exception ex) { return (false, ex.Message, null); }
+    }
+
+    // Close bounty without accepting (author self-close or admin on behalf of author) – refunds total to author
+    public async Task<(bool success, string? error, int? refunded)> CloseAsync(int id)
+    {
+        try
+        {
+            var resp = await _http.PostAsync(ApiRoutes.Bounty.Close(id), null);
+            if (!resp.IsSuccessStatusCode) return (false, await ExtractErrorAsync(resp), null);
+            var txt = await resp.Content.ReadAsStringAsync();
+            int? refunded = null;
+            try
+            {
+                var jo = System.Text.Json.JsonDocument.Parse(txt);
+                if (jo.RootElement.TryGetProperty("refunded", out var el) && el.TryGetInt32(out var v)) refunded = v;
+            }
+            catch { }
+            return (true, null, refunded);
+        }
+        catch (Exception ex) { return (false, ex.Message, null); }
+    }
+
+    private static async Task<string?> ExtractErrorAsync(HttpResponseMessage resp)
+    {
+        var txt = await resp.Content.ReadAsStringAsync();
+        try
+        {
+            var jo = System.Text.Json.JsonDocument.Parse(txt);
+            if (jo.RootElement.TryGetProperty("error", out var e)) return e.GetString() ?? txt;
+            return txt;
+        }
+        catch { return txt; }
+    }
+
     public async Task<CurrentUser?> GetCurrentUserAsync()
     {
         try { return await _http.GetFromJsonAsync<CurrentUser>(ApiRoutes.Account.GetUser); }

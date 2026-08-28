@@ -23,6 +23,7 @@ namespace GmGard.Models.App
         public int AnswerCount { get; set; }
         public bool CanAccept { get; set; }
         public bool CanAnswer { get; set; }
+        public bool CanClose { get; set; }
         public List<AnswerDto> Answers { get; set; }
         // Bounty-level comments: Post IdType=Bounty, ItemId=BountyId – allowed even after closed/expired
         public List<PostDto> BountyComments { get; set; } = new();

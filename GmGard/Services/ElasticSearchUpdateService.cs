@@ -48,6 +48,7 @@ namespace GmGard.Services
             Controllers.App.BountyController.OnAnswerBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(e.BountyId));
             Controllers.App.BountyController.OnDeleteBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.RemoveBounty(e));
             Controllers.App.BountyController.OnAcceptBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(e.BountyId));
+            Controllers.App.BountyController.OnCloseBounty += (s, e) => _taskQueue.QueueBackgroundWorkItem(Job.AddOrUpdateBountyById(e.BountyId));
             BlogController.OnDeleteBlog += (s, e) =>
             {
                 if (e.Deleted)

@@ -109,6 +109,9 @@ public static class ApiRoutes
         public const string Answer = Base + "/Answer";
         public const string Accept = Base + "/Accept";
         public static string Delete(int id) => Add(Base + "/Delete", "id", id.ToString());
+        public static string DemoteAnswer(int answerId) => Add(Base + "/DemoteAnswer", "answerId", answerId.ToString());
+        public static string PromoteComment(int postId) => Add(Base + "/PromoteComment", "postId", postId.ToString());
+        public static string Close(int id) => Add(Base + "/Close", "id", id.ToString());
         public const string GetConfig = Base + "/GetConfig";
         public const string ReplyAnswer = Base + "/ReplyAnswer";
         public const string ReplyPost = Base + "/ReplyPost";

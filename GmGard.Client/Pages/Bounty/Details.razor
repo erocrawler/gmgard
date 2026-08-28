@@ -38,6 +38,10 @@
                     <span class="text-xs opacity-60">@detail.CreateDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
                     <span class="text-xs opacity-60">浏览 @detail.ViewCount</span>
                     <button class="btn btn-ghost btn-xs h-6 min-h-0 text-[11px] gap-1 opacity-100" title="汇报问题" @onclick="()=>OpenReport(3, detail.Id, null)"><span class="text-xs">⚑</span><span class="hidden sm:inline">举报</span></button>
+                    @if (detail.CanClose)
+                    {
+                        <button class="btn btn-ghost btn-xs h-6 min-h-0 text-[11px]" title="以无最佳答案方式关闭本悬赏（退回全部棒棒糖给楼主）" @onclick='()=>OpenConfirm("close", detail.Id)'>关闭</button>
+                    }
                 </div>
                 <div class="flex flex-wrap gap-2 mt-3 text-xs">
                     <span class="badge badge-outline"><span class="ico-lolly ico-lolly-sm"></span> 最佳 @detail.Prize</span>
@@ -70,7 +74,7 @@
                 @if (detail.CanAccept && !detail.IsAccepted)
                 {
                     <div class="mt-4 border border-amber-200 bg-amber-50 rounded p-3">
-                        <div class="font-bold text-sm">结贴操作</div>
+                        <div class="font-bold text-sm">结贴操作@(IsAdmin && detail.Author != currentUser?.UserName ? "（管理员代楼主）" : "")</div>
                         <div class="text-xs opacity-70 mt-1">选择最佳答案，热心助人答案可多选。押金退回楼主，热心助人池平分，剩余退回。</div>
                         <div class="mt-3 space-y-2">
                             @foreach (var a in detail.Answers.OrderBy(x=>x.CreateDate))
@@ -180,6 +184,10 @@
                                 <div class="mt-1">
                                     <AuthorizeView>
                                         <Authorized>
+                                            @if (CanManageComment(bc) && detail != null && !detail.IsAccepted && !detail.CloseDate.HasValue && !(detail.ExpiresAt.HasValue && detail.ExpiresAt.Value < DateTime.Now))
+                                            {
+                                                <button class="btn btn-ghost btn-xs h-5 min-h-0 text-[10px] opacity-80 hover:opacity-100" @onclick='()=>OpenConfirm("promote", bc.PostId)' title="将此评论转为正式回答">转为回答</button>
+                                            }
                                             @if (activeReplyPostId != bc.PostId)
                                             {
                                                 <a class="post-reply text-[11px] link link-primary cursor-pointer" @onclick="() => OpenReplyPost(bc.PostId)"><span>回复</span></a>
@@ -267,6 +275,10 @@
                                 <span class="text-[11px] opacity-60">@ans.CreateDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
                                 @if (detail != null && ans.IsBest){<span class="badge badge-success badge-sm">最佳 <span class="ico-lolly ico-lolly-sm"></span>@detail.Prize</span>}
                                 else if (ans.IsHelpful){<span class="badge badge-primary badge-sm">热心助人</span>}
+                                @if (CanManageAnswer(ans) && !ans.IsBest)
+                                {
+                                    <button class="btn btn-ghost btn-xs h-5 min-h-0 text-[10px] opacity-80 hover:opacity-100" @onclick='()=>OpenConfirm("demote", ans.AnswerId)' title="将此回答降为评论">降为评论</button>
+                                }
                                 <button class="btn btn-ghost btn-xs h-5 min-h-0 text-[10px] ml-auto opacity-80 hover:opacity-100" @onclick="()=>OpenReport(4, ans.AnswerId, null)" title="汇报此回答">⚑ 举报</button>
                             </div>
                             <div class="mt-2 prose prose-sm max-w-none break-words bounty-answer-content">
@@ -458,11 +470,36 @@
     </div>
 }
 
+@* Generic confirm modal – demote answer / promote comment / close bounty *@
+@if (confirmAction != null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @onclick="CloseConfirm">
+        <div class="card bg-base-100 shadow-xl w-96" @onclick:stopPropagation="true">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sm">@confirmTitle</h3>
+                    <button class="btn btn-ghost btn-xs" @onclick="CloseConfirm" disabled="@confirmBusy">✕</button>
+                </div>
+                <p class="text-xs opacity-70">@confirmMessage</p>
+                @if (!string.IsNullOrEmpty(confirmError)){<div class="text-xs text-error mt-1">@confirmError</div>}
+                <div class="card-actions justify-end mt-2 gap-2">
+                    <button class="btn btn-ghost btn-sm" @onclick="CloseConfirm" disabled="@confirmBusy">取消</button>
+                    <button class="btn @confirmBtnClass btn-sm" @onclick="DoConfirm" disabled="@confirmBusy">@if(confirmBusy){<span class="loading loading-spinner loading-xs"></span>} 确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter] public int Id { get; set; }
     BountyDetail? detail;
+    CurrentUser? currentUser;
     bool loading = true;
     ImageLightbox? imgViewer;
+    bool IsAdmin => currentUser != null && (Array.Exists(currentUser.Roles, r => r.Equals("Administrator", StringComparison.OrdinalIgnoreCase)) || Array.Exists(currentUser.Roles, r => r.Equals("Moderator", StringComparison.OrdinalIgnoreCase)));
+    bool CanManageAnswer(BountyAnswerDto a) => currentUser != null && (IsAdmin || currentUser.UserName == detail?.Author || currentUser.UserName == a.Author);
+    bool CanManageComment(PostDto c) => currentUser != null && (IsAdmin || currentUser.UserName == detail?.Author || currentUser.UserName == c.Author);
     int selectedBest = 0;
     HashSet<int> selectedHelpful = new();
     bool accepting = false;
@@ -471,6 +508,15 @@
     bool deleting = false;
     string? deleteError;
     bool showDeleteConfirm = false;
+
+    // Generic confirm (demote / promote / close)
+    string? confirmAction;
+    int confirmId = 0;
+    string confirmTitle = "";
+    string confirmMessage = "";
+    string confirmBtnClass = "btn-primary";
+    bool confirmBusy = false;
+    string? confirmError;
 
     string answerContent = "";
     string PlainAnswer => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(answerContent ?? "", "<.*?>", "")).Trim();
@@ -572,6 +618,7 @@
     {
         loading = true;
         detail = await BountyService.GetAsync(Id);
+        currentUser = await BountyService.GetCurrentUserAsync();
         if (detail != null)
         {
             selectedBest = detail.BestAnswerId ?? detail.Answers?.FirstOrDefault(a=>a.IsBest)?.AnswerId ?? 0;
@@ -673,6 +720,78 @@
         deleting = false;
         if (ok){ Navigation.NavigateTo("bounty"); }
         else deleteError = err ?? "删除失败";
+        StateHasChanged();
+    }
+
+    void OpenConfirm(string action, int id)
+    {
+        confirmAction = action;
+        confirmId = id;
+        confirmError = null;
+        confirmBusy = false;
+        switch (action)
+        {
+            case "demote":
+                confirmTitle = "将回答降为评论";
+                confirmMessage = "该回答将变为求物评论（保留作者、时间与图片），其楼层回复也会一并转为评论。最佳答案不可降级。";
+                confirmBtnClass = "btn-warning";
+                break;
+            case "promote":
+                confirmTitle = "将评论转为回答";
+                confirmMessage = "该评论将变为正式回答，可参与最佳/热心助人评选。楼主自己的评论不可转。";
+                confirmBtnClass = "btn-primary";
+                break;
+            case "close":
+                confirmTitle = "关闭悬赏";
+                confirmMessage = $"将以无最佳答案方式关闭本悬赏，退回全部棒棒糖（{detail?.Prize}+{detail?.Deposit}+{detail?.HelpfulReward}）给楼主。关闭后不可再回答或结贴。";
+                confirmBtnClass = "btn-warning";
+                break;
+            default:
+                confirmAction = null;
+                return;
+        }
+        StateHasChanged();
+    }
+    void CloseConfirm()
+    {
+        confirmAction = null;
+        confirmBusy = false;
+        confirmError = null;
+    }
+    async Task DoConfirm()
+    {
+        if (confirmAction == null) return;
+        confirmBusy = true; confirmError = null; StateHasChanged();
+        bool ok = false;
+        string? err = null;
+        switch (confirmAction)
+        {
+            case "demote":
+                (ok, err) = await BountyService.DemoteAnswerAsync(confirmId);
+                break;
+            case "promote":
+                {
+                    var r = await BountyService.PromoteCommentAsync(confirmId);
+                    ok = r.success; err = r.error;
+                }
+                break;
+            case "close":
+                {
+                    var r = await BountyService.CloseAsync(confirmId);
+                    ok = r.success; err = r.error;
+                }
+                break;
+            default:
+                err = "未知操作";
+                break;
+        }
+        confirmBusy = false;
+        if (ok)
+        {
+            CloseConfirm();
+            await Load(true);
+        }
+        else confirmError = err ?? "操作失败";
         StateHasChanged();
     }
 

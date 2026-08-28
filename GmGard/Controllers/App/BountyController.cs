@@ -27,6 +27,9 @@ namespace GmGard.Controllers.App
         public static event EventHandler<Services.BountyEventArgs> OnAnswerBounty;
         public static event EventHandler<Services.BountyEventArgs> OnDeleteBounty;
         public static event EventHandler<Services.BountyEventArgs> OnAcceptBounty;
+        public static event EventHandler<Services.BountyEventArgs> OnCloseBounty;
+
+        private bool IsAdmin => User.IsInRole("Administrator") || User.IsInRole("Moderator");
 
         private readonly BlogContext db_;
         private readonly UsersContext udb_;
@@ -157,12 +160,16 @@ namespace GmGard.Controllers.App
             string avatarBase = AvatarBase;
             bool canAccept = false;
             bool canAnswer = false;
+            bool canClose = false;
             if (User.Identity.IsAuthenticated)
             {
                 bool isClosed = bounty.CloseDate.HasValue;
                 bool isExpired = bounty.ExpiresAt.HasValue && bounty.ExpiresAt.Value < DateTime.Now;
-                canAccept = !bounty.IsAccepted && !isClosed && !isExpired && User.Identity.Name == bounty.Author;
+                // Accept flow (pick best + helpful): author, or admin on behalf of the author
+                canAccept = !bounty.IsAccepted && !isClosed && !isExpired && (User.Identity.Name == bounty.Author || IsAdmin);
                 canAnswer = !bounty.IsAccepted && !isClosed && !isExpired && User.Identity.Name != bounty.Author;
+                // Close without accepting (author self-close or admin on behalf of author)
+                canClose = !bounty.IsAccepted && !isClosed && (User.Identity.Name == bounty.Author || IsAdmin);
             }
 
             var detail = new BountyDetail
@@ -185,6 +192,7 @@ namespace GmGard.Controllers.App
                 AnswerCount = bounty.Answers?.Count ?? 0,
                 CanAccept = canAccept,
                 CanAnswer = canAnswer,
+                CanClose = canClose,
                 Answers = new List<AnswerDto>(), // placeholder filled below
             };
 
@@ -608,7 +616,9 @@ namespace GmGard.Controllers.App
             var bounty = await db_.Bounties.Include(b => b.Answers).FirstOrDefaultAsync(b => b.BountyId == req.BountyId && !b.IsDeleted);
             if (bounty == null) return NotFound();
             if (bounty.IsAccepted) return BadRequest(new { error = "已经结贴" });
-            if (bounty.Author != User.Identity.Name) return Forbid();
+            if (bounty.CloseDate.HasValue) return BadRequest(new { error = "悬赏已关闭，不能再结贴" });
+            // Admin may accept on behalf of the author (same distribution rules)
+            if (bounty.Author != User.Identity.Name && !IsAdmin) return Forbid();
 
             var best = bounty.Answers.FirstOrDefault(a => a.AnswerId == req.BestAnswerId);
             if (best == null) return BadRequest(new { error = "最佳答案不存在" });
@@ -752,6 +762,155 @@ namespace GmGard.Controllers.App
                 return StatusCode(500, new { error = ex.Message });
             }
             return Json(new { success = true });
+        }
+
+        // Demote an answer to a bounty-level comment (Post IdType=Bounty).
+        // Allowed for: answer author, bounty author, admin/moderator.
+        // The accepted best answer can never be demoted.
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> DemoteAnswer(int answerId)
+        {
+            var answer = await db_.Answers.Include(a => a.Bounty).FirstOrDefaultAsync(a => a.AnswerId == answerId);
+            if (answer == null) return NotFound(new { error = "回答不存在" });
+            var bounty = answer.Bounty;
+            if (bounty == null || bounty.IsDeleted) return BadRequest(new { error = "悬赏已删除" });
+            if (bounty.AcceptedAnswerId == answer.AnswerId) return BadRequest(new { error = "不能降级最佳答案" });
+            if (answer.Author != User.Identity.Name && bounty.Author != User.Identity.Name && !IsAdmin)
+                return Forbid();
+
+            // Move any answer-floor reply posts (Post IdType=Answer) to bounty-level comments
+            var replyPosts = await db_.Posts.Where(p => p.IdType == ItemType.Answer && p.ItemId == answer.AnswerId).ToListAsync();
+            foreach (var p in replyPosts)
+            {
+                p.IdType = ItemType.Bounty;
+                p.ItemId = bounty.BountyId;
+            }
+
+            // Preserve original author/date/content; embed gallery images as <img> markup
+            var urls = ParseBountyImageUrls(answer.ImageUrl);
+            var imgHtml = BuildImageHtml(urls);
+            var post = new Post
+            {
+                IdType = ItemType.Bounty,
+                ItemId = bounty.BountyId,
+                Author = answer.Author,
+                Content = answer.Content + (string.IsNullOrEmpty(imgHtml) ? "" : sanitizer_.Sanitize(imgHtml)),
+                PostDate = answer.CreateDate,
+                Rating = 0
+            };
+            db_.Posts.Add(post);
+            db_.Answers.Remove(answer);
+            await db_.SaveChangesAsync();
+
+            return Json(new { success = true, postId = post.PostId });
+        }
+
+        // Promote a bounty-level comment (Post IdType=Bounty) to a real answer.
+        // Allowed for: comment author, bounty author, admin/moderator.
+        // Nested replies on the comment are converted to answer-floor reply posts.
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> PromoteComment(int postId)
+        {
+            var post = await db_.Posts.Include(p => p.Replies).FirstOrDefaultAsync(p => p.PostId == postId);
+            if (post == null) return NotFound(new { error = "评论不存在" });
+            if (post.IdType != ItemType.Bounty) return BadRequest(new { error = "仅悬赏评论可转为回答" });
+            var bounty = await db_.Bounties.FirstOrDefaultAsync(b => b.BountyId == post.ItemId);
+            if (bounty == null) return NotFound(new { error = "悬赏不存在" });
+            if (bounty.IsDeleted) return BadRequest(new { error = "悬赏已删除" });
+            if (bounty.IsAccepted || bounty.CloseDate.HasValue || (bounty.ExpiresAt.HasValue && bounty.ExpiresAt.Value < DateTime.Now))
+                return BadRequest(new { error = "悬赏已结贴或已过期，不能再转为回答" });
+            if (post.Author == bounty.Author) return BadRequest(new { error = "不能将楼主自己的评论转为回答" });
+            if (post.Author != User.Identity.Name && bounty.Author != User.Identity.Name && !IsAdmin)
+                return Forbid();
+
+            var answer = new Answer
+            {
+                BountyId = bounty.BountyId,
+                Author = post.Author,
+                Content = post.Content,
+                ImageUrl = "",
+                CreateDate = post.PostDate,
+                IsHelpful = false,
+            };
+            db_.Answers.Add(answer);
+
+            using var tx = await db_.Database.BeginTransactionAsync();
+            try
+            {
+                await db_.SaveChangesAsync();
+
+                // Convert nested Reply rows into answer-floor reply posts (Post IdType=Answer)
+                if (post.Replies != null && post.Replies.Count > 0)
+                {
+                    foreach (var r in post.Replies)
+                    {
+                        db_.Posts.Add(new Post
+                        {
+                            IdType = ItemType.Answer,
+                            ItemId = answer.AnswerId,
+                            Author = r.Author,
+                            Content = r.Content,
+                            PostDate = r.ReplyDate,
+                            Rating = 0
+                        });
+                    }
+                    post.Replies.Clear();
+                }
+                db_.Posts.Remove(post);
+                await db_.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+
+            return Json(new { success = true, answerId = answer.AnswerId });
+        }
+
+        // Close a bounty without accepting a best answer (thread archived, 已关闭).
+        // Allowed for the bounty author or admin/moderator (on behalf of the author).
+        // Since no answer is rewarded, the full total (Prize+Deposit+HelpfulReward) is refunded to the author.
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Close(int id)
+        {
+            var bounty = await db_.Bounties.FirstOrDefaultAsync(b => b.BountyId == id && !b.IsDeleted);
+            if (bounty == null) return NotFound(new { error = "悬赏不存在" });
+            if (bounty.IsAccepted) return BadRequest(new { error = "已结贴，无需关闭" });
+            if (bounty.CloseDate.HasValue) return BadRequest(new { error = "悬赏已关闭" });
+            if (bounty.Author != User.Identity.Name && !IsAdmin) return Forbid();
+
+            int total = bounty.Prize + bounty.Deposit + bounty.HelpfulReward;
+            using var userTx = await udb_.Database.BeginTransactionAsync();
+            try
+            {
+                var user = await udb_.Users.SingleOrDefaultAsync(u => u.UserName == bounty.Author);
+                if (user != null)
+                {
+                    expUtil_.AddPoint(user, total);
+                    await udb_.SaveChangesAsync();
+                }
+                bounty.CloseDate = DateTime.Now;
+                await db_.SaveChangesAsync();
+                await userTx.CommitAsync();
+                try { OnCloseBounty?.Invoke(this, new Services.BountyEventArgs { BountyId = bounty.BountyId, Bounty = bounty }); } catch { }
+            }
+            catch (Exception ex)
+            {
+                await userTx.RollbackAsync();
+                return StatusCode(500, new { error = ex.Message });
+            }
+            return Json(new { success = true, refunded = total });
+        }
+
+        private static string BuildImageHtml(string[] urls)
+        {
+            if (urls == null || urls.Length == 0) return "";
+            return "<br>" + string.Join("", urls.Select(u => $"<img src=\"{System.Net.WebUtility.HtmlEncode(u)}\">"));
         }
 
         // Bounty-level comments (Post IdType=Bounty) – allowed even after bounty closed/expired
