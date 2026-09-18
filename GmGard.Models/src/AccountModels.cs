@@ -368,6 +368,20 @@ namespace GmGard.Models
 
         public int DayBlogCount { get; set; }
         public int WeekBlogCount { get; set; }
+
+        /// <summary>
+        /// Last date on which the user completed all of the required daily quests
+        /// (sign-in + comment + rating). Used by the weekly "all dailies" quest.
+        /// </summary>
+        [DataType(DataType.Date)]
+        public DateTime? LastAllDailyDate { get; set; }
+
+        /// <summary>
+        /// Number of days within the current week on which all required daily quests were completed.
+        /// Reset when the week changes.
+        /// </summary>
+        public int WeekAllDailyCount { get; set; }
+
         [ForeignKey("TitleConfig")]
         public int Title { get; set; }
         public virtual TitleConfig TitleConfig { get; set; }

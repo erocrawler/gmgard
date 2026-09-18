@@ -7,7 +7,10 @@
         var currentAction = (string)ViewContext.RouteData.Values["action"];
         var currentId = (string)ViewContext.RouteData.Values["id"];
     }
-    @foreach (var c in Model.Values.Where(h => h.category.ParentCategoryID == null))
+    @* Categories flagged HideFromHomePage are omitted
+       from the nav tabs. They stay in Model/ViewBag.CategoryDict so that
+       _SubCategoryPartial's dict lookups and category-name resolution still work. *@
+    @foreach (var c in Model.Values.Where(h => h.category.ParentCategoryID == null && !h.category.HideFromHomePage))
     {
         var id = c.category.CategoryID;
         <li @if (string.Equals(currentAction, "List", StringComparison.CurrentCultureIgnoreCase) && currentId == id.ToString())

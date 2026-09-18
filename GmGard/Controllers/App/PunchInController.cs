@@ -178,6 +178,8 @@ namespace GmGard.Controllers.App
                 _expUtil.addExp(user, exp);
             }
             user.LastLoginIP = ExpUtil.GetIPAddress(HttpContext);
+            // Sign-in is one of the required dailies for the weekly all-daily quest.
+            _expUtil.CheckAllDailyQuest(user);
             await _udb.SaveChangesAsync();
             _cache.Remove(ExpUtil.SignCacheKey + user.UserName);
             return Json(new PunchInResult { Success = true, ConsecutiveDays = user.ConsecutiveSign, ExpBonus = exp, Points = user.Points });

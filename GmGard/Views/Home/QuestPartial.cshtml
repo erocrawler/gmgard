@@ -134,4 +134,19 @@
                 }</td>
         </tr>
     }
+    <tr>
+        <td><span class="newq">全勤<br />Week</span><br /><span class="label label-important lweekly">周常</span></td>
+        <td class="lalign">1周内每天完成签到、评论与评分</td>
+        <td><i title="补签券" class="icon-gift"></i>补签券×@QuestService.weekAllDailyTicket</td>
+        <td>@{
+                int weekalldailycount = expUtil.WeekAllDaily();
+                if (weekalldailycount >= @QuestService.weekAllDailyCount)
+                {
+                    <span class="label label-success">已完成</span>
+                }
+                else{
+                    <span class="label">@weekalldailycount / @QuestService.weekAllDailyCount</span>
+                }
+            }</td>
+    </tr>
 </table>    

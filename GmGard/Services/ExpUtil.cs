@@ -56,6 +56,8 @@ namespace GmGard.Services
 
         public const string WeekBloggedCacheKey = "~wbg";
 
+        public const string WeekAllDailyCacheKey = "~wad";
+
         public ExpUtil(BlogContext db, UsersContext udb, IMemoryCache cache, IHttpContextAccessor contextAccessor, MessageUtil msgUtil, AdminUtil adminUtil) : base(db, udb, cache)
         {
             _contextAccessor = contextAccessor;
@@ -354,6 +356,71 @@ namespace GmGard.Services
             return result.Value;
         }
 
+        /// <summary>
+        /// Number of days in the current week on which the user completed all required daily quests
+        /// (sign-in + comment + rating). Returns 0 once the stored week has rolled over.
+        /// </summary>
+        public int WeekAllDaily()
+        {
+            string username = HttpContext.User.Identity.Name;
+            int? result = _cache.Get<int?>(WeekAllDailyCacheKey + username);
+            if (result.HasValue)
+                return result.Value;
+            var quest = CurrentUser?.quest;
+            if (quest == null || quest.LastAllDailyDate == null || !quest.LastAllDailyDate.Value.isSameWeek(DateTime.Today))
+                result = 0;
+            else
+                result = quest.WeekAllDailyCount;
+            _cache.Set(WeekAllDailyCacheKey + username, result, new MemoryCacheEntryOptions { AbsoluteExpiration = DateTime.Today.AddDays(1) });
+            return result.Value;
+        }
+
+        /// <summary>
+        /// Records that the user finished today's required daily quests (sign-in + comment + rating),
+        /// advancing the weekly all-daily quest. Awards <see cref="QuestService.weekAllDailyTicket"/>
+        /// 补签券 once all <see cref="QuestService.weekAllDailyCount"/> days of the week are complete.
+        /// </summary>
+        /// <returns>True if the quest state changed and the caller must persist it.</returns>
+        public bool CheckAllDailyQuest(UserProfile profile)
+        {
+            var quest = profile?.quest;
+            if (quest == null)
+            {
+                return false;
+            }
+            bool signedToday = profile.LastSignDate.Date == DateTime.Today;
+            bool postedToday = quest.LastPostDate != null && quest.LastPostDate.Value.Date == DateTime.Today;
+            bool ratedToday = quest.LastRateDate != null && quest.LastRateDate.Value.Date == DateTime.Today;
+            if (!signedToday || !postedToday || !ratedToday)
+            {
+                return false;
+            }
+            var prevDay = quest.LastAllDailyDate;
+            if (prevDay.HasValue && prevDay.Value.Date == DateTime.Today)
+            {
+                return false; // already counted today
+            }
+            quest.LastAllDailyDate = DateTime.Today;
+            if (prevDay.HasValue && prevDay.Value.isSameWeek(DateTime.Today))
+            {
+                quest.WeekAllDailyCount++;
+            }
+            else
+            {
+                quest.WeekAllDailyCount = 1;
+            }
+            if (quest.WeekAllDailyCount == QuestService.weekAllDailyCount)
+            {
+                quest.PunchInTicket += QuestService.weekAllDailyTicket;
+            }
+            else if (quest.WeekAllDailyCount > QuestService.weekAllDailyCount)
+            {
+                quest.WeekAllDailyCount = QuestService.weekAllDailyCount;
+            }
+            _cache.Remove(WeekAllDailyCacheKey + profile.UserName);
+            return true;
+        }
+
         public bool HasRatedPost()
         {
             string username = HttpContext.User.Identity.Name;
@@ -393,6 +460,7 @@ namespace GmGard.Services
             }
             int blogcount = HasBlogged();
             int weekcount = WeekBlogged();
+            int alldailycount = WeekAllDaily();
             if (blogcount > 0)
             {
                 p++;
@@ -404,6 +472,12 @@ namespace GmGard.Services
             {
                 total++;
                 if (weekcount >= 15)
+                    p++;
+            }
+            if (alldailycount > 0)
+            {
+                total++;
+                if (alldailycount >= QuestService.weekAllDailyCount)
                     p++;
             }
             return p + " / " + total;
@@ -430,9 +504,13 @@ namespace GmGard.Services
                 }
             }
             profile.quest.LastRateDate = DateTime.Today;
+            bool dailyQuestChanged = CheckAllDailyQuest(profile);
             if (isNewRate)
             {
                 addExp(profile, RateExp);
+            }
+            if (isNewRate || dailyQuestChanged)
+            {
                 _udb.SaveChanges();
             }
             return isNewRate;
@@ -488,9 +566,13 @@ namespace GmGard.Services
                 }
             }
             profile.quest.LastPostDate = DateTime.Today;
+            bool dailyQuestChanged = CheckAllDailyQuest(profile);
             if (isNewPost)
             {
                 addExp(profile, PostExp);
+            }
+            if (isNewPost || dailyQuestChanged)
+            {
                 _udb.SaveChanges();
             }
             return isNewPost;

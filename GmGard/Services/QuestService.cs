@@ -24,7 +24,10 @@ namespace GmGard.Services
         public const int dayBlogCount = 3;
         public const int weekBlogCount = 7;
 
-        public const int EventBlogId = 98704;
+        // Weekly "all dailies" quest: complete every required daily (sign-in + comment + rating)
+        // on every day of the week to earn 补签券.
+        public const int weekAllDailyCount = 7;
+        public const int weekAllDailyTicket = 1;
 
         public static readonly string firstReplyNotice = string.Format("今天第一次评论，绅士度+{0}，棒棒糖+{0}", firstReplyExp);
         public static readonly string firstRateNotice = string.Format("今天第一次评分，绅士度+{0}，棒棒糖+{0}", firstRateExp);
@@ -60,7 +63,7 @@ namespace GmGard.Services
         {
             var context = sender as Controller;
             var post = e.Model;
-            if (post == null || !(PostConstant.PostRatingEventActive && post.Post.ItemId == EventBlogId && post.Value == 1))
+            if (post == null || !(PostConstant.PostRatingEventActive && post.Value == 1))
             {
                 return;
             }

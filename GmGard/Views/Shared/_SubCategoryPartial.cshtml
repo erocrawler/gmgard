@@ -3,7 +3,8 @@
 {
     var dict = ViewBag.CategoryDict as IDictionary<int, HeaderDisplay>;
 <ul class="subcatnav dropdown-menu">
-    @foreach(var subcat in Model.SubCategories)
+    @* Consistent with the top-level nav: HideFromHomePage categories are not listed. *@
+    @foreach(var subcat in Model.SubCategories.Where(s => !s.HideFromHomePage))
     {
         <li @if(subcat.SubCategories != null && subcat.SubCategories.Count > 0){<text>class="dropdown-submenu"</text>}>
             <a href='@Url.Action("List", "Blog", new { id = subcat.CategoryID })'>@subcat.CategoryName
