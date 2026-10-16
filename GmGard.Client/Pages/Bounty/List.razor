@@ -126,6 +126,10 @@
                                     }
                                 </div>
                             </div>
+                            @if (FirstImage(b.Image) is { } thumb)
+                            {
+                                <img src="@thumb" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" class="w-20 h-20 shrink-0 rounded-lg border object-cover bg-base-200" />
+                            }
                         </div>
                     </div>
                 </a>
@@ -242,6 +246,17 @@
             paged = await BountyService.ListAsync(showType, page, onlyMine, includeDeleted);
         loading = false;
         StateHasChanged();
+    }
+    // Image column is a JSON string array (see BountyController.ParseBountyImageUrls)
+    static string? FirstImage(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || !raw.TrimStart().StartsWith("[")) return null;
+        try
+        {
+            var arr = System.Text.Json.JsonSerializer.Deserialize<string[]>(raw);
+            return arr?.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+        }
+        catch { return null; }
     }
     string Strip(string html)
     {
