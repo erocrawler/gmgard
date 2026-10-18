@@ -57,12 +57,31 @@ These are frozen. The redesign restyles them but keeps their position, order and
 
 - Two-column body (content left, sidebar right) on desktop, with the same sidebar widgets in the same order.
 - Menu items, labels and badges (待审核 count, 意见建议 counts) unchanged.
-- The background-image system and canvas effects stay; they are part of the site's personality. They are layered on the new surfaces.
+- The background-image system stays in full, both layers: the full-width banner (`BannerUrl`, behind the header) and the side art (`BackgroundUrl`, visible on both sides of the content column). The canvas effects stay too. See §3.1.
 - List item anatomy (thumbnail, title, category, tags, author, date, counts) keeps the same fields in the same order.
 - **Removed on purpose:** the 春菜 mascot (see Phase 0).
 
-What *may* change: fonts, colours, spacing, borders and shadows, the icon set, widths
-(fluid up to ~1200px instead of a fixed 1000px), and mobile behaviour (menu → drawer, sidebar → below content).
+What *may* change: fonts, colours, spacing, borders and shadows, the icon set, and mobile behaviour
+(menu → drawer, sidebar → below content). The **1000px content column stays**, because the background art is drawn around it.
+
+### 3.1 Backgrounds
+
+Today `Css/bg.cshtml` paints two layers per background:
+
+| Type | `html` | `body` | < 1000px |
+|---|---|---|---|
+| `Normal` | side art `BackgroundUrl` (`_1440`/`_2560` variants), `repeat-y`, centred | banner `BannerUrl` at the top, `no-repeat` | side art removed, banner `_1024` only |
+| `Fixed` | one full-screen image, `background-attachment: fixed` | none | `BannerUrl1024` as the `html` background |
+
+The art assumes a ~1000px opaque column in the middle with a shadow (`#body`). The new shell keeps all of that:
+- **Reuse `bg.cshtml` / `BgTagHelper` output unchanged.** The new layout must not paint backgrounds on `html` or `body`, so per-background overrides (`body.bg13` offsets, `html.bg5` colours, etc.) keep working.
+- **Column width stays 1000px** (content + 280px sidebar). Widening to 1200px would hide 100px of art on each side, which is about half of it on a 1440px screen.
+- **The header stays transparent and keeps today's height** (~270px: logo area + menu), so each banner keeps the same crop. The logo, user card and menu sit on the banner as they do now.
+- **The column is an opaque panel** (`base-100` + shadow), as `#body` is today. That keeps text readable over any art, avoids blur costs, and means no background needs re-testing for contrast.
+- **Dark mode** changes only the panel and cards. The art is unchanged; backgrounds without a `background-color` get a dark fallback.
+- **Mobile** follows the existing < 1000px rule: banner only, no side art (as in the phone mock).
+- The 查看背景 / 选择背景 / 视差 buttons work as before.
+- Optional later: a 「无背景」 choice in the picker for users who want a plain page. Only that mode could use a wider fluid column.
 
 ## 4. Rendering model: static SSR Razor components
 
@@ -146,8 +165,8 @@ Bootstrap 2 and Tailwind's preflight conflict, because names like `btn`, `label`
 ### Phase 1 — Shell (≈2 weeks)
 Port the frame, keeping §3 exactly:
 - [ ] `MainLayout.razor` with components for the header, menu (DaisyUI `menu menu-horizontal` + dropdowns; collapses to a `drawer` on mobile), login/user status, `bodybtn` toolbar, category bar (`SiteHeader`), sidebar and footer.
-- [ ] Grid: CSS grid `minmax(0,1fr) 300px`, max ~1200px. The sidebar stacks under the content below 1024px.
-- [ ] Background system: keep the `bg.cshtml` output. Content surfaces become `bg-base-100/90 backdrop-blur` cards so backgrounds still show through. Check every background in `BackgroundSetting`.
+- [ ] Grid: CSS grid `minmax(0,1fr) 280px` inside the 1000px column. The sidebar stacks under the content below 1000px.
+- [ ] Background system per §3.1: reuse the `bg.cshtml` output, keep the header transparent at today's height, make the column an opaque panel. Screenshot every background in `BackgroundSetting` at 1920 / 1440 / 1000 / 390 widths, old vs. new.
 - [ ] Canvas effects loaded as standalone ES modules (no jQuery).
 - [ ] Dark mode via `data-theme`, remembered per user.
 
@@ -210,7 +229,7 @@ so the server-side HTML sanitiser stays the real security boundary either way.
 | Static SSR doesn't cover some interaction well | Phase 0 spike before committing; htmx / small JS islands; MVC fallback for that page |
 | Route conflicts between components and MVC | Port one URL at a time; integration tests on routing; reuse the route-ordering notes in `GmGard.Client/AGENTS.md` |
 | Post content looks different | `.post-content` stylesheet built from the editor's actual class list (§6.4) + DB class audit |
-| Backgrounds clash with new surfaces | Translucent cards; test every configured background |
+| Backgrounds look different | Same two layers, same 1000px column, same header height (§3.1); old/new screenshot of every background |
 | Ads / banners have fixed sizes | Keep ad slot dimensions identical; check with the AdManager role |
 | Two UIs double the maintenance | Strict rule: a page is either fully classic or fully modern; time-box the coexistence window |
 | Regressions in forms/auth | Playwright smoke tests for login, post, reply, search, punch-in |
