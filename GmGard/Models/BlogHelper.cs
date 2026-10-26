@@ -117,7 +117,19 @@ namespace GmGard.Models
 
         public static BlogLink[] GetBlogLink(string links)
         {
-            return links == null ? null : Newtonsoft.Json.JsonConvert.DeserializeObject<BlogLink[]>(links);
+            if (string.IsNullOrWhiteSpace(links))
+            {
+                return Array.Empty<BlogLink>();
+            }
+            try
+            {
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<BlogLink[]>(links) ?? Array.Empty<BlogLink>();
+            }
+            catch (Newtonsoft.Json.JsonException)
+            {
+                // 残缺 JSON 不应让整页报错。坏数据按“无链接”处理，页面照常渲染。
+                return Array.Empty<BlogLink>();
+            }
         }
 
         //get nth url from content

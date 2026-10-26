@@ -386,10 +386,7 @@ namespace GmGard.Controllers
 
         public ActionResult Suggestions(string pos = null)
         {
-            var blog = _db.Blogs.Find(0);
             ViewBag.pos = pos;
-            ViewBag.versiondata = blog.Content;
-            ViewBag.versiontitle = blog.Links;
             return View();
         }
 

@@ -707,16 +707,6 @@ namespace GmGard.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> EditVersion(string data, string version)
-        {
-            var blog = await _db.Blogs.FindAsync(PostConstant.SiteVersionNotes);
-            blog.Content = data;
-            blog.Links = version;
-            await _db.SaveChangesAsync();
-            return Ok();
-        }
-
-        [HttpPost]
         public async Task<ActionResult> EditSiteRules(string data)
         {
             var blog = await _db.Blogs.FindAsync(PostConstant.SiteRules);
