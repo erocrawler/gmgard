@@ -48,7 +48,7 @@
                     <span class="badge badge-outline">押金 @detail.Deposit</span>
                     <span class="badge badge-outline">热心助人池 @detail.HelpfulReward</span>
                 </div>
-                @if (detail.ExpiresAt.HasValue){<div class="text-[11px] opacity-60 mt-1">过期: @detail.ExpiresAt.Value.ToLocalTime().ToString("yyyy-MM-dd")</div>}
+                @if (detail.ExpiresAt.HasValue){<div class="text-[11px] opacity-60 mt-1">过期: @detail.ExpiresAt.Value.ToString("yyyy-MM-dd")</div>}
                 @if (!string.IsNullOrEmpty(deleteError)){<div class="alert alert-error py-1 text-xs mt-2">@deleteError</div>}
 
                 <div class="divider my-2"></div>

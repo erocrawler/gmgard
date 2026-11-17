@@ -66,7 +66,7 @@ namespace GmGard.Services
             var expUtil = scope.ServiceProvider.GetRequiredService<ExpUtil>();
             var cfg = scope.ServiceProvider.GetServices<Microsoft.Extensions.Options.IOptions<GmGard.Models.App.BountyConfig>>().FirstOrDefault()?.Value ?? new GmGard.Models.App.BountyConfig();
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var expired = await db.Bounties
                 .Where(b => !b.IsAccepted && !b.IsDeleted && b.ExpiresAt != null && b.ExpiresAt < now && b.CloseDate == null)
                 .Include(b => b.Answers)
