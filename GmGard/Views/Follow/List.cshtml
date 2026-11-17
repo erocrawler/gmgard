@@ -24,7 +24,7 @@
                 <h4>
                     @blogUtil.GetNickName(follow.UserName)
                 </h4>
-                <p> @follow.UserComment</p>
+                <p> @System.Net.WebUtility.HtmlDecode(follow.UserComment)</p>
 
                 @if (User.Identity.IsAuthenticated && User.Identity.Name == username)
                 {
