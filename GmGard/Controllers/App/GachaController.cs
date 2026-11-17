@@ -48,6 +48,11 @@ namespace GmGard.Controllers.App
                 return BadRequest();
             }
             int count = request.Count;
+            // 次数必须在 1~10:防止 COST*count 整数回绕绕过余额检查,以及超大 count 申请巨量内存
+            if (count < 1 || count > 10)
+            {
+                return BadRequest();
+            }
             var currentCost = COST * count;
             var user = await db_.Users.SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             if (user.Points < currentCost)

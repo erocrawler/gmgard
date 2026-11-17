@@ -85,6 +85,9 @@ namespace GmGard.Controllers
             {
                 message.MsgDate = DateTime.Now;
                 message.Sender = User.Identity.Name;
+                // 前端 encode() 只是体验层,服务端同样转义尖括号,绕过前端直接 POST 也不能存入 HTML
+                message.MsgContent = message.MsgContent?.Replace("<", "&lt;").Replace(">", "&gt;");
+                message.MsgTitle = message.MsgTitle?.Replace("<", "&lt;").Replace(">", "&gt;");
                 _udb.Messages.Add(message);
                 _udb.SaveChanges();
                 _cache.Remove("unreadmsg" + message.Recipient);

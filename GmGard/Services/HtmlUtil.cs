@@ -18,8 +18,6 @@ namespace GmGard.Services
     {
         private static readonly string[] OwnedSites = new[] { "hggard.com/", "gmgard.com/", "gmgard.us/", "//localhost" };
         private static readonly string[] NoSslOwnedSites = new[] { "cnmobchishi.hggard.com", "tu2.gmgard.com" };
-        private const string ProxyUrl = "https://gmgard.com/Proxy/";
-        private const string DevProxyUrl = "https://localhost:44316/Proxy/";
 
         private readonly IWebHostEnvironment _env;
         private readonly HttpContext _httpContext;
@@ -34,9 +32,6 @@ namespace GmGard.Services
             _appSettings = settings.Value;
         }
 
-
-        private string ProxiedUrl(string url) =>
-            Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(_env.IsDevelopment() ? DevProxyUrl : ProxyUrl, "url", url);
 
         public IHtmlContent ContentWithRewrite(string content)
         {
@@ -71,10 +66,6 @@ namespace GmGard.Services
             if (OwnedSites.Any(s => src.Contains(s)))
             {
                 return src.Replace("http://", "https://");
-            }
-            else if (_appSettings.EnableImageProxy)
-            {
-                return ProxiedUrl(src);
             }
             return src;
         }

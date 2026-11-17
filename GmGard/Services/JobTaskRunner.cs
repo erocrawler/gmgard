@@ -25,6 +25,8 @@ namespace GmGard.Services
             _serviceProvider = serviceProvider;
         }
 
+        private static string Enc(string s) => System.Net.WebUtility.HtmlEncode(s ?? string.Empty);
+
         public Task RunJob(Job job)
         {
             switch (job.JobType)
@@ -191,11 +193,11 @@ namespace GmGard.Services
                     string notice;
                     if (args.Type == NoticeType.NewPost)
                     {
-                        notice = string.Format("<a href='/User/{0}'>{0}</a> 回复了您的投稿：<a href='{2}'>{1}</a>", args.Actor, args.Content, args.Url);
+                        notice = string.Format("<a href='/User/{0}'>{0}</a> 回复了您的投稿：<a href='{2}'>{1}</a>", Enc(args.Actor), Enc(args.Content), args.Url);
                     }
                     else
                     {
-                        notice = string.Format("<a href='/User/{0}'>{0}</a> 在<a href='{2}'>{1}</a>中回复了您的评论", args.Actor, args.Content, args.Url);
+                        notice = string.Format("<a href='/User/{0}'>{0}</a> 在<a href='{2}'>{1}</a>中回复了您的评论", Enc(args.Actor), Enc(args.Content), args.Url);
                     }
                     int num = 0;
                     var db = _usersContext;
@@ -233,7 +235,7 @@ namespace GmGard.Services
                         Sender = args.Actor,
                         Recipient = args.NoticeUser,
                         MsgTitle = "删除通知",
-                        MsgContent = string.Format("您在投稿<a href='{1}'>{0}</a>中的评论已被管理员删除", args.Content, args.Url)
+                        MsgContent = string.Format("您在投稿<a href='{1}'>{0}</a>中的评论已被管理员删除", Enc(args.Content), args.Url)
                     });
                     return;
 
@@ -243,7 +245,7 @@ namespace GmGard.Services
                         Sender = args.Actor,
                         Recipient = args.NoticeUser,
                         MsgTitle = "删除通知",
-                        MsgContent = string.Format("您在投稿<a href='{1}'>{0}</a>中的回复已被管理员删除", args.Content, args.Url)
+                        MsgContent = string.Format("您在投稿<a href='{1}'>{0}</a>中的回复已被管理员删除", Enc(args.Content), args.Url)
                     });
                     return;
 
@@ -283,7 +285,7 @@ namespace GmGard.Services
                         Sender = "admin",
                         Recipient = args.NoticeUser,
                         MsgTitle = "提及通知",
-                        MsgContent = string.Format("<a href='/User/{0}'>{0}</a> 在 <a href='{2}'>{1}</a>中提到了您。", args.Actor, args.Content, args.Url),
+                        MsgContent = string.Format("<a href='/User/{0}'>{0}</a> 在 <a href='{2}'>{1}</a>中提到了您。", Enc(args.Actor), Enc(args.Content), args.Url),
                         IsSenderDelete = true
                     });
                     return;
@@ -316,7 +318,7 @@ namespace GmGard.Services
                         Recipient = args.NoticeUser,
                         MsgTitle = "悬赏结贴通知",
                         // args.Content = bountyTitle, args.Url = link, args.Actor = who accepted
-                        MsgContent = string.Format("<a href='/User/{0}'>{0}</a> 将您的回答在 <a href='{2}'>{1}</a> 中选为最佳/热心助人答案，奖励已发放。", args.Actor, args.Content, args.Url),
+                        MsgContent = string.Format("<a href='/User/{0}'>{0}</a> 将您的回答在 <a href='{2}'>{1}</a> 中选为最佳/热心助人答案，奖励已发放。", Enc(args.Actor), Enc(args.Content), args.Url),
                         IsSenderDelete = true
                     });
                     return;
@@ -327,7 +329,7 @@ namespace GmGard.Services
                         Sender = "admin",
                         Recipient = args.NoticeUser,
                         MsgTitle = "悬赏过期通知",
-                        MsgContent = string.Format("您的悬赏 <a href='{1}'>{0}</a> 已过期且无有效回答，已自动关闭，押金已退还。", args.Content, args.Url),
+                        MsgContent = string.Format("您的悬赏 <a href='{1}'>{0}</a> 已过期且无有效回答，已自动关闭，押金已退还。", Enc(args.Content), args.Url),
                         IsSenderDelete = true
                     });
                     return;
@@ -338,7 +340,7 @@ namespace GmGard.Services
                         Sender = "admin",
                         Recipient = args.NoticeUser,
                         MsgTitle = "悬赏自动结贴通知",
-                        MsgContent = string.Format("您的悬赏 <a href='{2}'>{1}</a> 因过期未手动结贴，系统已自动选定最佳答案 (作者: {0})。押金规则按站点设定处理。", args.Actor, args.Content, args.Url),
+                        MsgContent = string.Format("您的悬赏 <a href='{2}'>{1}</a> 因过期未手动结贴，系统已自动选定最佳答案 (作者: {0})。押金规则按站点设定处理。", Enc(args.Actor), Enc(args.Content), args.Url),
                         IsSenderDelete = true
                     });
                     return;

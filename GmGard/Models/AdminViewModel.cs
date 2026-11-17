@@ -38,7 +38,6 @@ namespace GmGard.Models
         public List<int> MonthlyReward { get; set; }
         [ModelBinder(BinderType = typeof(StringSplitIntListModelBinder))]
         public List<int> NoRankCategories { get; set; }
-        public bool EnableImageProxy { get; set; }
         [ReadOnlySetting, JsonIgnore]
         public string HttpsPort { get; set; } = "443";
         [ReadOnlySetting, JsonIgnore]

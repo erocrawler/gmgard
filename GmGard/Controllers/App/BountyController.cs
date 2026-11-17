@@ -313,13 +313,15 @@ namespace GmGard.Controllers.App
             if (string.IsNullOrWhiteSpace(req.Content) || req.Content.Trim().Length < cfg_.MinContentLength) return BadRequest(new { error = $"内容至少{cfg_.MinContentLength}字" });
             if (req.Content.Length > cfg_.MaxContentLength) return BadRequest(new { error = $"内容最多{cfg_.MaxContentLength}字" });
             if (req.Prize < cfg_.MinPrize) return BadRequest(new { error = $"最佳答案奖励至少{cfg_.MinPrize}" });
+            if (req.Prize > cfg_.MaxReward) return BadRequest(new { error = $"最佳答案奖励最多{cfg_.MaxReward}" });
             if (req.HelpfulReward < 0) req.HelpfulReward = 0;
+            if (req.HelpfulReward > cfg_.MaxReward) return BadRequest(new { error = $"热心助人奖励最多{cfg_.MaxReward}" });
             if (!cfg_.AllowZeroHelpfulReward && req.HelpfulReward == 0) return BadRequest(new { error = $"必须设置热心助人奖励至少{cfg_.MinHelpfulReward}" });
             if (req.HelpfulReward != 0 && req.HelpfulReward < cfg_.MinHelpfulReward)
                 return BadRequest(new { error = $"热心助人奖励至少{cfg_.MinHelpfulReward}，不需要可设0" });
 
             int deposit = req.Prize;
-            int totalCost = req.Prize + deposit + req.HelpfulReward;
+            int totalCost = checked(req.Prize + deposit + req.HelpfulReward);
             if (totalCost < cfg_.MinTotal)
                 return BadRequest(new { error = $"总计至少{cfg_.MinTotal}棒棒糖(最佳{req.Prize}+押金{deposit}+热心助人{req.HelpfulReward}={totalCost})" });
 
@@ -339,7 +341,7 @@ namespace GmGard.Controllers.App
             // Sanitize HTML content (like BlogController does) - allow smiley/img etc via sanitizer config
             var sanitizedContent = sanitizer_.Sanitize(req.Content.Trim());
             // Keep title plain text - strip tags
-            var sanitizedTitle = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(req.Title.Trim(), "<.*?>", "")).Trim();
+            var sanitizedTitle = System.Text.RegularExpressions.Regex.Replace(req.Title.Trim(), "<.*?>", "").Trim();
 
             var bounty = new Bounty
             {
@@ -734,17 +736,19 @@ namespace GmGard.Controllers.App
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-            var bounty = await db_.Bounties.FirstOrDefaultAsync(b => b.BountyId == id && !b.IsDeleted);
+            var bounty = await db_.Bounties.Include(b => b.Answers).FirstOrDefaultAsync(b => b.BountyId == id && !b.IsDeleted);
             if (bounty == null) return NotFound();
             if (bounty.Author != User.Identity.Name) return Forbid();
             if (bounty.IsAccepted) return BadRequest(new { error = "已结贴不能删除" });
             if (bounty.Answers != null && bounty.Answers.Any()) return BadRequest(new { error = "已有回答不能删除" });
+            // 已关闭(Close 或到期自动结贴)的悬赏在关闭时已经全额退款,删除时不能再退一次
+            bool alreadyRefunded = bounty.CloseDate.HasValue;
 
             // refund total
             using var userTx = await udb_.Database.BeginTransactionAsync();
             try
             {
-                var user = await udb_.Users.SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                var user = alreadyRefunded ? null : await udb_.Users.SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
                 if (user != null)
                 {
                     int total = bounty.Prize + bounty.Deposit + bounty.HelpfulReward;

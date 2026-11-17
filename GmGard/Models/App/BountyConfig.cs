@@ -7,6 +7,9 @@ namespace GmGard.Models.App
         // Minimum best answer reward (最佳答案奖励)
         public int MinPrize { get; set; } = 40;
 
+        // Maximum single reward (最佳答案/热心奖励各自上限),防止金额溢出
+        public int MaxReward { get; set; } = 100000;
+
         // Minimum helpful reward pool (热心奖励最低)
         public int MinHelpfulReward { get; set; } = 20;
 
