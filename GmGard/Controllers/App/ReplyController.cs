@@ -218,7 +218,7 @@ namespace GmGard.Controllers.App
                         Type = (Comment.CommentType)p.post.IdType,
                         CreateDate = p.post.PostDate,
                         Rating = r == null ? new int?() : r.value,
-                        Replies = p.post.Replies.Select(rr => new CommentReply
+                        Replies = p.post.Replies.OrderBy(rr => rr.ReplyDate).ThenBy(rr => rr.ReplyId).Select(rr => new CommentReply
                         {
                             ReplyId = rr.ReplyId,
                             Author = rr.Author,
@@ -242,7 +242,7 @@ namespace GmGard.Controllers.App
                     IsDownvoted = p.uv == null ? new bool?() : p.uv.Value == -1,
                     Type = (Comment.CommentType)p.post.IdType,
                     CreateDate = p.post.PostDate,
-                    Replies = p.post.Replies.Select(rr => new CommentReply
+                    Replies = p.post.Replies.OrderBy(rr => rr.ReplyDate).ThenBy(rr => rr.ReplyId).Select(rr => new CommentReply
                     {
                         ReplyId = rr.ReplyId,
                         Author = rr.Author,

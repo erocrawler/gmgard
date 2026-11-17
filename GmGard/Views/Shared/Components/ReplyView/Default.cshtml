@@ -91,7 +91,7 @@
                     @if (post.Replies.Count > 0)
                     {
                         <ul data-postid="@post.PostId">
-                            @foreach (var reply in post.Replies)
+                            @foreach (var reply in post.Replies.OrderBy(r => r.ReplyDate).ThenBy(r => r.ReplyId))
                             {
                                 await Html.RenderPartialAsync("ReplyPartial.cshtml", reply);
                             }
