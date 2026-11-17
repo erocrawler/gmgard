@@ -107,7 +107,7 @@
                                     }
                                 </div>
                                 <div class="font-medium mt-1 leading-snug truncate">@b.Title</div>
-                                <div class="text-xs opacity-70 mt-1 line-clamp-2">@((MarkupString)Strip(b.Content))</div>
+                                <div class="text-xs opacity-70 mt-1 line-clamp-2">@Strip(b.Content)</div>
                                 <div class="flex gap-2 mt-2 flex-wrap text-xs items-center">
                                     <span class="badge badge-outline badge-sm">最佳<span class="ico-lolly ico-lolly-sm ml-1"></span>@b.Prize</span>
                                     @if (b.HelpfulReward > 0)

@@ -485,6 +485,15 @@ namespace GmGard.Controllers
             if (ModelState.IsValid)
             {
                 Blog originalblog = _db.Blogs.Include(b => b.option).SingleOrDefault(b => b.BlogID == id);
+                if (originalblog == null)
+                {
+                    return NotFound();
+                }
+                // 与 GET 版一致:只有作者、管理员、版主可以编辑(此前 POST 缺少这个检查,任何登录用户都能改任意投稿)
+                if (originalblog.Author != User.Identity.Name && !User.IsInRole("Administrator") && !User.IsInRole("Moderator"))
+                {
+                    return Forbid();
+                }
                 bool hasupload = false;
                 List<string> dellist = null;
                 List<string> newlist = null;
@@ -874,6 +883,11 @@ namespace GmGard.Controllers
             {
                 return NotFound();
             }
+            BlogLinks = (BlogLinks ?? new BlogLink[0]).Where(b => b != null && !string.IsNullOrWhiteSpace(b.url)).ToArray();
+            if (BlogLinks.Length > 0 && !BlogHelper.checkBlogLinks(BlogLinks))
+            {
+                return BadRequest(new { error = "链接地址不得包含javascript" });
+            }
             var links = BlogHelper.GetBlogLink(blog.Links);
             if (links != null)
             {
@@ -882,7 +896,7 @@ namespace GmGard.Controllers
             blog.Links = Newtonsoft.Json.JsonConvert.SerializeObject(BlogLinks.Where(b => !string.IsNullOrWhiteSpace(b.url)));
             if (BlogPasswords != null)
             {
-                BlogPasswords = BlogPasswords.Where(b => !string.IsNullOrWhiteSpace(b.url)).ToArray();
+                BlogPasswords = BlogPasswords.Where(b => b != null && !string.IsNullOrWhiteSpace(b.url)).ToArray();
                 if (BlogPasswords.Length > 0)
                 {
                     blog.Content = blog.Content + string.Format("<p>{0:yyyy年MM月dd日 HH:mm} 补档：</p>", DateTime.Now);

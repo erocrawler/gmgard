@@ -267,7 +267,7 @@ namespace GmGard.Models
                 {
                     if (!string.IsNullOrWhiteSpace(item.url))
                     {
-                        pass += string.Format("{0}：<span class='label label-inverse'>{1}</span><br />", (string.IsNullOrWhiteSpace(item.name) ? "密码" : item.name), item.url);
+                        pass += string.Format("{0}：<span class='label label-inverse'>{1}</span><br />", System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(item.name) ? "密码" : item.name), System.Net.WebUtility.HtmlEncode(item.url));
                     }
                 }
                 content += string.Format("<p>{0}</p>", pass);
