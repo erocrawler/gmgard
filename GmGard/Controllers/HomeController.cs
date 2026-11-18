@@ -569,8 +569,7 @@ namespace GmGard.Controllers
             {
                 var baseHost = constantUtil.AppHost.TrimEnd('/');
                 if (string.IsNullOrEmpty(p)) return baseHost + "/";
-                if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || p.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                    return p;
+                // 不再接受绝对地址:path 一律拼在站点前缀之后(原来 http(s):// 开头会被原样转发 = 开放重定向)
                 return $"{baseHost}/{p}";
             }
 
