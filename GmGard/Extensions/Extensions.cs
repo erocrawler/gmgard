@@ -120,6 +120,10 @@ namespace GmGard.Extensions
                 self.NoRate = modified.NoRate;
                 self.NoApprove = modified.NoApprove;
             }
+            if (util.CheckAdmin())
+            {
+                self.NoComment = modified.NoComment; // Only admin (same rule as OverrideOption and the options UI)
+            }
             self.LockDesc = modified.LockDesc;
             return self;
         }

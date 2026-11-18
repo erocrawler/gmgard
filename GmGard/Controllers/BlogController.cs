@@ -608,11 +608,8 @@ namespace GmGard.Controllers
                 var mention = new MentionHandler(_udb);
                 blog.Content = mention.ParseMentions(blog.Content);
                 mention.SendMentionMsg(_msgUtil, originalblog.Author, originalblog.BlogTitle, Url.Action("Details", new { id = originalblog.BlogID }));
-                if (blog.Option != null && (originalblog.option != null || !blog.Option.IsDefault()))
-                {
-                    originalblog.option = blog.Option;
-                }
-                // else image uploaded before and did not changed
+                // 注意:选项已在上方经 MergeWith / OverrideOption 按权限过滤并写入 originalblog.option。
+                // 此处不能再用请求里的 blog.Option 整体覆盖(会绕过权限过滤,让作者自己设置管理员专属选项)。
                 string[] tags = TagUtil.SplitTags(blog.BlogTags);
                 List<Tag> updatedTags = null;
                 try
