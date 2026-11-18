@@ -211,6 +211,11 @@ namespace GmGard.Controllers
                     throw new BlogException();
                 }
                 List<IFormFile> BlogImages = new List<IFormFile>();
+                if (Request.Form.Files.Count > ImageGuard.MaxFilesPerRequest)
+                {
+                    ModelState.AddModelError("", "一次最多上传" + ImageGuard.MaxFilesPerRequest + "张图片");
+                    throw new BlogException();
+                }
                 if (Request.Form.Files.Count > 0)
                 {
                     for (int i = 0; i < Request.Form.Files.Count; i++)
@@ -456,6 +461,11 @@ namespace GmGard.Controllers
         {
             ViewBag.CategoryList = _catUtil.GetCategoryDropdown(blog.CategoryID);
             ViewBag.id = id;
+            if (files != null && files.Length > ImageGuard.MaxFilesPerRequest)
+            {
+                ModelState.AddModelError("", "一次最多上传" + ImageGuard.MaxFilesPerRequest + "张图片");
+                return View(blog);
+            }
             if (!_catUtil.GetCategory(blog.CategoryID).LinkOptional)
             {
                 if (blog.BlogLinks == null)

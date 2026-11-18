@@ -56,8 +56,11 @@ namespace GmGard.Services
             var filename = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.ToString().Trim('"');
             var imgname = GenerateImageName(filename);
 
+            await ImageGuard.Gate.WaitAsync();
+            try
+            {
             using var stream = file.OpenReadStream();
-            using var img = await Image.LoadAsync(stream);
+            using var img = await ImageGuard.LoadAsync(stream);
 
             img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 2400)));
 
@@ -77,6 +80,11 @@ namespace GmGard.Services
             }
 
             return (imgname, await mainUpload);
+            }
+            finally
+            {
+                ImageGuard.Gate.Release();
+            }
         }
 
         public string GenerateImageName(string filename = null)
@@ -95,7 +103,7 @@ namespace GmGard.Services
 
         public async Task<bool> SaveImageAsync(byte[] image, string imgname)
         {
-            using (var img = Image.Load(image))
+            using (var img = ImageGuard.Load(image))
             {
                 img.Mutate(ctx => ctx.Resize(ImageUtil.GetMaxSize(img, 1200)));
                 using (var ms = new MemoryStream())

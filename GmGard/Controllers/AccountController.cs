@@ -336,7 +336,7 @@ namespace GmGard.Controllers
                         _db.SaveChanges();
                     }
 
-                    if (model.avatar != null)
+                    if (model.avatar != null && model.avatar.Length <= 4 * 1048576)
                     {
                         byte[] fileData = null;
                         using (var reader = new BinaryReader(model.avatar.OpenReadStream()))
