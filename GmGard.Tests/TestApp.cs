@@ -20,6 +20,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 namespace GmGard.Tests
@@ -72,6 +75,16 @@ namespace GmGard.Tests
             services.AddSingleton<IConfiguration>(config);
             services.Configure<AppSettingsModel>(config.GetSection("ApplicationSettings"));
             services.Configure<DataSettingsModel>(config.GetSection("DataSettings"));
+            services.Configure<SiteConfig>(o =>
+            {
+                var site = new SiteInfo { Name = "test", Host = "gmgard.com", StaticHost = "static.gmgard.com", AppHost = "app.gmgard.com", Title = "test", Desc = "test", Logo = "" };
+                o.Sites = new List<SiteInfo> { site };
+                o.DevSite = site;
+                o.AppHostOrigins = new string[0];
+                o.DevAppHostOrigins = new string[0];
+                o.SmileyPaths = new string[0];
+            });
+            services.Configure<GmGard.Models.App.BountyConfig>(config.GetSection("BountyConfig"));   // 缺省值 = 生产默认值
 
             // 站里真实的服务(与 Startup.cs 一致)
             services.AddSingleton<BackgroundTaskQueue>();
@@ -103,12 +116,16 @@ namespace GmGard.Tests
             services.AddScoped<IRecommendationProvider, FakeRecommendation>();
             services.AddSingleton<IVisitCounter, FakeVisitCounter>();
             services.AddScoped<IUrlHelper>(_ => new FakeUrlHelper());
+            services.AddSingleton<IWebHostEnvironment>(new FakeWebHostEnvironment());
 
             Root = services.BuildServiceProvider(validateScopes: false);
 
             using var scope = Root.CreateScope();
             scope.ServiceProvider.GetRequiredService<BlogContext>().Database.EnsureCreated();
-            scope.ServiceProvider.GetRequiredService<UsersContext>().Database.EnsureCreated();
+            var udbInit = scope.ServiceProvider.GetRequiredService<UsersContext>();
+            udbInit.Database.EnsureCreated();
+            // UserQuest.Title 外键默认指向 TitleID=0(生产库里有这条默认称号)
+            udbInit.Database.ExecuteSqlRaw("INSERT INTO \"TitleConfigs\" (\"TitleID\", \"TitleName\") SELECT 0, 'default' WHERE NOT EXISTS (SELECT 1 FROM \"TitleConfigs\" WHERE \"TitleID\" = 0)");
             Available = true;
         }
 
@@ -122,8 +139,10 @@ namespace GmGard.Tests
             var sp = scope.ServiceProvider;
             var ctx = new DefaultHttpContext { RequestServices = sp };
             ctx.Session = new MemorySession();
+            // 默认按"空表单"处理(BlogController.Create 会读 Request.Form.Files)。不要直接给 Request.Form 赋值:
+            // 那样 HasFormContentType 会永远为 true,JSON 请求就被当成表单。需要 JSON 的测试自己设 ContentType 和 Body。
             ctx.Request.ContentType = "application/x-www-form-urlencoded";
-            ctx.Request.Form = new FormCollection(new Dictionary<string, StringValues>(), new FormFileCollection());
+            ctx.Request.Body = new MemoryStream();
             if (username != null)
             {
                 var claims = new List<Claim> { new Claim(ClaimTypes.Name, username) };
@@ -187,6 +206,163 @@ namespace GmGard.Tests
             return b.BlogID;
         }
 
+        /// <summary>直接写入一条求物悬赏(绕过 Create,用于构造各种状态)。closed=true 表示已 Close(CloseDate 有值)。</summary>
+        public int SeedBounty(string author, int prize = 40, int deposit = 40, int helpfulReward = 20, bool closed = false, bool accepted = false, bool deleted = false)
+        {
+            using var s = NewScope();
+            var db = s.ServiceProvider.GetRequiredService<BlogContext>();
+            var b = new Bounty
+            {
+                Title = "求物", Content = "<p>求一个东西,内容足够长。</p>", Author = author, ImageUrls = "[]",
+                CreateDate = DateTime.Now, IsDeleted = deleted, Prize = prize, Deposit = deposit, HelpfulReward = helpfulReward,
+                IsAccepted = accepted, ViewCount = 0, ExpiresAt = DateTime.Now.AddDays(30),
+                CloseDate = closed ? DateTime.Now : (DateTime?)null, Answers = new List<Answer>(),
+            };
+            db.Bounties.Add(b);
+            db.SaveChanges();
+            return b.BountyId;
+        }
+
+        /// <summary>直接写入一条悬赏回答。</summary>
+        public int SeedAnswer(int bountyId, string author, string content = "<p>这是回答内容</p>")
+        {
+            using var s = NewScope();
+            var db = s.ServiceProvider.GetRequiredService<BlogContext>();
+            var a = new Answer { BountyId = bountyId, Author = author, Content = content, ImageUrl = "[]", CreateDate = DateTime.Now };
+            db.Answers.Add(a);
+            db.SaveChanges();
+            return a.AnswerId;
+        }
+
+        /// <summary>直接写入一条评论/留言帖(ItemType.Blog 且 itemId 为 0/-1 时即意见反馈/问题举报留言板)。</summary>
+        public int SeedPost(ItemType type, int itemId, string author, string content = "<p>评论内容</p>")
+        {
+            using var s = NewScope();
+            var db = s.ServiceProvider.GetRequiredService<BlogContext>();
+            var p = new Post { Author = author, Content = content, PostDate = DateTime.Now, IdType = type, ItemId = itemId, Rating = 0 };
+            db.Posts.Add(p);
+            db.SaveChanges();
+            return p.PostId;
+        }
+
+        /// <summary>为已存在的用户写入任务记录(签到补签券等)。</summary>
+        public void SeedQuest(string username, int punchInTickets = 0)
+        {
+            using var s = NewScope();
+            var udb = s.ServiceProvider.GetRequiredService<UsersContext>();
+            int uid = udb.Users.Single(u => u.UserName == username).Id;
+            // UserQuest.Title 外键默认指向 TitleID=0(生产库里有这条默认称号)
+            udb.Database.ExecuteSqlRaw("INSERT INTO \"TitleConfigs\" (\"TitleID\", \"TitleName\") SELECT 0, 'default' WHERE NOT EXISTS (SELECT 1 FROM \"TitleConfigs\" WHERE \"TitleID\" = 0)");
+            udb.UserQuests.Add(new UserQuest { UserId = uid, PunchInTicket = punchInTickets });
+            udb.SaveChanges();
+        }
+
+        /// <summary>直接写入一个抽奖活动配置,返回 Id。</summary>
+        public int SeedRaffleConfig(int cost, DateTime start, DateTime end)
+        {
+            using var s = NewScope();
+            var udb = s.ServiceProvider.GetRequiredService<UsersContext>();
+            var cfg = new RaffleConfig { Title = "测试抽奖", EventStart = start, EventEnd = end, RaffleCost = cost, Image = "" };
+            udb.RaffleConfigs.Add(cfg);
+            udb.SaveChanges();
+            return cfg.Id;
+        }
+
+        /// <summary>
+        /// 与 Controller&lt;T&gt; 相同,但额外带上 NameIdentifier 声明(值为用户 Id)。
+        /// UserManager.GetUserAsync(User) 依赖该声明;需要它的控制器(如 RaffleController)用这个方法创建。用户必须已存在。
+        /// </summary>
+        public T ControllerWithId<T>(string username, params string[] roles) where T : ControllerBase
+        {
+            var c = Controller<T>(username, roles);
+            if (username != null)
+            {
+                int uid = QueryUsers(db => db.Users.Single(u => u.UserName == username).Id);
+                var claims = new List<Claim> { new Claim(ClaimTypes.Name, username), new Claim(ClaimTypes.NameIdentifier, uid.ToString()) };
+                claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+                c.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test", ClaimTypes.Name, ClaimTypes.Role));
+            }
+            return c;
+        }
+
+        /// <summary>
+        /// 与 Controller&lt;T&gt; 相同的上下文设置,但由调用方用 factory 显式构造控制器。
+        /// 用于构造函数里有夹具未注册依赖(如 SignInManager、EmailSender)的控制器:factory 传 null 占位,被测 action 不用到它们。
+        /// </summary>
+        public T ControllerWith<T>(string username, System.Func<IServiceProvider, T> factory, params string[] roles) where T : Controller
+        {
+            var scope = Root.CreateScope();
+            var sp = scope.ServiceProvider;
+            var ctx = new DefaultHttpContext { RequestServices = sp };
+            ctx.Session = new MemorySession();
+            // 默认按"空表单"处理(BlogController.Create 会读 Request.Form.Files)。不要直接给 Request.Form 赋值:
+            // 那样 HasFormContentType 会永远为 true,JSON 请求就被当成表单。需要 JSON 的测试自己设 ContentType 和 Body。
+            ctx.Request.ContentType = "application/x-www-form-urlencoded";
+            ctx.Request.Body = new MemoryStream();
+            if (username != null)
+            {
+                var claims = new List<Claim> { new Claim(ClaimTypes.Name, username) };
+                claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+                ctx.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test", ClaimTypes.Name, ClaimTypes.Role));
+            }
+            sp.GetRequiredService<IHttpContextAccessor>().HttpContext = ctx;
+            var c = factory(sp);
+            c.ControllerContext = new ControllerContext(new ActionContext(ctx, new RouteData(), new ControllerActionDescriptor()));
+            c.Url = new FakeUrlHelper();
+            c.TempData = new TempDataDictionary(ctx, new NullTempDataProvider());
+            return c;
+        }
+
+        /// <summary>写入一个卡池:为每个稀有度写一个 GachaItem,并把它们加入指定卡池(权重 1)。</summary>
+        public void SeedGachaPool(GachaPool.PoolName pool, params int[] rarities)
+        {
+            using var s = NewScope();
+            var udb = s.ServiceProvider.GetRequiredService<UsersContext>();
+            foreach (int r in rarities)
+            {
+                var item = new GachaItem { Name = "item" + r + "_" + Guid.NewGuid().ToString("N").Substring(0, 6), Title = "t", Description = "d", Rarity = r };
+                udb.GachaItems.Add(item);
+                udb.SaveChanges();
+                udb.GachaPools.Add(new GachaPool { Name = pool, ItemId = item.Id, Weight = 1 });
+                udb.SaveChanges();
+            }
+        }
+
+        /// <summary>直接写入一条站内信。</summary>
+        public int SeedMessage(string sender, string recipient, string title = "标题", string content = "正文", bool isRead = false)
+        {
+            using var s = NewScope();
+            var udb = s.ServiceProvider.GetRequiredService<UsersContext>();
+            var m = new Message { Sender = sender, Recipient = recipient, MsgTitle = title, MsgContent = content, MsgDate = DateTime.Now, IsRead = isRead };
+            udb.Messages.Add(m);
+            udb.SaveChanges();
+            return m.MsgId;
+        }
+
+        /// <summary>直接写入一条评论下的回复。</summary>
+        public int SeedReply(int postId, string author, string content = "<p>回复内容</p>")
+        {
+            using var s = NewScope();
+            var db = s.ServiceProvider.GetRequiredService<BlogContext>();
+            var r = new Reply { PostId = postId, Author = author, Content = content, ReplyDate = DateTime.Now };
+            db.Replies.Add(r);
+            db.SaveChanges();
+            return r.ReplyId;
+        }
+
+        /// <summary>生产库里存在的三个占位博客:0=意见建议、-1=问题举报(也是站点规则页)、-2=历史排行。评论/举报板的帖子挂在它们上面。</summary>
+        public void SeedPlaceholderBlogs()
+        {
+            int cat = SeedCategory(name: "占位");
+            foreach (int id in new[] { 0, -1, -2 })
+            {
+                int tmp = SeedBlog("admin", cat, title: "占位" + id);
+                using var s = NewScope();
+                var db = s.ServiceProvider.GetRequiredService<BlogContext>();
+                db.Database.ExecuteSqlRaw("UPDATE \"Blogs\" SET \"BlogID\" = {0} WHERE \"BlogID\" = {1}", id, tmp);
+            }
+        }
+
         /// <summary>用全新的上下文读数据(避免读到测试里控制器上下文的缓存)。</summary>
         public T QueryData<T>(Func<BlogContext, T> f) { using var s = NewScope(); return f(s.ServiceProvider.GetRequiredService<BlogContext>()); }
         public T QueryUsers<T>(Func<UsersContext, T> f) { using var s = NewScope(); return f(s.ServiceProvider.GetRequiredService<UsersContext>()); }
@@ -206,6 +382,16 @@ namespace GmGard.Tests
                 cmd.ExecuteNonQuery();
             }
         }
+    }
+
+    public class FakeWebHostEnvironment : IWebHostEnvironment
+    {
+        public string ApplicationName { get; set; } = "GmGard.Tests";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+        public string ContentRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public string EnvironmentName { get; set; } = "Testing";
+        public string WebRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     public class FakeUpload : IUpload
