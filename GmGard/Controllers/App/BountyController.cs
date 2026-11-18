@@ -330,7 +330,8 @@ namespace GmGard.Controllers.App
             if (user.Points < totalCost)
                 return BadRequest(new { error = "棒棒糖不足", current = user.Points, need = totalCost });
 
-            expUtil_.AddPoint(user, -totalCost);
+            if (!expUtil_.TryChangePoints(user, -totalCost))
+                return BadRequest(new { error = "棒棒糖不足", current = user.Points, need = totalCost });
             await udb_.SaveChangesAsync();
 
             // Merge uploaded + provided urls - JSON list storage (fixes ";" in URLs like 1743)

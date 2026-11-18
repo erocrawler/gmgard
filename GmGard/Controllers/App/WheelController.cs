@@ -383,7 +383,11 @@ namespace GmGard.Controllers.App
             {
                 return BadRequest(new { points = user.Points });
             }
-            _expUtil.AddPoint(user, -_wheelConfig.Value.WheelACost);
+            await using var tx = await _udb.Database.BeginTransactionAsync();
+            if (!_expUtil.TryChangePoints(user, -_wheelConfig.Value.WheelACost))
+            {
+                return BadRequest(new { points = user.Points });
+            }
             var prize = DrawPrize(_wheelConfig.Value.WheelAPrizes);
             var v = new UserVoucher
             {
@@ -397,6 +401,7 @@ namespace GmGard.Controllers.App
             _udb.UserVouchers.Add(v);
             SpinWheelResult result = await ProcessPrizeAsync(user, prize);
             await _udb.SaveChangesAsync();
+            await tx.CommitAsync();
             return Json(result);
         }
 

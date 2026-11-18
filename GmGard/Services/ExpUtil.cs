@@ -216,47 +216,73 @@ namespace GmGard.Services
                 Priority = CacheItemPriority.Normal
             });
 
-            //Also add point
-            user.Points += expCount;
-            _cache.Set<int?>(PointsCacheKey + username, user.Points, new MemoryCacheEntryOptions 
-            { 
-                SlidingExpiration = TimeSpan.FromMinutes(30),
-                Priority = CacheItemPriority.Normal
-            });
+            //Also add point (atomic UPDATE; see TryChangePoints)
+            if (expCount != 0)
+            {
+                TryChangePoints(user, expCount, allowOverdraft: true);
+            }
             return;
+        }
+
+        /// <summary>
+        /// 原子地变更积分:数据库里一条 UPDATE ... SET Points = Points + @delta,不再"读-改-写",
+        /// 并发请求不会互相覆盖(双花、丢更新)。
+        /// allowOverdraft=false(默认)时额外要求 Points + delta >= 0:余额不足返回 false,且不扣。
+        /// 扣费的调用方必须检查返回值。调用方已开事务时,UPDATE 在该事务内执行(回滚时一并回滚)。
+        /// 成功后会把 user.Points 同步为数据库里的新值,并让 EF 不再把旧值写回。
+        /// </summary>
+        public bool TryChangePoints(UserProfile user, int delta, bool allowOverdraft = false)
+        {
+            if (user.Id == 0)
+            {
+                // 还没入库的新实体:保持原行为,由调用方 SaveChanges 时一并写入
+                user.Points += delta;
+                return true;
+            }
+            int id = user.Id;
+            var q = _udb.Users.Where(u => u.Id == id);
+            if (delta < 0 && !allowOverdraft)
+            {
+                q = q.Where(u => u.Points + delta >= 0);
+            }
+            int rows = q.ExecuteUpdate(s => s.SetProperty(u => u.Points, u => u.Points + delta));
+            if (rows == 0)
+            {
+                return false;
+            }
+            int newPoints = _udb.Users.AsNoTracking().Where(u => u.Id == id).Select(u => u.Points).Single();
+            user.Points = newPoints;
+            var entry = _udb.Entry(user);
+            if (entry.State != EntityState.Detached)
+            {
+                var prop = entry.Property(u => u.Points);
+                prop.OriginalValue = newPoints;
+                prop.IsModified = false;
+            }
+            _cache.Remove(PointsCacheKey + user.UserName);
+            return true;
         }
 
         public void AddPoint(UserProfile user, int point)
         {
-            user.Points += point;
-            _cache.Set<int?>(PointsCacheKey + user.UserName, user.Points, new MemoryCacheEntryOptions 
-            { 
-                SlidingExpiration = TimeSpan.FromMinutes(30),
-                Priority = CacheItemPriority.Normal
-            });
+            TryChangePoints(user, point, allowOverdraft: true);
         }
 
         public async Task addPointAsync(string username, int pCount)
         {
             var user = await _udb.Users.SingleAsync(u => u.UserName == username);
-            AddPoint(user, pCount);
-            await _udb.SaveChangesAsync();
+            TryChangePoints(user, pCount, allowOverdraft: true);
         }
 
         public async Task<Tuple<bool, int>> trySpendPointAsync(string username, int amount)
         {
             var user = await _udb.Users.SingleAsync(u => u.UserName == username);
-            int remain = user.Points;
-            if (user.Points >= amount)
+            if (!TryChangePoints(user, -amount))
             {
-                await addPointAsync(username, -amount);
-                remain -= amount;
-            }
-            else
-            {
+                int remain = await _udb.Users.AsNoTracking().Where(u => u.Id == user.Id).Select(u => u.Points).SingleAsync();
                 return new Tuple<bool, int>(false, remain);
             }
-            return new Tuple<bool, int>(true, remain);
+            return new Tuple<bool, int>(true, user.Points);
         }
 
         public bool HasSigned(out int ConsecutiveSign)

@@ -63,7 +63,16 @@ namespace GmGard.Controllers.App
                     ErrorMessage = "棒棒糖不足",
                 });
             }
-            expUtil_.AddPoint(user, -currentCost);
+            // 扣费和写抽卡记录放在同一个事务里;扣费是原子 UPDATE(余额不足返回 false),并发十连不会双花
+            await using var tx = await db_.Database.BeginTransactionAsync();
+            if (!expUtil_.TryChangePoints(user, -currentCost))
+            {
+                return Json(new GachaResult
+                {
+                    Success = false,
+                    ErrorMessage = "棒棒糖不足",
+                });
+            }
             var result = new List<GachaItem>(count);
             for (int i = 0; i < count; ++i)
             {
@@ -82,6 +91,7 @@ namespace GmGard.Controllers.App
                 PoolName = request.Pool,
             }));
             await db_.SaveChangesAsync();
+            await tx.CommitAsync();
 
             var bonusResult = await gachaBonus_.HandleForItemsAsync(result);
 

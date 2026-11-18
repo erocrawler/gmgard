@@ -75,6 +75,8 @@ namespace GmGard.Controllers.App
         [HttpPost]
         public async Task<ActionResult> Do([FromBody]PunchInRequest request)
         {
+            // 同一用户的并发签到串行化:"此日已签"的检查和写入、补签券/积分扣减不会被同时通过
+            using var userLock = await UserLock.EnterAsync(User.Identity.Name);
             var user = await _udb.Users.Include(u => u.PunchIns).Include(u => u.quest).SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
             var d = request.Date.GetValueOrDefault(DateTime.Now);
             if (d.Date > DateTime.Today || d.Date < ExpUtil.FirstSignHistoryDate || d.Date < user.CreateDate.Date)
@@ -126,7 +128,7 @@ namespace GmGard.Controllers.App
                 else
                 {
                     int cost = MakeUpCost(d.Date);
-                    if (user.Points < cost)
+                    if (user.Points < cost || !_expUtil.TryChangePoints(user, -cost))
                     {
                         return BadRequest(new PunchInResult
                         {
@@ -136,7 +138,6 @@ namespace GmGard.Controllers.App
                             Points = user.Points
                         });
                     }
-                    user.Points -= cost;
                 }
             }
             else

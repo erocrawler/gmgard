@@ -76,6 +76,8 @@ namespace GmGard.Controllers.App
             {
                 return BadRequest();
             }
+            // 每人一次:同一用户的并发请求串行化,"是否已参与"的检查和写入不会被同时通过
+            using var userLock = await UserLock.EnterAsync(User.Identity.Name);
             if (await HasRaffleAsync(config))
             {
                 return Conflict();
@@ -85,7 +87,11 @@ namespace GmGard.Controllers.App
             {
                 return BadRequest();
             }
-            _expUtil.AddPoint(user, -config.RaffleCost);
+            await using var tx = await _udb.Database.BeginTransactionAsync();
+            if (!_expUtil.TryChangePoints(user, -config.RaffleCost))
+            {
+                return BadRequest();
+            }
             var r = new UserRaffle
             {
                 User = user,
@@ -95,6 +101,7 @@ namespace GmGard.Controllers.App
             };
             _udb.UserRaffles.Add(r);
             await _udb.SaveChangesAsync();
+            await tx.CommitAsync();
             return Ok();
         }
 
