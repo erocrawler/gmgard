@@ -111,7 +111,7 @@ namespace GmGard.Controllers.App
                     User.Identity.Name,
                     userCode.User.UserName,
                     "邀请码删除通知",
-                    string.Format("您的邀请码已被管理员删除<br>原因：<br>{0}", reason));
+                    string.Format("您的邀请码已被管理员删除<br>原因：<br>{0}", System.Net.WebUtility.HtmlEncode(reason ?? string.Empty)));
             }
             udb_.UserCodes.Remove(userCode);
             await udb_.SaveChangesAsync();

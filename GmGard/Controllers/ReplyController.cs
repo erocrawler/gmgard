@@ -310,7 +310,7 @@ namespace GmGard.Controllers
             return new EmptyResult();
         }
 
-        [Authorize]
+        [HttpPost, Authorize]
         public async Task<ActionResult> RatePost(int postid, int value)
         {
             if (Math.Abs(value) != 1)

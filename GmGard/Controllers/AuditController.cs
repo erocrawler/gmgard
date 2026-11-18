@@ -209,7 +209,7 @@ namespace GmGard.Controllers
             if (denyScore >= setting.BlogDenyThreshold && setting.BlogDenyThreshold > 0)
             {
                 DenyBlog(blog, "admin", true, latestAudits.Aggregate(new StringBuilder("投稿未通过审核。审核组给出的原因：<br>"),
-                    (sb, ba) => sb.AppendFormat("{0}：{1}<br>", ba.Auditor, string.IsNullOrEmpty(ba.Reason) ? "不通过" : ba.Reason)).ToString());
+                    (sb, ba) => sb.AppendFormat("{0}：{1}<br>", WebUtility.HtmlEncode(ba.Auditor), string.IsNullOrEmpty(ba.Reason) ? "不通过" : WebUtility.HtmlEncode(ba.Reason))).ToString());
                 needRefresh = true;
             }
             else

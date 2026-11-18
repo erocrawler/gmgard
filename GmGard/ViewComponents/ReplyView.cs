@@ -27,6 +27,15 @@ namespace GmGard.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync(int itemid, string name = "", int pagenum = 1, ItemType idtype = ItemType.Blog, bool hottest = false)
         {
+            // 意见反馈(0)和问题举报(-1)是内部留言板:管理员可看全部,登录用户只能看自己的留言,匿名不可见
+            if (idtype == ItemType.Blog && (itemid == PostConstant.Suggestions || itemid == PostConstant.Problems) && !_blogUtil.CheckAdmin())
+            {
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return Content(string.Empty);
+                }
+                name = User.Identity.Name;
+            }
             ViewData["idtype"] = idtype;
             ViewData["itemid"] = itemid;
             ViewData["hottest"] = hottest;

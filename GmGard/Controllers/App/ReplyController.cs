@@ -187,7 +187,10 @@ namespace GmGard.Controllers.App
         public ActionResult Comments(int id, Comment.CommentType commentType, string sort = "", int limit = 10, int skip = 0)
         {
             ItemType itemType = (ItemType)commentType;
-            var posts = _db.Posts.Include(r => r.Ratings).Include(r => r.Replies).Where(p => p.ItemId == id && p.IdType == itemType)
+            // 意见反馈(0)/问题举报(-1)是内部留言板:非管理员只能读到自己的留言,匿名什么也读不到
+            bool restrictToSelf = itemType == ItemType.Blog && (id == PostConstant.Suggestions || id == PostConstant.Problems) && !_blogUtil.CheckAdmin();
+            string selfName = User.Identity.IsAuthenticated ? User.Identity.Name : null;
+            var posts = _db.Posts.Include(r => r.Ratings).Include(r => r.Replies).Where(p => p.ItemId == id && p.IdType == itemType && (!restrictToSelf || p.Author == selfName))
                 .Select(p => new
                 {
                     post = p,

@@ -199,6 +199,11 @@ namespace GmGard.Controllers
 
         public ActionResult MsgAction(string msgid, string act)
         {
+            // 删除是状态变更,只接受 POST(防止被评论里的 <img src> 之类的 GET 触发)
+            if (act == "delete" && !Microsoft.AspNetCore.Http.HttpMethods.IsPost(Request.Method))
+            {
+                return StatusCode(405);
+            }
             int id = int.Parse(msgid);
             Message message = _udb.Messages.Find(id);
             if (!CheckUserOwnsMessage(message))
@@ -230,6 +235,7 @@ namespace GmGard.Controllers
             return NotFound();
         }
 
+        [HttpPost]
         public ActionResult ReportAction(int id, string act, int pagenum = 1)
         {
             Message msg = _udb.Messages.Find(id);
@@ -410,7 +416,7 @@ namespace GmGard.Controllers
 
 
 
-        [Authorize]
+        [HttpPost, Authorize]
         public ActionResult Report(int? id, ItemType itemType, int? postid, string MsgContent, string type)
         {
             if (id.HasValue)
