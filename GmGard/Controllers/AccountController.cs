@@ -312,6 +312,15 @@ namespace GmGard.Controllers
                         ModelState.AddModelError("RegisterCode", "无效的邀请码。");
                         return View(model);
                     }
+                    // 先原子地占用邀请码(UPDATE ... WHERE UsedBy IS NULL):并发注册共用同一个码时只有一个能抢到。
+                    // UsedBy 先临时记成买码人自己的 Id(外键要求必须是存在的用户),用户创建成功后改写成真实 Id;创建失败则还原成 NULL。
+                    int claimed = await _db.UserCodes.Where(c => c.Code == code && c.UsedBy == null)
+                        .ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedBy, c => (int?)c.UserId));
+                    if (claimed == 0)
+                    {
+                        ModelState.AddModelError("RegisterCode", "无效的邀请码。");
+                        return View(model);
+                    }
                 }
                 // 尝试注册用户
                 var user = new UserProfile
@@ -335,8 +344,7 @@ namespace GmGard.Controllers
 
                     if (_registerSettings.RequireCode)
                     {
-                        _db.UserCodes.Find(code).UsedBy = user.Id;
-                        _db.SaveChanges();
+                        await _db.UserCodes.Where(c => c.Code == code).ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedBy, (int?)user.Id));
                     }
 
                     if (model.avatar != null && model.avatar.Length <= 4 * 1048576)
@@ -349,6 +357,11 @@ namespace GmGard.Controllers
                         }
                     }
                     return RedirectToAction("Index", "Home");
+                }
+                if (_registerSettings.RequireCode)
+                {
+                    // 用户没创建成功,释放刚才占用的邀请码
+                    await _db.UserCodes.Where(c => c.Code == code).ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedBy, (int?)null));
                 }
                 AddErrors(createResult);
             }

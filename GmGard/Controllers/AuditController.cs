@@ -117,20 +117,16 @@ namespace GmGard.Controllers
             return (setting.JoinAuditorLevel > 0 && UserLevel >= setting.JoinAuditorLevel) || _blogUtil.CheckAdmin(true);
         }
 
-        private IEnumerable<BlogAudit> LatestAudits(BlogContext db)
+        /// <summary>
+        /// 每篇投稿在最近一次"通过/拒绝"之后的审核记录(还在进行中的那一轮)。
+        /// 整个过滤在数据库里完成:原来把整张 BlogAudits(7 万多行)读进内存再过滤,每个审核员每次刷新都要读一遍。
+        /// </summary>
+        private IQueryable<BlogAudit> LatestAudits(BlogContext db)
         {
-            // Get the max version for each blog where action is Approve or Deny
-            var maxVersions = db.BlogAudits
-                .Where(ba => ba.AuditAction == BlogAudit.Action.Approve || ba.AuditAction == BlogAudit.Action.Deny)
-                .GroupBy(ba => ba.BlogID)
-                .Select(g => new { BlogID = g.Key, MaxVersion = g.Max(ba => ba.BlogVersion) })
-                .ToList();
-            
-            var maxVersionDict = maxVersions.ToDictionary(x => x.BlogID, x => x.MaxVersion);
-            
-            // Get all audits where version is greater than the max approve/deny version for that blog
-            return db.BlogAudits.ToList()
-                .Where(ba => !maxVersionDict.ContainsKey(ba.BlogID) || ba.BlogVersion > maxVersionDict[ba.BlogID]);
+            return db.BlogAudits.Where(ba =>
+                !db.BlogAudits.Any(done => done.BlogID == ba.BlogID
+                    && (done.AuditAction == BlogAudit.Action.Approve || done.AuditAction == BlogAudit.Action.Deny)
+                    && done.BlogVersion >= ba.BlogVersion));
         }
 
         public async Task<ActionResult> Index(int page = 1)
@@ -142,19 +138,19 @@ namespace GmGard.Controllers
             }
             ViewBag.Auditor = user.auditor ?? new Auditor();
             
-            var latestAudits = LatestAudits(_db).Where(ba => ba.Auditor == User.Identity.Name).ToList();
-            var latestAuditBlogIds = latestAudits.Select(ba => ba.BlogID).ToHashSet();
-            
+            string me = User.Identity.Name;
+            var latestAudits = LatestAudits(_db).Where(ba => ba.Auditor == me).ToList();
+            var auditByBlog = latestAudits.GroupBy(ba => ba.BlogID).ToDictionary(g => g.Key, g => g.First());
+
+            // 待审投稿在数据库里排序,再取回(待审的只是少数);原来是先全部取回再在内存里排序
             var query = _db.Blogs.Where(b => b.isApproved == null && b.BlogID > 0)
+                .OrderBy(b => b.BlogDate)
                 .ToList()
-                .Select(b => new AuditModel 
-                { 
-                    blog = b, 
-                    audit = latestAuditBlogIds.Contains(b.BlogID) 
-                        ? latestAudits.FirstOrDefault(ba => ba.BlogID == b.BlogID) 
-                        : null 
+                .Select(b => new AuditModel
+                {
+                    blog = b,
+                    audit = auditByBlog.TryGetValue(b.BlogID, out var a) ? a : null
                 })
-                .OrderBy(b => b.blog.BlogDate)
                 .AsQueryable();
 
             Func<object, ActionResult> Result = View;
