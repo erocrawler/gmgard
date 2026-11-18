@@ -209,7 +209,7 @@ namespace GmGard.Controllers.App
                     post = p,
                     uc = p.Ratings.Count(ra => ra.Value == 1),
                     dc = p.Ratings.Count(ra => ra.Value == -1),
-                    uv = User.Identity.IsAuthenticated ? p.Ratings.FirstOrDefault(ra => ra.Rater == User.Identity.Name) : null
+                    uv = p.Ratings.FirstOrDefault(ra => ra.Rater == selfName)
                 });
             IQueryable<Comment> query;
             if (itemType == ItemType.Blog)

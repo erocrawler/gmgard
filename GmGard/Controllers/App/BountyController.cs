@@ -309,6 +309,8 @@ namespace GmGard.Controllers.App
             }
 
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            // JSON 路径不会执行 [Required] 校验:标题为空必须在扣费之前拒绝,否则先扣了积分、后面 req.Title.Trim() 才抛空引用
+            if (string.IsNullOrWhiteSpace(req.Title)) return BadRequest(new { error = "标题不能为空" });
             if (req.Title?.Length > cfg_.MaxTitleLength) return BadRequest(new { error = $"标题最多{cfg_.MaxTitleLength}字" });
             if (string.IsNullOrWhiteSpace(req.Content) || req.Content.Trim().Length < cfg_.MinContentLength) return BadRequest(new { error = $"内容至少{cfg_.MinContentLength}字" });
             if (req.Content.Length > cfg_.MaxContentLength) return BadRequest(new { error = $"内容最多{cfg_.MaxContentLength}字" });
