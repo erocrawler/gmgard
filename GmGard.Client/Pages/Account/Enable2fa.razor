@@ -80,6 +80,25 @@
             </div>
         </div>
     }
+    else if (isAlreadyEnabled)
+    {
+        @* 已启用两步验证:查看现有秘钥(用于在新设备上重新绑定验证器)需要重新输入账号密码 *@
+        <div class="card bg-base-100 shadow">
+            <div class="card-body gap-3">
+                <p class="text-sm">两步验证已启用。为保护您的账户,查看现有秘钥需要先输入当前账号密码。</p>
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-error text-sm"><span>@error</span></div>
+                }
+                <div class="flex gap-2">
+                    <input type="password" class="input input-bordered flex-1" autocomplete="current-password" placeholder="账号密码"
+                           @bind="password" @bind:event="oninput" @onkeypress="OnPasswordKey" />
+                    <button class="btn btn-primary" @onclick="ShowKey" disabled="@verifying">查看秘钥</button>
+                </div>
+                <a href="account/2fa" class="link link-primary text-sm">返回两步验证管理</a>
+            </div>
+        </div>
+    }
     else
     {
         <div class="alert alert-error"><span>加载失败，请刷新重试。</span></div>
@@ -144,6 +163,31 @@
     async Task OnKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await Verify();
+    }
+
+    string password = "";
+
+    async Task OnPasswordKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await ShowKey();
+    }
+
+    async Task ShowKey()
+    {
+        if (string.IsNullOrEmpty(password)) { error = "请输入账号密码"; return; }
+        verifying = true;
+        error = null;
+        var (key, err) = await AccountService.Show2FaKeysAsync(password);
+        verifying = false;
+        if (key != null)
+        {
+            password = "";
+            sharedKey = key;   // 重新渲染后,OnAfterRenderAsync 会画出二维码
+        }
+        else
+        {
+            error = err ?? "加载失败，请刷新重试";
+        }
     }
 
     async Task Verify()

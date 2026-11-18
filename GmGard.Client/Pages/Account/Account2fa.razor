@@ -33,6 +33,12 @@
                         <div class="alert alert-info"><span>您有 @model.RecoveryCodesLeft 个应急密码剩余。</span></div>
                     }
 
+                    <fieldset class="fieldset mt-2">
+                        <legend class="fieldset-legend">当前账号密码(禁用两步验证、重设应急密码、重设验证秘钥时需要)</legend>
+                        <input type="password" class="input input-bordered input-sm w-full max-w-xs" autocomplete="current-password"
+                               placeholder="请输入账号密码" @bind="password" @bind:event="oninput" />
+                    </fieldset>
+
                     <div class="flex flex-wrap gap-2 mt-2">
                         @if (model.IsMachineRemembered)
                         {
@@ -157,15 +163,19 @@
         else ShowToast("操作失败，请刷新重试", true);
     }
 
+    string password = "";
+
     async Task Disable2Fa(bool reset)
     {
-        var ok = await AccountService.Disable2FaAsync(reset);
+        if (string.IsNullOrEmpty(password)) { ShowToast("请先输入账号密码", true); return; }
+        var (ok, err) = await AccountService.Disable2FaAsync(reset, password);
         if (ok)
         {
+            password = "";
             model = await AccountService.Get2FaDataAsync();
             ShowToast(reset ? "已重设秘钥并禁用2FA，请重新启用" : "操作成功");
         }
-        else ShowToast("操作失败，请刷新重试", true);
+        else ShowToast(err ?? "操作失败，请刷新重试", true);
     }
 
     async Task ConfirmReset()
@@ -176,9 +186,11 @@
 
     async Task GenerateRecoveryCodes()
     {
-        var (ok, codes, err) = await AccountService.GenerateRecoveryCodesAsync();
+        if (string.IsNullOrEmpty(password)) { ShowToast("请先输入账号密码", true); return; }
+        var (ok, codes, err) = await AccountService.GenerateRecoveryCodesAsync(password);
         if (ok && codes != null)
         {
+            password = "";
             recoveryCodes = codes;
             showCodes = true;
         }

@@ -38,6 +38,7 @@ public static class ApiRoutes
         public static string Disable2Fa(bool reset) => Add($"{Base}/Disable2Fa", "reset", reset.ToString().ToLower());
         public const string ForgetClient = Base + "/ForgetClient";
         public const string GenerateRecoveryCodes = Base + "/GenerateRecoveryCodes";
+        public const string Show2FaKeys = Base + "/Show2FaKeys";
         public const string TwoFactorAuth = Base + "/TwoFactorAuth";
         public const string RecoveryCode = Base + "/RecoveryCode";
         public const string IsAuthenticated = Base + "/IsAuthenticated";

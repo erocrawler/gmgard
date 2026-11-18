@@ -252,10 +252,34 @@ namespace GmGard.Controllers.App
             });
         }
 
+        // 敏感的两步验证操作(读取共享密钥、关闭、重新生成应急密码)要求重新输入账号密码:
+        // XSS 或被窃取的会话 Cookie 只代表"已登录",拿不到密码就无法静默关闭两步验证或读出密钥。
+        // 用应急密码登录的用户第一步已输入过账号密码,所以丢了验证器时这条路径仍然畅通。
+        private async Task<bool> PasswordOkAsync(UserProfile user, string password)
+        {
+            return user != null && !string.IsNullOrEmpty(password) && await _userManager.CheckPasswordAsync(user, password);
+        }
+
         [HttpGet, Authorize]
         public async Task<ActionResult> Get2FaKeys()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (await _userManager.GetTwoFactorEnabledAsync(user))
+            {
+                // 已启用时不再直接给出密钥,需要用 Show2FaKeys(POST,带密码)
+                return StatusCode(403, new { errorCode = "password_required", error = "已启用两步验证,查看秘钥需要输入密码" });
+            }
+            return Json(await LoadSharedKeyAndQrCodeUriAsync(user));
+        }
+
+        [HttpPost, Authorize]
+        public async Task<ActionResult> Show2FaKeys([FromForm] string password)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (!await PasswordOkAsync(user, password))
+            {
+                return BadRequest(new { error = "密码错误" });
+            }
             return Json(await LoadSharedKeyAndQrCodeUriAsync(user));
         }
 
@@ -287,9 +311,13 @@ namespace GmGard.Controllers.App
         }
 
         [HttpPost, Authorize]
-        public async Task<ActionResult> Disable2Fa(bool reset = false)
+        public async Task<ActionResult> Disable2Fa([FromForm] string password, bool reset = false)
         {
             var user = await _userManager.GetUserAsync(User);
+            if (!await PasswordOkAsync(user, password))
+            {
+                return BadRequest(new { error = "密码错误" });
+            }
             var disable2faResult = await _userManager.SetTwoFactorEnabledAsync(user, false);
             if (!disable2faResult.Succeeded)
             {
@@ -305,12 +333,16 @@ namespace GmGard.Controllers.App
         }
 
         [HttpPost, Authorize]
-        public async Task<ActionResult> GenerateRecoveryCodes()
+        public async Task<ActionResult> GenerateRecoveryCodes([FromForm] string password)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+            if (!await PasswordOkAsync(user, password))
+            {
+                return BadRequest(new { error = "密码错误" });
             }
 
             var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
