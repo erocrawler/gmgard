@@ -201,6 +201,16 @@ namespace GmGard.Controllers
                         }
                     }
                 }
+                else if (blog.BlogLinks != null)
+                {
+                    // 链接可选的分类也要检查已填写的链接(原来不检查,可以直接存入 javascript: 链接)
+                    blog.BlogLinks = blog.BlogLinks.Where(b => b != null && !string.IsNullOrWhiteSpace(b.url)).ToArray();
+                    if (blog.BlogLinks.Length > 0 && !BlogHelper.checkBlogLinks(blog.BlogLinks))
+                    {
+                        ModelState.AddModelError("", "链接地址不得包含javascript");
+                        throw new BlogException();
+                    }
+                }
                 if (!_blogUtil.CheckAdmin())
                 {
                     content = sanitizerService.Sanitize(content);
@@ -481,6 +491,16 @@ namespace GmGard.Controllers
                         ModelState.AddModelError("", "链接地址不�E为空�E�且不得包含javascript");
                         return View(blog);
                     }
+                }
+            }
+            if (blog.BlogLinks != null && _catUtil.GetCategory(blog.CategoryID).LinkOptional)
+            {
+                // 链接可选的分类也要检查已填写的链接
+                blog.BlogLinks = blog.BlogLinks.Where(b => b != null && !string.IsNullOrWhiteSpace(b.url)).ToArray();
+                if (blog.BlogLinks.Length > 0 && !BlogHelper.checkBlogLinks(blog.BlogLinks))
+                {
+                    ModelState.AddModelError("", "链接地址不得包含javascript");
+                    return View(blog);
                 }
             }
             if (blog.Content == null || string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(blog.Content)))

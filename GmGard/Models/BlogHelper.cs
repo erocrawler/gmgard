@@ -245,7 +245,13 @@ namespace GmGard.Models
             {
                 if (string.IsNullOrEmpty(link.url))
                     return false;
-                else if (link.url.ToUpperInvariant().Contains("JAVASCRIPT"))
+                // 浏览器解析链接时会忽略 URL 里的制表符、换行等控制字符(java<TAB>script: 也会被当成 javascript:),
+                // 所以先去掉控制字符并裁掉首尾空白,再做检查;保存的也是处理后的值。
+                link.url = new string(link.url.Where(c => !char.IsControl(c)).ToArray()).Trim();
+                if (link.url.Length == 0)
+                    return false;
+                string upper = link.url.ToUpperInvariant();
+                if (upper.Contains("JAVASCRIPT") || upper.StartsWith("DATA:") || upper.StartsWith("VBSCRIPT:"))
                 {
                     return false;
                 }
