@@ -329,15 +329,9 @@ namespace GmGard
             services.AddScoped<UploadUtil>();
             services.AddScoped<WidgetUtil>();
             services.AddScoped<IRecommendationProvider, ElasticSearchProvider>();
-            bool enabelS3 = Configuration.GetSection("ApplicationSettings").GetValue<string>("UploadBackendType") == "LinodeS3";
-            if (enabelS3)
-            {
-                services.AddScoped<IUpload, LinodeS3>();
-            }
-            else
-            {
-                services.AddScoped<IUpload, LinodeUtil>();
-            }
+            // 上传后端固定为 S3。原来的 PHP 上传(LinodeUtil,明文 HTTP 带上传密钥)已废弃并删除;
+            // 线上最近 90 天的本地图投稿图片路径全部是 //static.gmgard.com/Images/upload(S3),没有一篇走旧后端。
+            services.AddScoped<IUpload, LinodeS3>();
             bool enabelES = Configuration.GetSection("ApplicationSettings").GetValue<string>("SearchBackendType") == "ElasticSearch";
             if (enabelES)
             {
