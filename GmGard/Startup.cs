@@ -478,11 +478,6 @@ namespace GmGard
                     defaults: new { controller = "Admin", action = "Manage" }
                 );
                 endpoints.MapControllerRoute(
-                    name: "Upload",
-                    pattern: "Upload/{*img}",
-                    defaults: new { controller = "Upload", action = "Index" }
-                );
-                endpoints.MapControllerRoute(
                     name: "HanGroups",
                     pattern: "H/{name}",
                     defaults: new { controller = "Han", action = "Index" }
