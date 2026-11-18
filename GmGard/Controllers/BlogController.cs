@@ -423,7 +423,7 @@ namespace GmGard.Controllers
             }
             if (unapprove)
             {
-                return RedirectToAction("Details", new { id = b.BlogID });
+                return b == null ? RedirectToAction("List") : RedirectToAction("Details", new { id = b.BlogID });
             }
             return RedirectToAction("List");
         }

@@ -91,7 +91,10 @@ namespace GmGard.Controllers
                         ModelState.AddModelError("", "此账户已被封禁。如有疑问请联系管理员。");
                         return View();
                     }
-                    var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, false);
+                    // lockoutOnFailure: true counts failures on the user row and locks the account
+                    // (Identity defaults: 5 tries, 5 minutes), so a password can't be brute-forced
+                    // without limit.
+                    var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, true);
                     if (result.Succeeded)
                     {
                         user.LastLoginDate = DateTime.Now;
@@ -423,8 +426,26 @@ namespace GmGard.Controllers
         [HttpPost]
         public ActionResult ChangeAvatar(string avatardata, string filetype, string x, string y, string w, string h, string op)
         {
-            byte[] b = Convert.FromBase64String(avatardata);
-            if (avatardata == null || !filetype.Contains("image") || b.Length > 524288 * 2)
+            if (string.IsNullOrWhiteSpace(avatardata) || string.IsNullOrEmpty(filetype))
+            {
+                ModelState.AddModelError("", "头像必须是图片，且小于1MB。");
+                return PartialView("_ChangeAvatarPartial");
+            }
+            // Check the payload size before base64-decoding it, so a huge body is rejected
+            // without allocating the decoded array first.
+            string base64Body = avatardata;
+            int comma = base64Body.IndexOf(',');
+            if (comma >= 0)
+            {
+                base64Body = base64Body.Substring(comma + 1);
+            }
+            if (base64Body.Length > 524288 * 2 * 4 / 3 + 4)
+            {
+                ModelState.AddModelError("", "头像必须是图片，且小于1MB。");
+                return PartialView("_ChangeAvatarPartial");
+            }
+            byte[] b = Convert.FromBase64String(base64Body);
+            if (!filetype.Contains("image") || b.Length > 524288 * 2)
             {
                 ModelState.AddModelError("", "头像必须是图片，且小于1MB。");
             }

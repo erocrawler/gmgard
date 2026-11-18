@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using GmGard.Models;
@@ -90,10 +91,12 @@ namespace GmGard.Controllers.App
             request.Headers.Add(HeaderNames.Cookie, cookieHeader.ToString());
             request.Headers.Add(HeaderNames.UserAgent, Request.Headers[HeaderNames.UserAgent].ToString());
             request.Headers.Add(HeaderNames.Accept, Request.Headers[HeaderNames.Accept].ToString());
-            var client = new HttpClient(handler);
+            // One client per request leaked sockets and had no timeout: a slow dlsite
+            // response could hang the request indefinitely.
+            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
             try
             {
-                var resp = await client.SendAsync(request);
+                var resp = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
                 var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.Load(resp.Content.ReadAsStream(), System.Text.Encoding.UTF8);
                 var node = doc.GetElementbyId("search_result_list");

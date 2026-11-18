@@ -140,9 +140,19 @@ namespace GmGard.Controllers
         public JsonResult Suggestions(int[] userid)
         {
             var uid = _udb.Users.AsNoTracking().Where(u => u.UserName == User.Identity.Name).Select(u => u.Id).Single();
-            foreach (var id in userid)
+            // Bound the batch and drop duplicates / already-followed ids, otherwise one request
+            // can insert an unbounded number of rows.
+            var wanted = (userid ?? Array.Empty<int>())
+                .Where(id => id != uid)
+                .Distinct()
+                .Take(50)
+                .ToList();
+            var existing = _udb.Follows.Where(f => f.UserID == uid && wanted.Contains(f.FollowID))
+                .Select(f => f.FollowID).ToList();
+            var validUsers = _udb.Users.Where(u => wanted.Contains(u.Id)).Select(u => u.Id).ToList();
+            foreach (var id in wanted)
             {
-                if (id == uid)
+                if (existing.Contains(id) || !validUsers.Contains(id))
                 {
                     continue;
                 }

@@ -394,7 +394,7 @@ namespace GmGard.Controllers
             {
                 ApproveBlog(b, User.Identity.Name, updatetime);
                 _db.SaveChanges();
-                string referrer = Request.Headers[HeaderNames.Referer];
+                string referrer = Request.Headers[HeaderNames.Referer].ToString() ?? string.Empty;
                 var showunapprove = referrer.IndexOf("showunapprove=true", StringComparison.InvariantCultureIgnoreCase) >= 0;
                 return new EmptyResult();
             }
