@@ -241,7 +241,12 @@ namespace GmGard
 
             services.ConfigureApplicationCookie(options =>
             {
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+                // SameAsRequest:HTTPS 请求发出的登录 Cookie 带 Secure 标记,HTTP 请求照旧不带,所以仍走 HTTP 的用户登录不受影响。
+                // (请求是否为 HTTPS 由 UseForwardedHeaders 读取反代的 X-Forwarded-Proto 判断。)
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                // 显式写出 Lax(框架默认值也是 Lax):站外链接跳转进来仍带登录态,跨站 POST/fetch/form 不带。不能用 Strict,
+                // 会让外链进来时显示未登录,并影响 animato 通过 OAuth 跳转登录。
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
                 options.AccessDeniedPath = "/403.html";
                 options.Events.OnRedirectToLogin = ctx =>
                 {
