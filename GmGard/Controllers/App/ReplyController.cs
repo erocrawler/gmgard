@@ -27,14 +27,17 @@ namespace GmGard.Controllers.App
         private BlogUtil _blogUtil;
         private RatingUtil _ratingUtil;
         private readonly HtmlSanitizerService _sanitizerService;
+        private readonly ExpUtil _expUtil;
 
         public ReplyController(
             BlogContext db,
             AdminUtil adminUtil,
             BlogUtil blogUtil,
             RatingUtil ratingUtil,
-            HtmlSanitizerService sanitizerService)
+            HtmlSanitizerService sanitizerService,
+            ExpUtil expUtil)
         {
+            _expUtil = expUtil;
             _db = db;
             _adminUtil = adminUtil;
             _blogUtil = blogUtil;
@@ -75,6 +78,11 @@ namespace GmGard.Controllers.App
                         {
                             return BadRequest(new { error = userrate.RateWithAccount ? "您已经评过分了" : "今天已经评过分了" });
                         }
+                    }
+                    int cdWait = _expUtil.TryBeginPost(User.Identity.Name);
+                    if (cdWait > 0)
+                    {
+                        return StatusCode(429, new { error = "回复CD为30秒，请等" + cdWait + "秒后再试" });
                     }
                     post = _blogUtil.AddBlogPost(request.ItemId, User.Identity.Name, _sanitizerService.Sanitize(request.Content));
                     if (userrate != null)
@@ -130,6 +138,11 @@ namespace GmGard.Controllers.App
             if (string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(request.Content)))
             {
                 return BadRequest(new { error = "内容不能为空或纯图片。" });
+            }
+            int cdWait = _expUtil.TryBeginPost(User.Identity.Name);
+            if (cdWait > 0)
+            {
+                return StatusCode(429, new { error = "回复CD为30秒，请等" + cdWait + "秒后再试" });
             }
             var reply = _blogUtil.AddPostReply(request.CommentId, User.Identity.Name, _sanitizerService.Sanitize(request.Content));
             TriggerAddReply(reply);

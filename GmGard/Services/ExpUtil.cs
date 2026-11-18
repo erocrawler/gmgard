@@ -263,6 +263,39 @@ namespace GmGard.Services
             return true;
         }
 
+        private const int PostCooldownSeconds = 30;
+        private static readonly object PostCooldownLock = new object();
+
+        /// <summary>
+        /// 发言冷却(评论、回复):30 秒,等级 10 以上不受限。按用户名记录在内存缓存里,不依赖 Session
+        /// (原来的 Session 冷却不带 Cookie 就能绕过,新版接口则完全没有冷却)。
+        /// "检查并占位"在同一个锁里完成,并发请求不会一起通过。
+        /// 返回 0 表示可以发言(同时记下本次时间);大于 0 表示还需要等待的秒数。
+        /// 调用方应在内容校验通过、真正写入之前调用。
+        /// </summary>
+        public int TryBeginPost(string username)
+        {
+            if (getUserLvl(username) >= 10)
+            {
+                return 0;
+            }
+            string key = "~lastpost" + username;
+            lock (PostCooldownLock)
+            {
+                var last = _cache.Get<DateTime?>(key);
+                if (last.HasValue)
+                {
+                    double remain = PostCooldownSeconds - (DateTime.Now - last.Value).TotalSeconds;
+                    if (remain > 0)
+                    {
+                        return (int)Math.Ceiling(remain);
+                    }
+                }
+                _cache.Set<DateTime?>(key, DateTime.Now, TimeSpan.FromMinutes(2));
+                return 0;
+            }
+        }
+
         public void AddPoint(UserProfile user, int point)
         {
             TryChangePoints(user, point, allowOverdraft: true);

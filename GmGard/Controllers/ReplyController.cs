@@ -173,18 +173,14 @@ namespace GmGard.Controllers
         [Authorize]
         public async Task<JsonResult> AddPostReply(int postid, string addreplycontent)
         {
-            DateTime? lastpost = HttpContext.Session.GetDateTime("LastPostTime");
-            if (lastpost.HasValue)
-            {
-                var diff = DateTime.Now - lastpost.Value;
-                if (diff.TotalSeconds < 30 && _expUtil.getUserLvl(User.Identity.Name) < 10)
-                {
-                    return Json(new { errmsg = "回复CD为30秒，请等" + (30 - diff.Seconds) + "秒后再试" });
-                }
-            }
             if (string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(addreplycontent)))
             {
                 return Json(new { errmsg = "回复不能为空" });
+            }
+            int cdWait = _expUtil.TryBeginPost(User.Identity.Name);
+            if (cdWait > 0)
+            {
+                return Json(new { errmsg = "回复CD为30秒，请等" + cdWait + "秒后再试" });
             }
             var reply = _blogUtil.AddPostReply(postid, User.Identity.Name, _sanitizerService.Sanitize(addreplycontent));
             TriggerAddReply(reply);
@@ -377,18 +373,14 @@ namespace GmGard.Controllers
             {
                 throw new BlogException("验证码计算错误，请重试。");
             }
-            DateTime? lastpost = HttpContext.Session.GetDateTime("LastPostTime");
-            if (lastpost.HasValue)
-            {
-                var diff = DateTime.Now - lastpost.Value;
-                if (diff.TotalSeconds < 30 && _expUtil.getUserLvl(User.Identity.Name) < 10)
-                {
-                    throw new BlogException("回复CD为30秒，请等" + (30 - diff.Seconds) + "秒后再试");
-                }
-            }
             if (string.IsNullOrWhiteSpace(BlogHelper.removeAllTags(Content)))
             {
                 throw new BlogException("回复不能为空或纯表情");
+            }
+            int cdWait = _expUtil.TryBeginPost(User.Identity.Name);
+            if (cdWait > 0)
+            {
+                throw new BlogException("回复CD为30秒，请等" + cdWait + "秒后再试");
             }
         }
     }
