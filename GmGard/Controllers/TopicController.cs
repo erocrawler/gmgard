@@ -267,12 +267,17 @@ namespace GmGard.Controllers
             {
                 ModelState.AddModelError("", ret > 0 ? "专题标签只能有1个" : "标签不得超过20个字符");
             }
-            else if (!_blogUtil.CheckAdmin())
+            else
             {
-                etopic.Content = sanitizerService.Sanitize(etopic.Content);
-            }
-            else if (ModelState.IsValid)
-            {
+                // Non-admins get the sanitizer, then must still fall through to the
+                // save path below (the old if/else-if chain returned the view here,
+                // so Writers/Moderators could never save a topic edit).
+                if (!_blogUtil.CheckAdmin())
+                {
+                    etopic.Content = sanitizerService.Sanitize(etopic.Content);
+                }
+                if (ModelState.IsValid)
+                {
                 var topic = _db.Topics.Include(t => t.tag).SingleOrDefault(t => t.TopicID == id);
                 bool uploadsaved = false;
                 bool bannersaved = false;
@@ -387,6 +392,7 @@ namespace GmGard.Controllers
                     throw;
                 }
                 return RedirectToAction("Details", new { id });
+                }
             }
             return View(etopic);
         }
